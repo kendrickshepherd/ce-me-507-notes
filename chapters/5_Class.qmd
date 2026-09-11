@@ -1,0 +1,286 @@
+---
+title: "Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import os
+import sys
+import math
+
+sys.path.append('.')
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+from notes_style import (use_chapter, save, tidy,
+                         INK, LOADCLR, REACTCLR, DIMCLR,
+                         DOMCLR, BDRYCLR, FLUXCLR)
+
+IMGDIR = use_chapter("Class5")
+```
+
+Last time, given $f$, $g$, $h$, and $\underline{\underline{K}}$, we let
+
+::: {.derivation}
+$$
+\mathcal{S} = \left\{\, u \in H^1(\Omega) \;\middle|\; u = g \text{ on } \Gamma_g \,\right\}
+\qquad\qquad
+\mathcal{V} = \left\{\, w \in H^1(\Omega) \;\middle|\; w = 0 \text{ on } \Gamma_g \,\right\}
+$$
+:::
+
+and showed that if $u$ solves the strong form, then it also satisfies: find $u \in \mathcal{S}$
+such that for every $w \in \mathcal{V}$,
+
+::: {.derivation}
+$$
+(\mathrm{W}) \qquad
+\int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega
+= \int_\Omega wf\;d\Omega + \int_{\Gamma_h} wh\;d\Gamma
+$$
+:::
+
+::: {.step}
+Write the strong form and weak form of the BVP on the left board, for reference throughout
+class.
+:::
+
+**Goals:**
+
+::: {.step .notes}
+- Strong form $\Rightarrow$ Weak form
+- Weak form $\Rightarrow$ Strong form
+- Weak form $\Rightarrow$ Galerkin form
+:::
+
+::: {.step}
+The first of these was written out at the end of Class 4 but not worked through in class,
+so it is carried over here; the rest of this class takes the other two.
+:::
+
+# Weak form $\Rightarrow$ strong form
+
+Run the previous class's steps in **reverse**, starting from $(\mathrm{W})$ written in
+multivariate-calculus form:
+
+::: {.derivation}
+$$
+\int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega
+= \int_\Omega wf\;d\Omega + \int_{\Gamma_h} wh\;d\Gamma
+$$
+:::
+
+::: {.step}
+Recall $w(x) = 0$ on $\Gamma_g$, and $\Gamma_g \cup \Gamma_h = \Gamma$, so the right-hand
+boundary term can be extended to the whole boundary $\Gamma$ without changing anything:
+:::
+
+::: {.derivation}
+$$
+\int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega
+= \int_\Omega wf\;d\Omega + \int_{\Gamma} wh\;d\Gamma
+\qquad\Longrightarrow\qquad
+0 = \int_\Omega \left(wf - \nabla w\cdot\underline{\underline{K}}\nabla u\right) d\Omega
+    + \int_\Gamma wh\;d\Gamma
+$$
+:::
+
+Now run the **Divergence Theorem** in reverse — the same identity used last time, applied
+to pull $\nabla w \cdot \underline{\underline{K}}\nabla u$ back into a divergence:
+
+::: {.derivation}
+$$
+0 = \int_\Omega \left(wf + w\,\nabla\cdot\left(\underline{\underline{K}}\nabla u\right)\right) d\Omega
+    + \int_\Gamma \left(wh - w\left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n}\right)d\Gamma
+$$
+:::
+
+::: {.step}
+Now, the above holds for **every** $w \in \mathcal{V}$. This freedom to choose $w$ is what
+lets us tease the two boundary conditions apart, using the **fundamental lemma of the
+calculus of variations**: if $\int_\Omega \beta\,\phi\;d\Omega = 0$ for every admissible
+$\phi \ge 0$, then $\beta = 0$ everywhere $\phi$ can be positive.
+:::
+
+## Recovering the PDE on $\Omega$
+
+Pick $w = \left[f + \nabla\cdot(\underline{\underline{K}}\nabla u)\right]\phi$ for some
+smooth $\phi$ with $\phi > 0$ on $\Omega$ and $\phi = 0$ on $\Gamma$ (so that
+$w \in \mathcal{V} \cap H^1(\Omega)$). This choice makes the boundary integral vanish
+identically, leaving
+
+::: {.derivation}
+$$
+0 = \int_\Omega \left(f + \nabla\cdot\left(\underline{\underline{K}}\nabla u\right)\right)^2 \phi\;d\Omega
+$$
+:::
+
+::: {.step}
+But $\phi > 0$ on $\Omega$ and
+$\left(f + \nabla\cdot(\underline{\underline{K}}\nabla u)\right)^2 \ge 0$ everywhere.
+An integral of a non-negative quantity that comes out to zero forces the integrand itself
+to be zero:
+:::
+
+::: {.derivation}
+$$
+\Longrightarrow \qquad
+\left(f + \nabla\cdot\left(\underline{\underline{K}}\nabla u\right)\right)^2 = 0
+\qquad\Longrightarrow\qquad
+\boxed{-\nabla\cdot\left(\underline{\underline{K}}\nabla u\right) = f} \qquad \text{on } \Omega
+$$
+:::
+
+## Recovering the flux condition on $\Gamma_h$
+
+Next, pick
+$w = \left[h - \left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n}\right]\psi$
+for some smooth $\psi$ with $\psi > 0$ on $\Gamma_h$ and $\psi = 0$ on $\Gamma_g$. Because
+the PDE result above already makes the domain integral vanish for **any** $w$, this choice
+leaves only
+
+::: {.derivation}
+$$
+0 = \int_{\Gamma_h} \left[h - \left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n}\right]^2 \psi\;d\Gamma
+$$
+:::
+
+::: {.step}
+By the same argument — $\psi > 0$ on $\Gamma_h$, and the bracketed quantity is squared —
+:::
+
+::: {.derivation}
+$$
+\Longrightarrow \qquad
+\boxed{\left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n} = h} \qquad \text{on } \Gamma_h
+$$
+:::
+
+## Summarizing
+
+::: {.derivation}
+$$
+-\nabla\cdot\left(\underline{\underline{K}}\nabla u\right) = f \quad \text{on } \Omega
+\qquad\text{(from the domain argument)}
+$$
+
+$$
+\left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n} = h \quad \text{on } \Gamma_h
+\qquad\text{(from the boundary argument)}
+$$
+
+$$
+u(x) = g(x) \quad \text{on } \Gamma_g
+\qquad\text{(because } u \in \mathcal{S} \text{ by assumption)}
+$$
+:::
+
+::: {.step}
+In sum: if we pick **two really, really good choices** for $w \in \mathcal{V}$, we exactly
+recover the strong form for $u \in \mathcal{S}$. Together with last class's argument, this
+shows $(\mathrm{S}) \Leftrightarrow (\mathrm{W})$ — the two formulations are truly
+equivalent, not merely "the weak form is an approximation."
+:::
+
+# The Galerkin method
+
+Typically, we don't know the really, really good choices for $w$ to test $u$ against — if
+we did, we'd already know the solution to our problem, most likely. Instead, we want to
+pick **"good" choices that can approximate with arbitrary accuracy.**
+
+::: {.step .notes}
+- sines and cosines $\leftarrow$ Fourier series
+- piecewise polynomials of a fixed degree
+:::
+
+We want functions that are **"dense"** in a **"complete"** space.
+
+::: {.step .notes}
+- **Complete:** we take limits of functions and still end up with a function in the space.
+  ($C^\infty$ functions are not complete, nor are $C^0$; $H^1(\Omega)$ and $L^2(\Omega)$
+  are complete.)
+- **Dense:** any function in the space is arbitrarily close to our specified choice of
+  function.
+:::
+
+::: {.step}
+Piecewise polynomials are "complete" (in the sense we want) — think of a computer screen
+and pixels.
+:::
+
+```{python fig_dense}
+#| echo: false
+#| output: false
+
+def target(x):
+    return 0.5 + 0.35 * np.sin(2.3 * math.pi * x) * np.exp(-0.6 * x)
+
+xf = np.linspace(0, 1, 500)
+
+fig, axes = plt.subplots(1, 3, figsize=(12.0, 3.1))
+for ax, n in zip(axes, (3, 6, 14)):
+    edges = np.linspace(0, 1, n + 1)
+    ax.plot(xf, target(xf), color=BDRYCLR, lw=1.6, alpha=0.4, zorder=2)
+    for i in range(n):
+        xm = 0.5 * (edges[i] + edges[i + 1])
+        ax.plot([edges[i], edges[i + 1]], [target(xm), target(xm)],
+                color=INK, lw=2.4, zorder=3)
+    for e in edges:
+        ax.axvline(e, color=DIMCLR, lw=0.5, alpha=0.5, zorder=1)
+    ax.set_title(f"{n} pieces", fontsize=12, color=INK, pad=6)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1.0)
+    ax.set_xticks([]); ax.set_yticks([])
+    ax.spines[["top", "right", "left"]].set_visible(False)
+
+fig.subplots_adjust(wspace=0.08)
+fig_dense_path = save(fig, "C5_Fig1_PiecewiseApprox.png")
+```
+
+![Piecewise-constant approximations of a smooth target: as the number of pieces grows, the approximation gets arbitrarily close — this is "density."](`{python} fig_dense_path`){#fig-c5-dense width=95%}
+
+# The Galerkin form
+
+::: {.derivation}
+$$
+(\mathrm{G}) \qquad
+\begin{array}{l}
+\text{Given } f,\, g,\, h,\, \underline{\underline{K}} \text{ as in } (\mathrm{W}),
+\text{ find } u^h = v^h + g^h, \text{ with } v^h \in \mathcal{V}^h \subset \mathcal{V},\;
+g^h \in \mathcal{S}^h \subset \mathcal{S} \\[6pt]
+\text{such that } \forall\, w^h \in \mathcal{V}^h \subset \mathcal{V}, \\[6pt]
+\qquad \displaystyle\int_\Omega w^h_{,i}\,K_{ij}\,u^h_{,j}\;d\Omega
+= \int_\Omega w^h f\;d\Omega + \int_{\Gamma_h} w^h h\;d\Gamma
+\end{array}
+$$
+:::
+
+Typically, we choose
+
+::: {.derivation}
+$$
+v^h = \sum_A \underset{\substack{\uparrow \\ \text{coefficients}}}{d_A}\;
+      \underset{\substack{\uparrow \\ \text{"basis" functions}}}{N_A(x)}
+\qquad\qquad
+g^h(x) = \sum_B g_B\,N_B(x)
+$$
+:::
+
+::: {.step}
+where the $N_B$ appearing in $g^h$ are **nonzero on $\Gamma_g$** and **zero away from
+$\Gamma_g$** — they are exactly the basis functions that carry the known boundary data.
+:::
+
+::: {.step}
+Next class picks up with this idea concretely: **Lagrange polynomials** as a basis for
+piecewise-polynomial spaces.
+:::

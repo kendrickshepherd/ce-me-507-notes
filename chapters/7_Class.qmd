@@ -1,0 +1,274 @@
+---
+title: "Class 7: From Galerkin to a Matrix Equation"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import os
+import sys
+import math
+
+sys.path.append('.')
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+from notes_style import (use_chapter, save, tidy,
+                         INK, LOADCLR, REACTCLR, DIMCLR,
+                         DOMCLR, BDRYCLR, FLUXCLR, MESHCLR)
+
+IMGDIR = use_chapter("Class7")
+```
+
+# Last time
+
+Pick $\mathcal{S}^h \subset \mathcal{S}$, $\mathcal{V}^h \subset \mathcal{V}$. Given
+$f$, $g$, $h$, $\underline{\underline{K}}$ as before, find $u^h \in \mathcal{S}^h \subset \mathcal{S}$
+such that $\forall\, w^h \in \mathcal{V}^h \subset \mathcal{V}$,
+
+::: {.derivation}
+$$
+\int_\Omega \nabla w^h \cdot \underline{\underline{K}}\nabla u^h\;d\Omega
+= \int_\Omega w f\;d\Omega + \int_{\Gamma_h} w h\;d\Gamma
+\qquad \text{or} \qquad
+a(w, u) = (w, f) + (w, h)_{\Gamma_h}
+$$
+:::
+
+Assume $u^h = v^h + g^h$, where $u^h \in \mathcal{S}^h$, $v^h \in \mathcal{V}^h$,
+$g^h \in \mathcal{S}^h$:
+
+::: {.derivation}
+$$
+v^h = \sum_{B=0,\,B \notin \Gamma_g}^{n_{bf}-1} d_B\,N_B
+\qquad\qquad
+g^h = \sum_{B=0,\,B \in \Gamma_g}^{n_{bf}-1} g_B\,N_B
+\qquad\qquad
+w^h = \sum_{A=0,\,A \notin \Gamma_g}^{n_{bf}-1} c_A\,N_A
+$$
+:::
+
+::: {.step}
+where $n_{bf}$ is the number of basis functions.
+:::
+
+```{python fig_examples}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(1, 2, figsize=(11.2, 4.4))
+
+# ---------------------------------- 1D example: 8 nodes, right end fixed ----
+ax = axes[0]
+n = 7
+xs = np.linspace(0, 6, n + 1)
+ax.plot([0, 6], [0, 0], color=INK, lw=2.4, zorder=2)
+for x in xs:
+    ax.plot([x], [0], marker="|", color=INK, ms=10, mew=1.4, zorder=3)
+ax.text(-0.4, 0.1, r"$\Gamma_h$", color=FLUXCLR, fontsize=13, ha="right")
+ax.text(6.4, 0.1, r"$\Gamma_g$", color=BDRYCLR, fontsize=13, ha="left")
+for x in xs:
+    ax.plot([x, x], [0, 0.4], color=DIMCLR, lw=0.6, ls="--", zorder=1)
+labels = [f"$N_{i}$" for i in range(n + 1)]
+for x, lab in zip(xs, labels):
+    ax.text(x, -0.35, lab, ha="center", va="top", fontsize=10.5, color=INK)
+ax.set_title("one-dimensional example", fontsize=12, color=INK, pad=8)
+tidy(ax)
+ax.set_xlim(-1.2, 7.0)
+ax.set_ylim(-0.9, 0.9)
+
+# ---------------------------------- 2D example: a structured quad mesh -----
+ax = axes[1]
+t = np.linspace(0, 2 * math.pi, 300)
+r = 2.2 + 0.15 * np.sin(4 * t)
+X, Y = r * np.cos(t), r * np.sin(t)
+ax.fill(X, Y, color=DOMCLR, alpha=0.4, zorder=0)
+
+# a simple structured mesh clipped to (roughly) the domain, avoiding a scipy
+# dependency for Delaunay triangulation -- a regular grid makes the point
+# just as well for illustrating Gamma_h/Gamma_g node classification
+grid = np.linspace(-2.0, 2.0, 6)
+mesh_pts = []
+for gx in grid:
+    for gy in grid:
+        if gx**2 / 2.7**2 + gy**2 / 2.4**2 <= 1.0:
+            mesh_pts.append((gx, gy))
+mesh_pts = np.array(mesh_pts)
+
+for gx in grid:
+    col = [(gx, gy) for gy in grid if gx**2/2.7**2 + gy**2/2.4**2 <= 1.0]
+    if len(col) > 1:
+        col = np.array(col)
+        ax.plot(col[:, 0], col[:, 1], color=MESHCLR, lw=0.9, zorder=2)
+for gy in grid:
+    row = [(gx, gy) for gx in grid if gx**2/2.7**2 + gy**2/2.4**2 <= 1.0]
+    if len(row) > 1:
+        row = np.array(row)
+        ax.plot(row[:, 0], row[:, 1], color=MESHCLR, lw=0.9, zorder=2)
+
+ax.plot(mesh_pts[:, 0], mesh_pts[:, 1], "o", ms=4, color=INK, zorder=4)
+
+outer = np.array([gx**2/2.7**2 + gy**2/2.4**2 > 0.62 for gx, gy in mesh_pts])
+in_gh = outer & (mesh_pts[:, 1] > 0)
+in_gg = outer & (mesh_pts[:, 1] <= 0)
+ax.plot(mesh_pts[in_gh, 0], mesh_pts[in_gh, 1], "o", ms=8, mfc="none",
+        mec=FLUXCLR, mew=2.0, zorder=5)
+ax.plot(mesh_pts[in_gg, 0], mesh_pts[in_gg, 1], "o", ms=8, mfc=BDRYCLR,
+        mec=BDRYCLR, zorder=5)
+ax.text(-1.0, 2.5, r"$\Gamma_h$", color=FLUXCLR, fontsize=13)
+ax.text(1.6, -2.5, r"$\Gamma_g$", color=BDRYCLR, fontsize=13)
+ax.text(2.7, 0.1, "degree-1 Lagrange\npolynomials", fontsize=9.5, color=INK,
+        ha="left")
+
+ax.set_title("two-dimensional example", fontsize=12, color=INK, pad=8)
+tidy(ax)
+ax.set_xlim(-3.0, 4.4)
+ax.set_ylim(-3.0, 3.0)
+
+fig.subplots_adjust(wspace=0.15)
+fig_examples_path = save(fig, "C7_Fig1_Examples.png")
+```
+
+![One- and two-dimensional meshes: open circles are basis functions unconstrained by $\Gamma_g$ (these carry the $c_A$/$d_B$ unknowns), filled circles are basis functions on $\Gamma_g$ (these carry the known $g_B$).](`{python} fig_examples_path`){#fig-c7-examples width=100%}
+
+# Deriving the matrix system
+
+::: {.derivation}
+$$
+\int_\Omega \nabla w^h \cdot \underline{\underline{K}} \nabla u^h\;d\Omega
+= \int_\Omega w^h f\;d\Omega + \int_{\Gamma_h} w^h h\;d\Gamma
+$$
+:::
+
+Substitute the expansions for $w^h$ and $u^h = v^h + g^h$ — note $c_A$, $d_B$, $g_B$ are all
+**constants**, so they come out of the integrals:
+
+::: {.derivation}
+$$
+\int_\Omega \nabla\left(\sum_A c_A N_A\right) \cdot \underline{\underline{K}}
+\nabla\left(\sum_B d_B N_B + \sum_B g_B N_B\right) d\Omega
+= \int_\Omega \left(\sum_A c_A N_A\right) f\;d\Omega
++ \int_{\Gamma_h} \left(\sum_A c_A N_A\right) h\;d\Gamma
+$$
+:::
+
+::: {.derivation}
+$$
+\sum_A \sum_B c_A\left[\int_\Omega \nabla N_A \cdot \underline{\underline{K}} \nabla N_B\;d\Omega\right] d_B
+= \sum_A c_A\left[\int_\Omega N_A f\;d\Omega\right]
++ \sum_A c_A\left[\int_{\Gamma_h} N_A h\;d\Gamma\right]
+- \sum_A \sum_B c_A\left[\int_\Omega \nabla N_A \cdot \underline{\underline{K}} \nabla N_B\;d\Omega\right] g_B
+$$
+:::
+
+::: {.step}
+This is dense, but every term is one of three integral "shapes" that we will name shortly.
+Collecting terms so that all of them are multiplied by $c_A$:
+:::
+
+::: {.derivation}
+$$
+0 = \sum_A c_A \left[-\sum_B d_B \int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega
+    + \int_\Omega N_A f\;d\Omega + \int_{\Gamma_h} N_A h\;d\Gamma
+    - \sum_B g_B \int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega\right]
+$$
+:::
+
+::: {.derivation}
+$$
+0 = \sum_A c_A\,G_A
+$$
+:::
+
+::: {.step}
+Now, remember that $w^h$ was arbitrary, meaning this is true **for all choices**
+$\{c_A\}_{A=0}^{n}$, $w^h = \sum c_A N_A$. Choose $w^h$ such that $c_0 = 1$, all other
+$c_A = 0$: this forces $0 = 1 \cdot G_0 \Rightarrow G_0 = 0$. Choose $w^h$ such that
+$c_1 = 1$, all other $c_A = 0$: $G_1 = 0$. Repeating for every index,
+$G_A = 0$ **for every $A$** — exactly the same "pick a really good test function" trick
+from Class 5, now applied coefficient by coefficient.
+:::
+
+Consequently, for any $A$ (an index of a basis function in $\mathcal{V}^h$), we have
+
+::: {.derivation}
+$$
+\sum_B d_B\left[\int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega\right]
+= \int_\Omega N_A f\;d\Omega + \int_{\Gamma_h} N_A h\;d\Gamma
+- \sum_B g_B\int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega
+$$
+:::
+
+or, naming the two integral shapes,
+
+::: {.derivation}
+$$
+\sum_B d_B\,a(N_A, N_B) = \underbrace{(N_A, f) + (N_A, h)_{\Gamma_h}
+                                       - \sum_B g_B\,a(N_A, N_B)}_{F_A}
+\qquad\qquad
+a(N_A, N_B) =: K_{AB}
+$$
+:::
+
+Putting all of these together, we get a large matrix equation — in index notation it is
+
+::: {.derivation}
+$$
+K_{AB}\,d_B = F_A
+\qquad\qquad (\text{dummy indices; } B \text{ denotes a sum})
+$$
+:::
+
+::: {.derivation}
+$$
+\boxed{\underline{\underline{K}}\,\underline{d} = \underline{F}}
+$$
+:::
+
+::: {.step}
+To solve this equation, we will need numerical integration methods. The most general and
+effective methods for piecewise-polynomial functions are called **Gaussian quadrature
+methods**, and are the subject of a later class — after we've built up the machinery for
+assembling $\underline{\underline{K}}$ and $\underline{F}$ concretely.
+:::
+
+```{python check_matrix}
+#| echo: false
+#| output: false
+
+# sanity check: the derivation above must reduce, in the simplest possible
+# case (K=1, one interior unknown, both ends Dirichlet, f constant, no flux),
+# to the textbook central-difference-like stiffness relation. Build it by
+# hand with three linear hat functions on [0, 2] and confirm K_11 = 2/h.
+h = 1.0
+nodes = [0.0, h, 2 * h]
+
+
+def N(i, x):
+    x = np.asarray(x, dtype=float)
+    out = np.zeros_like(x)
+    if i > 0:
+        m = (x >= nodes[i - 1]) & (x <= nodes[i])
+        out[m] = (x[m] - nodes[i - 1]) / h
+    if i < 2:
+        m = (x >= nodes[i]) & (x <= nodes[i + 1])
+        out[m] = (nodes[i + 1] - x[m]) / h
+    return out
+
+
+def dN(i, x, d=1e-6):
+    return (N(i, x + d) - N(i, x - d)) / (2 * d)
+
+
+xq = np.linspace(0, 2 * h, 20001)
+K11 = np.trapezoid(dN(1, xq) ** 2, xq)
+assert abs(K11 - 2.0 / h) < 1e-3, K11   # the familiar 1D stiffness value
+```

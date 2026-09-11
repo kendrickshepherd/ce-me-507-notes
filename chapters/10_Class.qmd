@@ -1,0 +1,369 @@
+---
+title: "Class 10: Assembly with the IEN Array, and Quadrature on an Element"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import os
+import sys
+import math
+
+sys.path.append('.')
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon as MplPolygon
+
+from notes_style import (use_chapter, save, tidy,
+                         INK, LOADCLR, REACTCLR, DIMCLR,
+                         DOMCLR, BDRYCLR, FLUXCLR, MESHCLR, REFCLR)
+
+IMGDIR = use_chapter("Class10")
+```
+
+::: {.derivation}
+$$
+(\mathrm{S}) \Longleftrightarrow (\mathrm{W})
+\;\xRightarrow{\text{approximate}}\; (\mathrm{G})
+\;\xRightarrow{\text{exact}}\; (\mathrm{M})
+$$
+:::
+
+::: {.step}
+Only one step in that chain loses anything: $(\mathrm{W}) \Rightarrow (\mathrm{G})$,
+where we restrict to a finite-dimensional subspace. $(\mathrm{S}) \Leftrightarrow
+(\mathrm{W})$ was proved both ways in Class 5, and $(\mathrm{G}) \Rightarrow
+(\mathrm{M})$ is just algebra.
+:::
+
+And $(\mathrm{S})$ — the strong form itself — is already an **(approximate) physics
+problem**: the modelling assumptions were made before any of this machinery started.
+
+::: {.derivation}
+$$
+-\nabla\cdot\left(\underline{\underline{K}}\nabla u\right) = f \quad \text{in } \Omega
+\qquad\qquad
+u = g \quad \text{in } \Gamma_g
+\qquad\qquad
+\left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n} = h \quad \text{in } \Gamma_h
+$$
+:::
+
+```{python fig_domain}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(5.4, 4.8))
+t = np.linspace(0, 2 * math.pi, 400)
+r = 2.3 + 0.24 * np.sin(3 * t) + 0.14 * np.cos(5 * t)
+X, Y = r * np.cos(t), r * np.sin(t)
+ax.fill(X, Y, color=DOMCLR, alpha=0.55, zorder=1)
+lmask = (t > 0.9 * math.pi) & (t < 1.1 * math.pi)
+rmask = (t > -0.1 * math.pi + 2 * math.pi) | (t < 0.1 * math.pi)
+gmask = ~(lmask | rmask)
+ax.plot(X[gmask], Y[gmask], color=BDRYCLR, lw=2.2, zorder=3)
+ax.plot(X[lmask], Y[lmask], color=FLUXCLR, lw=3.4, zorder=4)
+ax.plot(X[rmask], Y[rmask], color=FLUXCLR, lw=3.4, zorder=4)
+ax.text(0, 0, r"$\Omega$", ha="center", va="center", fontsize=17, color=INK)
+ax.text(0, 3.0, r"$\Gamma_g$", ha="center", va="bottom", fontsize=13,
+        color=BDRYCLR)
+ax.text(-3.0, 0, r"$\Gamma_h$", ha="right", va="center", fontsize=13,
+        color=FLUXCLR)
+ax.text(3.0, 0, r"$\Gamma_h$", ha="left", va="center", fontsize=13,
+        color=FLUXCLR)
+k = np.argmin(np.abs(t - 0.55 * math.pi))
+nx, ny = math.cos(t[k]), math.sin(t[k])
+ax.annotate("", xy=(X[k] + 0.9 * nx, Y[k] + 0.9 * ny), xytext=(X[k], Y[k]),
+            arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.5,
+                            mutation_scale=12), zorder=6)
+ax.text(X[k] + 1.05 * nx, Y[k] + 1.05 * ny, r"$n$", fontsize=12, color=INK)
+tidy(ax)
+ax.set_xlim(-3.6, 3.6); ax.set_ylim(-3.4, 3.6)
+fig_domain_path = save(fig, "C10_Fig1_Domain.png")
+```
+
+![Prototype heat problem: how does heat transfer through $\Omega$?](`{python} fig_domain_path`){#fig-c10-domain width=58%}
+
+::: {.step}
+Or, for elasticity, with $\sigma_{ij,j} + f_i = 0$:
+:::
+
+::: {.derivation}
+$$
+-\nabla\cdot\underline{\underline{\sigma}} = \underline{f} \quad \left(\sigma_{ij,j} + f_i = 0\right) \quad \text{in } \Omega
+\qquad\qquad
+\underline{u} = \underline{g} \quad \left(u_i = g_i\right) \quad \text{in } \Gamma_{g_i}
+\qquad\qquad
+\underline{\underline{\sigma}}\,\underline{n} = \underline{h}
+\quad \left(\sigma_{ij}n_j = h_i\right) \quad \text{in } \Gamma_{h_i}
+$$
+:::
+
+```{python fig_ibeam}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(5.0, 4.6))
+bw, bt, wh, ww = 3.2, 0.32, 2.3, 0.42
+parts = [(-bw / 2, wh / 2, bw, bt), (-bw / 2, -wh / 2 - bt, bw, bt),
+         (-ww / 2, -wh / 2, ww, wh)]
+for (px, py, pw, ph) in parts:
+    ax.add_patch(plt.Rectangle((px, py), pw, ph, facecolor=DOMCLR,
+                               edgecolor=BDRYCLR, lw=1.6, alpha=0.75, zorder=2))
+hatch_y = wh / 2 + bt
+for xh in np.linspace(-bw / 2, bw / 2, 8):
+    ax.plot([xh, xh - 0.18], [hatch_y, hatch_y + 0.28], color=INK, lw=1.0,
+            zorder=3)
+ax.plot([-bw / 2, bw / 2], [hatch_y, hatch_y], color=INK, lw=1.8, zorder=3)
+ax.annotate("", xy=(bw / 2 + 0.9, -wh / 2 - bt / 2),
+            xytext=(bw / 2 + 0.05, -wh / 2 - bt / 2),
+            arrowprops=dict(arrowstyle="-|>", color=LOADCLR, lw=1.7,
+                            mutation_scale=12), zorder=5)
+ax.text(bw / 2 + 1.0, -wh / 2 - bt / 2, r"$h$", color=LOADCLR, fontsize=13,
+        ha="left", va="center")
+ax.text(0, wh / 2 + bt + 0.55, r"$\Gamma_{g_i}$", color=BDRYCLR, fontsize=12,
+        ha="center")
+tidy(ax)
+ax.set_xlim(-2.4, 3.2); ax.set_ylim(-2.4, 2.4)
+fig_ibeam_path = save(fig, "C10_Fig2_IBeam.png")
+```
+
+::: {.step}
+![](`{python} fig_ibeam_path`){#fig-c10-ibeam width=42%}
+
+What is $\Gamma_{g_1}, \Gamma_{g_2}$? $\Gamma_{h_1}, \Gamma_{h_2}$? — Each component of
+displacement (or flux) can have its *own* Dirichlet or Neumann boundary, which need not
+coincide with the others. A pin support fixes both displacement components; a roller
+fixes only one.
+:::
+
+# End results: pull up the MFEM-style code
+
+::: {.step .notes}
+- (nonlinear) elasticity
+- temperature
+:::
+
+**To solve the big problem, approximately, we must first be able to solve on one element.**
+
+::: {.derivation}
+$$
+\sum_B \left(\int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega\right) d_B
+= \int_\Omega N_A f\;d\Omega + \int_{\Gamma_h} N_A h\;d\Gamma - \sum_B g_B \int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega
+$$
+:::
+
+::: {.step}
+we must first be able to solve, on one element $\Omega^e$,
+:::
+
+::: {.derivation}
+$$
+\int_{\Omega^e} \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega
+\qquad\qquad
+\int_{\Omega^e} N_A f\;d\Omega
+\qquad\qquad
+\int_{\Gamma_h^e} N_A h\;d\Gamma
+$$
+:::
+
+::: {.step .notes}
+1. Recall the definition of basis functions as a tensor product — see in Python.
+2. Recall use of the parent/parametric domain and its mappings.
+3. **IEN array** to allow for element-wise contributions.
+:::
+
+# The IEN array
+
+The **IEN** (element $\to$ node) array maps a local basis-function index $a$ on element $e$
+to the global basis-function index $A$: $a, e \xrightarrow{\text{IEN}} A$.
+
+```{python fig_ien}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(1, 2, figsize=(10.4, 5.2))
+
+# ---- left: 5-element "flower" mesh with local (a) and global (A) labels ----
+ax = axes[0]
+cx, cy = 1.0, 1.0
+elems = {
+    "e0": [(0, 0), (2, 0), (2, 2), (0, 2)],
+    "e1": [(0, 0), (2, 0), (3.0, -1.4), (-1.0, -1.4)],
+    "e2": [(2, 0), (2, 2), (3.4, 3.4), (3.0, -1.4)],
+    "e3": [(2, 2), (0, 2), (-1.0, 3.4), (3.4, 3.4)],
+    "e4": [(0, 2), (0, 0), (-1.0, -1.4), (-1.0, 3.4)],
+}
+for name, pts in elems.items():
+    poly = MplPolygon(pts, closed=True, facecolor="none", edgecolor=MESHCLR,
+                       lw=1.3, zorder=2)
+    ax.add_patch(poly)
+    cxp = sum(p[0] for p in pts) / 4
+    cyp = sum(p[1] for p in pts) / 4
+    ax.text(cxp, cyp, f"${name[0]}_{name[1]}$", fontsize=13, color=MESHCLR,
+            ha="center", va="center")
+
+# local labels 0..3 on e0's corners
+e0_local = {0: (0, 0), 1: (2, 0), 2: (2, 2), 3: (0, 2)}
+for a, (px, py) in e0_local.items():
+    dx, dy = (-0.32, 0.20) if a == 0 else (0.10, 0.20) if a == 1 else \
+             (0.10, -0.30) if a == 2 else (-0.32, -0.30)
+    ax.text(px + dx, py + dy, f"$a={a}$", fontsize=9.5, color=INK,
+            ha="center")
+
+for (px, py) in [(0, 0), (2, 0), (2, 2), (0, 2)]:
+    ax.plot([px], [py], "o", ms=6, color=INK, zorder=4)
+
+tidy(ax)
+ax.set_xlim(-1.8, 4.2); ax.set_ylim(-2.2, 4.2)
+ax.set_title("local view: element $e_0$", fontsize=12, color=INK, pad=8)
+
+# ---- right: global node numbers on the same mesh --------------------------
+ax = axes[1]
+for name, pts in elems.items():
+    poly = MplPolygon(pts, closed=True, facecolor="none", edgecolor=MESHCLR,
+                       lw=1.3, zorder=2)
+    ax.add_patch(poly)
+
+global_nodes = {
+    0: (0, 0), 1: (-1.0, -1.4), 2: (3.0, -1.4), 3: (3.4, 3.4),
+    4: (-1.0, 3.4), 5: (2, 0), 6: (2, 2), 7: (0, 2),
+}
+for A, (px, py) in global_nodes.items():
+    ax.plot([px], [py], "o", ms=8, color=INK, zorder=4)
+    ax.text(px, py + 0.28, f"${A}$", fontsize=12, color=REACTCLR, ha="center",
+            va="bottom")
+
+tidy(ax)
+ax.set_xlim(-1.8, 4.2); ax.set_ylim(-2.2, 4.2)
+ax.set_title("global node numbering", fontsize=12, color=INK, pad=8)
+
+fig.subplots_adjust(wspace=0.15)
+fig_ien_path = save(fig, "C10_Fig3_IENMesh.png")
+```
+
+![A central element $e_0$ shares each edge with a neighboring element $e_1$–$e_4$. Local corner indices $a=0,1,2,3$ on $e_0$ map to global indices $A = 0, 5, 6, 7$.](`{python} fig_ien_path`){#fig-c10-ien width=100%}
+
+| $a \backslash e$ | $e_0$ | $e_1$ | $e_2$ | $e_3$ | $e_4$ |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| $a=0$ | $A=0$ | | | | |
+| $a=1$ | $5$ | | | | |
+| $a=2$ | $6$ | | | | |
+| $a=3$ | $7$ | | | | |
+
+::: {.step}
+(Finish the rest — each column follows the same pattern of walking around its own
+element's four corners.)
+:::
+
+```{python check_ien}
+#| echo: false
+#| output: false
+
+# minimal self-consistency check on the IEN array sketched above: element e0's
+# four corners really are the shared vertices (0,0),(2,0),(2,2),(0,2), and
+# each of e0's edges is shared with exactly one neighboring element -- the
+# defining property of a conforming mesh
+e0 = [(0, 0), (2, 0), (2, 2), (0, 2)]
+edges_e0 = [(e0[i], e0[(i + 1) % 4]) for i in range(4)]
+
+
+def edge_in(elem_pts, edge):
+    pts = elem_pts
+    for i in range(len(pts)):
+        a, b = pts[i], pts[(i + 1) % len(pts)]
+        if {a, b} == set(edge):
+            return True
+    return False
+
+
+elems_py = {
+    "e1": [(0, 0), (2, 0), (3.0, -1.4), (-1.0, -1.4)],
+    "e2": [(2, 0), (2, 2), (3.4, 3.4), (3.0, -1.4)],
+    "e3": [(2, 2), (0, 2), (-1.0, 3.4), (3.4, 3.4)],
+    "e4": [(0, 2), (0, 0), (-1.0, -1.4), (-1.0, 3.4)],
+}
+for edge in edges_e0:
+    matches = [name for name, pts in elems_py.items() if edge_in(pts, edge)]
+    assert len(matches) == 1, (edge, matches)
+```
+
+# Global stiffness from local (element) stiffness
+
+::: {.derivation}
+$$
+K_{AB} = \int_{\Omega} \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega
+= \sum_e \int_{\Omega^e} \nabla_x N_A \cdot \underline{\underline{K}}\nabla_x N_B\;d\Omega
+\qquad \leftarrow \textbf{global stiffness}
+$$
+:::
+
+::: {.step}
+Use the IEN array to only work on relevant basis functions: $a, e \xrightarrow{\text{IEN}} A$,
+$b, e \xrightarrow{\text{IEN}} B$.
+:::
+
+::: {.derivation}
+$$
+K_{ab}^e = \int_{\Omega^e} \nabla_x N_A^{(x)}\,\underline{\underline{K}}(x)\,\nabla_x N_B^{(x)}\;d\Omega
+\qquad \leftarrow \textbf{local stiffness, spatial domain}
+$$
+:::
+
+Pulling this back to the reference domain, as in the last class:
+
+::: {.derivation}
+$$
+K_{ab}^e = \int_{\hat\Omega} \nabla_x N_a(\xi)\,\underline{\underline{K}}(x(\xi))\,
+           \nabla_x N_b(\xi)\;J(\xi)\;d\hat\Omega
+$$
+:::
+
+::: {.step}
+where
+$\dfrac{\partial N_a}{\partial x_i} = \dfrac{\partial N_a}{\partial \xi_j}\dfrac{\partial \xi_j}{\partial x_i}
+= (DF^{-1})^T \nabla_\xi N_a$ — the inverse of the deformation gradient, from last class:
+:::
+
+::: {.derivation}
+$$
+K_{ab}^e = \int_{\hat\Omega} \left[(DF)^{-T}\nabla_\xi N_a\right]
+           \underline{\underline{K}}\left[(DF)^{-T}\nabla_\xi N_b\right] J\;d\hat\Omega
+\qquad\Longrightarrow\qquad
+K_{ab}^e = \sum_{g=0}^{n_{quad}} w_g \left[(DF)^{-T}(\xi_g)\nabla_\xi N_a(\xi_g)\right]
+           \underline{\underline{K}}(x^e(\xi_g))
+           \left[(DF)^{-T}(\xi_g)\nabla_\xi N_b(\xi_g)\right] J(\xi_g)
+$$
+:::
+
+```{python check_gauss}
+#| echo: false
+#| output: false
+
+# 2-point Gauss-Legendre is exact for cubics, and is the rule this course
+# uses once we get to quadrature in earnest -- confirm it here on [-1, 1]
+gp = np.array([-1 / math.sqrt(3), 1 / math.sqrt(3)])
+wts = np.array([1.0, 1.0])
+
+
+def poly(xv):
+    return 2 * xv**3 - 3 * xv**2 + 5 * xv - 1
+
+
+exact = -4.0   # by hand: int_{-1}^{1} (2x^3 - 3x^2 + 5x - 1) dx = 0 - 2 + 0 - 2
+approx = sum(w * poly(xv) for w, xv in zip(wts, gp))
+assert abs(exact - approx) < 1e-12, (exact, approx)
+```
+
+::: {.step}
+This sum over quadrature points $g$ is what a finite element code evaluates for every
+element, every time it assembles $\underline{\underline{K}}$.
+:::

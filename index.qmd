@@ -1,0 +1,38 @@
+---
+title: "CE/ME 507 — Class Notes"
+---
+
+## Welcome {.unnumbered}
+
+These are the class notes for **CE/ME 507: Finite Element Methods**, one chapter per class
+period.
+
+The notes move from a pair of concrete engineering problems — a loaded beam and a heated
+circuit board — to the boundary value problem they share, then build the full machinery to
+solve such problems approximately: the strong and weak forms (and their equivalence in both
+directions), the Galerkin method, basis functions and Lagrange polynomials, the resulting
+discrete matrix system, element-wise assembly and sparsity, the isoparametric map and its
+Jacobian, and finally quadrature and assembly on a real mesh via the IEN array.
+
+Figures are generated programmatically rather than scanned, and the worked results are
+computed on the page so that the text and the drawings always agree.
+
+### Chapters
+
+| Class | Topic |
+|-------|-------|
+| [Class 2](chapters/2_Class.qmd) | Linear FEM: from physical problems to a boundary value problem |
+| [Class 3](chapters/3_Class.qmd) | Index notation, function spaces, and the weak form |
+| [Class 4](chapters/4_Class.qmd) | The strong form of a boundary value problem |
+| [Class 5](chapters/5_Class.qmd) | Weak form ⇒ strong form, and the Galerkin method |
+| [Class 6](chapters/6_Class.qmd) | Basis functions and Lagrange polynomials |
+| [Class 7](chapters/7_Class.qmd) | From Galerkin to a matrix equation |
+| [Class 8](chapters/8_Class.qmd) | Assembly, sparsity, and the road to quadrature |
+| [Class 9](chapters/9_Class.qmd) | The isoparametric map and the Jacobian |
+| [Class 10](chapters/10_Class.qmd) | Assembly with the IEN array, and quadrature on an element |
+
+### Support material
+
+| | |
+|---|---|
+| [Norms and Function Spaces](chapters/3_Support_FunctionSpaces.qmd) | Where the integrals in $L^2$ and $H^1$ come from |

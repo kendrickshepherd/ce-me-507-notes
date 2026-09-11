@@ -1,0 +1,327 @@
+---
+title: "Class 9: The Isoparametric Map and the Jacobian"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import os
+import sys
+import math
+
+sys.path.append('.')
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon as MplPolygon
+
+from notes_style import (use_chapter, save, tidy,
+                         INK, LOADCLR, REACTCLR, DIMCLR,
+                         DOMCLR, BDRYCLR, FLUXCLR, MESHCLR, REFCLR)
+
+IMGDIR = use_chapter("Class9")
+```
+
+We want to solve
+
+::: {.derivation}
+$$
+\int_{\Omega^e} \nabla N_A \cdot \underline{\underline{K}} \nabla N_B\;d\Omega
+\qquad\qquad
+\int_{\Omega^e} N_A f\;d\Omega \qquad \left(+ \int_{\Gamma^e} N_A h\;d\Gamma\right)
+$$
+:::
+
+**Method: change of intervals.** Map each physical element $\Omega^e$ — an arbitrary
+quadrilateral with corners $x_0^e, x_1^e, x_2^e, x_3^e$ — to a fixed, simple **reference
+element** $\hat\Omega = [-1,1]^2$ by a bijective, bilinear map.
+
+```{python fig_map}
+#| echo: false
+#| output: false
+
+corners = np.array([
+    [0.2, 0.0], [3.0, 0.3], [3.4, 2.8], [0.5, 2.5],
+])
+
+
+def shape4(xi, eta):
+    return np.array([
+        0.25 * (1 - xi) * (1 - eta), 0.25 * (1 + xi) * (1 - eta),
+        0.25 * (1 + xi) * (1 + eta), 0.25 * (1 - xi) * (1 + eta),
+    ])
+
+
+fig, axes = plt.subplots(1, 2, figsize=(9.6, 4.2))
+
+ax = axes[0]
+poly = MplPolygon(corners, closed=True, facecolor=DOMCLR, edgecolor=BDRYCLR,
+                   lw=1.8, alpha=0.6)
+ax.add_patch(poly)
+for i, c in enumerate(corners):
+    ax.plot([c[0]], [c[1]], "o", color=INK, ms=6, zorder=4)
+    ax.text(c[0] + 0.12, c[1] + 0.1, f"$x_{i}^e$", fontsize=12, color=INK)
+ax.set_xlim(-0.7, 4.2); ax.set_ylim(-0.7, 3.4)
+ax.set_aspect("equal")
+ax.set_xticks([]); ax.set_yticks([])
+for s in ax.spines.values():
+    s.set_visible(False)
+ax.set_title("physical element $\\Omega^e$", fontsize=12, color=INK, pad=8)
+ax.text(2.0, 1.3, "$\\Omega^e$", fontsize=14, color=BDRYCLR)
+
+ax = axes[1]
+sq = np.array([[-1, -1], [1, -1], [1, 1], [-1, 1]])
+poly2 = MplPolygon(sq, closed=True, facecolor="#efe6fb", edgecolor=REFCLR,
+                    lw=1.8, alpha=0.7)
+ax.add_patch(poly2)
+for i, c in enumerate(sq):
+    ax.plot([c[0]], [c[1]], "o", color=INK, ms=6, zorder=4)
+    ax.text(c[0] * 1.18, c[1] * 1.18, f"${i}$", fontsize=12, color=INK,
+            ha="center", va="center")
+ax.axhline(0, color=DIMCLR, lw=0.6, ls="--")
+ax.axvline(0, color=DIMCLR, lw=0.6, ls="--")
+ax.annotate("", xy=(1.5, 0), xytext=(-1.5, 0),
+            arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.0))
+ax.annotate("", xy=(0, 1.5), xytext=(0, -1.5),
+            arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.0))
+ax.text(1.55, 0.05, r"$\xi$", fontsize=13)
+ax.text(0.08, 1.55, r"$\eta$", fontsize=13)
+ax.set_xlim(-1.8, 1.8); ax.set_ylim(-1.8, 1.8)
+ax.set_aspect("equal")
+ax.set_xticks([]); ax.set_yticks([])
+for s in ax.spines.values():
+    s.set_visible(False)
+ax.set_title("reference element $\\hat\\Omega$", fontsize=12, color=REFCLR,
+             pad=8)
+ax.text(0.0, 0.65, "$\\hat\\Omega$", fontsize=14, color=REFCLR, ha="center")
+
+fig.text(0.5, 0.5, r"$\underset{x^e(\xi)}{\overset{\xi(x^e)}{\rightleftarrows}}$",
+          fontsize=18, ha="center", va="center", color=INK)
+
+fig.subplots_adjust(wspace=0.55)
+fig_map_path = save(fig, "C9_Fig1_Bijection.png")
+```
+
+![The map $\xi(x^e)$ and its inverse $x^e(\xi)$ are a bijection, and — for a straight-sided quad element with bilinear shape functions — bilinear.](`{python} fig_map_path`){#fig-c9-map width=88%}
+
+::: {.derivation}
+$$
+x^e(\xi) = \sum_a \underline{x}_a^e\,N_a(\xi)
+= \sum_a \left[x_a^e,\,y_a^e\right] N_a(\xi,\eta)
+$$
+:::
+
+## In one dimension
+
+```{python fig_1d}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(6.0, 1.8))
+x0e, x1e = 1.2, 3.6
+ax.plot([x0e, x1e], [0, 0], color=INK, lw=2.4, zorder=2)
+ax.plot([x0e, x1e], [0, 0], "o", color=INK, ms=6, zorder=3)
+ax.text(x0e, 0.28, r"$x_0^e$", ha="center", fontsize=12)
+ax.text(x1e, 0.28, r"$x_1^e$", ha="center", fontsize=12)
+
+ax.plot([5.4, 7.8], [0, 0], color=REFCLR, lw=2.4, zorder=2)
+ax.plot([5.4, 7.8], [0, 0], "o", color=REFCLR, ms=6, zorder=3)
+ax.text(5.4, 0.28, "$-1$", ha="center", fontsize=12, color=REFCLR)
+ax.text(7.8, 0.28, "$+1$", ha="center", fontsize=12, color=REFCLR)
+
+ax.annotate("", xy=(4.9, 0.02), xytext=(4.0, 0.02),
+            arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.3,
+                            connectionstyle="arc3,rad=-0.3"))
+ax.annotate("", xy=(4.0, -0.20), xytext=(4.9, -0.20),
+            arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.3,
+                            connectionstyle="arc3,rad=-0.3"))
+tidy(ax)
+ax.set_xlim(0.4, 8.6)
+ax.set_ylim(-0.55, 0.9)
+fig_1d_path = save(fig, "C9_Fig2_1DMapping.png")
+```
+
+::: {.derivation}
+$$
+\frac{\partial x}{\partial\xi} = \sum_a x_a^e \frac{\partial N_a(\xi)}{\partial\xi}
+\qquad\qquad \text{if } N_a \text{ is the $a$-th Lagrange basis function}
+$$
+:::
+
+# Change of variables in the integrals
+
+::: {.derivation}
+$$
+\int_{\Omega^e} N_A^{(x)}\,f(x)\;d\Omega
+= \int_{\hat\Omega} N_A(x(\xi))\;f(x(\xi))\;J(\xi)\;d\hat\Omega
+\qquad\qquad
+J = \det\left(\frac{\partial x}{\partial\xi}\right)
+$$
+:::
+
+::: {.step}
+The Jacobian $J$ is the **infinitesimal change in area** (or length, or volume) that the
+map introduces. In 2D,
+:::
+
+::: {.derivation}
+$$
+J = \det\left(\begin{bmatrix}
+\dfrac{\partial x}{\partial \xi} & \dfrac{\partial x}{\partial \eta} \\[8pt]
+\dfrac{\partial y}{\partial \xi} & \dfrac{\partial y}{\partial \eta}
+\end{bmatrix}\right)
+$$
+:::
+
+## The deformation gradient
+
+::: {.step}
+What is $\dfrac{\partial x_i}{\partial \xi_j}$? This is called the **deformation gradient**
+(also the **Jacobian matrix**), $DF = \nabla_\xi \underline{x}$. How do we compute it?
+:::
+
+::: {.derivation}
+$$
+\nabla_\xi \underline{x} = \nabla_\xi\left(\sum_a \underline{x}_a^e N_a(\xi)\right)
+= \sum_a \underline{x}_a^e \nabla_\xi N_a(\xi)
+\qquad\qquad \text{or} \qquad
+\frac{\partial x_i}{\partial \xi_j} = \sum_a x_{a,i}^e \frac{\partial N_a(\xi,\eta)}{\partial\xi_j}
+$$
+:::
+
+```{python check_jacobian}
+#| echo: false
+#| output: false
+
+def dshape4(xi, eta):
+    dN_dxi = np.array([-0.25 * (1 - eta), 0.25 * (1 - eta),
+                       0.25 * (1 + eta), -0.25 * (1 + eta)])
+    dN_deta = np.array([-0.25 * (1 - xi), -0.25 * (1 + xi),
+                        0.25 * (1 + xi), 0.25 * (1 - xi)])
+    return dN_dxi, dN_deta
+
+
+def DF(xi, eta):
+    dN_dxi, dN_deta = dshape4(xi, eta)
+    return np.array([
+        [dN_dxi @ corners[:, 0], dN_deta @ corners[:, 0]],
+        [dN_dxi @ corners[:, 1], dN_deta @ corners[:, 1]],
+    ])
+
+
+# the mapping must recover every corner exactly at (+-1, +-1)
+for (xi, eta), c in zip([(-1, -1), (1, -1), (1, 1), (-1, 1)], corners):
+    N = shape4(xi, eta)
+    assert np.allclose(N @ corners, c)
+
+# the physical area computed via 2x2 Gauss quadrature of det(DF) over the
+# reference square must match the shoelace-formula area of the true quad --
+# exact, because det(DF) for a bilinear map is itself only bilinear/quadratic
+gp = [-1 / math.sqrt(3), 1 / math.sqrt(3)]
+area_quad = sum(np.linalg.det(DF(xi, eta)) for xi in gp for eta in gp)
+
+
+def shoelace(pts):
+    xarr, yarr = pts[:, 0], pts[:, 1]
+    return 0.5 * abs(np.dot(xarr, np.roll(yarr, -1))
+                      - np.dot(yarr, np.roll(xarr, -1)))
+
+
+area_true = shoelace(corners)
+assert abs(area_quad - area_true) < 1e-9, (area_quad, area_true)
+```
+
+::: {.step}
+For the quadrilateral element in @fig-c9-map, this check verifies something worth
+noticing: integrating $J(\xi,\eta)$ over the reference square with a $2\times2$ Gauss rule
+reproduces the exact physical area of the quad (via the shoelace formula) to machine
+precision — because $J$ for a bilinear map is itself only bilinear in each direction, and
+$2$-point Gauss integrates such polynomials exactly. (Gauss quadrature itself is next
+class's topic — for now, take it as "a good rule for polynomials.")
+:::
+
+# Building the stiffness integral on the reference element
+
+::: {.derivation}
+$$
+\int_{\Omega^e} \nabla_x N_A \cdot \underline{\underline{K}} \nabla_x N_B\;d\Omega
+= \int_{\hat\Omega} \nabla_x N_A \cdot \underline{\underline{K}} \nabla_x N_B\;J\;d\hat\Omega
+= \int_{\hat\Omega} \nabla_x N_a^{(\xi)}\,\underline{\underline{K}}\,\nabla_x N_b^{(\xi)}\;J\;d\hat\Omega
+$$
+:::
+
+::: {.step}
+But $\nabla_x N_a$ needs the **chain rule**, since $N_a$ is naturally a function of $\xi$,
+not $x$:
+:::
+
+::: {.derivation}
+$$
+\frac{\partial N_a}{\partial x_i} = \frac{\partial \xi_j}{\partial x_i}\,\frac{\partial N_a}{\partial \xi_j}
+\qquad \text{(chain rule)}
+\qquad\qquad
+= (DF)^{-T} \nabla_\xi N_a
+\qquad \text{(inverse function theorem)}
+$$
+:::
+
+so that, altogether,
+
+::: {.derivation}
+$$
+\int_{\Omega^e} \nabla_x N_A \cdot \underline{\underline{K}}\nabla_x N_B\;d\Omega
+= \int_{\hat\Omega}
+   \left[(DF)^{-T}\nabla_\xi N_a\right]\,\underline{\underline{K}}\,
+   \left[(DF)^{-T}\nabla_\xi N_b\right]\;J\;d\hat\Omega
+$$
+:::
+
+```{python check_chain_rule}
+#| echo: false
+#| output: false
+
+# confirm the chain-rule identity numerically at an interior point: comparing
+# a finite-difference gradient of N_a in physical (x,y) coordinates against
+# (DF)^{-T} times the reference-space gradient
+def phys_to_ref(x_target, y_target, tol=1e-12, max_it=50):
+    xi, eta = 0.0, 0.0
+    for _ in range(max_it):
+        N = shape4(xi, eta)
+        F = N @ corners - np.array([x_target, y_target])
+        if np.linalg.norm(F) < tol:
+            break
+        J = DF(xi, eta)
+        d = np.linalg.solve(J, -F)
+        xi, eta = xi + d[0], eta + d[1]
+    return xi, eta
+
+
+def N_of_xy(a, xv, yv):
+    xi, eta = phys_to_ref(xv, yv)
+    return shape4(xi, eta)[a]
+
+
+x0, y0 = 2.0, 1.4
+xi0, eta0 = phys_to_ref(x0, y0)
+d = 1e-6
+grad_x_fd = np.array([
+    (N_of_xy(0, x0 + d, y0) - N_of_xy(0, x0 - d, y0)) / (2 * d),
+    (N_of_xy(0, x0, y0 + d) - N_of_xy(0, x0, y0 - d)) / (2 * d),
+])
+dN_dxi, dN_deta = dshape4(xi0, eta0)
+grad_ref = np.array([dN_dxi[0], dN_deta[0]])
+grad_x_chain = np.linalg.solve(DF(xi0, eta0).T, grad_ref)
+assert np.allclose(grad_x_fd, grad_x_chain, atol=1e-5), (grad_x_fd, grad_x_chain)
+```
+
+::: {.step}
+Next class puts a name to the special points $\xi_g$ and weights $w_g$ used to carry out
+these reference-element integrals in practice: **Gaussian quadrature.**
+:::

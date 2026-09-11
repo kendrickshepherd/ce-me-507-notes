@@ -1,0 +1,57 @@
+project:
+  type: book
+
+book:
+  title: "CE/ME 507 — Class Notes"
+  description: Finite Element Methods
+  sidebar:
+    background: "#E5E5E5"
+    contents:
+      - chapters/2_Class.qmd
+      - chapters/3_Class.qmd
+      - chapters/3_Support_FunctionSpaces.qmd
+      - chapters/4_Class.qmd
+      - chapters/5_Class.qmd
+      - chapters/6_Class.qmd
+      - chapters/7_Class.qmd
+      - chapters/8_Class.qmd
+      - chapters/9_Class.qmd
+      - chapters/10_Class.qmd
+
+  bread-crumbs: true
+  back-to-top-navigation: true
+  chapters:
+    - index.qmd
+    - chapters/2_Class.qmd
+    - chapters/3_Class.qmd
+    - chapters/4_Class.qmd
+    - chapters/5_Class.qmd
+    - chapters/6_Class.qmd
+    - chapters/7_Class.qmd
+    - chapters/8_Class.qmd
+    - chapters/9_Class.qmd
+    - chapters/10_Class.qmd
+
+  appendices:
+    - chapters/3_Support_FunctionSpaces.qmd
+
+format:
+  html:
+    theme: [lumen, notes.scss]
+    code-fold: false
+    backgroundcolor: "#F5F5F5"
+    html-math-method: mathjax
+    fig-cap-location: bottom
+    include-in-header:
+      - text: |
+          <script>
+          window.MathJax = {
+            tex: {
+              tags: 'ams',
+              macros: {
+                RR: '{\\mathbb{R}}',
+                Om: '{\\Omega}'
+              }
+            }
+          };
+          </script>

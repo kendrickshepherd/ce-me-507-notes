@@ -1,0 +1,479 @@
+---
+title: "Class 3: Index Notation, Function Spaces, and the Weak Form"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import os
+import sys
+import math
+
+sys.path.append('.')
+sys.path.append('../../structplot')
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+from notes_style import (use_chapter, save, dim_x, tidy,
+                         INK, LOADCLR, REACTCLR, TRIBCLR, DIMCLR,
+                         DOMCLR, BDRYCLR, FLUXCLR)
+
+IMGDIR = use_chapter("Class3")
+```
+
+It is often easier to write multivariable calculus ideas in "index" notation, or "Einstein
+Summation" notation.
+
+::: {.derivation}
+$$
+f := f \qquad \leftarrow \text{a function or value}
+$$
+:::
+
+::: {.derivation}
+$$
+\text{(gradient)}\qquad \nabla f := f_{,i}
+\qquad \leftarrow
+\text{commas indicate derivatives, } i\text{'s indicate indices}
+$$
+:::
+
+::: {.step}
+e.g. in 2D
+:::
+
+::: {.derivation}
+$$
+\nabla f = \begin{bmatrix} \partial f_1/\partial x \\[2pt] \partial f_2/\partial x \end{bmatrix}
+\qquad ; \qquad
+f_{,1} = \frac{\partial f_1}{\partial x}
+\qquad
+f_{,2} = \frac{\partial f_2}{\partial x}
+$$
+:::
+
+::: {.derivation}
+$$
+\text{(double gradient)}\qquad \nabla(\nabla f) := f_{,ij}
+\qquad\qquad
+\begin{bmatrix}
+f_{,11} & f_{,12} & f_{,13} \\
+f_{,21} & f_{,22} & f_{,23} \\
+f_{,31} & f_{,32} & f_{,33}
+\end{bmatrix}
+$$
+:::
+
+::: {.derivation}
+$$
+\text{(Laplacian)}\qquad \Delta f := \nabla \cdot \nabla f := f_{,ii}
+\qquad \leftarrow
+\text{repeated indices are "dummy" indices \& indicate sums}
+$$
+:::
+
+::: {.derivation}
+$$
+f_{,ii} = f_{,11} + f_{,22} + f_{,33}
+= \frac{\partial^2 f}{\partial x^2} + \frac{\partial^2 f}{\partial y^2}
++ \frac{\partial^2 f}{\partial z^2}
+$$
+:::
+
+::: {.derivation}
+$$
+\text{a vector (-valued function)}\qquad \underline{V} := V_i
+\qquad\qquad
+\underline{V} = \begin{bmatrix} V_1 \\ V_2 \\ V_3 \end{bmatrix}
+$$
+:::
+
+::: {.derivation}
+$$
+\text{(divergence)}\qquad \nabla \cdot \underline{V} := V_{i,i}
+\qquad\qquad
+V_{i,i} = \frac{\partial v_1}{\partial x} + \frac{\partial v_2}{\partial y}
++ \frac{\partial v_3}{\partial z} \quad \text{in 3D}
+$$
+:::
+
+::: {.derivation}
+$$
+\text{(dot product)}\qquad \underline{V}\cdot\underline{n} := V_i n_i
+\qquad\qquad
+V_i n_i = V_1 n_1 + V_2 n_2 + V_3 n_3
+$$
+:::
+
+::: {.derivation}
+$$
+\underline{\underline{A}} = A_{ij}
+\qquad \text{(matrix w/ row entries in } i \text{, column entries in } j)
+$$
+:::
+
+::: {.derivation}
+$$
+\underline{\underline{A}}\,\underline{x} = \underline{b}
+\qquad\Longrightarrow\qquad
+A_{ij} x_j = b_i
+\qquad \text{(matrix-vector multiplication)}
+$$
+:::
+
+If time... let
+
+::: {.derivation}
+$$
+\underline{\underline{A}} = \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix}
+\qquad
+\underline{f} = \begin{bmatrix} x^2 + y \\ y + z \end{bmatrix}
+\qquad
+\underline{V} = \begin{bmatrix} 2 \\ 5 \end{bmatrix}
+$$
+:::
+
+::: {.step}
+what is &nbsp; $A_{ij} f_j$ ? &nbsp;&nbsp; $A_{ij,j}$ ? &nbsp;&nbsp; $f_{j,k}$ ?
+&nbsp;&nbsp; $f_i V_i$ ? &nbsp;&nbsp; $f_i V_j$ ?
+:::
+
+# Notation
+
+::: {.derivation}
+$$
+u_{,xx} := \frac{\partial^2 u}{\partial x^2}
+\qquad
+u_{,x} := \frac{\partial u}{\partial x}
+\qquad
+\dot{u} = \frac{Du}{Dt}
+\qquad
+\ddot{u} = \frac{D^2 u}{Dt^2}
+$$
+:::
+
+::: {.step}
+($D/Dt$ is the total derivative — don't worry about it for now.)
+:::
+
+**Function**
+
+::: {.derivation}
+$$
+f : \Omega \longrightarrow \mathbb{R}
+$$
+:::
+
+::: {.step .notes}
+- $\Omega$ is the **domain**, $\mathbb{R}$ is the **range**
+:::
+
+::: {.step .notes}
+- $\mathbb{R}$ &nbsp; real #s
+- $\mathbb{R}^2$ &nbsp; Euclidean plane
+- $\mathbb{R}^3$ &nbsp; Euclidean 3-space (real world)
+- $\mathbb{I}$ &nbsp; unit interval
+- $\mathbb{I}\times\mathbb{I} = \mathbb{I}^2$ &nbsp; unit square
+:::
+
+::: {.step .notes}
+- $[a,b]$ &nbsp; closed interval from $a$ to $b$
+- $(a,b)$ &nbsp; open interval from $a$ to $b$
+- $\bar{\Omega}$ &nbsp; closed domain (include the boundary)
+- $a \in \mathbb{R}$ &nbsp; $a$ is in $\mathbb{R}$ (so it is $1$, $\sqrt{3}$, $-\pi$, etc.)
+:::
+
+# The 1D Poisson equation
+
+The following is important for diffusion-related problems (heat, contaminant), well
+drawdown, electromagnetics, axial rod deformation, etc.
+
+Called the **1D Poisson equation** (but potentially w/ different boundary conditions).
+
+Given $f : \bar{\Omega} \to \mathbb{R}$ & constants $g, h \in \mathbb{R}$, find
+$u : \bar{\Omega} \to \mathbb{R}$ such that
+
+::: {.derivation}
+$$
+(\mathrm{S})\quad
+\begin{cases}
+u_{,xx} + f = 0 & \text{on } \Omega \\[6pt]
+u(1) = g \\[6pt]
+-u_{,x}(0) = h
+\end{cases}
+$$
+:::
+
+If $f = 0$, it is called the **Laplace equation**, & the $\partial_{xx}$ operator is the 1D
+**Laplace operator**.
+
+**Exact Solution:**
+
+::: {.derivation}
+$$
+u(x) = g + (1-x)h + \int_x^1\left(\int_0^y f(z)\,dz\right) dy
+$$
+:::
+
+::: {.step}
+...but we want to approximate & understand so we can do similar for 2D / 3D.
+:::
+
+```{python check_exact}
+#| echo: false
+#| output: false
+
+# Verify the stated exact solution satisfies (S), for a non-trivial f.
+G, H_BC = 0.7, 1.3
+
+
+def f_src(x):
+    return 1.0 + 2.0 * x
+
+
+def u_exact(x):
+    x = np.atleast_1d(np.asarray(x, dtype=float))
+    out = np.empty_like(x)
+    for k, xv in enumerate(x):
+        ys = np.linspace(xv, 1.0, 4001)
+        inner = np.array([np.trapezoid(f_src(np.linspace(0.0, y, 2001)),
+                                       np.linspace(0.0, y, 2001)) for y in ys])
+        out[k] = G + (1.0 - xv) * H_BC + np.trapezoid(inner, ys)
+    return out
+
+
+xs = np.linspace(0.0, 1.0, 9)
+uu = u_exact(xs)
+
+# u,xx + f = 0 in the interior, by central differences
+d = 1e-4
+xi = np.linspace(0.15, 0.85, 6)
+u_xx = (u_exact(xi + d) - 2 * u_exact(xi) + u_exact(xi - d)) / d**2
+assert np.max(np.abs(u_xx + f_src(xi))) < 5e-4, np.max(np.abs(u_xx + f_src(xi)))
+
+# u(1) = g  and  -u,x(0) = h
+assert abs(u_exact(1.0)[0] - G) < 1e-9
+u_x0 = (u_exact(0.0 + d)[0] - u_exact(0.0)[0]) / d
+assert abs(-u_x0 - H_BC) < 1e-3, -u_x0
+```
+
+```{python fig_exact}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(5.6, 3.0))
+xp = np.linspace(0.0, 1.0, 60)
+up = u_exact(xp)
+ax.plot(xp, up, color=BDRYCLR, lw=2.4, zorder=4)
+ax.fill_between(xp, 0, up, color=DOMCLR, alpha=0.45, zorder=1)
+ax.plot([1.0], [G], marker="o", ms=7, color=INK, zorder=6)
+ax.annotate("$u(1) = g$", xy=(1.0, G), xytext=(1.06, G),
+            arrowprops=dict(arrowstyle="-", color=INK, lw=1.0),
+            fontsize=12, color=INK, ha="left", va="center")
+sl = (u_exact(0.02)[0] - u_exact(0.0)[0]) / 0.02
+ax.plot([0.0, 0.22], [up[0], up[0] + 0.22 * sl], color=FLUXCLR, lw=2.0,
+        ls=(0, (4, 2)), zorder=5)
+ax.annotate(r"slope $-h$", xy=(0.13, up[0] + 0.13 * sl),
+            xytext=(0.34, up[0] + 0.30),
+            arrowprops=dict(arrowstyle="-", color=FLUXCLR, lw=1.0),
+            fontsize=12, color=FLUXCLR, ha="left")
+ax.set_xlabel("$x$", fontsize=12)
+ax.set_ylabel("$u$", fontsize=12)
+ax.spines[["top", "right"]].set_visible(False)
+ax.spines[["left", "bottom"]].set_linewidth(1.0)
+ax.set_xlim(-0.02, 1.34)
+ax.set_ylim(0, max(up) * 1.22)
+ax.grid(alpha=0.25)
+fig_exact_path = save(fig, "C3_Fig1_ExactSolution.png")
+```
+
+::: {.step}
+![The exact solution for $f(x) = 1 + 2x$, $g = 0.7$, $h = 1.3$ — the Dirichlet condition fixes the value at $x=1$, the Neumann condition fixes the slope at $x=0$.](`{python} fig_exact_path`){#fig-c3-exact width=62%}
+:::
+
+# Function spaces
+
+For FEM, we need to write down $(\mathrm{S})$ in an alternative, but equivalent, manner:
+the **variational form** or **weak form**.
+
+Need to talk about kinds of functions we can have, or "function spaces".
+
+```{python fig_spaces}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(1, 4, figsize=(12.2, 2.6))
+rng = np.random.default_rng(7)
+
+# C^0 : continuous, but kinked everywhere
+ax = axes[0]
+xk = np.linspace(0, 1, 26)
+yk = 0.5 + np.cumsum(rng.normal(0, 0.10, xk.size))
+yk -= yk.min() - 0.12
+ax.plot(xk, yk, color=BDRYCLR, lw=1.8)
+ax.set_title(r"$C^0$ — continuous", fontsize=12, color=INK, pad=6)
+
+# C^{-1} : a jump
+ax = axes[1]
+x1 = np.linspace(0, 0.45, 40); x2 = np.linspace(0.45, 1, 40)
+ax.plot(x1, 0.35 + 0.9 * x1, color=BDRYCLR, lw=1.8)
+ax.plot(x2, 0.30 + 0.25 * np.sin(7 * x2), color=BDRYCLR, lw=1.8)
+ax.plot([0.45], [0.35 + 0.9 * 0.45], marker="o", ms=5, mfc="white",
+        mec=BDRYCLR, mew=1.5)
+ax.plot([0.45], [0.30 + 0.25 * math.sin(7 * 0.45)], marker="o", ms=5,
+        color=BDRYCLR)
+ax.set_title(r"$C^{-1}$ — discontinuous", fontsize=12, color=INK, pad=6)
+
+# C^1 : smooth bump, continuous first derivative
+ax = axes[2]
+xs_ = np.linspace(0, 1, 200)
+ax.plot(xs_, 0.2 + 0.8 * np.exp(-((xs_ - 0.5) / 0.18) ** 2), color=BDRYCLR, lw=1.8)
+ax.set_title(r"$C^1$ — continuous derivative", fontsize=12, color=INK, pad=6)
+
+# C^infinity
+ax = axes[3]
+ax.plot(xs_, 0.55 + 0.35 * np.sin(2 * math.pi * xs_), color=BDRYCLR, lw=1.8)
+ax.set_title(r"$C^\infty$ — every derivative", fontsize=12, color=INK, pad=6)
+
+for ax in axes:
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.05, 1.35)
+    ax.set_xticks([]); ax.set_yticks([])
+    ax.spines[["top", "right"]].set_visible(False)
+
+fig.subplots_adjust(wspace=0.10)
+fig_spaces_path = save(fig, "C3_Fig2_FunctionSpaces.png")
+```
+
+![](`{python} fig_spaces_path`){#fig-c3-spaces width=100%}
+
+::: {.notes}
+- $C^0 \to$ continuous function
+- $C^{-1} \to$ discontinuous function
+- $C^1 \to$ continuous function w/ continuous derivatives
+- $C^\infty \to$ continuous function w/ every derivative continuous
+:::
+
+$H^1(\mathbb{R}) \to$ **First Sobolev Space** of $\mathbb{R}$... quite a complicated group
+of functions, we will discuss more later in class.
+
+::: {.step}
+See [Support: Norms and Function Spaces](3_Support_FunctionSpaces.qmd) for where these
+integrals come from.
+:::
+
+::: {.step}
+The **Sobolev Embedding Theorem** says these are essentially continuous functions (actually
+Hölder continuous).
+:::
+
+Alternatively, $H^1$ functions are functions such that
+
+::: {.derivation}
+$$
+\left.
+\begin{aligned}
+\int_\Omega (f)^2 \, d\Omega &< \infty \qquad \leftarrow L^2 \text{ functions} \\[6pt]
+\int_\Omega (f_{,x})^2 \, d\Omega &< \infty
+\end{aligned}
+\;\right\}
+\quad \text{when } \Omega \subset \mathbb{R}
+$$
+:::
+
+# The weak form
+
+Then define two sets:
+
+::: {.derivation}
+$$
+\text{trial solutions}\qquad
+\mathcal{S} = \left\{\, u \;\middle|\; u \in H^1(\mathbb{I}),\; u(1) = g \,\right\}
+$$
+:::
+
+::: {.derivation}
+$$
+\text{test solutions / variations}\qquad
+\mathcal{V} = \left\{\, w \;\middle|\; w \in H^1,\; w(1) = 0 \,\right\}
+$$
+:::
+
+**Weak (variational) formulation:**
+
+Given $f$, $g$, & $h$ as before, find $u \in \mathcal{S}$ such that
+$\forall\, w \in \mathcal{V}$
+
+::: {.derivation}
+$$
+(\mathrm{W})\qquad
+\int_0^1 w_{,x}\, u_{,x}\, dx = \int_0^1 w f\, dx + w(0)\, h
+$$
+:::
+
+::: {.step}
+Inner product — or just multiply by $w$ & integrate.
+:::
+
+::: {.derivation}
+$$
+(\mathrm{W}) \iff (\mathrm{S})
+$$
+:::
+
+# A brief note on bilinearity
+
+Assume $\underline{v}$, $\underline{w}$ are vectors. The inner product of $\underline{v}$
+and $\underline{w}$, written $\langle \underline{v}, \underline{w}\rangle$, is defined as
+
+::: {.derivation}
+$$
+\langle \underline{v}, \underline{w}\rangle = v_i w_i = \sum_{i=1}^{n} v_i w_i
+= v_1 w_1 + \cdots + v_n w_n
+$$
+:::
+
+We show that $\langle \cdot, \cdot \rangle$ is **bilinear** if for an arbitrary set of
+coefficients $\alpha$, $\beta$, & arbitrary vectors $\underline{v}$, $\underline{w}$,
+$\underline{z}$
+
+::: {.derivation}
+$$
+\begin{aligned}
+\langle \alpha\underline{v} + \beta\underline{z},\; \underline{w}\rangle
+  &= \alpha\langle \underline{v}, \underline{w}\rangle
+   + \beta\langle \underline{z}, \underline{w}\rangle \\[6pt]
+\text{\&}\qquad
+\langle \underline{v},\; \alpha\underline{w} + \beta\underline{z}\rangle
+  &= \alpha\langle \underline{v}, \underline{w}\rangle
+   + \beta\langle \underline{v}, \underline{z}\rangle
+\end{aligned}
+$$
+:::
+
+How do we show this? Go back to the definition.
+
+::: {.step}
+e.g.
+:::
+
+::: {.derivation}
+$$
+\begin{aligned}
+\langle \alpha\underline{v} + \beta\underline{z},\; \underline{w}\rangle
+  &= \left(\alpha\underline{v} + \beta\underline{z}\right)_i w_i \\
+  &= \left(\alpha v_i + \beta z_i\right) w_i \\
+  &= \alpha v_i w_i + \beta z_i w_i \\
+  &= \alpha\langle \underline{v}, \underline{w}\rangle
+   + \beta\langle \underline{z}, \underline{w}\rangle
+\end{aligned}
+$$
+:::

@@ -1,0 +1,480 @@
+---
+title: "Class 2: Linear FEM"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import os
+import sys
+import math
+
+sys.path.append('.')
+sys.path.append('../../structplot')
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon as MplPolygon
+
+from structplot import Model, Node, Element, Support, PointLoad, DistLoad
+from structplot import Dimension
+
+from notes_style import (use_chapter, save, iso, iso_face, iso_slab, iso_column,
+                         beam_line, arrow_down, arrow_up, dim_x, tidy,
+                         INK, LOADCLR, REACTCLR, TRIBCLR, DIMCLR,
+                         DOMCLR, BDRYCLR, FLUXCLR)
+
+IMGDIR = use_chapter("Class2")
+
+
+def hatch_wall(ax, x, y0, y1, side=1, n=7, size=0.28, color=INK, lw=1.3):
+    """A fixed-support wall: a solid line with hatching on one side."""
+    ax.plot([x, x], [y0, y1], color=color, lw=lw * 1.4, zorder=6)
+    for yv in np.linspace(y0, y1, n):
+        ax.plot([x, x + side * size], [yv, yv - size], color=color, lw=lw,
+                zorder=6)
+```
+
+Consider a beam loaded from various forces
+
+```{python fig_beam}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(5.8, 3.4))
+
+W, D, H = 4.2, 1.8, 1.3            # length, depth, height of the bar
+KW = dict(ang=30.0, k=0.62)        # a deeper projection so the bar reads as 3D
+
+
+def face(pts, fc, lw=1.3, z=2):
+    ax.add_patch(MplPolygon([iso(*p, **KW) for p in pts], closed=True,
+                            facecolor=fc, edgecolor=INK, lw=lw, zorder=z))
+
+
+face([(0, 0, H), (W, 0, H), (W, D, H), (0, D, H)], "#f4f4f4", z=2)   # top
+face([(0, 0, 0), (W, 0, 0), (W, 0, H), (0, 0, H)], "#fcfcfc", z=3)   # front
+face([(0, 0, 0), (0, D, 0), (0, D, H), (0, 0, H)], "#e8e8e8", z=4)   # cut end
+
+# hatching on the cut end, as on the sketch
+for t in np.linspace(0.14, 0.86, 5):
+    p0 = iso(0.0, D * t, 0.0, **KW)
+    p1 = iso(0.0, D * t, H, **KW)
+    ax.plot([p0[0], p1[0]], [p0[1], p1[1]], color=INK, lw=0.8, zorder=5)
+
+for t in np.linspace(0.10, 0.92, 8):
+    cx = W * t
+    px, py = iso(cx, D * 0.5, H + 1.05, **KW)
+    qx, qy = iso(cx, D * 0.5, H + 0.06, **KW)
+    ax.annotate("", xy=(qx, qy), xytext=(px, py),
+                arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.1,
+                                mutation_scale=9), zorder=9)
+
+tidy(ax)
+ax.set_xlim(-0.7, W + D * 0.62 * 0.866 + 0.7)
+ax.set_ylim(-0.6, H + D * 0.62 * 0.5 + 1.6)
+fig_beam_path = save(fig, "C2_Fig1_LoadedBeam.png")
+```
+
+::: {.step}
+![](`{python} fig_beam_path`){#fig-c2-beam width=52%}
+:::
+
+We have forces due to
+
+::: {.step .notes}
+- surface contact
+- → forces due to self-weight / inertia
+- → locations that the beam is fixed from moving in a direction
+:::
+
+We want to determine a way to find
+
+::: {.step .notes}
+- displacements
+- stresses &nbsp;&nbsp;&nbsp;$\Big\}$&nbsp; assess the quality of the design
+- strains
+:::
+
+Alternatively, consider a circuit board with various heat sources & cooling systems
+
+```{python fig_board}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(5.6, 3.0))
+
+W, D, T = 5.0, 3.0, 0.22
+iso_slab(ax, 0, W, 0, D, 0.0, T, fc="#f6f6f6", zorder=2)
+
+# components sitting on the board
+for cx, cy, r in ((1.9, 1.7, 0.42), (3.4, 2.2, 0.17), (1.1, 1.0, 0.15),
+                  (2.6, 0.95, 0.16)):
+    pts = [iso(cx + r * math.cos(t), cy + r * 0.62 * math.sin(t), 0.0)
+           for t in np.linspace(0, 2 * math.pi, 40)]
+    ax.add_patch(MplPolygon(pts, closed=True, facecolor="#e4e4e4",
+                            edgecolor=INK, lw=1.1, zorder=6))
+
+tidy(ax)
+ax.set_xlim(-0.6, W + D * 0.55 + 0.6)
+ax.set_ylim(-0.9, D * 0.5 + 1.0)
+fig_board_path = save(fig, "C2_Fig2_CircuitBoard.png")
+```
+
+::: {.step}
+![](`{python} fig_board_path`){#fig-c2-board width=52%}
+:::
+
+::: {.step .notes}
+- We have heat generated from some of the systems
+- heat removed by surface coolants
+- fixed temperatures at some locations
+:::
+
+We want to determine a way to find
+
+::: {.step .notes}
+- temperatures
+- heat flux &nbsp;&nbsp;&nbsp;$\Big\}$&nbsp; assess the viability of the design
+- convective behavior
+:::
+
+How do we synthesize both of these concepts, as well as e.g. flow of fluid, transport of a
+contaminant, current through a medium, etc.
+
+Generalize & express as a **boundary value** (time independent) **or initial value** (time
+dependent) **problem**.
+
+Consider the deformation of a one-dimensional beam.
+
+# 1D Axial Deformation Derivation
+
+```{python fig_bar}
+#| echo: false
+#| output: false
+
+L_BAR = 8.0
+
+fig, ax = plt.subplots(figsize=(7.6, 2.6))
+m = Model()
+m.add_node(Node("A", 0.0, 0.0, hide_dot=True, hide_id=True))
+m.add_node(Node("B", L_BAR, 0.0, hide_dot=True, hide_id=True))
+m.add_element(Element("E1", "A", "B", kind="beam", color=INK, linewidth=2.6))
+# the axial end force, and the distributed axial load q(x)
+m.add_load(PointLoad("A", fx=1.0, scale=0.62, points_to_loc=True, label="$F$",
+                     color=INK, text_size=13, label_xalign="right",
+                     label_yalign="bottom"))
+# stop the arrows short of the wall so the last one does not run into it
+m.add_load(DistLoad("E1", wx_start=1.0, wx_end=1.0, end_offset=0.90,
+                    points_to_loc=False, n_arrows=8, scale=0.30,
+                    label="$q(x)$", color=INK, text_size=13))
+m.add_dimension(Dimension("A", "B", kind="x", label="$L$", offset=-0.55,
+                          color=DIMCLR, text_size=13))
+m.plot(ax=ax, show_node_labels=False, show_element_labels=False,
+       show_axes=False, node_size=0)
+
+hatch_wall(ax, L_BAR, -0.42, 0.42, side=1, n=6, size=0.34)
+ax.annotate("", xy=(1.35, -0.62), xytext=(0.15, -0.62),
+            arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.2,
+                            mutation_scale=11))
+ax.plot([0.15, 0.15], [-0.78, -0.46], color=INK, lw=1.2)
+ax.text(1.45, -0.62, "$x, u$", color=INK, ha="left", va="center", fontsize=13)
+
+tidy(ax)
+ax.set_xlim(-1.8, L_BAR + 1.6)
+ax.set_ylim(-2.2, 1.9)
+fig_bar_path = save(fig, "C2_Fig3_AxialBar.png")
+```
+
+::: {.step}
+![](`{python} fig_bar_path`){#fig-c2-bar width=76%}
+:::
+
+Assume a structural member loaded axially, both by a force at its end, $F$, and a
+distributed axial loading, $q$.
+
+Assume the bar is of length $L$, $x$ is the position along the bar from the LHS, & $u$ is
+displacement (as a function of $x$) in the rightward direction. Assume a constant
+cross-section, $A$.
+
+Let $Q_c = \left(\int q\,dx + C\right)$ be the pre-derivative of $q$.
+
+Choose an "element" of the bar
+
+```{python fig_element}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(5.6, 3.0))
+
+# a wider element so the integral sits inside it, as on the sketch
+x0, x1, y0, y1 = 0.0, 3.4, 0.0, 2.0
+ax.add_patch(plt.Rectangle((x0, y0), x1 - x0, y1 - y0, facecolor="#fbfbfb",
+                           edgecolor=INK, lw=1.6, zorder=2))
+ax.annotate("", xy=(x0 - 1.5, (y0 + y1) / 2), xytext=(x0 - 0.08, (y0 + y1) / 2),
+            arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.7,
+                            mutation_scale=13), zorder=5)
+ax.text(x0 - 1.6, (y0 + y1) / 2, r"$A\sigma(x)$", color=INK, ha="right",
+        va="center", fontsize=13)
+ax.annotate("", xy=(x1 + 1.5, (y0 + y1) / 2), xytext=(x1 + 0.08, (y0 + y1) / 2),
+            arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.7,
+                            mutation_scale=13), zorder=5)
+ax.text(x1 + 1.6, (y0 + y1) / 2, r"$A\sigma(x+\Delta x)$", color=INK,
+        ha="left", va="center", fontsize=13)
+for t in (0.90, 0.12):
+    yv = y0 + (y1 - y0) * t
+    ax.annotate("", xy=(x1 - 0.30, yv), xytext=(x0 + 0.30, yv),
+                arrowprops=dict(arrowstyle="-|>", color=INK, lw=0.9,
+                                ls=(0, (3, 2)), mutation_scale=8), zorder=4)
+ax.text((x0 + x1) / 2, (y0 + y1) / 2, r"$\int_{x}^{x+\Delta x} q(y)\,dy$",
+        color=INK, ha="center", va="center", fontsize=12, zorder=6)
+dim_x(ax, x0, x1, y0 - 0.60, r"$\Delta x$", fs=13)
+
+tidy(ax)
+ax.set_xlim(x0 - 3.9, x1 + 4.1)
+ax.set_ylim(y0 - 1.9, y1 + 0.6)
+fig_element_path = save(fig, "C2_Fig4_Element.png")
+```
+
+::: {.step}
+![](`{python} fig_element_path`){#fig-c2-element width=56%}
+:::
+
+Sum the forces for this element:
+
+::: {.derivation}
+$$
+\begin{aligned}
+\sum F_x = 0 \;\Rightarrow\;& -A\sigma(x) + A\sigma(x+\Delta x)
+   + \int_x^{x+\Delta x} q(y)\,dy = 0 \\[4pt]
+\Rightarrow\;& A\big[\sigma(x+\Delta x) - \sigma(x)\big]
+   + Q_c(x+\Delta x) - Q_c(x) = 0 \\[4pt]
+\Rightarrow\;& \frac{1}{\Delta x}\Big[A\big[\sigma(x+\Delta x)-\sigma(x)\big]
+   + Q_c(x+\Delta x) - Q_c(x)\Big] = 0
+   \qquad \text{b.c. } \Delta x \neq 0 \\[4pt]
+\Rightarrow\;& A\left[\frac{\sigma(x+\Delta x)-\sigma(x)}{\Delta x}\right]
+   + \frac{Q_c(x+\Delta x)-Q_c(x)}{\Delta x} = 0
+\end{aligned}
+$$
+:::
+
+::: {.step}
+$\displaystyle \lim_{\Delta x \to 0}$
+:::
+
+::: {.derivation}
+$$
+\begin{aligned}
+\Rightarrow\;& A\frac{d\sigma}{dx} + \frac{dQ_c}{dx} = 0 \\[4pt]
+\Rightarrow\;& A\frac{d\sigma}{dx} + q(x) = 0
+   && \text{(Fundamental Theorem of Calculus)} \\[4pt]
+\Rightarrow\;& AE\frac{d\varepsilon}{dx} + q(x) = 0
+   && \text{(Hooke's Law: } \sigma = E\varepsilon) \\[4pt]
+\Rightarrow\;& \boxed{AE\frac{d^2u}{dx^2} + q(x) = 0}
+   && \left(\varepsilon = \frac{du}{dx}
+      = \lim_{\Delta x \to 0}\frac{\Delta \ell}{\Delta x}\right)
+\end{aligned}
+$$
+:::
+
+Now,
+
+::: {.derivation}
+$$
+\begin{aligned}
+u(L) &= 0 && \text{(Fixed end)} \\[6pt]
+F &= \left.\frac{A\sigma}{A}\right|_{x=0}
+   = \left.\frac{AE\varepsilon}{A}\right|_{x=0}
+   = \left.AE\frac{du}{dx}\right|_{x=0}
+   && \text{(Force on the end)} \\[4pt]
+&\Rightarrow\; \left.\frac{du}{dx}\right|_{x=0} = \frac{F}{EA}
+\end{aligned}
+$$
+:::
+
+## In Summary
+
+::: {.derivation}
+$$
+\frac{d^2u}{dx^2} + \frac{q(x)}{EA} = 0
+\qquad
+u(L) = 0
+\qquad
+\left.\frac{du}{dx}\right|_{x=0} = \frac{F}{EA}
+$$
+:::
+
+Define
+
+::: {.derivation}
+$$
+f(x) = \frac{q(x)}{EA}
+\qquad\qquad
+h = \frac{-F}{EA}
+$$
+:::
+
+Then our problem matches the Hughes FEM book:
+
+::: {.derivation}
+$$
+\frac{d^2u}{dx^2} + f(x) = 0
+\qquad
+u(L) = 0
+\qquad
+-\frac{du}{dx} = h
+\qquad\Longleftrightarrow\qquad
+\left(\;
+\begin{aligned}
+u_{,xx} + f &= 0 \\
+u(L) &= 0 \\
+-u_{,x} &= h
+\end{aligned}
+\;\right)
+$$
+:::
+
+# The Poisson equation
+
+Many problems, including heat transfer, flow of water in an aquifer, electromagnetic
+potential, & 1D rod deformation can be written using Laplace's / Poisson's Equation.
+
+::: {.derivation}
+$$
+(\mathrm{S})\quad
+\begin{cases}
+\dfrac{\partial^2 u}{\partial x^2} + f = 0
+  & \leftarrow \text{Poisson equation} \\[10pt]
+u(L) = g
+  & \leftarrow \text{known, or \textbf{Dirichlet} boundary condition} \\[10pt]
+-\dfrac{du}{dx} = h
+  & \leftarrow \text{flux-based, or \textbf{Neumann} boundary condition}
+\end{cases}
+$$
+:::
+
+Here, in reality, $u$ is our unknown quantity; $f$, $g$ & $h$ are inputs.
+
+In language of math, $u$ is a function — write
+
+::: {.step}
+$u : [0, L] \longrightarrow \mathbb{R}$
+:::
+
+::: {.step .notes}
+- the domain is the kinds of input locations
+- the range is the expected kinds of output ($\mathbb{R}$ is real #s)
+:::
+
+$(\mathrm{S})$ is a boundary value problem, with the two boundary conditions only examples
+of types of boundary conditions.
+
+## In higher dimensions
+
+In higher dimensions, the Poisson Equation is as follows, with the Laplace equation being
+the case when $f = 0$.
+
+Given $f : \Omega \to \mathbb{R}$, $h : \Gamma_h \to \mathbb{R}$,
+$g : \Gamma_g \to \mathbb{R}$, find $u \in H^1(\Omega)$ such that
+
+::: {.derivation}
+$$
+\begin{aligned}
+-\Delta u &= f && \text{in } \Omega && \leftarrow \text{Poisson equation} \\
+u &= g && \text{on } \Gamma_g && \leftarrow \text{known values} \\
+\nabla u \cdot \underline{n} &= h && \text{on } \Gamma_h && \leftarrow \text{known flux}
+\end{aligned}
+$$
+:::
+
+Or, more generally, for anisotropic behavior, assuming $\underline{\underline{K}}$ is also
+known, find $u$ such that
+
+::: {.derivation}
+$$
+\begin{aligned}
+-\nabla \cdot \left(\underline{\underline{K}}\nabla u\right) &= f && \text{in } \Omega \\
+u &= g && \text{on } \Gamma_g \\
+\nabla\left(\underline{\underline{K}}u\right)\cdot \underline{n} &= h && \text{on } \Gamma_h
+\end{aligned}
+$$
+:::
+
+```{python fig_domain}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(1, 2, figsize=(10.6, 3.6),
+                         gridspec_kw={"width_ratios": [1.0, 1.05]})
+
+# ---- a general domain ------------------------------------------------------
+ax = axes[0]
+t = np.linspace(0, 2 * math.pi, 400)
+r = 2.3 + 0.30 * np.sin(3 * t) + 0.18 * np.cos(5 * t)
+X, Y = r * np.cos(t), r * np.sin(t)
+ax.fill(X, Y, color=DOMCLR, alpha=0.55, zorder=1)
+top = (t > 0.35 * math.pi) & (t < 0.95 * math.pi)
+ax.plot(X, Y, color=BDRYCLR, lw=2.0, zorder=3)
+ax.plot(X[top], Y[top], color=FLUXCLR, lw=3.2, zorder=4)
+ax.text(0.0, 0.0, r"$\Omega$", ha="center", va="center", fontsize=17, color=INK)
+ax.text(X[top][len(X[top]) // 2] - 0.1, Y[top][len(Y[top]) // 2] + 0.45,
+        r"$\Gamma_h$", ha="center", va="bottom", fontsize=14, color=FLUXCLR)
+ax.text(0.9, -2.75, r"$\Gamma_g$", ha="center", va="top", fontsize=14,
+        color=BDRYCLR)
+tidy(ax)
+ax.set_xlim(-3.4, 3.4); ax.set_ylim(-3.6, 3.4)
+
+# ---- an I-beam cross-section ------------------------------------------------
+ax = axes[1]
+bw, bt, wh, ww = 3.4, 0.34, 2.1, 0.42
+parts = [(-bw / 2, wh / 2, bw, bt), (-bw / 2, -wh / 2 - bt, bw, bt),
+         (-ww / 2, -wh / 2, ww, wh)]
+for (px, py, pw, ph) in parts:
+    ax.add_patch(plt.Rectangle((px, py), pw, ph, facecolor=DOMCLR,
+                               edgecolor=BDRYCLR, lw=1.8, alpha=0.75, zorder=2))
+ax.plot([-bw / 2, bw / 2], [wh / 2 + bt, wh / 2 + bt], color=FLUXCLR, lw=3.4,
+        zorder=5)
+ax.text(0.0, wh / 2 + bt + 0.22, r"$\Gamma_h$", ha="center", va="bottom",
+        fontsize=14, color=FLUXCLR)
+ax.text(0.0, -wh / 2 - bt - 0.28, r"$\Gamma_g$", ha="center", va="top",
+        fontsize=14, color=BDRYCLR)
+ax.text(ww / 2 + 0.35, 0.0, r"$\Omega$", ha="left", va="center", fontsize=16,
+        color=INK)
+tidy(ax)
+ax.set_xlim(-2.9, 2.9); ax.set_ylim(-2.6, 2.4)
+
+fig.subplots_adjust(wspace=0.05)
+fig_domain_path = save(fig, "C2_Fig5_Domain.png")
+```
+
+![](`{python} fig_domain_path`){#fig-c2-domain width=94%}
+
+::: {.notes}
+- $\Omega$ is the geometry of interest (called the "domain")
+- $\partial\Omega \equiv \Gamma$ is the boundary of the domain
+- $\Gamma_g$ is the part of the boundary where we know $u = g$
+- $\Gamma_h$ is the part of the boundary where we know the flux
+:::
+
+The entire boundary is such that
+
+::: {.derivation}
+$$
+\Gamma = \Gamma_g \cup \Gamma_h
+\qquad\qquad
+\Gamma_g \cap \Gamma_h = \emptyset
+$$
+:::
+
+::: {.step .notes}
+- $\cup$ &nbsp; union
+- $\cap$ &nbsp; intersect
+- $\emptyset$ &nbsp; empty set (nothing)
+:::

@@ -1,0 +1,266 @@
+---
+title: "Support: Norms and Function Spaces"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import os
+import sys
+import math
+
+sys.path.append('.')
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+from notes_style import (use_chapter, save, tidy,
+                         INK, LOADCLR, REACTCLR, TRIBCLR, DIMCLR,
+                         DOMCLR, BDRYCLR, FLUXCLR)
+
+IMGDIR = use_chapter("Class3_Support")
+```
+
+Supporting material for [Class 3](3_Class.qmd), from a conversation at the board about
+where the integrals in $L^2$ and $H^1$ come from.
+
+# From a discrete norm to an integral
+
+For a finite list of numbers, the norm is the familiar one:
+
+::: {.derivation}
+$$
+\|\underline{u}\| = \sqrt{u_1^2 + u_2^2 + \cdots + u_n^2}
+\qquad\qquad
+\|\underline{u}\|^2 = \sum_{i=1}^{n} u_i^2
+$$
+:::
+
+Now let those numbers be **samples of a function**, $u_i = u(x_i)$. Adding more samples
+must not make the norm grow without bound, so each term carries a **weight** $w_i$ — the
+piece of the domain it stands for:
+
+::: {.derivation}
+$$
+\|\underline{u}\|^2 = \sum_{i=1}^{n} u_i^2 \, w_i
+\qquad \xrightarrow[\;n \to \infty\;]{} \qquad
+\int_0^L u^2 \, dx
+$$
+:::
+
+```{python fig_discrete}
+#| echo: false
+#| output: false
+
+L = 1.0
+
+
+def u_fun(x):
+    return 0.55 + 0.42 * np.sin(2.4 * math.pi * x) * np.exp(-0.8 * x)
+
+
+xf = np.linspace(0, L, 400)
+fig, axes = plt.subplots(1, 3, figsize=(12.2, 3.1))
+
+for ax, n in zip(axes[:2], (6, 24)):
+    xi = np.linspace(0, L, n)
+    ax.plot(xf, u_fun(xf), color=BDRYCLR, lw=1.6, alpha=0.45, zorder=2)
+    ax.vlines(xi, 0, u_fun(xi), color=BDRYCLR, lw=1.3, zorder=3)
+    ax.plot(xi, u_fun(xi), "o", ms=5.0, color=INK, zorder=4)
+    ax.set_title(f"$n = {n}$ samples", fontsize=12, color=INK, pad=6)
+    ax.text(0.5, -0.30, r"$\sum u_i^2\,w_i$", transform=ax.transAxes,
+            ha="center", va="top", fontsize=13, color=INK)
+
+ax = axes[2]
+ax.plot(xf, u_fun(xf), color=BDRYCLR, lw=2.2, zorder=3)
+ax.fill_between(xf, 0, u_fun(xf), color=DOMCLR, alpha=0.65, zorder=1)
+ax.set_title(r"$n \to \infty$", fontsize=12, color=INK, pad=6)
+ax.text(0.5, -0.30, r"$\int_0^L u^2\,dx$", transform=ax.transAxes,
+        ha="center", va="top", fontsize=13, color=INK)
+
+for ax in axes:
+    ax.set_xlim(-0.03, L + 0.03)
+    ax.set_ylim(0, 1.08)
+    ax.set_xticks([]); ax.set_yticks([])
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.set_xlabel("$x$", fontsize=12, labelpad=1)
+
+fig.subplots_adjust(wspace=0.10, bottom=0.24)
+fig_discrete_path = save(fig, "S3_Fig1_DiscreteToIntegral.png")
+```
+
+![The integral is the infinite-dimensional version of the vector norm: weight each sample by the piece of domain it represents, then refine.](`{python} fig_discrete_path`){#fig-s3-discrete width=100%}
+
+# The $L^2$ (Lebesgue) norm
+
+::: {.derivation}
+$$
+u \in L^2(\Omega)
+\quad\Longleftrightarrow\quad
+\int_\Omega u^2 \, d\Omega < \infty
+\qquad\qquad
+\|u\|_{L^2} = \left(\int_\Omega u^2 \, d\Omega\right)^{1/2}
+$$
+:::
+
+Membership depends on the **domain** as much as on the formula. Since the test is on
+$u^2$, compare two functions whose squares are the two classic borderline integrands:
+
+::: {.derivation}
+$$
+u(x) = \frac{1}{x} \;\Rightarrow\; u^2 = \frac{1}{x^2}
+\qquad\qquad
+v(x) = \frac{1}{x^{1/4}} \;\Rightarrow\; v^2 = \frac{1}{\sqrt{x}}
+$$
+:::
+
+::: {.step}
+($v$ is the fourth root of $1/x$; squaring it gives $1/\sqrt{x}$.)
+:::
+
+```{python fig_four}
+#| echo: false
+#| output: false
+
+# closed forms:  int x^-1/2 = 2 sqrt(x)      int x^-2 = -1/x
+eps = np.array([1e-2, 1e-4, 1e-6, 1e-8])
+Ms = np.array([1e2, 1e4, 1e6, 1e8])
+assert abs((2 - 2 * np.sqrt(eps))[-1] - 2.0) < 1e-3          # int_0^1  x^-1/2 -> 2
+assert (-1 + 1 / eps)[-1] > 1e7                              # int_0^1  x^-2   -> inf
+assert abs((1 - 1 / Ms)[-1] - 1.0) < 1e-6                    # int_1^inf x^-2  -> 1
+assert (2 * np.sqrt(Ms) - 2)[-1] > 1e3                       # int_1^inf x^-1/2 -> inf
+
+GOOD, BAD = "#1d6f5c", "#a5342a"
+GOODF, BADF = "#bfe3d8", "#f3c9c2"
+
+PANELS = [
+    # integrand, label, domain, converges?, value, x-range, y-top
+    (lambda x: x ** -2.0, r"$u^2 = 1/x^2$", r"$\Omega = (0,1)$",
+     False, r"$= \infty$", (0.20, 1.0), 12.0),
+    (lambda x: x ** -2.0, r"$u^2 = 1/x^2$", r"$\Omega = (1,\infty)$",
+     True, r"$= 1$", (1.0, 7.0), 1.15),
+    (lambda x: x ** -0.5, r"$v^2 = 1/\sqrt{x}$", r"$\Omega = (0,1)$",
+     True, r"$= 2$", (0.0065, 1.0), 12.0),
+    (lambda x: x ** -0.5, r"$v^2 = 1/\sqrt{x}$", r"$\Omega = (1,\infty)$",
+     False, r"$= \infty$", (1.0, 7.0), 1.15),
+]
+
+fig, axes = plt.subplots(2, 2, figsize=(10.6, 5.4))
+for ax, (fn, ilab, dlab, conv, val, (xa, xb), ytop) in zip(axes.ravel(), PANELS):
+    xx = np.linspace(xa, xb, 600)
+    col, fill = (GOOD, GOODF) if conv else (BAD, BADF)
+    ax.fill_between(xx, 0, np.minimum(fn(xx), ytop), color=fill, alpha=0.9, zorder=1)
+    ax.plot(xx, fn(xx), color=BDRYCLR, lw=2.2, zorder=3)
+    ax.set_ylim(0, ytop)
+    ax.set_xlim(xa - 0.03 * (xb - xa), xb)
+    ax.set_title(f"{ilab}   on   {dlab}", fontsize=12.5, color=INK, pad=7)
+    verdict = "converges" if conv else "diverges"
+    ax.text(0.97, 0.86, verdict, transform=ax.transAxes, ha="right", va="top",
+            fontsize=13, color=col, weight="bold")
+    ax.text(0.97, 0.70, val, transform=ax.transAxes, ha="right", va="top",
+            fontsize=13, color=col)
+    ax.set_xlabel("$x$", fontsize=11, labelpad=1)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.grid(alpha=0.2)
+
+fig.subplots_adjust(hspace=0.62, wspace=0.20)
+fig_four_path = save(fig, "S3_Fig2_FourIntegrals.png")
+```
+
+![Both left-hand integrands blow up at the origin, yet only one encloses a finite area — you cannot tell by looking, you have to do the integral. In the tail the verdicts reverse.](`{python} fig_four_path`){#fig-s3-four width=100%}
+
+|  | $\Omega = (0,1)$ | $\Omega = (1,\infty)$ |
+|---|---|---|
+| $u = \dfrac{1}{x}$ | $\displaystyle\int_0^1 \frac{dx}{x^2} = \infty$ | $\displaystyle\int_1^\infty \frac{dx}{x^2} = 1$ |
+| $v = \dfrac{1}{x^{1/4}}$ | $\displaystyle\int_0^1 \frac{dx}{\sqrt{x}} = 2$ | $\displaystyle\int_1^\infty \frac{dx}{\sqrt{x}} = \infty$ |
+
+Reading those off as membership in $H^0 = L^2$:
+
+::: {.notes}
+- $\dfrac{1}{x} \notin H^0\big((0,1)\big)$ &nbsp;&nbsp;but&nbsp;&nbsp;
+  $\dfrac{1}{x} \in H^0\big((1,\infty)\big)$
+- $\dfrac{1}{x^{1/4}} \in H^0\big((0,1)\big)$ &nbsp;&nbsp;but&nbsp;&nbsp;
+  $\dfrac{1}{x^{1/4}} \notin H^0\big((1,\infty)\big)$
+:::
+
+The two ends make **opposite** demands: near a singularity the function must not blow up
+too fast, while over an infinite tail it must decay fast enough. For a pure power
+$u = x^{-p}$, so $u^2 = x^{-2p}$,
+
+::: {.derivation}
+$$
+\int_0^1 x^{-2p}\,dx < \infty \iff p < \tfrac{1}{2}
+\qquad\qquad
+\int_1^\infty x^{-2p}\,dx < \infty \iff p > \tfrac{1}{2}
+$$
+:::
+
+::: {.step}
+No single $p$ satisfies both — so **no pure power lies in $L^2\big((0,\infty)\big)$**,
+$1/x$ included.
+:::
+
+# Sobolev norms: $H^0$ and $H^1$
+
+::: {.derivation}
+$$
+\underbrace{\|u\|_{H^0} = \left(\int_\Omega u^2\, d\Omega\right)^{1/2}}_{H^0 \;=\; L^2}
+\qquad\qquad
+\|u\|_{H^1} = \left(\int_\Omega u^2 + \left(u_{,x}\right)^2 d\Omega\right)^{1/2}
+$$
+:::
+
+The extra derivative term is what makes $H^1$ a measure of a function's **energy**: two
+functions can be the same "size" in $L^2$ while costing very different amounts to bend.
+
+```{python fig_energy}
+#| echo: false
+#| output: false
+
+xg = np.linspace(0, 1, 20001)
+KS = (1, 2, 4)
+rows = []
+for k in KS:
+    u = np.sin(k * math.pi * xg)
+    ux = k * math.pi * np.cos(k * math.pi * xg)
+    l2 = math.sqrt(np.trapezoid(u ** 2, xg))
+    h1s = math.sqrt(np.trapezoid(ux ** 2, xg))
+    rows.append((k, l2, h1s))
+    # every member has the same L2 norm, 1/sqrt(2)
+    assert abs(l2 - 1 / math.sqrt(2)) < 1e-6, l2
+    assert abs(h1s - k * math.pi / math.sqrt(2)) < 1e-4, h1s
+
+fig, axes = plt.subplots(1, 3, figsize=(12.2, 2.9))
+for ax, (k, l2, h1s) in zip(axes, rows):
+    xx = np.linspace(0, 1, 800)
+    ax.plot(xx, np.sin(k * math.pi * xx), color=BDRYCLR, lw=2.0)
+    ax.axhline(0, color=INK, lw=0.8, alpha=0.5)
+    kk = "" if k == 1 else str(k)
+    ax.set_title(rf"$u = \sin({kk}\pi x)$", fontsize=12.5, color=INK, pad=6)
+    ax.text(0.5, -0.22, rf"$\|u\|_{{L^2}} = {l2:.3f}$", transform=ax.transAxes,
+            ha="center", va="top", fontsize=12, color="#1d6f5c")
+    ax.text(0.5, -0.44, rf"$\|u_{{,x}}\|_{{L^2}} = {h1s:.2f}$",
+            transform=ax.transAxes, ha="center", va="top", fontsize=12,
+            color=LOADCLR)
+    ax.set_xlim(-0.02, 1.02); ax.set_ylim(-1.25, 1.25)
+    ax.set_xticks([]); ax.set_yticks([])
+    ax.spines[["top", "right", "left"]].set_visible(False)
+
+fig.subplots_adjust(wspace=0.10, bottom=0.30)
+fig_energy_path = save(fig, "S3_Fig3_Energy.png")
+```
+
+![All three have the **same** $L^2$ norm; the derivative term grows in proportion to $k$. That term is the energy $H^1$ sees and $L^2$ does not.](`{python} fig_energy_path`){#fig-s3-energy width=100%}
+
+::: {.step}
+This is why the weak form of Class 3 is posed in $H^1$: the integral
+$\int_0^1 w_{,x}u_{,x}\,dx$ only makes sense for functions whose derivatives are square
+integrable.
+:::

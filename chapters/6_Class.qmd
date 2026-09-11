@@ -1,0 +1,470 @@
+---
+title: "Class 6: Basis Functions and Lagrange Polynomials"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import os
+import sys
+import math
+
+sys.path.append('.')
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+from notes_style import (use_chapter, save, tidy, lagrange_basis,
+                         INK, LOADCLR, REACTCLR, DIMCLR,
+                         DOMCLR, BDRYCLR, FLUXCLR, MESHCLR, BASISCLRS)
+
+IMGDIR = use_chapter("Class6")
+```
+
+# Last time
+
+$(\mathrm{S}) \Rightarrow (\mathrm{W})$: given $f$, $g$, $h$, and
+$\underline{\underline{K}}$, let
+
+::: {.derivation}
+$$
+\mathcal{S} = \left\{\, u \in H^1(\Omega) \;\middle|\; u = g \text{ on } \Gamma_g \,\right\}
+\qquad\qquad
+\mathcal{V} = \left\{\, w \in H^1(\Omega) \;\middle|\; w = 0 \text{ on } \Gamma_g \,\right\}
+$$
+:::
+
+Find $u \in \mathcal{S}$ such that $\forall\, w \in \mathcal{V}$,
+
+::: {.derivation}
+$$
+\int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega
+= \int_\Omega wf\;d\Omega + \int_{\Gamma_h} wh\;d\Gamma
+$$
+:::
+
+or, in **condensed form**,
+
+::: {.derivation}
+$$
+a(w, u) = (w, f) + (w, h)_{\Gamma_h}
+$$
+:::
+
+::: {.step}
+This is just shorthand: $a(\cdot,\cdot)$ is the **bilinear form**
+$a(w,u) = \int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega$,
+$(\cdot,\cdot)$ is the $L^2$ **inner product** $(w,f) = \int_\Omega wf\;d\Omega$, and
+$(\cdot,\cdot)_{\Gamma_h}$ is the same inner product taken over $\Gamma_h$ instead of
+$\Omega$. Bilinearity is what lets us pull the coefficients $c_A$, $d_B$ out of these
+expressions later — see the [bilinearity note in Class 3](3_Class.qmd).
+:::
+
+**Galerkin Form:** choose a tractable set of functions with good properties (i.e. density
+in $H^1(\Omega)$). Pick $\mathcal{S}^h \subset \mathcal{S}$,
+$\mathcal{V}^h \subset \mathcal{V}$ — *discrete*, e.g. sines and cosines, or piecewise
+polynomials.
+
+Given $f$, $g$, $h$, and $\underline{\underline{K}}$, find
+$u^h \in \mathcal{S}^h \subset \mathcal{S}$ such that
+$\forall\, w^h \in \mathcal{V}^h$,
+
+::: {.derivation}
+$$
+\int_\Omega \nabla w^h \cdot \underline{\underline{K}}\nabla u^h\;d\Omega
+= \int_\Omega w^h f\;d\Omega + \int_{\Gamma_h} w^h h\;d\Gamma
+\qquad \text{or} \qquad
+a(w^h, u^h) = (w^h, f) + (w^h, h)_{\Gamma_h}
+$$
+:::
+
+# Choosing the basis
+
+We choose a set of functions that give us the behavior we like and are a **basis** for our
+space of interest.
+
+## Basis: a linear-algebra idea
+
+::: {.step .notes}
+- linearly independent
+- span the space
+:::
+
+::: {.step}
+Together, these mean you can represent any item in the space **uniquely** as a sum of
+coefficients times members of the basis.
+:::
+
+```{python fig_bases}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(1, 4, figsize=(12.4, 3.2))
+
+CASES = [
+    ([(1, 0), (0, 1)], "$\\{[1,0],\\,[0,1]\\}$"),
+    ([(1, 0), (2, 2/3)], "$\\{[1,0],\\,[2,\\tfrac23]\\}$".replace("\\tfrac23","2/3")),
+    ([(-1, 1), (1, -1)], "$\\{[-1,1],\\,[1,-1]\\}$"),
+    ([(-0.5, 1), (1, 0.5), (-0.375, 1.2)],
+     "$\\{[-\\tfrac12,1],[1,\\tfrac12],[-\\tfrac38,1.2]\\}$".replace(
+         "\\tfrac12","1/2").replace("\\tfrac38","3/8")),
+]
+
+for ax, (vecs, title) in zip(axes, CASES):
+    for (vx, vy), c in zip(vecs, BASISCLRS):
+        ax.annotate("", xy=(vx, vy), xytext=(0, 0),
+                    arrowprops=dict(arrowstyle="-|>", color=c, lw=2.0,
+                                    mutation_scale=13), zorder=4)
+        ax.text(vx * 1.15, vy * 1.15, f"[{vx:g},{vy:g}]", fontsize=9.5,
+                color=c, ha="center", va="center")
+    ax.axhline(0, color=DIMCLR, lw=0.8)
+    ax.axvline(0, color=DIMCLR, lw=0.8)
+    ax.set_xlim(-1.7, 2.3)
+    ax.set_ylim(-1.7, 1.7)
+    ax.set_aspect("equal")
+    ax.set_xticks([]); ax.set_yticks([])
+    for s in ax.spines.values():
+        s.set_visible(False)
+    ax.set_title(title, fontsize=11, color=INK, pad=8)
+
+fig.subplots_adjust(wspace=0.35)
+fig_bases_path = save(fig, "C6_Fig1_BasesForR2.png")
+```
+
+![Which of these are bases for $\mathbb{R}^2$, and why?](`{python} fig_bases_path`){#fig-c6-bases width=100%}
+
+```{python check_bases}
+#| echo: false
+#| output: false
+
+# verify the determinant test underlying the answer to fig-c6-bases
+import numpy.linalg as la
+sets = {
+    "std":       [(1, 0), (0, 1)],
+    "skew":      [(1, 0), (2, 2/3)],
+    "collinear": [(-1, 1), (1, -1)],
+}
+dets = {k: la.det(np.array(v, dtype=float).T) for k, v in sets.items()}
+assert abs(dets["std"] - 1.0) < 1e-9
+assert abs(dets["skew"] - 2/3) < 1e-9
+assert abs(dets["collinear"]) < 1e-9   # the anti-parallel pair is NOT a basis
+```
+
+::: {.step}
+The first two are bases (their vectors are linearly independent — the determinant of the
+matrix formed from them is nonzero). The third pair, $\{[-1,1],[1,-1]\}$, is **not** a
+basis: the two vectors are scalar multiples of each other (anti-parallel), so they span
+only a line, not the plane. The fourth set has **three** vectors in $\mathbb{R}^2$ — too
+many to be a basis, since a basis for $\mathbb{R}^2$ has exactly two elements, though any
+two of the three (chosen to be independent) would work.
+:::
+
+## Choosing a basis for piecewise polynomials
+
+For us, we want bases of piecewise polynomials — use the **Lagrange polynomials**.
+
+::: {.step}
+**Example:** $y = mx + b$ on domain $[0, 1]$. Then
+:::
+
+::: {.derivation}
+$$
+y \approx b\,\ell_1(x) + (m+b)\,\ell_2(x)
+\qquad \text{(polynomial degree 1)}
+$$
+
+$$
+\ell_1(x) = \frac{x - 1}{0 - 1}
+\qquad\qquad
+\ell_2(x) = \frac{x - 0}{1 - 0}
+$$
+:::
+
+```{python fig_linear_lagrange}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(4.6, 3.2))
+xs = np.linspace(0, 1, 200)
+nodes = [0.0, 1.0]
+for a, lab, c in zip(range(2), [r"$\ell_1$", r"$\ell_2$"], BASISCLRS):
+    ax.plot(xs, lagrange_basis(nodes, a, xs), color=c, lw=2.2, label=lab)
+ax.plot([0, 1], [0, 0], color=INK, lw=0.8)
+ax.text(0.02, 1.06, r"$\ell_1$", color=BASISCLRS[0], fontsize=13)
+ax.text(0.95, 1.06, r"$\ell_2$", color=BASISCLRS[1], fontsize=13)
+ax.set_xlim(-0.05, 1.05); ax.set_ylim(-0.15, 1.2)
+ax.set_xticks([0, 1]); ax.set_yticks([0, 1])
+ax.spines[["top", "right"]].set_visible(False)
+fig_ll_path = save(fig, "C6_Fig2_LinearLagrange.png")
+```
+
+::: {.step}
+![](`{python} fig_ll_path`){#fig-c6-linlag width=45%}
+:::
+
+For a quadratic, $y = \alpha x^2 + \beta x + \gamma$ on domain $[-1, 1]$:
+
+::: {.derivation}
+$$
+y(x) \approx (\alpha - \beta + \gamma)\,\ell_1(x) + \gamma\,\ell_2(x)
+             + (\alpha + \beta + \gamma)\,\ell_3(x)
+\qquad \text{(polynomial degree 2)}
+$$
+
+$$
+\ell_1(x) = \frac{(x-0)(x-1)}{(-1-0)(-1-1)}
+\qquad
+\ell_2(x) = \frac{(x-(-1))(x-1)}{(0-(-1))(0-1)}
+\qquad
+\ell_3(x) = \frac{(x-(-1))(x-0)}{(1-(-1))(1-0)}
+$$
+:::
+
+```{python fig_quad_lagrange}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(4.6, 3.2))
+xs = np.linspace(-1, 1, 200)
+nodes3 = [-1.0, 0.0, 1.0]
+labels = [r"$\ell_1$", r"$\ell_2$", r"$\ell_3$"]
+for a, lab, c in zip(range(3), labels, BASISCLRS):
+    ax.plot(xs, lagrange_basis(nodes3, a, xs), color=c, lw=2.2)
+ax.plot([-1, 1], [0, 0], color=INK, lw=0.8)
+ax.text(-0.97, 1.06, r"$\ell_1$", color=BASISCLRS[0], fontsize=13)
+ax.text(-0.05, 1.06, r"$\ell_2$", color=BASISCLRS[1], fontsize=13)
+ax.text(0.92, 1.06, r"$\ell_3$", color=BASISCLRS[2], fontsize=13)
+ax.set_xlim(-1.1, 1.1); ax.set_ylim(-0.4, 1.2)
+ax.set_xticks([-1, 0, 1]); ax.set_yticks([0, 1])
+ax.spines[["top", "right"]].set_visible(False)
+fig_ql_path = save(fig, "C6_Fig3_QuadLagrange.png")
+```
+
+::: {.step}
+![](`{python} fig_ql_path`){#fig-c6-quadlag width=45%}
+:::
+
+```{python check_lagrange}
+#| echo: false
+#| output: false
+
+# a Lagrange basis of degree p reproduces every polynomial up to degree p
+# exactly; check the quadratic case against a random quadratic
+rng = np.random.default_rng(0)
+alpha, beta, gamma = rng.normal(size=3)
+def y_exact(x):
+    return alpha * x**2 + beta * x + gamma
+c1, c2, c3 = alpha - beta + gamma, gamma, alpha + beta + gamma
+xs = np.linspace(-1, 1, 50)
+approx = (c1 * lagrange_basis(nodes3, 0, xs) + c2 * lagrange_basis(nodes3, 1, xs)
+          + c3 * lagrange_basis(nodes3, 2, xs))
+assert np.allclose(approx, y_exact(xs), atol=1e-10)
+```
+
+# From one element to a mesh: piecewise Lagrange bases ($p=1$)
+
+Then we choose, e.g., Lagrange polynomial bases on a finite number of intervals, or
+**"elements."**
+
+```{python fig_hat_p1}
+#| echo: false
+#| output: false
+
+n_el = 6
+knots = np.linspace(0, 6, n_el + 1)
+
+
+def hat(i, x):
+    x = np.asarray(x, dtype=float)
+    out = np.zeros_like(x)
+    if i > 0:
+        m = (x >= knots[i - 1]) & (x <= knots[i])
+        out[m] = (x[m] - knots[i - 1]) / (knots[i] - knots[i - 1])
+    if i < n_el:
+        m = (x >= knots[i]) & (x <= knots[i + 1])
+        out[m] = (knots[i + 1] - x[m]) / (knots[i + 1] - knots[i])
+    return out
+
+
+xs = np.linspace(0, 6, 900)
+fig, axes = plt.subplots(len(knots), 1, figsize=(7.6, 8.6), sharex=True)
+for i, ax in enumerate(axes):
+    ax.plot(xs, hat(i, xs), color=BASISCLRS[i % len(BASISCLRS)], lw=2.2)
+    ax.plot(knots, np.zeros_like(knots), color=INK, lw=1.4)
+    for k in knots:
+        ax.plot([k], [0], marker="|", color=INK, ms=10, mew=1.3)
+    ax.text(knots[i], 1.12, f"$N_{{{i}}}$", ha="center", va="bottom",
+            fontsize=12, color=BASISCLRS[i % len(BASISCLRS)])
+    ax.set_ylim(-0.15, 1.3)
+    ax.set_yticks([])
+    ax.spines[["top", "right", "left"]].set_visible(False)
+axes[-1].set_xticks(knots)
+axes[-1].set_xticklabels([f"$x_{{{i}}}$" for i in range(len(knots))], fontsize=10)
+axes[-1].set_xlabel("")
+axes[0].text(knots[0], 1.05, "", fontsize=1)  # spacer
+
+fig.subplots_adjust(hspace=0.35)
+fig_hatp1_path = save(fig, "C6_Fig4_HatFunctions_p1.png")
+```
+
+![Piecewise-linear ("hat") basis functions, one per node $x_i$.](`{python} fig_hatp1_path`){#fig-c6-hatp1 width=68%}
+
+::: {.step}
+These are a basis for the space of piecewise-linear functions from $x_0 = 0$ to $x_n = L$,
+with pieces meeting at each $x_i$.
+:::
+
+```{python check_p1}
+#| echo: false
+#| output: false
+
+# a p=1 hat basis is a partition of unity: sum_i N_i(x) = 1 everywhere on [0,L]
+total = sum(hat(i, xs) for i in range(n_el + 1))
+assert np.allclose(total, 1.0), total
+```
+
+# If we choose Lagrange polynomials of degree 2
+
+Now each element carries **three** local nodes (two endpoints and a midpoint), so the
+basis functions have a mix of shapes: interior-node functions are single humps confined
+to one element, while shared-endpoint functions must be smooth across the element
+boundary.
+
+```{python fig_hat_p2}
+#| echo: false
+#| output: false
+
+n_el2 = 3
+el_edges = np.linspace(0, 6, n_el2 + 1)
+# global node layout for p=2: endpoint, midpoint, endpoint, midpoint, ...
+gx = []
+for e in range(n_el2):
+    a, b = el_edges[e], el_edges[e + 1]
+    gx += [a, 0.5 * (a + b)]
+gx.append(el_edges[-1])
+gx = np.array(gx)
+n_glob = len(gx)
+
+
+def elem_of(i):
+    """Which element(s) global node i touches, as a list of (element, local_a)."""
+    out = []
+    for e in range(n_el2):
+        a, b = el_edges[e], el_edges[e + 1]
+        m = 0.5 * (a + b)
+        locs = [a, m, b]
+        for la, xv in enumerate(locs):
+            if abs(xv - gx[i]) < 1e-9:
+                out.append((e, la))
+    return out
+
+
+def N_global(i, x):
+    x = np.asarray(x, dtype=float)
+    out = np.zeros_like(x)
+    for e, la in elem_of(i):
+        a, b = el_edges[e], el_edges[e + 1]
+        m = 0.5 * (a + b)
+        mask = (x >= a) & (x <= b)
+        out[mask] = lagrange_basis([a, m, b], la, x[mask])
+    return out
+
+
+xs2 = np.linspace(0, 6, 1200)
+fig, axes = plt.subplots(n_glob, 1, figsize=(7.6, 11.0), sharex=True)
+for i, ax in enumerate(axes):
+    ax.plot(xs2, N_global(i, xs2), color=BASISCLRS[i % len(BASISCLRS)], lw=2.0)
+    ax.plot(el_edges, np.zeros_like(el_edges), color=INK, lw=1.4)
+    for k in el_edges:
+        ax.plot([k], [0], marker="|", color=INK, ms=10, mew=1.3)
+    ax.text(gx[i], 1.12, f"$N_{{{i}}}$", ha="center", va="bottom", fontsize=11,
+            color=BASISCLRS[i % len(BASISCLRS)])
+    ax.set_ylim(-0.35, 1.3)
+    ax.set_yticks([])
+    ax.spines[["top", "right", "left"]].set_visible(False)
+axes[-1].set_xticks(el_edges)
+axes[-1].set_xticklabels([f"$x_{{{i}}}$" for i in range(len(el_edges))], fontsize=10)
+
+fig.subplots_adjust(hspace=0.30)
+fig_hatp2_path = save(fig, "C6_Fig5_HatFunctions_p2.png")
+```
+
+![Piecewise-quadratic basis functions. Functions at shared endpoints ($N_0$, $N_2$, $N_4$, $N_6$) span two elements; functions at midpoints ($N_1$, $N_3$, $N_5$) live on one.](`{python} fig_hatp2_path`){#fig-c6-hatp2 width=68%}
+
+::: {.step}
+These are a basis for the space of piecewise-quadratic functions from $x_0 = 0$ to
+$x_n = L$, piecewise at each element boundary $x_i$.
+:::
+
+```{python check_p2}
+#| echo: false
+#| output: false
+
+total2 = sum(N_global(i, xs2) for i in range(n_glob))
+assert np.allclose(total2, 1.0, atol=1e-9), np.max(np.abs(total2 - 1.0))
+```
+
+# For this class only: a compact notation
+
+Say $P_{p,n}$ is piecewise polynomial functions of degree $p$, split into $n-1$ even
+intervals. Then, with a little love, we can make
+$\mathcal{S}^h \sim P_{p,n} \sim \mathcal{V}^h$.
+
+For sake of concreteness, assume $(\mathrm{W})$: $a(w,u) = (w,f) + w(0)h$, $u(L) = g$.
+Particularly, let $u^h = v^h + g^h$:
+
+::: {.derivation}
+$$
+v^h(x) = \sum_{B=0}^{\text{all but last}} d_B\,N_B(x)
+\qquad\qquad
+g^h(x) = g\,N_{\text{last}}(x)
+$$
+:::
+
+::: {.step}
+Then $v^h \in \mathcal{V}^h$, $w^h \in \mathcal{V}^h$ are
+$w^h(x) = \sum_{A=0}^{\text{all but last}} c_A\,N_A$, and $u^h \in \mathcal{S}^h$.
+:::
+
+And we have
+
+::: {.derivation}
+$$
+a(w^h, u^h) = (w^h, f) + w(0)h
+\qquad\Longrightarrow\qquad
+a(w^h, v^h + g^h) = (w^h, f) + w(0)h
+\qquad\Longrightarrow\qquad
+a(w^h, v^h) = (w^h, f) + w(0)h - a(w^h, g^h)
+$$
+:::
+
+In multiple dimensions,
+
+::: {.derivation}
+$$
+v^h = \sum_{B \notin \Gamma_g} d_B\,N_B(x)
+\qquad
+w^h = \sum_{A \notin \Gamma_g} c_A\,N_A(x)
+\qquad
+g^h = \sum_{B \in \Gamma_g} g_B\,N_B(x)
+$$
+
+$$
+a(w^h, v^h) = (w^h, f) + (w^h, h)_{\Gamma_h} - a(w^h, g^h)
+$$
+:::
+
+::: {.step}
+This last rearrangement — splitting the trial solution into a part $v^h$ built from basis
+functions that vanish on $\Gamma_g$, plus a "lift" $g^h$ that carries the known boundary
+values — is exactly how the Dirichlet boundary condition gets enforced in a computer
+implementation. The next class works through this in full, arriving at a concrete matrix
+equation.
+:::

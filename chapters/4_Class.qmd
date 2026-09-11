@@ -1,0 +1,349 @@
+---
+title: "Class 4: Strong and Weak Forms of the Boundary Value Problem"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import os
+import sys
+import math
+
+sys.path.append('.')
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon as MplPolygon
+
+from notes_style import (use_chapter, save, tidy, arrow_down, arrow_up, dim_x,
+                         INK, LOADCLR, REACTCLR, DIMCLR,
+                         DOMCLR, BDRYCLR, FLUXCLR, MESHCLR)
+
+IMGDIR = use_chapter("Class4")
+
+
+def hatch_wall(ax, x, y0, y1, side=1, n=7, size=0.28, color=INK, lw=1.3):
+    """A fixed-support wall: a solid line with hatching on one side."""
+    ax.plot([x, x], [y0, y1], color=color, lw=lw * 1.4, zorder=6)
+    for yv in np.linspace(y0, y1, n):
+        ax.plot([x, x + side * size], [yv, yv - size], color=color, lw=lw,
+                zorder=6)
+```
+
+# Strong form of the boundary value problem (Poisson)
+
+::: {.derivation}
+Given $f : \Omega \to \mathbb{R}$, $g : \Gamma_g \to \mathbb{R}$, and
+$h : \Gamma_h \to \mathbb{R}$, find $u : \bar\Omega \to \mathbb{R}$ such that
+
+$$
+-\nabla\cdot\left(\underline{\underline{K}}\nabla u\right)
+= -\left(K_{ij}u_{,j}\right)_{,i} = f
+\qquad \text{in } \Omega
+$$
+
+$$
+u = g \qquad \text{on } \Gamma_g
+$$
+
+$$
+\left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n}
+= K_{ij}u_{,j}\,n_i = h
+\qquad \text{on } \Gamma_h
+$$
+:::
+
+```{python fig_domain}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(6.0, 5.2))
+t = np.linspace(0, 2 * math.pi, 400)
+r = 2.3 + 0.28 * np.sin(3 * t) + 0.16 * np.cos(5 * t)
+X, Y = r * np.cos(t), r * np.sin(t)
+ax.fill(X, Y, color=DOMCLR, alpha=0.55, zorder=1)
+
+topmask = (t > 0.30 * math.pi) & (t < 0.62 * math.pi)
+botmask = (t > 1.18 * math.pi) & (t < 1.55 * math.pi)
+gmask = ~(topmask | botmask)
+ax.plot(X[gmask], Y[gmask], color=BDRYCLR, lw=2.2, zorder=3)
+ax.plot(X[topmask], Y[topmask], color=FLUXCLR, lw=3.4, zorder=4)
+ax.plot(X[botmask], Y[botmask], color=FLUXCLR, lw=3.4, zorder=4)
+
+ax.text(0.0, 0.0, r"$\Omega$", ha="center", va="center", fontsize=18, color=INK)
+i = len(X[topmask]) // 2
+ax.text(X[topmask][i] + 0.3, Y[topmask][i] + 0.5, r"$\Gamma_h$", ha="left",
+        va="bottom", fontsize=14, color=FLUXCLR)
+i2 = len(X[botmask]) // 2
+ax.text(X[botmask][i2] - 0.3, Y[botmask][i2] - 0.5, r"$\Gamma_h$", ha="right",
+        va="top", fontsize=14, color=FLUXCLR)
+ax.text(2.2, 1.6, r"$\Gamma_g$", ha="left", va="center", fontsize=14,
+        color=BDRYCLR)
+
+# outward normal arrow at a point on the boundary
+k = np.argmin(np.abs(t - 0.85 * math.pi))
+nx, ny = math.cos(t[k]), math.sin(t[k])
+px, py = X[k], Y[k]
+ax.annotate("", xy=(px + 0.9 * nx, py + 0.9 * ny), xytext=(px, py),
+            arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.6,
+                            mutation_scale=13), zorder=6)
+ax.text(px + 1.05 * nx, py + 1.05 * ny + 0.25, r"$n$", ha="center",
+        va="bottom", fontsize=13, color=INK)
+ax.text(px + 1.05 * nx - 1.3, py + 1.05 * ny - 0.55, "unit outward normal",
+        ha="center", va="center", fontsize=10.5, color=INK)
+
+tidy(ax)
+ax.set_xlim(-3.4, 3.6)
+ax.set_ylim(-3.4, 3.4)
+fig_domain_path = save(fig, "C4_Fig1_Domain.png")
+```
+
+![](`{python} fig_domain_path`){#fig-c4-domain width=68%}
+
+# In one dimension
+
+::: {.derivation}
+$$
+-\left(K u_{,x}\right)_{,x} = f \qquad \text{in } \Omega
+\qquad\qquad
+u = g \qquad \text{on } \Gamma_g
+\qquad\qquad
+(Ku_{,x})\,n = h \qquad \text{on } \Gamma_h
+$$
+:::
+
+The one-dimensional boundary $\Gamma$ is just the two endpoints, so $n$ can only be $-1$
+or $+1$ — the outward normal at the left end always points in $-x$, and at the right end
+always in $+x$.
+
+```{python fig_examples}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(4, 1, figsize=(8.4, 6.4))
+
+def bar(ax, left_kind, right_kind, n_left_label=None, n_right_label=None):
+    # "fixed" = Dirichlet (u=g, drawn as a hatched wall); "free" = Neumann
+    # (flux h prescribed, drawn as simply an open end -- there is no support)
+    L = 6.0
+    ax.plot([0, L], [0, 0], color=INK, lw=2.6, zorder=3)
+    if left_kind == "fixed":
+        hatch_wall(ax, 0.0, -0.5, 0.5, side=-1, n=6, size=0.34)
+    if right_kind == "fixed":
+        hatch_wall(ax, L, -0.5, 0.5, side=1, n=6, size=0.34)
+    ax.text(-0.05, 0.85, "$x=0$", ha="center", va="bottom", fontsize=11,
+            color=INK)
+    ax.text(L + 0.05, 0.85, "$x=L$", ha="center", va="bottom", fontsize=11,
+            color=INK)
+    if n_left_label:
+        ax.annotate("", xy=(-1.15, 0.0), xytext=(-0.05, 0.0),
+                    arrowprops=dict(arrowstyle="-|>", color=REACTCLR, lw=1.5,
+                                    mutation_scale=11), zorder=5)
+        ax.text(-1.3, 0.0, n_left_label, ha="right", va="center",
+                fontsize=11.5, color=REACTCLR)
+    if n_right_label:
+        ax.annotate("", xy=(L + 1.15, 0.0), xytext=(L + 0.05, 0.0),
+                    arrowprops=dict(arrowstyle="-|>", color=REACTCLR, lw=1.5,
+                                    mutation_scale=11), zorder=5)
+        ax.text(L + 1.3, 0.0, n_right_label, ha="left", va="center",
+                fontsize=11.5, color=REACTCLR)
+    tidy(ax)
+    ax.set_xlim(-2.4, L + 2.4)
+    ax.set_ylim(-1.1, 1.5)
+
+bar(axes[0], "fixed", "fixed")
+bar(axes[1], "free", "fixed", n_left_label="$n=-1$")
+bar(axes[2], "fixed", "free", n_right_label="$n=+1$")
+bar(axes[3], "free", "free", n_left_label="$n=-1$", n_right_label="$n=+1$")
+
+fig.subplots_adjust(hspace=0.75)
+fig_examples_path = save(fig, "C4_Fig2_Examples.png")
+```
+
+![](`{python} fig_examples_path`){#fig-c4-examples width=78%}
+
+::: {.step}
+The Neumann boundary is wherever a flux $h$ is prescribed instead of a value $g$. At the
+left end, the outward normal is $-1$; at the right end, it is $+1$ — that sign is why the
+Neumann condition in one dimension is written $-u_{,x}(0) = h$ but $+u_{,x}(L) = h$: both
+are $(Ku_{,x})\cdot n = h$ once $K=1$ is included and $n$ is substituted in.
+:::
+
+# Coming from the exact solution
+
+Last time, we found the exact solution to the 1D Poisson problem to be
+
+::: {.derivation}
+$$
+u(x) = g + (1-x)h + \int_x^1\left(\int_0^y f(z)\,dz\right)dy
+$$
+:::
+
+::: {.step}
+So we're done... why do anything more?
+:::
+
+::: {.step .notes}
+- What if we don't have a simple function $f$?
+- What if the domain is not one-dimensional?
+:::
+
+Want to convert this into a representation we can compute on. **Idea:** use an inner
+product and function space to "describe" our function.
+
+::: {.derivation}
+$$
+\mathcal{S} = \left\{\, u \in H^1(\Omega) \;\middle|\; u(x) = g(x) \text{ for } x \in \Gamma_g \,\right\}
+\qquad \leftarrow \textbf{trial function space}
+$$
+
+$$
+\mathcal{V} = \left\{\, w \in H^1(\Omega) \;\middle|\; w(x) = 0 \text{ for } x \in \Gamma_g \,\right\}
+\qquad \leftarrow \textbf{test function space}
+$$
+:::
+
+::: {.step}
+Recall $H^1(\Omega) = \left\{ f : \Omega \to \mathbb{R} \;\middle|\;
+\int_\Omega f^2 + \nabla f \cdot \nabla f \; d\Omega < \infty \right\}$ — in 1D, these are
+continuous functions. (See the [function-space appendix](3_Support_FunctionSpaces.qmd) for
+more.)
+:::
+
+# Weak form of the boundary value problem
+
+::: {.derivation}
+Given $f : \Omega \to \mathbb{R}$, $g : \Gamma_g \to \mathbb{R}$, $h : \Gamma_h \to \mathbb{R}$,
+and $\underline{\underline{K}} : \Omega \to \mathbb{R}^{n_{sd} \times n_{sd}}$ symmetric
+positive definite, find $u \in \mathcal{S}$ such that for every $w \in \mathcal{V}$,
+
+$$
+(\mathrm{W}) \qquad
+\int_\Omega \nabla w \cdot \underline{\underline{K}} \nabla u \; d\Omega
+= \int_\Omega wf\;d\Omega + \int_{\Gamma_h} wh\;d\Gamma
+$$
+:::
+
+In one dimension, this is
+
+::: {.derivation}
+$$
+(\mathrm{W}) \qquad
+\int_0^L w_{,x}\,K\,u_{,x}\;dx
+= \int_0^L wf\;dx + w u_{,x}\Big\rvert_{x=0}^{x=L}
+\qquad \text{or, in our case,} \qquad
+\int_0^L w_{,x}\,K\,u_{,x}\;dx = \int_0^1 wf\;dx + w(0)\,h
+$$
+:::
+
+# What does this mean?
+
+::: {.step}
+**Example:** put an object in a bag, try to guess the object.
+:::
+
+::: {.step .notes}
+- → bag size is the "space" of objects you're guessing in
+- → people can come look in the bag & describe with 1 word
+:::
+
+::: {.step}
+(In class, a mousetrap toy.)
+:::
+
+The words are what we use to "test" or "measure" our object against.
+
+If we have all possible descriptors, we should know precisely what the object is.
+Otherwise, we pick a set of "best" words with which to describe.
+
+::: {.step}
+Think about this — it is sort of the way we come to know God.
+:::
+
+::: {.step .notes}
+- → descriptors, experiences, etc., but we have limited knowledge; at some point we will
+  know — John 17:3
+:::
+
+# Formal proof of equivalence (strong $\Rightarrow$ weak)
+
+Start from the strong form and multiply by an arbitrary $w$, then integrate over $\Omega$:
+
+::: {.derivation}
+$$
+-\nabla\cdot\left(\underline{\underline{K}}\nabla u\right) = f
+\qquad\Longrightarrow\qquad
+-\int_\Omega w\,\nabla\cdot\left(\underline{\underline{K}}\nabla u\right)\,d\Omega
+= \int_\Omega wf\,d\Omega
+\qquad (w \text{ arbitrary})
+$$
+:::
+
+The left side needs the **product rule**, applied to $\nabla\cdot(w\underline{\underline{K}}\nabla u)$:
+
+::: {.derivation}
+$$
+\nabla\cdot\left(w\,\underline{\underline{K}}\nabla u\right)
+= \nabla w\cdot\underline{\underline{K}}\nabla u
++ w\,\nabla\cdot\left(\underline{\underline{K}}\nabla u\right)
+$$
+:::
+
+so that, integrating the left side and applying the **Divergence Theorem**,
+
+::: {.derivation}
+$$
+\int_\Omega \nabla\cdot\left(w\,\underline{\underline{K}}\nabla u\right) d\Omega
+= \int_\Gamma \left(w\,\underline{\underline{K}}\nabla u\right)\cdot \underline{n}\;d\Gamma
+$$
+:::
+
+Combining these two facts, the term we wanted rearranges into
+
+::: {.derivation}
+$$
+-\left(\int_\Gamma \left(w\,\underline{\underline{K}}\nabla u\right)\cdot\underline{n}\;d\Gamma
+- \int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u \;d\Omega\right)
+= \int_\Omega wf\,d\Omega
+$$
+:::
+
+::: {.derivation}
+$$
+\Longrightarrow \qquad
+\int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u \; d\Omega
+= \int_\Omega wf\,d\Omega + \int_\Gamma \left(w\,\underline{\underline{K}}\nabla u\right)\cdot\underline{n}\;d\Gamma
+$$
+:::
+
+::: {.derivation}
+$$
+\Longrightarrow \qquad
+\int_\Omega w_{,i}K_{ij}u_{,j}\;d\Omega
+= \int_\Omega wf\,d\Omega + \int_\Gamma w K_{ij}u_{,j}\,n_i\;d\Gamma
+$$
+:::
+
+::: {.step}
+But $w(x) = 0$ on $\Gamma_g$, and $\Gamma = \Gamma_g \cup \Gamma_h$, so the boundary
+integral only survives over $\Gamma_h$ — where the strong form tells us
+$K_{ij}u_{,j}n_i = h$:
+:::
+
+::: {.derivation}
+$$
+\boxed{\int_\Omega w_{,i}K_{ij}u_{,j}\;d\Omega
+= \int_\Omega wf\,d\Omega + \int_{\Gamma_h} wh\;d\Gamma}
+$$
+:::
+
+which is exactly $(\mathrm{W})$. The next class continues the other direction —
+$(\mathrm{W}) \Rightarrow (\mathrm{S})$ — which is a genuinely different (and more
+delicate) argument.

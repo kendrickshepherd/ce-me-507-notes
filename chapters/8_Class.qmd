@@ -1,0 +1,324 @@
+---
+title: "Class 8: Assembly, Sparsity, and the Road to Quadrature"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import os
+import sys
+import math
+
+sys.path.append('.')
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+from notes_style import (use_chapter, save, tidy, arrow_down,
+                         INK, LOADCLR, REACTCLR, DIMCLR,
+                         DOMCLR, BDRYCLR, FLUXCLR, MESHCLR)
+
+IMGDIR = use_chapter("Class8")
+```
+
+We now know
+
+::: {.derivation}
+$$
+(\mathrm{S}) \Longleftrightarrow (\mathrm{W}) \;\xRightarrow{\text{approximate}}\; (\mathrm{G})
+\;\Longrightarrow\; (\mathrm{M})
+$$
+:::
+
+where $(\mathrm{M})$ is: given $f : \Omega \to \mathbb{R}$, $g : \Gamma_g \to \mathbb{R}$,
+$h : \Gamma_h \to \mathbb{R}$, $\underline{\underline{K}} : \Omega \to
+\mathbb{R}^{n_{sd}\times n_{sd}}$, find $\underline{d}$ such that
+$\underline{\underline{K}}\,\underline{d} = \underline{F}$, where
+
+::: {.derivation}
+$$
+K_{AB} = \int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega
+\qquad\qquad
+F_A = \int_\Omega N_A f\;d\Omega + \int_{\Gamma_h} N_A h\;d\Gamma
+      - \int_\Omega \nabla N_A \cdot \underline{\underline{K}}
+        \left(\sum_{B \in \Gamma_g} g_B N_B\right) d\Omega
+$$
+:::
+
+For a given problem, this becomes a matrix equation with $n_{unk}$ rows and $n_{unk}$
+columns (note the symmetry — this will be shown to be sparse).
+
+# A one-dimensional example
+
+```{python fig_setup}
+#| echo: false
+#| output: false
+
+l0, l1, l2 = 1.5, 2.0, 2.5
+x = np.array([0.0, l0, l0 + l1, l0 + l1 + l2])
+L = x[-1]
+
+fig, ax = plt.subplots(figsize=(8.4, 2.9))
+ax.plot([0, L], [0, 0], color=INK, lw=2.6, zorder=2)
+for xi in x:
+    ax.plot([xi], [0], marker="|", color=INK, ms=12, mew=1.5, zorder=3)
+labels = ["$N_0$", "$N_1$", "$N_2$", "$N_3$"]
+for xi, lab in zip(x, labels):
+    ax.text(xi, -0.35, lab, ha="center", va="top", fontsize=12, color=INK)
+ax.text(-0.3, 0.55, "$h$", color=FLUXCLR, fontsize=13, ha="center")
+ax.annotate("", xy=(0.55, 0.5), xytext=(-0.15, 0.5),
+            arrowprops=dict(arrowstyle="-|>", color=FLUXCLR, lw=1.5,
+                            mutation_scale=11))
+for xf in np.linspace(0.1, L - 0.2, 6):
+    arrow_down(ax, xf, 0.55, 0.35, None, color=LOADCLR, lw=1.1)
+ax.text(L / 2, 1.05, "$f$", color=LOADCLR, fontsize=13, ha="center")
+ax.text(L + 0.55, 0.15, "$g$", color=BDRYCLR, fontsize=13, ha="center")
+ax.plot([L, L], [-0.15, 0.55], color=INK, lw=1.6)
+for yv in np.linspace(-0.1, 0.5, 5):
+    ax.plot([L, L + 0.28], [yv, yv - 0.12], color=INK, lw=1.0)
+for i, (a, b) in enumerate(zip(x[:-1], x[1:])):
+    ax.annotate("", xy=(b - 0.05, -0.62), xytext=(a + 0.05, -0.62),
+                arrowprops=dict(arrowstyle="<|-|>", color=DIMCLR, lw=0.9,
+                                mutation_scale=8))
+    ax.text((a + b) / 2, -0.75, f"$\\ell_{i}$", ha="center", va="top",
+            fontsize=10.5, color=DIMCLR)
+tidy(ax)
+ax.set_xlim(-1.2, L + 1.4)
+ax.set_ylim(-1.3, 1.4)
+fig_setup_path = save(fig, "C8_Fig1_Setup.png")
+```
+
+![Three elements, lengths $\ell_0+\ell_1+\ell_2 = L$. Node $N_3$ is "known" (Dirichlet, value $g$); node $N_0$ carries the prescribed flux $h$.](`{python} fig_setup_path`){#fig-c8-setup width=80%}
+
+::: {.derivation}
+$$
+\begin{bmatrix}
+\int_0^L N_{0,x}N_{0,x}\,dx & \int_0^L N_{0,x}N_{1,x}\,dx & \int_0^L N_{0,x}N_{2,x}\,dx \\[4pt]
+\int_0^L N_{1,x}N_{0,x}\,dx & \int_0^L N_{1,x}N_{1,x}\,dx & \int_0^L N_{1,x}N_{2,x}\,dx \\[4pt]
+\int_0^L N_{2,x}N_{0,x}\,dx & \int_0^L N_{2,x}N_{1,x}\,dx & \int_0^L N_{2,x}N_{2,x}\,dx
+\end{bmatrix}
+\begin{bmatrix} d_0 \\ d_1 \\ d_2 \end{bmatrix}
+=
+\begin{bmatrix}
+\int_0^L N_0 f\,dx + N_0(0)h - g\int_0^L N_{0,x}N_{3,x}\,dx \\[4pt]
+\int_0^L N_1 f\,dx - g\int_0^L N_{1,x}N_{3,x}\,dx \\[4pt]
+\int_0^L N_2 f\,dx - g\int_0^L N_{2,x}N_{3,x}\,dx
+\end{bmatrix}
+$$
+:::
+
+## Simplifying based on the supports of the functions
+
+::: {.step}
+$N_0$ and $N_2$ are **not adjacent** — their supports (elements 0–1 and 1–2 respectively)
+share at most a single point, so $\int_\Omega N_{0,x}N_{2,x}\,d\Omega = 0$. The same holds
+for $N_0$/$N_3$ and $N_1$/$N_3$. This is the origin of **sparsity**: most entries of
+$K_{AB}$ vanish because most pairs of basis functions don't overlap.
+:::
+
+::: {.derivation}
+$$
+\begin{bmatrix}
+\int_0^L N_{0,x}N_{0,x}\,dx & \int_0^L N_{0,x}N_{1,x}\,dx & 0 \\[4pt]
+\int_0^L N_{1,x}N_{0,x}\,dx & \int_0^L N_{1,x}N_{1,x}\,dx & \int_0^L N_{1,x}N_{2,x}\,dx \\[4pt]
+0 & \int_0^L N_{2,x}N_{1,x}\,dx & \int_0^L N_{2,x}N_{2,x}\,dx
+\end{bmatrix}
+\begin{bmatrix} d_0 \\ d_1 \\ d_2 \end{bmatrix}
+=
+\begin{bmatrix}
+\int_0^L N_0 f\,dx + h \\[4pt]
+\int_0^L N_1 f\,dx \\[4pt]
+\int_0^L N_2 f\,dx - g\int_0^L N_{2,x}N_{3,x}\,dx
+\end{bmatrix}
+$$
+:::
+
+```{python check_sparsity}
+#| echo: false
+#| output: false
+
+def dN(i, xv):
+    """Closed-form derivative of the i-th linear hat function (piecewise
+    constant on each element -- exact, unlike a finite-difference approach,
+    which misbehaves at the two ends where the hat is one-sided)."""
+    xv = np.asarray(xv, dtype=float)
+    out = np.zeros_like(xv)
+    if i > 0:
+        m = (xv >= x[i - 1]) & (xv < x[i])
+        out[m] = 1.0 / (x[i] - x[i - 1])
+    if i < 3:
+        m = (xv >= x[i]) & (xv < x[i + 1])
+        out[m] = -1.0 / (x[i + 1] - x[i])
+    return out
+
+
+xq = np.linspace(0, L, 400001)[:-1]
+K = np.zeros((4, 4))
+for i in range(4):
+    for j in range(4):
+        K[i, j] = np.trapezoid(dN(i, xq) * dN(j, xq), xq)
+
+# tridiagonal, closed-form entries for a piecewise-linear 1D stiffness matrix
+# (tolerance set by the trapezoidal quadrature grid resolution, ~1/n_pts)
+tol = 1e-5
+assert abs(K[0, 0] - 1 / l0) < tol
+assert abs(K[1, 1] - (1 / l0 + 1 / l1)) < tol
+assert abs(K[2, 2] - (1 / l1 + 1 / l2)) < tol
+assert abs(K[3, 3] - 1 / l2) < tol
+assert abs(K[0, 1] + 1 / l0) < tol
+assert abs(K[1, 2] + 1 / l1) < tol
+assert abs(K[2, 3] + 1 / l2) < tol
+# non-adjacent basis functions truly do not overlap
+assert abs(K[0, 2]) < 1e-12 and abs(K[0, 3]) < 1e-12 and abs(K[1, 3]) < 1e-12
+```
+
+::: {.step}
+Notice that **all the integrals in $\underline{\underline{K}}$ look the same**, in some
+way:
+:::
+
+::: {.step .notes}
+- Dirichlet (known) boundary-condition data looks the same as the integrals in
+  $\underline{\underline{K}}$ — it is just $\int \nabla N_A \cdot
+  \underline{\underline{K}} \nabla N_B$ against a *known* coefficient $g_B$.
+- Neumann (known-flux) boundary-condition data is a **number** in 1D — but a **curve** in
+  2D and a **surface** in 3D.
+- Integrals with forcing functions on the right-hand side all look the same as each other.
+:::
+
+::: {.step}
+That observation is what makes a general-purpose code possible: there are only a handful
+of distinct integral shapes to implement, no matter the problem or the dimension.
+:::
+
+# The local view: appearance on a single element
+
+```{python fig_local}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(5.4, 3.4))
+xi, xip1 = 0.0, 2.0
+ax.plot([xi, xip1], [0, 0], color=INK, lw=2.4, zorder=2)
+ax.plot([xi], [0], marker="|", color=INK, ms=12, mew=1.5, zorder=3)
+ax.plot([xip1], [0], marker="|", color=INK, ms=12, mew=1.5, zorder=3)
+xs = np.linspace(xi, xip1, 100)
+ax.plot(xs, (xip1 - xs) / (xip1 - xi), color=BDRYCLR, lw=2.0)
+ax.plot(xs, (xs - xi) / (xip1 - xi), color=LOADCLR, lw=2.0)
+ax.text(xi - 0.1, 1.12, "$N_i$", color=BDRYCLR, fontsize=13, ha="center")
+ax.text(xip1 + 0.1, 1.12, "$N_{i+1}$", color=LOADCLR, fontsize=13, ha="center")
+# global (black) names above, local element (brown) names below -- the
+# relabelling is the whole point of this figure
+ax.text(xi, -0.42, "$x_i$", ha="center", va="top", fontsize=11.5, color=INK)
+ax.text(xip1, -0.42, "$x_{i+1}$", ha="center", va="top", fontsize=11.5,
+        color=INK)
+ax.text(xi, -0.95, "$x_0^e$", ha="center", va="top", fontsize=11.5,
+        color=MESHCLR)
+ax.text(xip1, -0.95, "$x_1^e$", ha="center", va="top", fontsize=11.5,
+        color=MESHCLR)
+ax.text(xi - 0.1, 0.88, "$N_0^e$", color=MESHCLR, fontsize=12, ha="center")
+ax.text(xip1 + 0.1, 0.88, "$N_1^e$", color=MESHCLR, fontsize=12, ha="center")
+tidy(ax)
+ax.set_xlim(-0.9, 2.9)
+ax.set_ylim(-1.4, 1.4)
+fig_local_path = save(fig, "C8_Fig2_LocalView.png")
+```
+
+![](`{python} fig_local_path`){#fig-c8-local width=45%}
+
+We want to solve integrals like
+
+::: {.derivation}
+$$
+\int_{x_i}^{x_{i+1}} N_{i,x}\,N_{i+1,x}\;dx = \int_{x_0^e}^{x_1^e} N_{0,x}^e\,N_{1,x}^e\;dx
+$$
+:::
+
+::: {.step}
+and similarly $\int_{x_i}^{x_{i+1}} N_{i+s,x}N_{i+t,x}\,dx
+= \int_{x_0^e}^{x_1^e} N_{s,x}^e N_{t,x}^e\,dx$ for $s,t \in \{0,1\}$: the integral only
+depends on the **local** shape of the basis functions restricted to that one element, not
+on which global element it happens to be. This is why we can compute a small "element"
+integral once and reuse the recipe everywhere. Likewise for load terms:
+:::
+
+::: {.derivation}
+$$
+\int_{x_i}^{x_{i+1}} N_i\,f\;dx = \int_{x_0^e}^{x_1^e} N_0^e\,f\;dx
+\qquad\qquad
+\int_{x_i}^{x_{i+1}} N_{i+1}\,f\;dx = \int_{x_0^e}^{x_1^e} N_1^e\,f\;dx
+$$
+:::
+
+# Numerical quadrature
+
+Let $p(x)$ be a function. How can we solve $\int_a^b p\;dx$ in general on a computer?
+$\to$ **numerical quadrature.**
+
+::: {.step}
+**Example: Riemann sums.** Sum a bunch of bins with height $h_i$, base length $B_i$:
+$\sum_i h_i B_i \approx$ area/integral, where $h_i = p(x_i)$.
+:::
+
+```{python fig_riemann}
+#| echo: false
+#| output: false
+
+def p(xv):
+    return 1.2 + 0.5 * np.sin(1.6 * xv) + 0.15 * xv
+
+
+a_, b_ = 0.2, 5.6
+xf = np.linspace(a_, b_, 400)
+n_bins = 9
+edges = np.linspace(a_, b_, n_bins + 1)
+
+fig, ax = plt.subplots(figsize=(6.6, 3.4))
+ax.plot(xf, p(xf), color=BDRYCLR, lw=2.0, zorder=3)
+for i in range(n_bins):
+    xm = 0.5 * (edges[i] + edges[i + 1])
+    ax.bar(edges[i], p(xm), width=edges[i + 1] - edges[i], align="edge",
+           color=DOMCLR, edgecolor=MESHCLR, lw=1.0, zorder=1)
+ax.text(a_, p(a_) + 0.25, "$p(x)$", color=BDRYCLR, fontsize=12)
+ax.set_xlabel("$x$", fontsize=12)
+ax.set_xlim(a_ - 0.1, b_ + 0.1)
+ax.set_ylim(0, 2.2)
+ax.spines[["top", "right"]].set_visible(False)
+ax.set_xticks([a_, b_]); ax.set_xticklabels(["$a$", "$b$"])
+ax.set_yticks([])
+fig_riemann_path = save(fig, "C8_Fig3_Riemann.png")
+```
+
+![](`{python} fig_riemann_path`){#fig-c8-riemann width=68%}
+
+```{python check_riemann}
+#| echo: false
+#| output: false
+
+# a fine enough Riemann sum should approximate the true integral well
+exact = np.trapezoid(p(np.linspace(a_, b_, 400001)), np.linspace(a_, b_, 400001))
+edges_fine = np.linspace(a_, b_, 2001)
+riemann = sum(p(0.5 * (edges_fine[i] + edges_fine[i + 1])) *
+              (edges_fine[i + 1] - edges_fine[i]) for i in range(2000))
+assert abs(riemann - exact) / abs(exact) < 1e-3
+```
+
+We want to pick some ideal choice of quadrature rule for **polynomial basis functions**:
+
+::: {.derivation}
+$$
+\int_a^b p(x)\;dx = \sum_{g=0}^{n_g - 1} w_g\,p(x_g)
+$$
+:::
+
+::: {.step}
+for some polynomial degree, where $w_g$ and $x_g$ are special points and weights — the
+subject of the next class.
+:::

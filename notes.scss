@@ -1,0 +1,30 @@
+/*-- scss:defaults --*/
+
+/*-- scss:rules --*/
+
+// These notes are written in a single ink, so there is no in-class/pre-class
+// distinction to preserve -- unlike CE 321. `.step` and `.notes` carry the
+// indentation the handwritten pages use to show hierarchy.
+.step {
+  margin-left: 2.0rem;
+}
+
+.notes ul {
+  list-style: none;
+  padding-left: 1.4rem;
+}
+.notes > ul {
+  padding-left: 0.4rem;
+}
+.notes li {
+  margin: 0.18rem 0;
+}
+
+// A derivation chain: each line a consequence of the one above it.
+.derivation {
+  margin-left: 1.2rem;
+}
+
+figure { margin-top: 1.1rem; margin-bottom: 1.1rem; }
+
+h1, h2, h3 { margin-top: 1.9rem; }
