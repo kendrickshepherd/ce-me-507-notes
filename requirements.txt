@@ -1,0 +1,5 @@
+jupyter
+matplotlib>=3.6
+numpy>=1.22
+PyYAML
+git+https://github.com/kendrickshepherd/structplot.git@v0.1.0

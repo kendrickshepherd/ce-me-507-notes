@@ -1,2 +1,9 @@
 /.quarto/
 **/*.quarto_ipynb
+_book/
+generated_images/
+**/*_files/
+__pycache__/
+.DS_Store
+Class_PDFs/
+*.docx
