@@ -1,0 +1,1185 @@
+---
+title: "1D Poisson III: An Axially Loaded Rod"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import os
+import sys
+import math
+
+sys.path.append('.')
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon as MplPolygon, Rectangle, Ellipse
+
+from notes_style import (use_chapter, save, tidy, dim_x,
+                         INK, LOADCLR, REACTCLR, DIMCLR,
+                         DOMCLR, BDRYCLR, FLUXCLR)
+
+IMGDIR = use_chapter("Poisson1D_Rod")
+
+# ---- the worked example used throughout this page (SI units) ---------------
+# An end-bearing concrete pile: loaded at its head, resisted along its shaft by
+# skin friction, and seated on rock at its toe.  x runs DOWN the pile.
+L    = 10.0          # m    pile length
+E    = 30.0e9        # Pa   concrete
+A    = 0.30 * 0.30   # m^2  square pile, 300 mm x 300 mm
+EA   = E * A         # N
+P    = 900.0e3       # N    column load on the head, pointing down (+x)
+fsk  = -40.0e3       # N/m  skin friction, pointing up (-x)
+ROD  = "#e2e2e2"     # the rod's body
+SOIL = "#efe3cf"
+ROCK = "#c9c3b8"
+
+
+def arrow(ax, p_from, p_to, color=INK, lw=1.8, ms=13, z=6, style="-|>"):
+    ax.annotate("", xy=p_to, xytext=p_from,
+                arrowprops=dict(arrowstyle=style, color=color, lw=lw,
+                                mutation_scale=ms, shrinkA=0, shrinkB=0),
+                zorder=z)
+
+
+def graph(ax, xlabel=None, ylabel=None):
+    """A plotted function: left and bottom axes only."""
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+    for s in ("left", "bottom"):
+        ax.spines[s].set_linewidth(0.9)
+    if xlabel:
+        ax.set_xlabel(xlabel, fontsize=11)
+    if ylabel:
+        ax.set_ylabel(ylabel, fontsize=11)
+    ax.tick_params(labelsize=9.5)
+
+
+def box(ax, x0, x1, y0, y1, fc=ROD, ec=INK, lw=1.3, z=1, alpha=1.0, **kw):
+    ax.add_patch(Rectangle((min(x0, x1), min(y0, y1)), abs(x1 - x0),
+                           abs(y1 - y0), facecolor=fc, edgecolor=ec, lw=lw,
+                           zorder=z, alpha=alpha, **kw))
+
+
+def hatch_wall(ax, x, y0, y1, side=1, n=7, size=0.28, color=INK, lw=1.3):
+    """A fixed support: a solid line with hatching on one side."""
+    ax.plot([x, x], [y0, y1], color=color, lw=lw * 1.4, zorder=6)
+    for yv in np.linspace(y0, y1, n):
+        ax.plot([x, x + side * size], [yv, yv - size], color=color, lw=lw,
+                zorder=6)
+
+
+def axial_arrows(ax, x0, x1, y, sign, n=7, size=0.45, color=LOADCLR, lw=1.3,
+                 scale=None):
+    """Small arrows along a bar showing a distributed axial load f.
+    `scale(x)` in [0, 1] optionally sizes each arrow by the local |f|."""
+    for xv in np.linspace(x0, x1, n + 2)[1:-1]:
+        s = size * (scale(xv) if scale else 1.0)
+        if s < 0.04:
+            continue
+        arrow(ax, (xv - sign * s / 2, y), (xv + sign * s / 2, y), color=color,
+              lw=lw, ms=9)
+```
+
+This page is the companion to [1D Poisson I: Heat Conduction Through a Wall](Poisson1D_Heat.qmd).
+Both read Hughes' one-dimensional model problem,
+
+::: {.derivation}
+$$
+(\mathrm{S}) \qquad
+\begin{aligned}
+&\text{Given } f : \bar\Omega \to \RR \text{ and constants } g \text{ and } h,
+ \text{ find } u : \bar\Omega \to \RR \text{ such that} \\[2pt]
+&\qquad u_{,xx} + f = 0 \quad \text{on } \Omega = \,]0,1[ \\
+&\qquad u(1) = g \\
+&\qquad -u_{,x}(0) = h
+\end{aligned}
+$$
+:::
+
+or, with the length and the material constant put back, as in [Class 4](4_Class.qmd),
+
+::: {.derivation}
+$$
+-\left(K u_{,x}\right)_{,x} = f \quad \text{in } \Omega = \,]0, L[
+\qquad\qquad
+u = g \quad \text{on } \Gamma_g
+\qquad\qquad
+\left(K u_{,x}\right) n = h \quad \text{on } \Gamma_h
+$$
+:::
+
+On this page $u$ is an **axial displacement** and $K = EA$ is the **axial stiffness**.
+The equations are letter-for-letter those of the wall. The difference is in what $h$
+*means*, and it changes the sign of $h$ in a way that trips people up; see
+[the boundary conditions](#sec-rod-neumann) below.
+
+## The physical problem
+
+```{python fig_pile}
+#| echo: false
+#| output: false
+
+fig, (ax, bx) = plt.subplots(1, 2, figsize=(10.4, 5.6),
+                             gridspec_kw=dict(width_ratios=[1.0, 1.35]))
+
+# ---- the pile in the ground
+top, toe = 0.35, -6.0
+box(ax, -2.6, 2.6, toe, 0.0, fc=SOIL, ec="none", z=0)
+box(ax, -2.6, 2.6, toe - 1.3, toe, fc=ROCK, ec="none", z=0, hatch="xx")
+ax.plot([-2.6, 2.6], [0, 0], color="#8a6d3b", lw=1.6, zorder=1)
+ax.text(-2.5, 0.08, "ground", fontsize=9.5, color="#8a6d3b", va="bottom")
+ax.text(-2.5, toe - 1.05, "rock", fontsize=10, color="#5a544a", va="center",
+        bbox=dict(fc=ROCK, ec="none", pad=1.0))
+box(ax, -0.3, 0.3, toe, top, fc="#d9d9d9", ec=INK, lw=1.5, z=3)
+arrow(ax, (0, top + 1.6), (0, top), color=LOADCLR, lw=2.6, ms=17)
+ax.text(0.15, top + 1.0, "$P$ = 900 kN\n(column load)", ha="left",
+        va="center", fontsize=10.5, color=LOADCLR)
+for yv in np.linspace(toe + 0.5, -0.5, 6):
+    for xs in (-0.52, 0.52):
+        arrow(ax, (xs, yv - 0.3), (xs, yv + 0.3), color=REACTCLR, lw=1.3,
+              ms=9)
+ax.text(-0.75, -3.0, "skin\nfriction", ha="right", va="center",
+        fontsize=10.5, color=REACTCLR)
+ax.text(-0.4, toe - 0.35, "toe on rock: $u(L) = 0$", ha="right",
+        va="center", fontsize=9.5, color="#2f4f6f")
+# x runs down the pile
+arrow(ax, (1.75, top), (1.75, toe - 0.9), color=INK, lw=1.2, ms=11)
+ax.text(1.9, toe - 0.9, "$x$", ha="left", va="center", fontsize=13)
+ax.text(1.9, top, "$x = 0$", ha="left", va="center", fontsize=10.5)
+ax.text(1.9, toe, "$x = L$ = 10 m", ha="left", va="center", fontsize=10.5)
+ax.set_title("an end-bearing pile", fontsize=12)
+tidy(ax)
+ax.set_xlim(-2.7, 3.5)
+ax.set_ylim(toe - 1.4, top + 2.0)
+
+# ---- the same thing as a 1D model, laid on its side
+Lb = 6.0
+box(bx, 0, Lb, -0.28, 0.28, fc="#d9d9d9", ec=INK, lw=1.5, z=2)
+arrow(bx, (-1.5, 0), (0, 0), color=LOADCLR, lw=2.6, ms=17)
+bx.text(-0.8, 0.25, "$h$ = +900 kN", ha="center", va="bottom", fontsize=11,
+        color=LOADCLR)
+axial_arrows(bx, 0.0, Lb, 0.62, -1, n=7, color=REACTCLR)
+bx.text(Lb / 2, 0.95, "$f$ = −40 kN/m (points toward $-x$)", ha="center",
+        va="bottom", fontsize=11, color=REACTCLR)
+hatch_wall(bx, Lb, -0.75, 0.75, side=1, n=6, size=0.3)
+bx.text(Lb + 0.45, 0.0, "$u(L) = g = 0$", ha="left", va="center",
+        fontsize=11, color=BDRYCLR)
+arrow(bx, (0, -1.55), (Lb + 0.9, -1.55), color=INK, lw=1.2, ms=11)
+bx.text(Lb + 1.0, -1.55, "$x$", ha="left", va="center", fontsize=13)
+bx.text(0, -1.7, "$x=0$", ha="center", va="top", fontsize=10.5)
+bx.text(Lb, -1.7, "$x=L$", ha="center", va="top", fontsize=10.5)
+bx.text(Lb / 2, -0.05, r"$E$ = 30 GPa,  $A$ = 0.09 m²", ha="center",
+        va="center", fontsize=10.5)
+bx.set_title("the 1D model: turn $x$ to point right", fontsize=12)
+tidy(bx)
+bx.set_xlim(-2.2, Lb + 2.8)
+bx.set_ylim(-2.4, 2.2)
+fig.tight_layout(w_pad=2.0)
+fig_pile_path = save(fig, "R_Fig1_Pile.png")
+```
+
+![A concrete pile carrying a column load to rock. The load comes in at the head, part of
+it is shed into the soil along the shaft by friction, and the rest is delivered to the rock
+at the toe. On the right, the same pile as a one-dimensional model.](`{python} fig_pile_path`){#fig-r-pile width=98%}
+
+The pile is long and slender, and the loads act along its axis, so the only motion that
+matters is along the axis. Every cross-section at depth $x$ moves the same distance
+$u(x)$ down the pile: one number per cross-section, a function of one variable.
+
+| What happens physically | Where | Becomes |
+|---|---|---|
+| Soil grips the shaft and resists its downward motion | throughout $\Omega$ | the forcing $f$ |
+| The toe sits on rock that does not move | $x = L$ | a Dirichlet condition $u = g = 0$ |
+| The column pushes down on the head with a known force | $x = 0$ | a Neumann condition $(EA\,u_{,x})\,n = h$ |
+
+Nothing about the equation cares that the pile is vertical. $x$ can point any way, as
+long as every sign is read relative to it. Here $+x$ is **down**.
+
+## The one-dimensional domain
+
+```{python fig_domain}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(7.4, 2.3))
+Ld = 6.0
+box(ax, 0, Ld, -0.18, 0.18, fc=ROD, ec=INK)
+ax.text(Ld / 2, 0.36, r"$\Omega$", ha="center", va="bottom", fontsize=17)
+for xv, n, lab in ((0.0, -1, "$x=0$"), (Ld, 1, "$x=L$")):
+    ax.plot([xv], [0], "o", color=INK, ms=8, zorder=6)
+    ax.text(xv, -0.4, lab, ha="center", va="top", fontsize=11.5)
+    arrow(ax, (xv, 0), (xv + 1.1 * n, 0), color=REACTCLR, lw=1.6, ms=12)
+    ax.text(xv + 1.25 * n, 0.0, "$n=%+d$" % n, ha="left" if n > 0 else "right",
+            va="center", fontsize=12, color=REACTCLR)
+ax.text(Ld / 2, -0.95,
+        r"$\Omega = \, ]0, L[ \qquad \bar\Omega = [0, L] \qquad "
+        r"\Gamma = \{0, L\} = \Gamma_g \cup \Gamma_h$",
+        ha="center", va="top", fontsize=13)
+tidy(ax)
+ax.set_xlim(-2.9, Ld + 2.9)
+ax.set_ylim(-1.55, 0.85)
+fig_domain_path = save(fig, "R_Fig2_Domain.png")
+```
+
+![The same domain as for the wall: the open interval $\Omega$, its two end points
+$\Gamma$, and the outward unit normal at each.](`{python} fig_domain_path`){#fig-r-domain width=78%}
+
+::: {.step .notes}
+- $\Omega = \,]0, L[$ is the inside of the rod; $\bar\Omega = [0, L]$ adds its two ends.
+- $\Gamma = \{0, L\}$, with outward normals $n = -1$ at $x = 0$ and $n = +1$ at $x = L$.
+- Each end gets exactly one condition: its **displacement** is known, or the **force on
+  it** is known. $\Gamma = \Gamma_g \cup \Gamma_h$, $\Gamma_g \cap \Gamma_h = \emptyset$.
+:::
+
+## The quantities and their units
+
+| Symbol | Meaning | SI units | This example |
+|---|---|---|---|
+| $x$ | position along the axis | m | $0 \le x \le L$, down the pile |
+| $L$ | length | m | 10 m |
+| $u(x)$ | axial displacement, positive toward $+x$ | m (report in mm) | unknown |
+| $\varepsilon = u_{,x}$ | axial strain | m/m (dimensionless) | unknown |
+| $\sigma = E\varepsilon$ | axial stress, tension positive | Pa (MPa) | unknown |
+| $E$ | Young's modulus | Pa (GPa) | 30 GPa, concrete |
+| $A$ | cross-sectional area | m² | 0.09 m² (300 × 300 mm) |
+| $K = EA$ | axial stiffness | N | $2.7\times10^{9}$ N |
+| $N = EA\,u_{,x}$ | internal axial force, tension positive | N (kN) | unknown |
+| $f(x)$ | distributed axial load per unit length, positive toward $+x$ | N/m (kN/m) | −40 kN/m |
+| $g$ | prescribed end displacement | m | 0 |
+| $h$ | prescribed end force, positive toward $+x$ | N (kN) | +900 kN |
+
+::: {.step}
+Hughes' elasticity chapter writes the same problem **per unit area**: $\sigma_{,x} + b = 0$,
+with a body force $b$ in N/m³ and a traction $h$ in Pa. For a rod of constant $A$, multiply
+through by $A$: $f = bA$ in N/m, and $h$ becomes a force in N. The pictures are the same.
+:::
+
+## Where the differential equation comes from
+
+### Kinematics: displacement and strain
+
+```{python fig_kinematics}
+#| echo: false
+#| output: false
+
+Lk, K = 6.0, 1.0
+fk, hk = 0.10, 0.25
+uk = lambda x: (hk + fk * Lk) * x / K - fk * x ** 2 / (2 * K)
+xs = np.linspace(0, Lk, 7)
+exag = 1.0
+
+fig, axes = plt.subplots(2, 1, figsize=(8.4, 6.2),
+                         gridspec_kw=dict(height_ratios=[1.0, 1.25]))
+ax = axes[0]
+y0, y1 = 1.5, 0.0
+box(ax, 0, Lk, y0 - 0.2, y0 + 0.2, fc=ROD)
+box(ax, 0, Lk + uk(Lk), y1 - 0.2, y1 + 0.2, fc="#f3d6d0", ec=INK)
+hatch_wall(ax, 0, y1 - 0.5, y0 + 0.5, side=-1, n=9, size=0.25)
+for i, xv in enumerate(xs):
+    xd = xv + uk(xv)
+    ax.plot([xv, xv], [y0 - 0.2, y0 + 0.2], color=INK, lw=1.4, zorder=3)
+    ax.plot([xd, xd], [y1 - 0.2, y1 + 0.2], color=INK, lw=1.4, zorder=3)
+    ax.plot([xv, xd], [y0 - 0.2, y1 + 0.2], color=DIMCLR, lw=0.8, ls=":")
+    ax.text(xv + (0.12 if i == 0 else 0), y0 + 0.28, "$x_{%d}$" % i,
+            ha="left" if i == 0 else "center", va="bottom", fontsize=10.5)
+i = 4
+arrow(ax, (xs[i], y1 - 0.36), (xs[i] + uk(xs[i]), y1 - 0.36), color=LOADCLR,
+      lw=1.6, ms=11)
+ax.text(xs[i] + uk(xs[i]) / 2, y1 - 0.45, "$u(x_4)$", ha="center", va="top",
+        fontsize=11, color=LOADCLR)
+arrow(ax, (Lk + uk(Lk), y1), (Lk + uk(Lk) + 0.9, y1), color=LOADCLR, lw=2.2,
+      ms=14)
+ax.text(Lk + 0.25, y0, "before", ha="left", va="center", fontsize=10.5,
+        color=DIMCLR)
+ax.text(Lk + uk(Lk) + 1.0, y1 + 0.32, "after", ha="left", va="bottom",
+        fontsize=10.5, color=DIMCLR)
+tidy(ax)
+ax.set_xlim(-0.6, Lk + uk(Lk) + 1.8)
+ax.set_ylim(-1.0, 2.2)
+
+ax = axes[1]
+xx = np.linspace(0, Lk, 200)
+ax.plot(xx, uk(xx), color=LOADCLR, lw=2.4)
+ax.plot(xs, uk(xs), "o", color=LOADCLR, ms=6)
+x0, run = 2.0, 1.2
+s = (hk + fk * Lk) / K - fk * x0 / K
+ax.plot([x0, x0 + run, x0 + run], [uk(x0), uk(x0), uk(x0) + s * run],
+        color=INK, lw=1.2)
+ax.plot([x0 - 0.8, x0 + run + 0.4], [uk(x0) - 0.8 * s, uk(x0) + (run + 0.4) * s],
+        color=INK, lw=1.2, ls="--")
+ax.text(x0 + run / 2, uk(x0) - 0.05, r"$\Delta x$", ha="center", va="top",
+        fontsize=11)
+ax.text(x0 + run + 0.08, uk(x0) + s * run / 2, r"$\Delta u$", ha="left",
+        va="center", fontsize=11)
+ax.text(x0 + run + 0.6, uk(x0) + s * (run + 0.4) - 0.05,
+        r"strain $\varepsilon = \lim\ \Delta u / \Delta x = u_{,x}$",
+        ha="left", va="top", fontsize=11.5)
+ax.set_xticks(xs)
+ax.set_xticklabels(["$x_{%d}$" % i for i in range(len(xs))])
+ax.set_yticks([])
+ax.set_xlim(-0.1, Lk + 0.1)
+graph(ax, "$x$", "displacement $u(x)$")
+fig.tight_layout(h_pad=0.6)
+fig_kin_path = save(fig, "R_Fig3_Kinematics.png")
+```
+
+![Top: a rod before and after loading (displacements greatly exaggerated). Each material
+point $x_i$ moves to $x_i + u(x_i)$. Bottom: the same displacements as a function. Where
+the curve is steep, neighbouring points separate fast — the rod is stretched
+there.](`{python} fig_kin_path`){#fig-r-kinematics width=84%}
+
+The **displacement** $u(x)$ is how far the material point that started at $x$ has moved
+along the axis. Two neighbouring points $\Delta x$ apart end up $\Delta x + \Delta u$
+apart, so the **strain** — change in length per unit length — is the slope of the
+displacement:
+
+::: {.derivation}
+$$
+\varepsilon = \lim_{\Delta x \to 0} \frac{\left(\Delta x + \Delta u\right) - \Delta x}{\Delta x}
+= u_{,x}
+\qquad\qquad
+u_{,x} > 0 \;\text{stretched (tension)}, \qquad u_{,x} < 0 \;\text{shortened (compression)}
+$$
+:::
+
+::: {.step}
+A **uniform** shift of the whole rod, $u = $ constant, has $u_{,x} = 0$: it moves the rod
+without straining it. Hold on to this; it is why a rod with no support is not a solvable
+problem.
+:::
+
+### Material: Hooke's law, from stress to force
+
+```{python fig_hooke}
+#| echo: false
+#| output: false
+
+fig, (ax, bx) = plt.subplots(1, 2, figsize=(9.6, 3.4),
+                             gridspec_kw=dict(width_ratios=[1.0, 1.35]))
+eps = np.linspace(0, 0.0012, 50)
+ax.plot(eps * 1e3, 30e9 * eps / 1e6, color=INK, lw=2.4)
+ax.plot([0.4, 0.8, 0.8], [12, 12, 24], color=LOADCLR, lw=1.2)
+ax.text(0.82, 18, "$E$", color=LOADCLR, fontsize=13, va="center")
+ax.text(0.05, 33, r"$\sigma = E\,\varepsilon$", fontsize=13, va="top")
+ax.set_xlim(0, 1.25)
+ax.set_ylim(0, 37)
+graph(ax, r"strain $\varepsilon$ (×10⁻³)", r"stress $\sigma$ (MPa)")
+ax.set_title("linear elastic material ($E$ = 30 GPa)", fontsize=11)
+
+# a rod cut open: stress spread over the section adds up to N
+box(bx, 0, 3.0, -0.8, 0.8, fc=ROD)
+bx.add_patch(Ellipse((3.0, 0), 0.5, 1.6, facecolor="#cfcfcf", edgecolor=INK,
+                     lw=1.3, zorder=2))
+for yv in np.linspace(-0.62, 0.62, 7):
+    arrow(bx, (3.0 + 0.1 * math.sqrt(max(0, 1 - (yv / 0.8) ** 2)), yv),
+          (3.75, yv), color=LOADCLR, lw=1.1, ms=8)
+bx.text(3.85, 0.95, r"$\sigma$ on each bit of $A$", ha="left", va="bottom",
+        fontsize=10.5, color=LOADCLR)
+arrow(bx, (4.75, 0), (6.1, 0), color=REACTCLR, lw=2.8, ms=17)
+bx.text(5.45, -0.25, r"$N = \sigma A = EA\,u_{,x}$", ha="center", va="top",
+        fontsize=12.5, color=REACTCLR)
+bx.text(4.4, 0.0, "=", fontsize=16, ha="center", va="center")
+bx.text(1.5, 0, "$A$", fontsize=13, ha="center", va="center")
+tidy(bx)
+bx.set_xlim(-0.2, 6.4)
+bx.set_ylim(-1.4, 1.5)
+fig.tight_layout(w_pad=2.5)
+fig_hooke_path = save(fig, "R_Fig4_Hooke.png")
+```
+
+![Left: a linear elastic material, $\sigma = E\varepsilon$. Right: the stress on a cut,
+added up over the cross-section, is the internal axial force $N$ — drawn here in
+tension, pulling outward on the cut face.](`{python} fig_hooke_path`){#fig-r-hooke width=90%}
+
+::: {.derivation}
+$$
+N = \sigma A = E A\,\varepsilon = EA\,u_{,x}
+\qquad\qquad [\text{Pa}\cdot\text{m}^2 = \text{N}]
+$$
+:::
+
+This is the rod's version of Fourier's law, with one sign difference: here there is **no
+minus sign**. Heat flows *down* the temperature gradient, but a rod pulls back *along*
+its stretch.
+
+### Equilibrium of a thin slice
+
+```{python fig_slice}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(8.2, 4.4))
+Ld = 8.0
+box(ax, 0, Ld, 3.2, 3.8)
+xa, xb = 4.3, 5.0
+box(ax, xa, xb, 3.2, 3.8, fc=LOADCLR, ec=LOADCLR, z=2, alpha=0.45)
+ax.text(-0.15, 3.5, "$x=0$", ha="right", va="center", fontsize=11)
+ax.text(Ld + 0.15, 3.5, "$x=L$", ha="left", va="center", fontsize=11)
+
+Z0, Z1, Y0, Y1 = 2.4, 5.9, 0.0, 1.9
+ax.plot([xa, Z0], [3.2, Y1], color=LOADCLR, lw=0.9, ls="--")
+ax.plot([xb, Z1], [3.2, Y1], color=LOADCLR, lw=0.9, ls="--")
+box(ax, Z0, Z1, Y0, Y1, fc="#f7e1dd", ec=LOADCLR, lw=1.6)
+arrow(ax, (Z0 + 0.02, 0.95), (Z0 - 1.9, 0.95), color=REACTCLR, lw=2.4, ms=16)
+ax.text(Z0 - 1.95, 1.15, "$N(x)$", ha="left", va="bottom", fontsize=12.5,
+        color=REACTCLR)
+arrow(ax, (Z1 - 0.02, 0.95), (Z1 + 1.9, 0.95), color=REACTCLR, lw=2.4, ms=16)
+ax.text(Z1 + 1.95, 1.15, r"$N(x+\Delta x)$", ha="right", va="bottom",
+        fontsize=12.5, color=REACTCLR)
+arrow(ax, ((Z0 + Z1) / 2 - 0.8, 0.95), ((Z0 + Z1) / 2 + 0.8, 0.95),
+      color=LOADCLR, lw=2.4, ms=16)
+ax.text((Z0 + Z1) / 2, 1.15, r"$f\,\Delta x$", ha="center", va="bottom",
+        fontsize=12.5, color=LOADCLR)
+ax.text(Z0, -0.12, "$x$", ha="center", va="top", fontsize=12)
+ax.text(Z1, -0.12, r"$x+\Delta x$", ha="center", va="top", fontsize=12)
+ax.text((Z0 + Z1) / 2, -0.62, "(tension drawn positive: arrows pull away from each face)",
+        ha="center", va="top", fontsize=9.5, color=DIMCLR)
+tidy(ax)
+ax.set_xlim(-1.0, Ld + 1.0)
+ax.set_ylim(-1.1, 4.0)
+fig_slice_path = save(fig, "R_Fig5_Slice.png")
+```
+
+![Free body of a slice of length $\Delta x$. The rest of the rod pulls on each face with
+the internal force $N$; the distributed load contributes $f\,\Delta x$.](`{python} fig_slice_path`){#fig-r-slice width=80%}
+
+Sum the forces in $+x$. The rod to the left pulls the slice toward $-x$ with $N(x)$; the
+rod to the right pulls it toward $+x$ with $N(x+\Delta x)$:
+
+::: {.derivation}
+$$
+-N(x) + N(x + \Delta x) + f\,\Delta x = 0
+\qquad\xrightarrow[\;\text{divide by } \Delta x,\; \Delta x \to 0\;]{}\qquad
+N_{,x} + f = 0
+$$
+:::
+
+::: {.step}
+Read it as **"the internal force drops by exactly the load applied along the way"**:
+$N_{,x} = -f$. In the pile, friction pushes up ($f < 0$), so $N$ grows toward
+$+x$. The compression is largest at the head and the soil takes some of it off as you
+go down.
+:::
+
+Substituting $N = EA\,u_{,x}$ gives the differential equation of the strong form:
+
+::: {.derivation}
+$$
+-\left(EA\,u_{,x}\right)_{,x} = f
+\quad\Longleftrightarrow\quad
+\left(EA\,u_{,x}\right)_{,x} + f = 0
+\quad\xrightarrow{\;EA \text{ constant}\;}\quad
+EA\,u_{,xx} + f = 0
+\quad\xrightarrow{\;EA = 1\;}\quad
+u_{,xx} + f = 0 \;\;\text{(Hughes)}
+$$
+:::
+
+### What the equation says about the shape of $u$
+
+```{python fig_curvature}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(7.6, 4.3))
+xx = np.linspace(0, L, 200)
+u0, uL = 0.0, 1.0e-3
+for fv, col, lab in ((+100e3, LOADCLR, "$f$ = +100 kN/m (toward $+x$): concave down"),
+                     (0, INK, "$f = 0$: straight line (uniform strain)"),
+                     (-100e3, REACTCLR, "$f$ = −100 kN/m (toward $-x$): concave up")):
+    u = u0 + (uL - u0) * xx / L + fv / (2 * EA) * xx * (L - xx)
+    ax.plot(xx, u * 1e3, color=col, lw=2.2, label=lab)
+for xv, uv in ((0, u0), (L, uL)):
+    ax.plot([xv], [uv * 1e3], "o", color=BDRYCLR, ms=8, zorder=5)
+ax.text(-0.3, 0.0, "$u(0)$ = 0", color=BDRYCLR, fontsize=10.5, ha="right",
+        va="center")
+ax.text(L + 0.3, 1.0, "$u(L)$ = 1 mm", color=BDRYCLR, fontsize=10.5,
+        ha="left", va="center")
+ax.set_xlim(-2.6, L + 2.9)
+ax.set_xticks(range(0, 11, 2))
+ax.legend(frameon=False, fontsize=10.5, loc="upper center",
+          bbox_to_anchor=(0.5, -0.2))
+graph(ax, "$x$ (m)", "$u$ (mm)")
+fig_curv_path = save(fig, "R_Fig6_Curvature.png")
+```
+
+![Three rods with the same end displacements and different distributed loads
+($EA = 2.7\times10^9$ N, $L$ = 10 m). With no load the displacement is linear and the strain
+is the same everywhere; a load bows it.](`{python} fig_curv_path`){#fig-r-curvature width=74%}
+
+::: {.step .notes}
+- $u_{,xx} = -f/EA$: the load sets the **curvature** of the displacement, just as heat
+  generation set the curvature of the temperature.
+- $f = 0$: $u$ is linear, $\varepsilon$ and $N$ are constant — the familiar
+  $\delta = PL/EA$ bar.
+- $f \ne 0$: the strain, and therefore $N$, changes along the rod at the rate $-f$.
+:::
+
+## The forcing function $f$
+
+$f(x)$ is an axial load **per unit length** of rod, in N/m, positive when it points
+toward $+x$. It is the only data that acts in the interior of $\Omega$. Integrated over
+the length, it is the total distributed force, in N:
+
+::: {.derivation}
+$$
+\int_0^L f\,dx \quad \left[\tfrac{\text{N}}{\text{m}}\cdot\text{m} = \text{N}\right]
+\qquad\text{e.g.}\qquad (-40\ \text{kN/m})(10\ \text{m}) = -400\ \text{kN}
+\quad\text{(400 kN carried by friction, upward)}
+$$
+:::
+
+```{python fig_forcing}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(1, 3, figsize=(10.4, 4.6))
+
+# (1) a rod hanging under its own weight: x down, f = rho g A, uniform
+ax = axes[0]
+box(ax, -1.2, 1.2, 0.0, 0.25, fc="#dcdcdc", ec="none", hatch="////")
+ax.plot([-1.2, 1.2], [0, 0], color=INK, lw=1.8)
+box(ax, -0.15, 0.15, -5.0, 0.0, fc=ROD, lw=1.3)
+for yv in np.linspace(-4.6, -0.5, 6):
+    arrow(ax, (0.45, yv + 0.28), (0.45, yv - 0.28), color=LOADCLR, lw=1.3,
+          ms=9)
+arrow(ax, (-0.7, -0.2), (-0.7, -1.4), color=INK, lw=1.1, ms=10)
+ax.text(-0.8, -1.4, "$x$", ha="right", va="center", fontsize=12)
+ax.text(0.65, -2.6, r"$f = \rho g A$" + "\n(own weight)", ha="left",
+        va="center", fontsize=11, color=LOADCLR)
+ax.text(0, -5.3, "steel, $A$ = 500 mm²:\n$f$ = 7850 × 9.81 × 0.0005\n= 38.5 N/m",
+        ha="center", va="top", fontsize=9.5)
+ax.set_title("hanging rod\n(uniform $f > 0$)", fontsize=11)
+tidy(ax)
+ax.set_xlim(-1.7, 2.3)
+ax.set_ylim(-7.3, 0.9)
+
+# (2) a friction pile: x down, f < 0, uniform
+ax = axes[1]
+box(ax, -1.2, 1.2, -5.0, 0.0, fc=SOIL, ec="none")
+ax.plot([-1.2, 1.2], [0, 0], color="#8a6d3b", lw=1.4)
+box(ax, -0.15, 0.15, -5.0, 0.3, fc="#d9d9d9", lw=1.3, z=2)
+for yv in np.linspace(-4.6, -0.5, 6):
+    for xs_ in (-0.4, 0.4):
+        arrow(ax, (xs_, yv - 0.28), (xs_, yv + 0.28), color=REACTCLR, lw=1.3,
+              ms=9)
+arrow(ax, (-0.7 - 0.3, 0.3), (-0.7 - 0.3, -0.9), color=INK, lw=1.1, ms=10)
+ax.text(-1.1, -0.9, "$x$", ha="right", va="center", fontsize=12)
+ax.text(0, -5.3, "shaft friction $\\tau$ × perimeter:\n$f = -\\tau p$\n"
+        "e.g. −33 kPa × 1.2 m = −40 kN/m", ha="center", va="top", fontsize=9.5)
+ax.set_title("pile in soil\n(uniform $f < 0$)", fontsize=11)
+tidy(ax)
+ax.set_xlim(-1.7, 1.7)
+ax.set_ylim(-7.3, 0.9)
+
+# (3) a spinning bar: x outward from the hub, f = rho A omega^2 x, growing
+ax = axes[2]
+ax.add_patch(plt.Circle((0, 0), 0.35, facecolor="#cfcfcf", edgecolor=INK,
+                        lw=1.3, zorder=3))
+box(ax, 0.0, 4.2, -0.15, 0.15, fc=ROD, lw=1.3, z=2)
+axial_arrows(ax, 0.3, 4.2, 0.55, +1, n=6, size=0.8,
+             scale=lambda x: x / 4.2)
+arc = np.linspace(0.3, 1.25, 30)
+ax.plot(1.1 * np.cos(arc), 1.1 * np.sin(arc), color=INK, lw=1.2)
+arrow(ax, (1.1 * np.cos(1.2), 1.1 * np.sin(1.2)),
+      (1.1 * np.cos(1.3), 1.1 * np.sin(1.3)), color=INK, lw=1.2, ms=10)
+ax.text(0.55, 1.25, r"$\omega$", fontsize=13)
+arrow(ax, (0.0, -0.7), (1.3, -0.7), color=INK, lw=1.1, ms=10)
+ax.text(1.4, -0.7, "$x$", ha="left", va="center", fontsize=12)
+ax.text(2.8, 0.95, r"$f = \rho A\,\omega^2 x$", ha="center", va="bottom",
+        fontsize=11, color=LOADCLR)
+ax.text(2.1, -1.3, "centrifugal load grows\nlinearly from the hub\n"
+        "(turbine blade, centrifuge arm)", ha="center", va="top", fontsize=9.5)
+ax.set_title("spinning bar\n(linear $f > 0$)", fontsize=11)
+tidy(ax)
+ax.set_xlim(-0.6, 4.6)
+ax.set_ylim(-4.0, 2.4)
+fig.tight_layout(w_pad=1.5)
+fig_forcing_path = save(fig, "R_Fig7_Forcing.png")
+```
+
+![Three distributed axial loads. Arrow length is proportional to $|f|$, and the sign of
+$f$ is read against the $x$ arrow drawn in each panel.](`{python} fig_forcing_path`){#fig-r-forcing width=98%}
+
+::: {.step .notes}
+- **Self-weight** of a vertical member: $f = \rho g A$. It is often negligible — 38.5 N/m
+  for a 500 mm² steel rod — but not for long hoist cables or tall columns.
+- **Skin friction** along a pile or ground anchor: the soil resists the motion, so $f$
+  points opposite to the motion.
+- **Inertial (centrifugal) load** on a spinning member: $f = \rho A\omega^2 x$, which
+  grows with distance from the hub.
+- Loads that act at a **point** (a bracket bolted halfway along) are not an $f$ in the
+  strong form: $f$ would have to be a delta function, and $u_{,xx}$ would not exist
+  there. The weak form handles them naturally; the strong form does not.
+:::
+
+## Boundary conditions
+
+Each end gets exactly one condition: either its **displacement** is known, or the
+**force applied to it** is known. Never both, and never neither.
+
+### Dirichlet: $u = g$ on $\Gamma_g$ — the displacement is known
+
+```{python fig_dirichlet}
+#| echo: false
+#| output: false
+
+fig, (ax, bx) = plt.subplots(1, 2, figsize=(10.0, 2.8))
+# a rigid support: g = 0
+box(ax, 0, 4.0, -0.25, 0.25)
+hatch_wall(ax, 4.0, -0.8, 0.8, side=1, n=7, size=0.3)
+ax.plot([4.0], [0], "o", color=BDRYCLR, ms=9, zorder=7)
+ax.text(3.8, -0.45, "$u(L) = g = 0$", ha="right", va="top", fontsize=12,
+        color=BDRYCLR)
+ax.text(2.0, 0.45, "rod", ha="center", va="bottom", fontsize=10.5,
+        color=DIMCLR)
+ax.set_title("rigid support (rock, a stiff wall):  $g = 0$", fontsize=11)
+tidy(ax)
+ax.set_xlim(-0.5, 5.3)
+ax.set_ylim(-1.7, 1.2)
+
+# a prescribed movement: a jack moves the end by g
+gd = 0.7
+box(bx, 0, 4.0 + gd, -0.25, 0.25, fc="#f3d6d0")
+box(bx, 0, 4.0, -0.25, 0.25, fc="none", ec=DIMCLR, lw=1.0, ls="--", z=3)
+box(bx, 4.0 + gd, 4.0 + gd + 0.35, -0.6, 0.6, fc="#b9c9da", ec=BDRYCLR,
+    lw=1.5, z=3)
+box(bx, 4.0 + gd + 0.35, 5.8, -0.2, 0.2, fc="#b9c9da", ec=BDRYCLR, lw=1.3,
+    z=3)
+hatch_wall(bx, 5.8, -0.8, 0.8, side=1, n=7, size=0.3)
+bx.text(5.0, 0.7, "jack", ha="center", va="bottom", fontsize=10.5,
+        color=BDRYCLR)
+arrow(bx, (4.0, -0.95), (4.0 + gd, -0.95), color=BDRYCLR, lw=1.6, ms=11,
+      style="<|-|>")
+bx.text(4.0 + gd / 2, -1.1, "$g$ = 2 mm", ha="center", va="top",
+        fontsize=12, color=BDRYCLR)
+bx.set_title("prescribed movement (support settlement, jacking):  $g \\neq 0$",
+             fontsize=11)
+tidy(bx)
+bx.set_xlim(-0.5, 6.5)
+bx.set_ylim(-1.7, 1.2)
+fig.tight_layout(w_pad=2.0)
+fig_dir_path = save(fig, "R_Fig8_Dirichlet.png")
+```
+
+![Two Dirichlet conditions. Left: a support that does not move. Right: an end driven a
+known distance, drawn exaggerated; the dashed outline is where the rod was.](`{python} fig_dir_path`){#fig-r-dirichlet width=96%}
+
+::: {.step .notes}
+- $g$ is a **displacement**, in m. $g = 0$ is the ordinary fixed support.
+- A Dirichlet condition pins the *value* of $u$ and says nothing about the slope, and so
+  nothing about the force there. The force the support supplies — the **reaction** — is
+  an output, found after solving: $N$ at that end.
+- It is an **essential** boundary condition. In the weak form, it is built into the trial
+  space $\mathcal{S}$.
+:::
+
+### Neumann: $(EA\,u_{,x})\,n = h$ on $\Gamma_h$ — the end force is known {#sec-rod-neumann}
+
+At an end with no support, the only thing holding the rod in equilibrium is the applied
+force. Take a sliver of rod right at the end. The applied force $h$ acts on its outer
+face, and the rest of the rod pulls on its inner face with $N$, toward the inside:
+
+::: {.derivation}
+$$
+\text{at } x = L:\quad h - N(L) = 0
+\qquad\qquad
+\text{at } x = 0:\quad h + N(0) = 0
+$$
+:::
+
+Both are one statement, $N\,n = h$. With $N = EA\,u_{,x}$, that is exactly the Neumann
+condition of the strong form:
+
+::: {.derivation}
+$$
+h = \sigma A\, n = \left(EA\,u_{,x}\right) n
+\qquad\Longrightarrow\qquad
+\text{at } x = 0:\; -EA\,u_{,x}(0) = h
+\qquad\qquad
+\text{at } x = L:\; +EA\,u_{,x}(L) = h
+$$
+:::
+
+::: {.callout-important}
+## $h$ means something different here than for the wall
+
+For the **rod**, $h = \sigma A\,n$ is the $x$-component of the applied **force vector**:
+$h > 0$ means the force points toward $+x$, **whichever end** it acts on. So $h > 0$
+**pushes** on the left end (compression) but **pulls** on the right end (tension).
+
+For the **wall**, $h = -q\,n$ is the heat flux **into** the body: $h > 0$ means heat
+enters, whichever face it acts on.
+
+The equations $\mp K u_{,x} = h$ are identical, so the *slopes* in the two problems
+behave identically. What changes is which way the arrow in the picture points.
+:::
+
+```{python fig_neumann}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(2, 3, figsize=(10.4, 6.4))
+W = 2.2
+titles = ["$h > 0$: force toward $+x$", "$h = 0$: free end",
+          "$h < 0$: force toward $-x$"]
+for i, side in enumerate(("left", "right")):
+    inside = +1 if side == "left" else -1
+    for j, hs in enumerate((+1, 0, -1)):
+        ax = axes[i, j]
+        push = hs * inside > 0
+        state = "stress-free" if hs == 0 else ("compression" if push else "tension")
+        # the displacement near the end, above the rod
+        slope = (-hs if side == "left" else hs) * 0.45
+        xs = np.linspace(0, inside * W, 50)
+        ax.plot(xs, 0.75 + slope * xs - 0.04 * xs ** 2, color=INK, lw=2.2,
+                zorder=4)
+        tt = np.array([0, inside * 1.4])
+        ax.plot(tt, 0.75 + slope * tt, color=LOADCLR, lw=1.3, ls="--",
+                zorder=4)
+        ax.plot([0], [0.75], "o", color=INK, ms=5, zorder=5)
+        ax.text(inside * W, 0.75 + slope * inside * W - 0.04 * W ** 2 + 0.22,
+                "$u$", fontsize=11, ha="right" if inside > 0 else "left")
+        ax.plot([0, 0], [-1.5, 1.95], color=DIMCLR, lw=0.8, ls=":")
+        # the rod itself, coloured by what the end force does to it
+        fc = {"tension": "#f3d6d0", "compression": "#d6e2f3",
+              "stress-free": ROD}[state]
+        box(ax, 0, inside * W, -1.15, -0.65, fc=fc, lw=1.2)
+        ax.text(inside * W / 2, -0.9, state, ha="center", va="center",
+                fontsize=10)
+        yA = -0.9
+        if hs != 0:
+            far = -inside * 1.35
+            p0, p1 = ((far, yA), (0, yA)) if push else ((0, yA), (far, yA))
+            arrow(ax, p0, p1, color=LOADCLR, lw=2.6, ms=16)
+            ax.text(far / 2, yA + 0.2, "push" if push else "pull",
+                    color=LOADCLR, fontsize=11, ha="center", va="bottom")
+        else:
+            ax.text(-inside * 0.7, yA, "nothing\napplied", color=DIMCLR,
+                    fontsize=9.5, ha="center", va="center")
+        if side == "left":
+            rel = {1: "< 0", 0: "= 0", -1: "> 0"}[hs]
+            eq = r"$-EA\,u_{,x}(0) = h \;\Rightarrow\; u_{,x}(0) %s$" % rel
+        else:
+            rel = {1: "> 0", 0: "= 0", -1: "< 0"}[hs]
+            eq = r"$EA\,u_{,x}(L) = h \;\Rightarrow\; u_{,x}(L) %s$" % rel
+        ax.text(0, -1.55, eq, ha="center", va="top", fontsize=11)
+        if i == 0:
+            ax.set_title(titles[j], fontsize=12, pad=10)
+        ax.set_xlim(-2.4, 2.4)
+        ax.set_ylim(-2.1, 2.0)
+        tidy(ax)
+fig.text(0.005, 0.74, "left end\n$x = 0$\n$n = -1$", ha="left", va="center",
+         fontsize=11.5)
+fig.text(0.005, 0.27, "right end\n$x = L$\n$n = +1$", ha="left", va="center",
+         fontsize=11.5)
+fig.subplots_adjust(left=0.09, right=0.99, wspace=0.08, hspace=0.18)
+fig_neu_path = save(fig, "R_Fig9_Neumann.png")
+```
+
+![The Neumann condition at either end of a rod. The black curve is the displacement near
+the end and the dashed red line its tangent — the strain there. Compare row by row with the
+same figure for the wall: the slopes are identical, but for the rod a positive $h$ always
+points toward $+x$, so on the right end it pulls, where for the wall it pushed heat
+in.](`{python} fig_neu_path`){#fig-r-neumann width=100%}
+
+::: {.step .notes}
+- $h$ is a **force**, in N, positive toward $+x$ (or, per unit area, a traction in Pa).
+- $h = 0$ is a **free end**: no force, so zero strain — the displacement curve arrives
+  flat.
+- The **magnitude** of the slope is $|h|/EA$. For the pile, $900\ \text{kN} / 2.7\times10^9\
+  \text{N} = 3.33\times10^{-4}$: the head is shortened by 0.33 mm per metre.
+- It is a **natural** boundary condition. In the weak form it appears as the boundary term
+  $w(0)\,h$.
+- A spring support, $h = -k_s\,u$, mixes value and slope. That is a Robin condition and is
+  not part of the model problem.
+:::
+
+### Which end gets which condition
+
+```{python fig_configs}
+#| echo: false
+#| output: false
+
+xx = np.linspace(0, L, 200)
+K = EA
+configs = [
+    ("(a)  Hughes: $\\Gamma_h = \\{0\\}$, $\\Gamma_g = \\{L\\}$ — the pile",
+     ("h", P), ("g", 0.0), fsk,
+     0.0 + P / K * (L - xx) + fsk / (2 * K) * (L ** 2 - xx ** 2)),
+    ("(b)  swapped: $\\Gamma_g = \\{0\\}$, $\\Gamma_h = \\{L\\}$ — the pile, mirrored",
+     ("g", 0.0), ("h", -P), -fsk,
+     0.0 + (-P + (-fsk) * L) / K * xx - (-fsk) / (2 * K) * xx ** 2),
+    ("(c)  both Dirichlet: $\\Gamma_g = \\{0, L\\}$, $\\Gamma_h = \\emptyset$",
+     ("g", 2.0e-3), ("g", 0.0), fsk,
+     2.0e-3 * (1 - xx / L) + fsk / (2 * K) * xx * (L - xx)),
+    ("(d)  both Neumann: $\\Gamma_h = \\{0, L\\}$, $\\Gamma_g = \\emptyset$",
+     ("h", P), ("h", -(P + fsk * L)), fsk, None),
+]
+
+fig, axes = plt.subplots(4, 2, figsize=(10.0, 11.0),
+                         gridspec_kw=dict(width_ratios=[1.0, 1.25]))
+for i, (title, bcL, bcR, fv, u) in enumerate(configs):
+    ax = axes[i, 0]
+    box(ax, 0, 3.0, -0.22, 0.22, fc="#d9d9d9")
+    axial_arrows(ax, 0, 3.0, 0.45, np.sign(fv), n=6, size=0.35,
+                 color=REACTCLR if fv < 0 else LOADCLR)
+    ax.text(1.5, -0.4, ("$f$ = %+.0f kN/m" % (fv / 1e3)).replace("-", "−"),
+            ha="center", va="top", fontsize=10,
+            color=REACTCLR if fv < 0 else LOADCLR)
+    for xv, (kind, val), inside in ((0.0, bcL, +1), (3.0, bcR, -1)):
+        if kind == "g":
+            hatch_wall(ax, xv, -0.55, 0.55, side=-inside, n=5, size=0.22)
+            ax.text(xv - inside * 0.25, 0.75, "$g$ = %.0f mm" % (val * 1e3),
+                    ha="center", va="bottom", fontsize=10.5, color=BDRYCLR)
+        else:
+            push = np.sign(val) * inside > 0
+            far = xv - inside * 1.2
+            p0, p1 = ((far, 0), (xv, 0)) if push else ((xv, 0), (far, 0))
+            arrow(ax, p0, p1, color=LOADCLR, lw=2.4, ms=15)
+            ax.text(xv - inside * 0.6, 0.35,
+                    ("$h$ = %+.0f\nkN" % (val / 1e3)).replace("-", "−"),
+                    ha="center", va="bottom", fontsize=10.5, color=LOADCLR)
+    ax.set_title(title, fontsize=11, loc="left")
+    tidy(ax)
+    ax.set_xlim(-1.6, 4.6)
+    ax.set_ylim(-1.1, 1.6)
+
+    ax = axes[i, 1]
+    ax.axhline(0, color=DIMCLR, lw=0.7)
+    if u is not None:
+        ax.plot(xx, u * 1e3, color=INK, lw=2.2)
+        for xv, (kind, val), inside in ((0.0, bcL, +1), (L, bcR, -1)):
+            ui = np.interp(xv, xx, u) * 1e3
+            if kind == "g":
+                ax.plot([xv], [ui], "o", color=BDRYCLR, ms=8, zorder=5)
+            else:
+                s = (val / K) * (-1 if xv == 0 else 1) * 1e3
+                tt = np.array([xv, xv + inside * 3.0])
+                ax.plot(tt, ui + s * (tt - xv), color=LOADCLR, lw=2.0, ls="--")
+    else:
+        base = -P / K * xx - fsk / (2 * K) * xx ** 2
+        for c in (1.0e-3, 2.0e-3, 3.0e-3, 4.0e-3):
+            ax.plot(xx, (c + base) * 1e3, color=INK if c == 3.0e-3 else "0.6",
+                    lw=2.2 if c == 3.0e-3 else 1.3,
+                    ls="-" if c == 3.0e-3 else "--")
+        ax.text(0.5 * L, 4.2, "$u + C$ solves it for every constant $C$:\n"
+                "the pile can float up or down as a rigid body",
+                ha="center", va="bottom", fontsize=10)
+    ax.set_xlim(-0.2, L + 0.2)
+    ax.set_ylim(-3.2, 5.4)
+    graph(ax, "$x$ (m)" if i == 3 else None, "$u$ (mm)")
+fig.tight_layout(h_pad=1.4, w_pad=2.0)
+fig_configs_path = save(fig, "R_Fig10_Configurations.png")
+```
+
+![The four ways to assign the two ends, for the pile of @fig-r-pile. Blue dots are
+Dirichlet values; dashed red lines are the slopes (strains) that Neumann data force on the
+curve.](`{python} fig_configs_path`){#fig-r-configs width=100%}
+
+::: {.step .notes}
+- **(a) Hughes' arrangement.** Force given at $x = 0$, displacement at $x = L$:
+  $\;u(L) = g,\;\; -EA\,u_{,x}(0) = h$. This is the pile: 900 kN pushing down (toward
+  $+x$) on the head, the toe fixed on rock.
+- **(b) Swapped.** Displacement given at $x = 0$, force at $x = L$:
+  $\;u(0) = g,\;\; +EA\,u_{,x}(L) = h$. Drawn here as the **mirror image** of (a) — the
+  same pile, stood on its head. Because $x$ now runs from the toe to the head, the column
+  load points toward $-x$ and **$h$ = −900 kN**; the friction flips too, $f$ = +40 kN/m.
+  Compare the wall, where the mirror image kept $h$ = +50 W/m². A force has a direction
+  in space; a heat inflow does not.
+- **(c) Two Dirichlet ends** is well-posed: here the head is jacked down 2 mm and the toe
+  is fixed. The curve is a straight line plus the small bow from the friction.
+- **(d) Two Neumann ends** is **not** well-posed:
+    - *Uniqueness fails.* Force data see only $u_{,x}$, so any rigid-body shift
+      $u + C$ is also a solution. Nothing stops the pile from floating.
+    - *Existence needs equilibrium.* The applied forces must balance:
+      $h_0 + h_L + \int_0^L f\,dx = 0$. The panel uses $h_L$ = −500 kN — the rock's
+      reaction, handed in as data — so that $900 - 500 - 400 = 0$. Any other $h_L$ and the
+      rod accelerates, and there is no static solution.
+- So **$\Gamma_g$ must not be empty**: at least one end must be held.
+:::
+
+## The strong form, complete
+
+For Hughes' arrangement (a):
+
+::: {.derivation}
+$$
+(\mathrm{S}) \qquad
+\begin{aligned}
+&\text{Given } f : \bar\Omega \to \RR \;[\text{N/m}],\;
+  EA > 0 \;[\text{N}],\;
+  g \;[\text{m}], \text{ and } h \;[\text{N}],
+  \text{ find } u : \bar\Omega \to \RR \;[\text{m}] \text{ such that} \\[3pt]
+&\qquad \left(EA\,u_{,x}\right)_{,x} + f = 0
+   && \text{on } \Omega = \,]0, L[ && \text{(equilibrium + Hooke)} \\
+&\qquad u(L) = g && && \text{(Dirichlet: known displacement)} \\
+&\qquad -EA\,u_{,x}(0) = h && && \text{(Neumann: known end force)}
+\end{aligned}
+$$
+:::
+
+and, for the swapped arrangement (b), $u(0) = g$ and $+EA\,u_{,x}(L) = h$.
+
+::: {.step .notes}
+- **Strong** because the equation must hold at every point, which demands $u_{,xx}$
+  everywhere. A rod whose area steps from one size to another, or a point load partway
+  along, already breaks this; the weak form will not mind.
+- With constant $EA$ and $f$, the exact solution of (a) is
+:::
+
+::: {.derivation}
+$$
+u(x) = g + \frac{h}{EA}\,(L - x) + \frac{f}{2EA}\,\left(L^2 - x^2\right)
+\qquad\qquad
+N(x) = EA\,u_{,x} = -h - f\,x
+$$
+:::
+
+## Worked example: the pile
+
+```{python example_numbers}
+#| echo: false
+#| output: false
+
+xx = np.linspace(0, L, 300)
+u_a = lambda x: P / EA * (L - x) + fsk / (2 * EA) * (L ** 2 - x ** 2)
+N_a = lambda x: -P - fsk * x
+u0 = u_a(0.0)
+eps0 = -P / EA
+```
+
+The pile of @fig-r-pile: $L$ = 10 m, $E$ = 30 GPa, $A$ = 0.09 m², so
+$EA = 2.7\times10^{9}$ N. A column pushes down on the head with 900 kN ($h$ = +900 kN,
+toward $+x$); skin friction of 40 kN/m acts upward ($f$ = −40 kN/m); the toe sits on
+rock ($g$ = 0).
+
+```{python example_math}
+#| echo: false
+#| output: asis
+
+print(r"""
+::: {.derivation}
+$$
+\begin{aligned}
+u(x) &= \frac{900\times10^{3}}{2.7\times10^{9}}\,(10 - x)
+  + \frac{-40\times10^{3}}{2(2.7\times10^{9})}\,(100 - x^2) \quad [\text{m}] \\[4pt]
+u(0) &= %.3f - %.3f = %.2f\ \text{mm (the head settles)}
+  \qquad\qquad u_{,x}(0) = -\frac{h}{EA} = %.3f\times10^{-4} \\[4pt]
+N(x) &= EA\,u_{,x} = -900 + 40\,x \quad [\text{kN}]
+  \qquad\qquad N(0) = -900\ \text{kN}, \quad N(L) = %.0f\ \text{kN}
+\end{aligned}
+$$
+:::
+""" % (P * L / EA * 1e3, -fsk * L ** 2 / (2 * EA) * 1e3, u0 * 1e3,
+       eps0 * 1e4, N_a(L) / 1e3))
+```
+
+```{python fig_example}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(2, 1, figsize=(7.8, 6.8), sharex=True,
+                         gridspec_kw=dict(height_ratios=[1.3, 1.0]))
+ax = axes[0]
+ax.plot(xx, u_a(xx) * 1e3, color=INK, lw=2.4)
+ax.plot([L], [0], "o", color=BDRYCLR, ms=9, zorder=5)
+ax.text(L - 0.1, 0.12, "$u(L) = g = 0$\n(rock)", ha="right", va="bottom",
+        color=BDRYCLR, fontsize=11)
+tt = np.array([0, 4.0])
+ax.plot(tt, (u0 + eps0 * tt) * 1e3, color=LOADCLR, lw=1.6, ls="--")
+run = 2.0
+ax.plot([0, run, run], [u0 * 1e3, u0 * 1e3, (u0 + eps0 * run) * 1e3],
+        color=LOADCLR, lw=1.3)
+ax.text(run / 2, u0 * 1e3 + 0.05, "2 m", ha="center", va="bottom",
+        fontsize=10, color=LOADCLR)
+ax.text(run + 0.08, (u0 + eps0 * run / 2) * 1e3,
+        ("%.2f mm" % (eps0 * run * 1e3)).replace("-", "−"), ha="left",
+        va="center", fontsize=10, color=LOADCLR)
+ax.text(0.3, 0.95,
+        (r"slope $u_{,x}(0) = -h/EA$ = %.2f × 10⁻⁴" % (eps0 * 1e4)).replace("= -", "= −"),
+        ha="left", va="top", fontsize=11, color=LOADCLR)
+ax.annotate("$u(0)$ = %.2f mm" % (u0 * 1e3), xy=(0, u0 * 1e3),
+            xytext=(0.4, u0 * 1e3 + 0.45), ha="left", va="bottom", fontsize=11,
+            arrowprops=dict(arrowstyle="-", color=INK, lw=0.8))
+ax.set_ylim(-0.2, 3.4)
+graph(ax, None, "displacement $u$ (mm, down)")
+
+ax = axes[1]
+ax.plot(xx, N_a(xx) / 1e3, color=REACTCLR, lw=2.4)
+ax.fill_between(xx, 0, N_a(xx) / 1e3, color=REACTCLR, alpha=0.12, lw=0)
+ax.axhline(0, color=DIMCLR, lw=0.8)
+ax.text(0.15, -900 - 25, "$N(0) = -h$ = −900 kN\n(column load)", ha="left",
+        va="top", fontsize=10.5, color=REACTCLR)
+ax.text(L - 0.15, N_a(L) / 1e3 + 40, "$N(L)$ = −500 kN\n(delivered to rock)",
+        ha="right", va="bottom", fontsize=10.5, color=REACTCLR)
+ax.text(5.0, -250, "slope $N_{,x} = -f$ = +40 kN/m:\n400 kN shed to the soil by friction",
+        ha="center", va="center", fontsize=10.5)
+ax.set_ylim(-1150, 60)
+graph(ax, "$x$ (m, down the pile)", "axial force $N$ (kN)")
+fig.tight_layout(h_pad=1.0)
+fig_example_path = save(fig, "R_Fig11_Example.png")
+```
+
+![The pile's solution. Top: displacement, zero at the rock and leaving the head with the
+slope the column load dictates. Bottom: the internal axial force $N = EA\,u_{,x}$, all
+compression, decreasing in magnitude as friction takes load into the
+soil.](`{python} fig_example_path`){#fig-r-example width=80%}
+
+Every line of the strong form, checked on the picture:
+
+::: {.step .notes}
+- **The differential equation.** $EA\,u_{,xx} = -f > 0$: the displacement curve bends
+  upward uniformly. Equivalently $N_{,x} = -f$ = +40 kN/m: the force line in the lower
+  panel is straight.
+- **The Dirichlet condition.** $u = 0$ at the rock.
+- **The Neumann condition.** At the head the tangent drops 0.67 mm over 2 m, a slope of
+  $-3.33\times10^{-4}$, and $-EA\,u_{,x}(0) = -2.7\times10^{9}\times(-3.33\times10^{-4})
+  = 900$ kN $= h$.
+- **Equilibrium of the whole pile.** 900 kN down at the head = 400 kN of friction +
+  500 kN at the toe. The Dirichlet end's reaction, 500 kN, came *out* of the solution.
+:::
+
+## Explore the strong form
+
+The black curve is the exact $u(x)$ for the settings below, with the pile's
+$L$ = 10 m. Blue dots are Dirichlet ends; the dashed red line is the strain a Neumann
+condition forces on its end. Under the plots, the rod is drawn twice: grey ticks are
+material points before loading, and black ticks are the same points after, with the
+displacements exaggerated. The band is shaded by the internal force: red for tension,
+blue for compression.
+
+```{ojs}
+//| echo: false
+viewof rBC = Inputs.radio(new Map([
+  ["(a) Hughes: h at x = 0, g at x = L", "a"],
+  ["(b) swapped: g at x = 0, h at x = L", "b"],
+  ["(c) g at both ends", "c"]
+]), {value: "a", label: "Boundary conditions"})
+viewof rF  = Inputs.range([-150, 150],   {value: -40,  step: 5,   label: "f (kN/m, toward +x)"})
+viewof rH  = Inputs.range([-1500, 1500], {value: 900,  step: 25,  label: "h (kN, toward +x)"})
+viewof rG  = Inputs.range([-3, 3],       {value: 0,    step: 0.1, label: "g (mm)"})
+viewof rG0 = Inputs.range([-3, 3],       {value: 2,    step: 0.1, label: "g at x = 0 in (c) (mm)"})
+viewof rEA = Inputs.range([0.5, 10],     {value: 2.7,  step: 0.1, label: "EA (×10⁹ N)"})
+```
+
+```{ojs}
+//| echo: false
+rod = {
+  const L = 10, K = rEA * 1e9, f = rF * 1e3, h = rH * 1e3, g = rG / 1e3, g0 = rG0 / 1e3;
+  let u, du;
+  if (rBC === "a") {
+    u  = x => g + h / K * (L - x) + f / (2 * K) * (L * L - x * x);
+    du = x => -h / K - f * x / K;
+  } else if (rBC === "b") {
+    u  = x => g + (h + f * L) / K * x - f / (2 * K) * x * x;
+    du = x => (h + f * L) / K - f * x / K;
+  } else {
+    u  = x => g0 + (g - g0) * x / L + f / (2 * K) * x * (L - x);
+    du = x => (g - g0) / L + f * (L - 2 * x) / (2 * K);
+  }
+  const N = x => K * du(x);
+  const pts = d3.range(121).map(i => { const x = L * i / 120; return {x, u: 1e3 * u(x), N: N(x) / 1e3}; });
+  return {L, K, f, h, u, du, N, pts};
+}
+```
+
+```{ojs}
+//| echo: false
+{
+  const {L, u, du, N, pts} = rod;
+  const W = Math.min(width, 760);
+  const dirX = rBC === "a" ? [L] : rBC === "b" ? [0] : [0, L];
+  const neuX = rBC === "a" ? 0 : rBC === "b" ? L : null;
+  const marks = [
+    Plot.ruleY([0], {stroke: "#bbb"}),
+    Plot.line(pts, {x: "x", y: "u", stroke: "#1a1a1a", strokeWidth: 2.6}),
+    Plot.dot(dirX.map(x => ({x, u: 1e3 * u(x)})), {x: "x", y: "u", r: 6, fill: "#4a7ba7"})
+  ];
+  if (neuX !== null) {
+    const d = (neuX === 0 ? 1 : -1) * 3;
+    marks.push(Plot.line([{x: neuX, u: 1e3 * u(neuX)}, {x: neuX + d, u: 1e3 * (u(neuX) + du(neuX) * d)}],
+      {x: "x", y: "u", stroke: "#c0392b", strokeWidth: 2.4, strokeDasharray: "7,4"}));
+  }
+  const top = Plot.plot({
+    width: W, height: 280, marginLeft: 55,
+    x: {label: "x (m) →", domain: [-0.5, L + 0.5]},
+    y: {label: "↑ displacement u (mm)", grid: true},
+    marks
+  });
+
+  const Nplot = Plot.plot({
+    width: W, height: 200, marginLeft: 55,
+    x: {label: "x (m) →", domain: [-0.5, L + 0.5]},
+    y: {label: "↑ axial force N (kN)", grid: true},
+    marks: [
+      Plot.ruleY([0], {stroke: "#bbb"}),
+      Plot.areaY(pts, {x: "x", y: "N", fill: "#1f6feb", fillOpacity: 0.12}),
+      Plot.line(pts, {x: "x", y: "N", stroke: "#1f6feb", strokeWidth: 2.4})
+    ]
+  });
+
+  // the rod before and after, coloured by N
+  const umax = d3.max(pts, p => Math.abs(p.u)) || 1;
+  const exag = 0.35 / (umax / 1e3);           // biggest movement drawn as 0.35 m
+  const segs = pts.slice(0, -1).map((p, i) => ({x1: p.x + exag * p.u / 1e3,
+    x2: pts[i + 1].x + exag * pts[i + 1].u / 1e3, N: p.N}));
+  const ticks = d3.range(0, 11).map(i => L * i / 10);
+  const Nmax = d3.max(pts, p => Math.abs(p.N)) || 1;
+  const band = Plot.plot({
+    width: W, height: 130, marginLeft: 55,
+    x: {label: `x (m) → — displacements exaggerated ×${exag.toFixed(0)}`, domain: [-0.5, L + 0.5]},
+    y: {axis: null, domain: [0, 2]},
+    color: {type: "diverging", scheme: "RdBu", reverse: true, domain: [-Nmax, Nmax],
+            legend: true, label: "N (kN): red tension, blue compression"},
+    marks: [
+      Plot.rect([{x1: 0, x2: L}], {x1: "x1", x2: "x2", y1: 1.2, y2: 1.8, fill: "#e2e2e2", stroke: "#999"}),
+      Plot.ruleX(ticks, {x: d => d, y1: 1.2, y2: 1.8, stroke: "#888", strokeWidth: 1.5}),
+      Plot.rect(segs, {x1: "x1", x2: "x2", y1: 0.2, y2: 0.8, fill: "N", stroke: "N"}),
+      Plot.ruleX(ticks, {x: d => d + exag * u(d), y1: 0.2, y2: 0.8, stroke: "#1a1a1a", strokeWidth: 1.5}),
+      Plot.link(ticks, {x1: d => d, y1: 1.2, x2: d => d + exag * u(d), y2: 0.8, stroke: "#aaa", strokeDasharray: "2,2"})
+    ]
+  });
+  return html`<div>${top}${Nplot}${band}</div>`;
+}
+```
+
+```{ojs}
+//| echo: false
+{
+  const {L, K, f, h, u, du, N} = rod;
+  const fmt = (v, d = 1) => (v < 0 ? "−" : "") + Math.abs(v).toFixed(d);
+  let bc;
+  if (rBC === "a") bc = `−EA u,x(0) = ${fmt(-N(0) / 1e3, 0)} kN = h ✓\u2003\u2003u(L) = ${fmt(1e3 * u(L), 2)} mm = g ✓`;
+  else if (rBC === "b") bc = `u(0) = ${fmt(1e3 * u(0), 2)} mm = g ✓\u2003\u2003+EA u,x(L) = ${fmt(N(L) / 1e3, 0)} kN = h ✓`;
+  else bc = `u(0) = ${fmt(1e3 * u(0), 2)} mm ✓\u2003\u2003u(L) = ${fmt(1e3 * u(L), 2)} mm ✓\u2003\u2003(h is not used: Γₕ = ∅)`;
+  // external forces on the rod, toward +x: at x = 0 the force is -N(0), at x = L it is +N(L)
+  const F0 = -N(0) / 1e3, FL = N(L) / 1e3, Ff = f * L / 1e3;
+  return html`<div style="font-size: 0.95rem; line-height: 1.6; margin: 0.4rem 0 1rem 0;">
+    <b>Boundary conditions:</b> ${bc}<br>
+    <b>Curvature:</b> u,xx = −f/EA = ${fmt(-f / K * 1e6, 2)} × 10⁻⁶ per m, everywhere<br>
+    <b>Equilibrium</b> (forces toward +x): at x = 0: ${fmt(F0, 0)} kN &nbsp;+&nbsp; along the rod ∫f dx: ${fmt(Ff, 0)} kN
+    &nbsp;+&nbsp; at x = L: ${fmt(FL, 0)} kN &nbsp;=&nbsp; ${fmt(F0 + Ff + FL, 0)} kN<br>
+    <span style="color:#666">Whichever end is Dirichlet, its force above is the support reaction: an output of the solve, not an input.</span>
+  </div>`;
+}
+```
+
+::: {.step .notes}
+- In (a), set $h = 0$: a free head. The displacement arrives flat and the whole rod is
+  in tension or compression only from friction.
+- Switch from (a) to (b) with the same $h$ = +900 kN: the load now **pulls** the far end
+  of the rod, the band turns red, and the curve changes shape, not just side. To get the
+  mirror image of the pile you must also flip the signs of $h$ and $f$.
+- In (a) or (b), double $EA$: every displacement halves, and $N$ does not change at all. The forces are
+  set by equilibrium alone; the stiffness only decides how far the rod moves to carry
+  them. In (c), where both ends are held, the stiffness does change $N$.
+:::

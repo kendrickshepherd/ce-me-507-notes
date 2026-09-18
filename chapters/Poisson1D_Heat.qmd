@@ -1,0 +1,1053 @@
+---
+title: "1D Poisson I: Heat Conduction Through a Wall"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import os
+import sys
+import math
+
+sys.path.append('.')
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon as MplPolygon, Rectangle
+
+from notes_style import (use_chapter, save, tidy, iso, dim_x,
+                         INK, LOADCLR, REACTCLR, DIMCLR,
+                         DOMCLR, BDRYCLR, FLUXCLR)
+
+IMGDIR = use_chapter("Poisson1D_Heat")
+
+# ---- the worked example used throughout this page (SI units) ---------------
+L     = 0.30     # m      wall thickness
+kappa = 1.4      # W/(m K) thermal conductivity of concrete
+f0    = 500.0    # W/m^3  heat generated inside the wall (heat of hydration)
+h0    = 50.0     # W/m^2  solar heat flux absorbed at the sunlit face
+g0    = 20.0     # deg C  interior face temperature
+HOTCLR = "#e67e22"   # the sun, and the 1 m x 1 m strip
+
+
+def arrow(ax, p_from, p_to, color=INK, lw=1.8, ms=13, z=6, style="-|>"):
+    ax.annotate("", xy=p_to, xytext=p_from,
+                arrowprops=dict(arrowstyle=style, color=color, lw=lw,
+                                mutation_scale=ms, shrinkA=0, shrinkB=0),
+                zorder=z)
+
+
+def graph(ax, xlabel=None, ylabel=None):
+    """A plotted function: left and bottom axes only."""
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+    for s in ("left", "bottom"):
+        ax.spines[s].set_linewidth(0.9)
+    if xlabel:
+        ax.set_xlabel(xlabel, fontsize=11)
+    if ylabel:
+        ax.set_ylabel(ylabel, fontsize=11)
+    ax.tick_params(labelsize=9.5)
+
+
+def box(ax, x0, x1, y0, y1, fc=DOMCLR, ec=BDRYCLR, lw=1.3, z=1, alpha=1.0):
+    ax.add_patch(Rectangle((x0, y0), x1 - x0, y1 - y0, facecolor=fc,
+                           edgecolor=ec, lw=lw, zorder=z, alpha=alpha))
+
+
+def dirichlet_block(ax, x, y, side, label, w=0.55, hgt=0.9, fs=11):
+    """A reservoir that holds a face at a known temperature: u = g."""
+    x0 = x if side > 0 else x - w
+    ax.add_patch(Rectangle((x0, y - hgt / 2), w, hgt, facecolor="#dbe7f3",
+                           edgecolor=BDRYCLR, lw=1.6, hatch="////", zorder=4))
+    ax.text(x0 + w / 2, y + hgt / 2 + 0.08, label, ha="center", va="bottom",
+            color=BDRYCLR, fontsize=fs)
+
+
+def insulation(ax, x, y0, y1, side, w=0.3):
+    ax.add_patch(Rectangle((x if side > 0 else x - w, y0), w, y1 - y0,
+                           facecolor="#fff3cd", edgecolor="#b8860b", lw=1.0,
+                           hatch="xxx", zorder=4))
+
+
+rng = np.random.default_rng(7)
+
+
+def sources(ax, fx, x0, x1, y0, y1, fmax, n=90, ms=5.5):
+    """Scatter + (source) or - (sink) marks with density proportional to |f|."""
+    xs = rng.uniform(x0, x1, 40 * n)
+    ys = rng.uniform(y0, y1, 40 * n)
+    keep = rng.uniform(0, 1, 40 * n) < np.abs(fx(xs)) / fmax
+    xs, ys = xs[keep][:n], ys[keep][:n]
+    pos = fx(xs) > 0
+    ax.plot(xs[pos], ys[pos], "+", color=LOADCLR, ms=ms, mew=1.3, zorder=3)
+    ax.plot(xs[~pos], ys[~pos], "_", color=REACTCLR, ms=ms, mew=1.5, zorder=3)
+```
+
+This page and its companion, [1D Poisson III: An Axially Loaded Rod](Poisson1D_Rod.qmd),
+read the same model problem — the one-dimensional Poisson equation of Hughes,
+*The Finite Element Method*, Chapter 1 — in two different physical settings. The
+mathematics is identical on both pages. The physics is not, and it is the physics that
+tells you what $f$, $g$, and $h$ *are*, what units they carry, and which way they point.
+
+Hughes states the model problem with every constant set to one:
+
+::: {.derivation}
+$$
+(\mathrm{S}) \qquad
+\begin{aligned}
+&\text{Given } f : \bar\Omega \to \RR \text{ and constants } g \text{ and } h,
+ \text{ find } u : \bar\Omega \to \RR \text{ such that} \\[2pt]
+&\qquad u_{,xx} + f = 0 \quad \text{on } \Omega = \,]0,1[ \\
+&\qquad u(1) = g \\
+&\qquad -u_{,x}(0) = h
+\end{aligned}
+$$
+:::
+
+Choosing a length of one and a material constant of one hides two things that the
+pictures below need, so we put them back: the domain becomes $\Omega = \,]0, L[$, and a
+material constant $K$ appears inside the derivative, as in [Class 4](4_Class.qmd):
+
+::: {.derivation}
+$$
+-\left(K u_{,x}\right)_{,x} = f \quad \text{in } \Omega
+\qquad\qquad
+u = g \quad \text{on } \Gamma_g
+\qquad\qquad
+\left(K u_{,x}\right) n = h \quad \text{on } \Gamma_h
+$$
+:::
+
+On this page $u$ is a **temperature** and $K = \kappa$ is the **thermal conductivity**.
+Everything below is in SI units.
+
+## The physical problem
+
+```{python fig_wall}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(8.2, 4.8))
+KW = dict(ang=150.0, k=0.55)
+T, D, H = 1.3, 3.0, 3.0          # drawn thickness (x), length (y), height (z)
+
+
+def P(x, y, z):
+    return iso(x, y, z, **KW)
+
+
+def face(pts, fc, ec=INK, lw=1.2, z=2, alpha=1.0, ls="-"):
+    ax.add_patch(MplPolygon([P(*p) for p in pts], closed=True, facecolor=fc,
+                            edgecolor=ec, lw=lw, zorder=z, alpha=alpha, ls=ls))
+
+
+face([(0, 0, 0), (0, D, 0), (0, D, H), (0, 0, H)], "#e9e9e9", z=2)      # sunlit face
+face([(0, 0, H), (T, 0, H), (T, D, H), (0, D, H)], "#f4f4f4", z=2)      # top
+face([(0, 0, 0), (T, 0, 0), (T, 0, H), (0, 0, H)], "#fbfbfb", z=3)      # front cut
+
+# heat generated inside the concrete, seen on the cut face
+fx = lambda x: np.ones_like(x)
+xs = rng.uniform(0.08, T - 0.08, 60)
+zs = rng.uniform(0.15, H - 0.15, 60)
+ax.plot(xs, zs, "+", color=LOADCLR, ms=5, mew=1.2, zorder=4)
+
+# the 1 m x 1 m strip that becomes the 1D model
+y0, y1, z0, z1 = 1.05, 1.95, 1.35, 2.25
+face([(0, y0, z0), (0, y1, z0), (0, y1, z1), (0, y0, z1)], HOTCLR, ec=HOTCLR,
+     z=5, alpha=0.55, lw=1.4)
+face([(0, y0, z1), (T, y0, z1), (T, y1, z1), (0, y1, z1)], HOTCLR, ec=HOTCLR,
+     z=5, alpha=0.30, lw=1.2, ls="--")
+face([(0, y0, z0), (T, y0, z0), (T, y0, z1), (0, y0, z1)], HOTCLR, ec=HOTCLR,
+     z=5, alpha=0.20, lw=1.2, ls="--")
+sx, sy = P(T, (y0 + y1) / 2, z1)
+ax.annotate("a 1 m × 1 m strip\nthrough the thickness\nbecomes the 1D model",
+            xy=(sx, sy), xytext=(T + 0.55, H + 1.0), ha="left", va="bottom",
+            fontsize=10.5, color="#a0520d",
+            arrowprops=dict(arrowstyle="-", color="#a0520d", lw=1.0))
+
+# the sun and its absorbed flux
+sun = (-3.4, 3.9)
+ax.add_patch(plt.Circle(sun, 0.42, color="#f5b301", zorder=5))
+for a in np.linspace(0, 2 * math.pi, 12, endpoint=False):
+    ax.plot([sun[0] + 0.52 * math.cos(a), sun[0] + 0.78 * math.cos(a)],
+            [sun[1] + 0.52 * math.sin(a), sun[1] + 0.78 * math.sin(a)],
+            color="#f5b301", lw=1.6, zorder=5)
+for yy, zz in ((0.6, 1.0), (1.5, 1.8), (2.4, 2.6), (1.0, 2.7)):
+    tx, ty = P(0, yy, zz)
+    arrow(ax, (sun[0] + 0.6, sun[1] - 0.5), (tx - 0.05, ty),
+          color=HOTCLR, lw=1.4, ms=11)
+ax.text(sun[0] - 0.2, sun[1] - 0.95, "sunlit exterior face:\nabsorbed heat flux $h$\n(W/m²)",
+        ha="center", va="top", fontsize=10.5, color=HOTCLR)
+
+# the interior face and the room
+ax.text(T + 0.35, 0.55, "interior face,\nwall temperature held at\n$g$ = 20 °C",
+        ha="left", va="bottom", fontsize=10.5, color=BDRYCLR)
+
+ax.text(T / 2, -0.95, "$f$: heat generated inside\n(hydration, W/m³)",
+        ha="center", va="top", fontsize=10.5, color=LOADCLR)
+
+# the coordinate and the thickness
+arrow(ax, P(0, 0, 0), (T + 1.0, 0.0), color=INK, lw=1.3, ms=11)
+ax.text(T + 1.05, 0.0, "$x$", ha="left", va="center", fontsize=13)
+dim_x(ax, 0.0, T, -0.35, "$L$ = 0.30 m", fs=11)
+
+tidy(ax)
+ax.set_xlim(-4.5, T + 3.0)
+ax.set_ylim(-1.8, 5.2)
+fig_wall_path = save(fig, "H_Fig1_Wall.png")
+```
+
+![A concrete wall, heated by the sun on its outside face, holding a room at 20 °C on its
+inside face, and generating heat internally as it cures.](`{python} fig_wall_path`){#fig-h-wall width=80%}
+
+The wall is long and tall compared with its thickness. Far from its edges, nothing
+changes as you move along the wall or up it — temperature varies **only through the
+thickness**, in $x$. So cut out a strip with a $1\,\text{m} \times 1\,\text{m}$ face and
+follow the temperature along it. Every quantity on this page is **per square meter of
+wall face**, which is why fluxes are in W/m² and not W.
+
+Three things act on the strip, and each becomes one piece of the strong form:
+
+| What happens physically | Where | Becomes |
+|---|---|---|
+| Heat is generated inside the concrete as it cures | throughout $\Omega$ | the forcing $f$ |
+| The interior face is held at the room's temperature | $x = L$ | a Dirichlet condition $u = g$ |
+| The sun pushes a known heat flux into the exterior face | $x = 0$ | a Neumann condition $(\kappa u_{,x})\,n = h$ |
+
+## The one-dimensional domain
+
+```{python fig_domain}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(7.4, 2.3))
+Ld = 6.0
+box(ax, 0, Ld, -0.18, 0.18, fc=DOMCLR, ec=BDRYCLR)
+ax.text(Ld / 2, 0.36, r"$\Omega$", ha="center", va="bottom", fontsize=17)
+for xv, n, lab in ((0.0, -1, "$x=0$"), (Ld, 1, "$x=L$")):
+    ax.plot([xv], [0], "o", color=INK, ms=8, zorder=6)
+    ax.text(xv, -0.4, lab, ha="center", va="top", fontsize=11.5)
+    arrow(ax, (xv, 0), (xv + 1.1 * n, 0), color=REACTCLR, lw=1.6, ms=12)
+    ax.text(xv + 1.25 * n, 0.0, "$n=%+d$" % n, ha="left" if n > 0 else "right",
+            va="center", fontsize=12, color=REACTCLR)
+ax.text(Ld / 2, -0.95,
+        r"$\Omega = \, ]0, L[ \qquad \bar\Omega = [0, L] \qquad "
+        r"\Gamma = \{0, L\} = \Gamma_g \cup \Gamma_h$",
+        ha="center", va="top", fontsize=13)
+tidy(ax)
+ax.set_xlim(-2.9, Ld + 2.9)
+ax.set_ylim(-1.55, 0.85)
+fig_domain_path = save(fig, "H_Fig2_Domain.png")
+```
+
+![The domain $\Omega$ is the open interval through the thickness; its boundary $\Gamma$ is
+just the two faces, each with an outward unit normal.](`{python} fig_domain_path`){#fig-h-domain width=78%}
+
+::: {.step .notes}
+- $\Omega = \,]0, L[$ is the **open** interval — the inside of the wall, faces excluded.
+  Hughes writes open intervals with outward-facing brackets.
+- $\bar\Omega = [0, L]$ is its **closure** — the wall including its two faces. The
+  solution $u$ is defined on $\bar\Omega$, since we need its value *at* the faces.
+- $\Gamma = \{0, L\}$ is the **boundary**: in one dimension, just two points.
+- The **outward unit normal** $n$ points out of $\Omega$: $n = -1$ at $x = 0$ and
+  $n = +1$ at $x = L$. It is only a sign in 1D, but that sign is what decides whether a
+  Neumann condition reads $-\kappa u_{,x}(0) = h$ or $+\kappa u_{,x}(L) = h$.
+- Each point of $\Gamma$ gets **exactly one** boundary condition:
+  $\Gamma = \Gamma_g \cup \Gamma_h$ and $\Gamma_g \cap \Gamma_h = \emptyset$.
+:::
+
+## The quantities and their units
+
+| Symbol | Meaning | SI units | This example |
+|---|---|---|---|
+| $x$ | position through the thickness | m | $0 \le x \le L$ |
+| $L$ | wall thickness | m | 0.30 m |
+| $u(x)$ | temperature (often written $T$) | °C (or K) | unknown |
+| $u_{,x}$ | temperature gradient | °C/m | unknown |
+| $\kappa$ | thermal conductivity ($K$ in class) | W/(m·K) | 1.4 W/(m·K), concrete |
+| $q(x)$ | heat flux in the $+x$ direction | W/m² | unknown |
+| $f(x)$ | heat generated per unit volume | W/m³ | 500 W/m³ |
+| $g$ | prescribed face temperature | °C | 20 °C |
+| $h$ | prescribed heat flux **into** the wall | W/m² | 50 W/m² |
+
+Temperature *differences* are the same in °C and K, so $\kappa$ can be read as
+W/(m·°C) with no conversion.
+
+## Where the differential equation comes from
+
+### Conservation of energy on a thin slice
+
+```{python fig_slice}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(8.2, 4.4))
+Ld = 8.0
+# the whole strip, with one slice shaded
+box(ax, 0, Ld, 3.2, 3.8)
+xa, xb = 4.3, 5.0
+box(ax, xa, xb, 3.2, 3.8, fc=HOTCLR, ec=HOTCLR, z=2, alpha=0.6)
+ax.text(-0.15, 3.5, "$x=0$", ha="right", va="center", fontsize=11)
+ax.text(Ld + 0.15, 3.5, "$x=L$", ha="left", va="center", fontsize=11)
+
+# the slice, enlarged
+Z0, Z1, Y0, Y1 = 2.4, 5.9, 0.0, 1.9
+ax.plot([xa, Z0], [3.2, Y1], color=HOTCLR, lw=0.9, ls="--")
+ax.plot([xb, Z1], [3.2, Y1], color=HOTCLR, lw=0.9, ls="--")
+box(ax, Z0, Z1, Y0, Y1, fc="#fde9d6", ec=HOTCLR, lw=1.6, z=1)
+fz = lambda x: np.ones_like(x)
+sources(ax, fz, Z0 + 0.25, Z1 - 0.25, Y0 + 0.25, Y1 - 0.25, 1.0, n=26, ms=7)
+ax.text((Z0 + Z1) / 2, Y0 - 0.12, r"generated: $f\,\Delta x$", ha="center",
+        va="top", fontsize=12, color=LOADCLR)
+
+arrow(ax, (Z0 - 1.9, 0.95), (Z0 + 0.05, 0.95), color=FLUXCLR, lw=2.4, ms=16)
+ax.text(Z0 - 1.95, 1.15, "in: $q(x)$", ha="left", va="bottom", fontsize=12.5,
+        color=FLUXCLR)
+arrow(ax, (Z1 - 0.05, 0.95), (Z1 + 1.9, 0.95), color=FLUXCLR, lw=2.4, ms=16)
+ax.text(Z1 + 1.95, 1.15, r"out: $q(x+\Delta x)$", ha="right", va="bottom",
+        fontsize=12.5, color=FLUXCLR)
+ax.text(Z0, -0.12, "$x$", ha="center", va="top", fontsize=12)
+ax.text(Z1, -0.12, r"$x+\Delta x$", ha="center", va="top", fontsize=12)
+ax.text((Z0 + Z1) / 2, Y1 + 0.1, "face area = 1 m²", ha="center",
+        va="bottom", fontsize=10.5, color=DIMCLR)
+
+tidy(ax)
+ax.set_xlim(-1.0, Ld + 1.0)
+ax.set_ylim(-0.75, 4.0)
+fig_slice_path = save(fig, "H_Fig3_Slice.png")
+```
+
+![A slice of the strip of thickness $\Delta x$. At steady state, heat in plus heat made
+equals heat out.](`{python} fig_slice_path`){#fig-h-slice width=80%}
+
+Let $q(x)$ be the **heat flux** — watts crossing each square meter of a plane at $x$,
+counted positive when heat moves toward $+x$. At steady state the slice's temperature is
+not changing, so every watt that enters or is made inside it must leave:
+
+::: {.derivation}
+$$
+\underbrace{q(x)\cdot 1}_{\text{in}}
++ \underbrace{f\,\Delta x \cdot 1}_{\text{generated}}
+- \underbrace{q(x+\Delta x)\cdot 1}_{\text{out}} = 0
+\qquad\xrightarrow[\;\text{divide by } \Delta x,\; \Delta x \to 0\;]{}\qquad
+-q_{,x} + f = 0
+$$
+:::
+
+::: {.step}
+Each term is in watts: W/m² × 1 m² for the fluxes, and W/m³ × (Δx · 1 m²) for the
+generation. Read the result as **"the flux grows exactly as fast as heat is being made"**:
+$q_{,x} = f$.
+:::
+
+### Fourier's law: heat flows downhill
+
+The balance has one equation and two unknowns, $q$ and $u$. The material supplies the
+second relation. **Fourier's law** says heat flows from hot to cold, at a rate
+proportional to how steeply the temperature falls:
+
+::: {.derivation}
+$$
+q = -\kappa\, u_{,x}
+$$
+:::
+
+```{python fig_fourier}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(1, 2, figsize=(9.2, 3.7))
+xx = np.linspace(0, 1, 200)
+cases = [(lambda x: 32 - 10 * x - 5 * x ** 2, lambda x: -10 - 10 * x, +1,
+          r"$u_{,x} < 0 \;\Rightarrow\; q = -\kappa u_{,x} > 0$"),
+         (lambda x: 18 + 10 * x + 5 * x ** 2, lambda x: 10 + 10 * x, -1,
+          r"$u_{,x} > 0 \;\Rightarrow\; q = -\kappa u_{,x} < 0$")]
+for ax, (u, du, sgn, lab) in zip(axes, cases):
+    ax.plot(xx, u(xx), color=INK, lw=2.2)
+    x0 = 0.45
+    s = du(x0)
+    tt = np.array([x0 - 0.2, x0 + 0.2])
+    ax.plot(tt, u(x0) + s * (tt - x0), color=LOADCLR, lw=1.5, ls="--")
+    # slope triangle
+    ax.plot([x0, x0 + 0.2, x0 + 0.2], [u(x0), u(x0), u(x0) + 0.2 * s],
+            color=LOADCLR, lw=1.1)
+    ax.text(x0 + 0.22, u(x0) + 0.1 * s, "slope\n$u_{,x}$", ha="left",
+            va="center", fontsize=10.5, color=LOADCLR)
+    # the wall, coloured by temperature, with the flux arrow in it
+    ext = [0, 1, 5.5, 10.5]
+    ax.imshow(u(xx)[None, :], extent=ext, aspect="auto", cmap="coolwarm",
+              vmin=16, vmax=34, zorder=0)
+    a0, a1 = (0.3, 0.7) if sgn > 0 else (0.7, 0.3)
+    arrow(ax, (a0, 7.2), (a1, 7.2), color=INK, lw=2.2, ms=16)
+    ax.text(0.5, 10.2, "heat flux $q$", ha="center", va="top", fontsize=10.5)
+    ax.set_title(lab, fontsize=12)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(5.5, 36)
+    ax.set_yticks([15, 20, 25, 30, 35])
+    graph(ax, "$x$", "temperature $u$ (°C)")
+    ax.set_xticks([])
+fig.tight_layout(w_pad=3)
+fig_fourier_path = save(fig, "H_Fig4_Fourier.png")
+```
+
+![Fourier's law. The coloured band is the wall, red where it is hot. Heat flows
+downhill on the temperature curve: the minus sign in $q = -\kappa u_{,x}$ makes the flux
+point opposite to the slope.](`{python} fig_fourier_path`){#fig-h-fourier width=92%}
+
+Substituting Fourier's law into the balance gives the differential equation of the
+strong form, in all three of the notations you will meet:
+
+::: {.derivation}
+$$
+-\left(\kappa\,u_{,x}\right)_{,x} = f
+\quad\Longleftrightarrow\quad
+\left(\kappa\,u_{,x}\right)_{,x} + f = 0
+\quad\xrightarrow{\;\kappa \text{ constant}\;}\quad
+\kappa\, u_{,xx} + f = 0
+\quad\xrightarrow{\;\kappa = 1\;}\quad
+u_{,xx} + f = 0 \;\;\text{(Hughes)}
+$$
+:::
+
+### What the equation says about the shape of $u$
+
+With $\kappa$ constant, $u_{,xx} = -f/\kappa$: **the forcing sets the curvature of the
+temperature profile**, point by point.
+
+```{python fig_curvature}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(7.6, 4.3))
+xx = np.linspace(0, L, 200)
+uL, uR = 30.0, 20.0
+for fv, col, lab in ((+500, LOADCLR, "$f = +500$ W/m³ (source): concave down"),
+                     (0, INK, "$f = 0$: straight line"),
+                     (-500, REACTCLR, "$f = -500$ W/m³ (sink): concave up")):
+    u = uL + (uR - uL) * xx / L + fv / (2 * kappa) * xx * (L - xx)
+    ax.plot(xx, u, color=col, lw=2.2, label=lab)
+for xv, uv in ((0, uL), (L, uR)):
+    ax.plot([xv], [uv], "o", color=BDRYCLR, ms=8, zorder=5)
+ax.text(0.004, uL + 0.7, "$u(0)$ = 30 °C", color=BDRYCLR, fontsize=10.5,
+        ha="left", va="bottom")
+ax.text(L - 0.004, uR - 0.95, "$u(L)$ = 20 °C", color=BDRYCLR, fontsize=10.5,
+        ha="right", va="top")
+ax.legend(frameon=False, fontsize=10.5, loc="upper center",
+          bbox_to_anchor=(0.5, -0.2), ncol=1)
+ax.set_ylim(18.2, 31.3)
+ax.set_xlim(-0.005, L + 0.005)
+graph(ax, "$x$ (m)", "$u$ (°C)")
+fig_curv_path = save(fig, "H_Fig5_Curvature.png")
+```
+
+![Three walls with the same face temperatures and different forcing. With no source the
+profile is straight; a source bows it up; a sink bows it down. ($\kappa$ = 1.4 W/(m·K),
+$L$ = 0.30 m.)](`{python} fig_curv_path`){#fig-h-curvature width=74%}
+
+::: {.step .notes}
+- $f = 0$: $u_{,xx} = 0$, so the profile is a **straight line** and the flux
+  $q = -\kappa u_{,x}$ is the same everywhere — what goes in one face comes out the other.
+- $f > 0$: $u_{,xx} < 0$, a **hump**. The wall is hotter inside than a straight line
+  would predict, because the heat made inside has to flow out through the faces.
+- $f < 0$: $u_{,xx} > 0$, a **dip** — heat is being removed inside the wall.
+:::
+
+## The forcing function $f$
+
+$f(x)$ is heat **generated per unit volume**, in W/m³. It is the only term in the strong
+form that acts in the *interior* of $\Omega$; $g$ and $h$ act only at the faces.
+Integrated through the thickness, it gives the heat made behind each square meter of
+wall, in W/m²:
+
+::: {.derivation}
+$$
+\int_0^L f\,dx \quad \left[\tfrac{\text{W}}{\text{m}^3}\cdot\text{m}
+= \tfrac{\text{W}}{\text{m}^2}\right]
+\qquad\text{e.g.}\qquad 500 \times 0.30 = 150\ \text{W/m}^2
+$$
+:::
+
+```{python fig_forcing}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(2, 3, figsize=(10.0, 4.8),
+                         gridspec_kw=dict(height_ratios=[1.0, 1.25]))
+xx = np.linspace(0, L, 300)
+delta = 0.04
+fcases = [
+    ("uniform: heat of hydration",
+     lambda x: 500 * np.ones_like(x), 500),
+    ("absorbed radiation, decaying\nfrom the sunlit face",
+     lambda x: 2000 * np.exp(-x / delta), 2000),
+    ("cooling pipe at mid-thickness\n(a heat sink, $f<0$)",
+     lambda x: -1500 * np.exp(-((x - L / 2) / 0.025) ** 2), 1500),
+]
+for j, (title, fx, fmax) in enumerate(fcases):
+    ax = axes[0, j]
+    box(ax, 0, L, 0, 0.12, fc="#f4f4f4", ec=INK, lw=1.2)
+    sources(ax, fx, 0.003, L - 0.003, 0.006, 0.114, fmax, n=70, ms=6)
+    ax.set_title(title, fontsize=11)
+    ax.set_xlim(-0.01, L + 0.01)
+    ax.set_ylim(-0.01, 0.13)
+    ax.axis("off")
+    ax = axes[1, j]
+    fv = fx(xx)
+    ax.fill_between(xx, 0, fv, where=fv >= 0, color=LOADCLR, alpha=0.25, lw=0)
+    ax.fill_between(xx, 0, fv, where=fv < 0, color=REACTCLR, alpha=0.25, lw=0)
+    ax.plot(xx, fv, color=LOADCLR if fmax and fv.mean() >= 0 else REACTCLR,
+            lw=2.0)
+    ax.axhline(0, color=DIMCLR, lw=0.8)
+    ax.set_xlim(-0.01, L + 0.01)
+    graph(ax, "$x$ (m)", "$f$ (W/m³)" if j == 0 else None)
+fig.tight_layout(h_pad=0.6, w_pad=1.6)
+fig_forcing_path = save(fig, "H_Fig6_Forcing.png")
+```
+
+![Three forcing functions. Top: the wall with a $+$ mark for heat made and a $-$ mark for
+heat removed, at a density proportional to $|f|$. Bottom: the same $f(x)$ as a graph.
+](`{python} fig_forcing_path`){#fig-h-forcing width=96%}
+
+::: {.step .notes}
+- **Heat of hydration** — cement releases heat as it cures, nearly uniformly through a
+  freshly cast wall. This is the $f$ used in the example on this page.
+- **Absorbed radiation** — sunlight that penetrates a (semi-)transparent layer is
+  absorbed over a short depth $\delta$, so $f = f_0 e^{-x/\delta}$ is concentrated near
+  the sunlit face.
+- **Embedded heating or cooling** — electric heating cables in the slab give $f > 0$
+  where they run; a chilled-water pipe removes heat, $f < 0$.
+- $f = 0$ is the everyday case of an ordinary, inert wall.
+:::
+
+## Boundary conditions
+
+Each face gets exactly one condition: either its **temperature** is known, or the **heat
+flux through it** is known. Never both — and, as we will see, never *neither*.
+
+### Dirichlet: $u = g$ on $\Gamma_g$ — the temperature is known
+
+```{python fig_dirichlet}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(7.6, 3.7))
+xx = np.linspace(0, L, 200)
+for s, a in ((-60, 0.9), (-20, 0.9), (40, 0.9), (0, 0.9)):
+    u = g0 + s * (xx - L) - 180 * (xx - L) ** 2 * (1 if s <= 0 else -0.5)
+    ax.plot(xx, u, color=INK if s == 0 else "0.55", lw=2.2 if s == 0 else 1.3,
+            ls="-" if s == 0 else "--")
+ax.plot([L], [g0], "o", color=BDRYCLR, ms=10, zorder=6)
+ax.add_patch(Rectangle((L, 5), 0.04, 30, facecolor="#dbe7f3",
+                       edgecolor=BDRYCLR, lw=1.6, hatch="////", zorder=4))
+ax.text(L + 0.02, 36, "room temperature\n(a large\nreservoir)", ha="center",
+        va="bottom", fontsize=10, color=BDRYCLR)
+ax.annotate("$u(L) = g$ = 20 °C", xy=(L, g0), xytext=(0.17, 9),
+            fontsize=12, color=BDRYCLR,
+            arrowprops=dict(arrowstyle="-|>", color=BDRYCLR, lw=1.2))
+ax.set_xlim(0, L + 0.045)
+ax.set_ylim(5, 45)
+graph(ax, "$x$ (m)", "$u$ (°C)")
+fig_dir_path = save(fig, "H_Fig7_Dirichlet.png")
+```
+
+![A Dirichlet condition pins the *value* of $u$ at a face. Every one of these curves
+satisfies $u(L) = 20$ °C; the condition says nothing about the slope, which is left for
+the rest of the problem to decide.](`{python} fig_dir_path`){#fig-h-dirichlet width=72%}
+
+::: {.step .notes}
+- $g$ is a **temperature**, in °C.
+- Physically: the face touches something so large, or so well mixed, that the wall
+  cannot change its temperature — and for the moment can be thought of as room air under a thermostat, an ice bath at 0 °C,
+  flowing water, deep ground.
+- It is called an **essential** boundary condition: it is imposed directly on the
+  unknown $u$. Later, in the weak form, it is built into the trial space $\mathcal{S}$
+  rather than appearing in any integral.
+:::
+
+### Neumann: $(\kappa u_{,x})\,n = h$ on $\Gamma_h$ — the heat flux is known
+
+Here is the one relation that looks mysterious until you draw it. Start from Fourier's
+law: $q$ is the flux toward $+x$, so $q\,n$ is the flux leaving through a face (outward
+normal), and $-q\,n$ is the flux **entering** through it. The Neumann condition fixes
+the flux entering:
+
+::: {.derivation}
+$$
+h = -q\,n = -\left(-\kappa u_{,x}\right) n = \left(\kappa\,u_{,x}\right) n
+$$
+:::
+
+So $(\kappa u_{,x})\,n = h$ is not a new law; it is Fourier's law evaluated at a face,
+with $h$ read as **heat flux into the wall**, in W/m². Now substitute the two possible
+normals:
+
+::: {.derivation}
+$$
+\text{at } x = 0 \;(n = -1): \quad -\kappa\,u_{,x}(0) = h
+\qquad\qquad
+\text{at } x = L \;(n = +1): \quad +\kappa\,u_{,x}(L) = h
+$$
+:::
+
+```{python fig_neumann}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(2, 3, figsize=(10.4, 5.8))
+W = 2.2                       # drawn depth of wall shown inside the panel
+titles = ["$h > 0$: heat flows in", "$h = 0$: insulated",
+          "$h < 0$: heat flows out"]
+for i, side in enumerate(("left", "right")):
+    n = -1 if side == "left" else +1
+    for j, hs in enumerate((+1, 0, -1)):
+        ax = axes[i, j]
+        # wall occupies the region on the interior side of the face at x = 0
+        inside = +1 if side == "left" else -1
+        box(ax, 0, inside * W, -1.25, 1.95, fc=DOMCLR, ec="none", z=0)
+        ax.plot([0, 0], [-1.25, 1.95], color=BDRYCLR, lw=2.4, zorder=3)
+        ax.text(inside * W / 2, 1.8, "wall", ha="center", va="top",
+                fontsize=10, color=BDRYCLR)
+        ax.text(-inside * 0.9, 1.8, "outside", ha="center", va="top",
+                fontsize=10, color=DIMCLR)
+        # the temperature near the face: slope = h / (kappa n)
+        slope = hs * n * 0.5
+        xs = np.linspace(0, inside * W, 50)
+        us = 0.55 + slope * xs - 0.05 * xs ** 2
+        ax.plot(xs, us, color=INK, lw=2.2, zorder=4)
+        tt = np.array([0, inside * 1.4])
+        ax.plot(tt, 0.55 + slope * tt, color=LOADCLR, lw=1.3, ls="--", zorder=4)
+        ax.text(inside * 1.45, 0.55 + slope * inside * 1.4,
+                "  tangent  " if hs == 0 else "", fontsize=9, color=LOADCLR,
+                ha="left" if inside > 0 else "right", va="center")
+        ax.plot([0], [0.55], "o", color=INK, ms=5, zorder=5)
+        ax.text(inside * 0.12, 0.0 + 0.55 + 0.35 * (1 if slope <= 0 else -1) + (0.0),
+                "$u$", fontsize=11, ha="left" if inside > 0 else "right")
+        # the flux arrow across the face
+        yA = -0.8
+        if hs == 0:
+            insulation(ax, 0, -1.25, 1.95, side=-inside, w=0.35)
+        else:
+            a_out, a_in = (-inside * 1.3, yA), (inside * 0.9, yA)
+            p0, p1 = (a_out, a_in) if hs > 0 else (a_in, a_out)
+            arrow(ax, p0, p1, color=FLUXCLR, lw=2.6, ms=16)
+            ax.text(-inside * 1.25, yA + 0.2,
+                    "heat in" if hs > 0 else "heat out", color=FLUXCLR,
+                    fontsize=11, ha="center", va="bottom")
+        # the resulting sign of the slope
+        if side == "left":
+            rel = {1: "< 0", 0: "= 0", -1: "> 0"}[hs]
+            eq = r"$-\kappa u_{,x}(0) = h \;\Rightarrow\; u_{,x}(0) %s$" % rel
+        else:
+            rel = {1: "> 0", 0: "= 0", -1: "< 0"}[hs]
+            eq = r"$\kappa u_{,x}(L) = h \;\Rightarrow\; u_{,x}(L) %s$" % rel
+        ax.text(0, -1.45, eq, ha="center", va="top", fontsize=11)
+        if i == 0:
+            ax.set_title(titles[j], fontsize=12, pad=10)
+        ax.set_xlim(-2.4, 2.4)
+        ax.set_ylim(-2.0, 2.0)
+        tidy(ax)
+fig.text(0.005, 0.74, "left face\n$x = 0$\n$n = -1$", ha="left", va="center",
+         fontsize=11.5)
+fig.text(0.005, 0.28, "right face\n$x = L$\n$n = +1$", ha="left", va="center",
+         fontsize=11.5)
+fig.subplots_adjust(left=0.09, right=0.99, wspace=0.08, hspace=0.18)
+fig_neu_path = save(fig, "H_Fig8_Neumann.png")
+```
+
+![The Neumann condition at either face, for heating, insulation, and cooling. The black
+curve is the temperature near the face and the dashed red line is its tangent there.
+Whichever face it acts on, heat entering ($h > 0$) makes the face the hot spot, so the
+temperature always falls *away from* the face into the wall — which is a negative slope on
+the left and a positive slope on the right. That sign flip is exactly the
+$n$.](`{python} fig_neu_path`){#fig-h-neumann width=100%}
+
+::: {.step .notes}
+- $h$ is a **heat flux**, in W/m², positive when heat goes **in**, on either face.
+- $h = 0$ is a perfectly **insulated** (adiabatic) face: the profile arrives with zero
+  slope. By symmetry, this is also what the mid-plane of a wall heated equally from both
+  sides looks like.
+- The **magnitude** of the slope is $|u_{,x}| = |h|/\kappa$. With $h$ = 50 W/m² and
+  $\kappa$ = 1.4 W/(m·K), the temperature changes by 35.7 °C per meter — 0.36 °C over the
+  first centimeter of the wall. A poorer conductor (smaller $\kappa$) needs a steeper
+  gradient to carry the same flux.
+- It is called a **natural** boundary condition: in the weak form it will appear on its
+  own as the boundary term $w(0)\,h$, rather than being imposed on $u$.
+- A real face exchanging heat with air obeys $h = h_c\,(u_\infty - u)$, which mixes the
+  value and the slope. That is a Robin condition, and it is not part of Hughes'
+  model problem.
+:::
+
+### Which face gets which condition
+
+The model problem does not care which face is Dirichlet and which is Neumann — but the
+formulas do, through $n$. There are four ways to assign the two faces:
+
+```{python fig_configs}
+#| echo: false
+#| output: false
+
+xx = np.linspace(0, L, 200)
+f = f0
+configs = [
+    ("(a)  Hughes: $\\Gamma_h = \\{0\\}$, $\\Gamma_g = \\{L\\}$",
+     ("h", h0), ("g", g0),
+     g0 + h0 / kappa * (L - xx) + f / (2 * kappa) * (L ** 2 - xx ** 2)),
+    ("(b)  swapped: $\\Gamma_g = \\{0\\}$, $\\Gamma_h = \\{L\\}$",
+     ("g", g0), ("h", h0),
+     g0 + (h0 + f * L) / kappa * xx - f / (2 * kappa) * xx ** 2),
+    ("(c)  both Dirichlet: $\\Gamma_g = \\{0, L\\}$, $\\Gamma_h = \\emptyset$",
+     ("g", 35.0), ("g", g0),
+     35.0 + (g0 - 35.0) * xx / L + f / (2 * kappa) * xx * (L - xx)),
+    ("(d)  both Neumann: $\\Gamma_h = \\{0, L\\}$, $\\Gamma_g = \\emptyset$",
+     ("h", h0), ("h", -(h0 + f * L)), None),
+]
+
+fig, axes = plt.subplots(4, 2, figsize=(10.0, 11.0),
+                         gridspec_kw=dict(width_ratios=[1.0, 1.25]))
+for i, (title, bcL, bcR, u) in enumerate(configs):
+    ax = axes[i, 0]
+    box(ax, 0, 3.0, -0.35, 0.35)
+    sources(ax, lambda x: np.ones_like(x), 0.1, 2.9, -0.28, 0.28, 1.0, n=18)
+    for xv, (kind, val), inside in ((0.0, bcL, +1), (3.0, bcR, -1)):
+        if kind == "g":
+            dirichlet_block(ax, xv, 0.0, -inside, "$g$ = %.0f °C" % val,
+                            w=0.5, hgt=0.9, fs=10.5)
+        else:
+            a0, a1 = (xv - inside * 1.2, 0.0), (xv - inside * 0.02, 0.0)
+            if val < 0:
+                a0, a1 = a1, a0
+            arrow(ax, a0, a1, color=FLUXCLR, lw=2.4, ms=15)
+            ax.text(xv - inside * 0.75, 0.5,
+                    ("$h$ = %+.0f\nW/m²" % val).replace("-", "−"),
+                    ha="center", va="bottom", fontsize=10.5, color=FLUXCLR)
+    ax.text(1.5, -0.55, "$f$ = 500 W/m³", ha="center", va="top", fontsize=10,
+            color=LOADCLR)
+    ax.set_title(title, fontsize=11.5, loc="left")
+    tidy(ax)
+    ax.set_xlim(-1.5, 4.5)
+    ax.set_ylim(-1.1, 1.5)
+
+    ax = axes[i, 1]
+    if u is not None:
+        ax.plot(xx, u, color=INK, lw=2.2)
+        for xv, (kind, val), inside in ((0.0, bcL, +1), (L, bcR, -1)):
+            ui = np.interp(xv, xx, u)
+            if kind == "g":
+                ax.plot([xv], [ui], "o", color=BDRYCLR, ms=8, zorder=5)
+            else:
+                s = (val / kappa) * (-1 if xv == 0 else 1)
+                tt = np.array([xv, xv + inside * 0.09])
+                ax.plot(tt, ui + s * (tt - xv), color=FLUXCLR, lw=2.0, ls="--")
+    else:
+        base = -h0 / kappa * xx - f / (2 * kappa) * xx ** 2
+        for c in (35, 45, 55, 65):
+            ax.plot(xx, c + base, color=INK if c == 45 else "0.6",
+                    lw=2.2 if c == 45 else 1.3, ls="-" if c == 45 else "--")
+        ax.text(0.5 * L, 66, "$u + C$ solves it for every constant $C$",
+                ha="center", va="bottom", fontsize=10.5)
+    ax.set_xlim(-0.005, L + 0.005)
+    ax.set_ylim(5, 72)
+    graph(ax, "$x$ (m)" if i == 3 else None, "$u$ (°C)")
+fig.tight_layout(h_pad=1.4, w_pad=2.0)
+fig_configs_path = save(fig, "H_Fig9_Configurations.png")
+```
+
+![The four ways to assign the two faces, each with the same wall and the same
+$f$ = 500 W/m³. On the right, blue dots are Dirichlet values the curve must pass through;
+dashed teal lines are the slopes that Neumann data force on it.](`{python} fig_configs_path`){#fig-h-configs width=100%}
+
+::: {.step .notes}
+- **(a) Hughes' arrangement.** Flux given at $x = 0$, temperature at $x = L$:
+  $\;u(L) = g,\;\; -\kappa u_{,x}(0) = h$.
+- **(b) Swapped.** Temperature given at $x = 0$, flux at $x = L$:
+  $\;u(0) = g,\;\; +\kappa u_{,x}(L) = h$. Only the sign in front of $\kappa u_{,x}$
+  changes. Note that (b) is the *mirror image* of (a), sun on the right instead of the
+  left — and $h$ = +50 W/m² in both, because in both the sun pushes heat **in**. The sign
+  of the heat-flux $h$ follows the wall, not the $x$-axis.
+- **(c) Two Dirichlet faces** is a well-posed problem, with two values
+  $g_0 = u(0)$ and $g_L = u(L)$. Hughes' notation then carries a $g$ for each point of
+  $\Gamma_g$.
+- **(d) Two Neumann faces** is **not** a well-posed problem, for two reasons:
+    - *Uniqueness fails.* Flux data only ever see $u_{,x}$, so adding any constant to a
+      solution gives another one. The temperature level is never pinned down.
+    - *Existence needs luck.* At steady state, every watt in must come out:
+      $h_0 + h_L + \int_0^L f\,dx = 0$. The panel uses $h_L$ = −200 W/m² for exactly
+      this reason (50 in, 150 made, 200 out). Any other $h_L$ has **no** steady solution
+      at all — the wall just keeps heating up or cooling down.
+- So **$\Gamma_g$ must not be empty**: at least one face needs a known temperature.
+:::
+
+## The strong form, complete
+
+Collecting the pieces, for Hughes' arrangement (a):
+
+::: {.derivation}
+$$
+(\mathrm{S}) \qquad
+\begin{aligned}
+&\text{Given } f : \bar\Omega \to \RR \;[\text{W/m}^3],\;
+  \kappa > 0 \;[\text{W/(m·K)}],\;
+  g \;[{}^\circ\text{C}], \text{ and } h \;[\text{W/m}^2],
+  \text{ find } u : \bar\Omega \to \RR \;[{}^\circ\text{C}] \text{ such that} \\[3pt]
+&\qquad \left(\kappa\,u_{,x}\right)_{,x} + f = 0
+   && \text{on } \Omega = \,]0, L[ && \text{(energy balance + Fourier)} \\
+&\qquad u(L) = g && && \text{(Dirichlet: known temperature)} \\
+&\qquad -\kappa\,u_{,x}(0) = h && && \text{(Neumann: known inflow)}
+\end{aligned}
+$$
+:::
+
+and, for the swapped arrangement (b), replace the last two lines by $u(0) = g$ and
+$+\kappa\,u_{,x}(L) = h$.
+
+::: {.step .notes}
+- It is called the **strong** form because the differential equation must hold
+  **at every point** of $\Omega$. That demands $u_{,xx}$ exist everywhere — a smooth
+  solution. A wall made of two materials, with $\kappa$ jumping at an interface, already
+  strains this requirement; the weak form relaxes it.
+- With constant $\kappa$ and $f$, integrating twice gives the exact solution of (a):
+:::
+
+::: {.derivation}
+$$
+u(x) = g + \frac{h}{\kappa}\,(L - x) + \frac{f}{2\kappa}\,\left(L^2 - x^2\right)
+$$
+:::
+
+::: {.step}
+which, with $L = \kappa = 1$, is the $u(x) = g + (1-x)h + \int_x^1\!\int_0^y f\,dz\,dy$
+of [Class 4](4_Class.qmd).
+:::
+
+## Worked example
+
+```{python example_numbers}
+#| echo: false
+#| output: false
+
+xx = np.linspace(0, L, 300)
+u_a = lambda x: g0 + h0 / kappa * (L - x) + f0 / (2 * kappa) * (L ** 2 - x ** 2)
+q_a = lambda x: h0 + f0 * x                   # q = -kappa u_,x
+dudx0 = -h0 / kappa
+u0 = u_a(0.0)
+qL = q_a(L)
+```
+
+The concrete wall of @fig-h-wall: $L$ = 0.30 m, $\kappa$ = 1.4 W/(m·K), curing at
+$f$ = 500 W/m³, with $h$ = 50 W/m² of sunlight absorbed at the outside face $x = 0$ and
+the inside face $x = L$ held at $g$ = 20 °C. This is arrangement (a).
+
+```{python example_math}
+#| echo: false
+#| output: asis
+
+print(r"""
+::: {.derivation}
+$$
+\begin{aligned}
+u(x) &= 20 + \frac{50}{1.4}\,(0.30 - x) + \frac{500}{2(1.4)}\,(0.09 - x^2)
+  \quad [{}^\circ\text{C}] \\[4pt]
+u(0) &= 20 + %.2f + %.2f = %.1f\ {}^\circ\text{C}
+  \qquad\qquad u_{,x}(0) = -\frac{h}{\kappa} = %.1f\ {}^\circ\text{C/m} \\[4pt]
+q(x) &= -\kappa\,u_{,x} = 50 + 500\,x \quad [\text{W/m}^2]
+  \qquad\qquad q(L) = %.0f\ \text{W/m}^2
+\end{aligned}
+$$
+:::
+""" % (h0 * L / kappa, f0 * L ** 2 / (2 * kappa), u0, dudx0, qL))
+```
+
+```{python fig_example}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(2, 1, figsize=(7.8, 6.8), sharex=True,
+                         gridspec_kw=dict(height_ratios=[1.35, 1.0]))
+ax = axes[0]
+ax.plot(xx, u_a(xx), color=INK, lw=2.4)
+ax.plot([L], [g0], "o", color=BDRYCLR, ms=9, zorder=5)
+ax.text(L - 0.004, g0 - 1.6, "$u(L) = g$ = 20 °C", ha="right", va="top",
+        color=BDRYCLR, fontsize=11)
+# the tangent at x = 0 and a 5 cm slope triangle
+tt = np.array([0, 0.12])
+ax.plot(tt, u0 + dudx0 * tt, color=FLUXCLR, lw=1.6, ls="--")
+run = 0.05
+ax.plot([0, run, run], [u0, u0, u0 + dudx0 * run], color=FLUXCLR, lw=1.3)
+ax.text(run / 2, u0 + 0.6, "5 cm", ha="center", va="bottom", fontsize=10,
+        color=FLUXCLR)
+ax.text(run + 0.004, u0 + dudx0 * run / 2, ("%.2f °C" % (dudx0 * run)).replace("-", "−"),
+        ha="left", va="center", fontsize=10, color=FLUXCLR)
+ax.text(0.125, u0 + dudx0 * 0.12 + 0.5,
+        (r"slope $u_{,x}(0) = -h/\kappa$ = %.1f °C/m" % dudx0).replace("= -3", "= −3"),
+        ha="left", va="bottom", fontsize=11, color=FLUXCLR)
+ax.annotate("$u(0)$ = %.1f °C" % u0, xy=(0, u0), xytext=(0.012, u0 + 5.0),
+            ha="left", va="bottom", fontsize=11,
+            arrowprops=dict(arrowstyle="-", color=INK, lw=0.8))
+ax.set_ylim(14, 56)
+graph(ax, None, "temperature $u$ (°C)")
+
+ax = axes[1]
+ax.plot(xx, q_a(xx), color=FLUXCLR, lw=2.4)
+ax.fill_between(xx, h0, q_a(xx), color=LOADCLR, alpha=0.15, lw=0)
+ax.axhline(h0, color=FLUXCLR, lw=0.8, ls=":")
+ax.text(0.004, h0 - 12, "$q(0) = h$ = 50 W/m² in", ha="left", va="top",
+        fontsize=11, color=FLUXCLR)
+ax.text(L - 0.004, qL + 8, "$q(L)$ = %.0f W/m² out" % qL, ha="right",
+        va="bottom", fontsize=11, color=FLUXCLR)
+ax.text(0.2, 95, r"$+\int_0^L f\,dx$ = 150 W/m²" + "\nmade inside",
+        ha="center", va="center", fontsize=10.5, color=LOADCLR)
+ax.set_ylim(0, 245)
+graph(ax, "$x$ (m)", "heat flux $q$ (W/m²)")
+fig.tight_layout(h_pad=1.0)
+fig_example_path = save(fig, "H_Fig10_Example.png")
+```
+
+![The solution of the worked example. Top: temperature, pinned at the inside face and
+leaving the outside face with the slope the sunlight dictates. Bottom: the heat flux
+$q = -\kappa u_{,x}$, which grows by exactly the heat made inside the
+wall.](`{python} fig_example_path`){#fig-h-example width=80%}
+
+Every line of the strong form can be checked on the picture:
+
+::: {.step .notes}
+- **The differential equation.** $\kappa u_{,xx} = -f$: the temperature curve bends
+  down everywhere, at the same rate, because $f$ is uniform. Equivalently,
+  $q_{,x} = f$ = 500 W/m³: the flux line in the lower panel is straight with slope 500.
+- **The Dirichlet condition.** The curve passes through 20 °C at $x = L$.
+- **The Neumann condition.** At $x = 0$ the tangent drops 1.79 °C over the first 5 cm,
+  a slope of −35.7 °C/m, and $-\kappa u_{,x}(0) = -1.4 \times (-35.7) = 50$ W/m² $= h$.
+- **The energy balance.** 50 W/m² in through the sunlit face plus 150 W/m² made inside
+  equals the 200 W/m² delivered to the room at $x = L$.
+:::
+
+The same wall with the sun on the other side is arrangement (b): $u(0) = 20$ °C,
+$+\kappa u_{,x}(L) = 50$ W/m², and $u(x) = g + \frac{h + fL}{\kappa}\,x -
+\frac{f}{2\kappa}\,x^2$ — the mirror image of the curve above, with the *same* $h$.
+Compare this with the rod, where mirroring the problem flips the sign of $h$.
+
+## Explore the strong form
+
+Move the sliders and watch each line of the strong form act on the solution. The black
+curve is the exact $u(x)$. A blue dot marks each Dirichlet face, and the dashed teal
+line is the slope that the Neumann condition forces on its face. The band below the
+curve is the wall, shaded by temperature, with arrows showing the heat flux
+$q = -\kappa u_{,x}$.
+
+```{ojs}
+//| echo: false
+viewof hBC = Inputs.radio(new Map([
+  ["(a) Hughes: h at x = 0, g at x = L", "a"],
+  ["(b) swapped: g at x = 0, h at x = L", "b"],
+  ["(c) g at both faces", "c"]
+]), {value: "a", label: "Boundary conditions"})
+viewof hF  = Inputs.range([-2000, 2000], {value: 500, step: 50,  label: "f (W/m³)"})
+viewof hH  = Inputs.range([-300, 300],   {value: 50,  step: 5,   label: "h (W/m², into wall)"})
+viewof hG  = Inputs.range([0, 40],       {value: 20,  step: 1,   label: "g (°C)"})
+viewof hG0 = Inputs.range([0, 40],       {value: 35,  step: 1,   label: "g at x = 0 in (c) (°C)"})
+viewof hK  = Inputs.range([0.2, 5],      {value: 1.4, step: 0.1, label: "κ (W/(m·K))"})
+```
+
+```{ojs}
+//| echo: false
+heat = {
+  const L = 0.30, k = hK, f = hF, h = hH, g = hG, g0 = hG0;
+  let u, du;
+  if (hBC === "a") {
+    u  = x => g + h / k * (L - x) + f / (2 * k) * (L * L - x * x);
+    du = x => -h / k - f * x / k;
+  } else if (hBC === "b") {
+    u  = x => g + (h + f * L) / k * x - f / (2 * k) * x * x;
+    du = x => (h + f * L) / k - f * x / k;
+  } else {
+    u  = x => g0 + (g - g0) * x / L + f / (2 * k) * x * (L - x);
+    du = x => (g - g0) / L + f * (L - 2 * x) / (2 * k);
+  }
+  const q = x => -k * du(x);
+  const pts = d3.range(121).map(i => { const x = L * i / 120; return {x, u: u(x), q: q(x)}; });
+  return {L, k, f, h, g, g0, u, du, q, pts};
+}
+```
+
+```{ojs}
+//| echo: false
+{
+  const {L, u, du, q, pts} = heat;
+  const W = Math.min(width, 760);
+  const dirX = hBC === "a" ? [L] : hBC === "b" ? [0] : [0, L];
+  const neuX = hBC === "a" ? 0 : hBC === "b" ? L : null;
+  const marks = [
+    Plot.line(pts, {x: "x", y: "u", stroke: "#1a1a1a", strokeWidth: 2.6}),
+    Plot.dot(dirX.map(x => ({x, u: u(x)})), {x: "x", y: "u", r: 6, fill: "#4a7ba7"})
+  ];
+  if (neuX !== null) {
+    const d = (neuX === 0 ? 1 : -1) * 0.08;
+    marks.push(Plot.line([{x: neuX, u: u(neuX)}, {x: neuX + d, u: u(neuX) + du(neuX) * d}],
+      {x: "x", y: "u", stroke: "#0d9488", strokeWidth: 2.4, strokeDasharray: "7,4"}));
+  }
+  const top = Plot.plot({
+    width: W, height: 300, marginLeft: 55,
+    x: {label: "x (m) →", domain: [0, L]},
+    y: {label: "↑ temperature u (°C)", grid: true},
+    marks
+  });
+
+  // the wall, shaded by temperature, with flux arrows
+  const segs = pts.slice(0, -1).map((p, i) => ({x1: p.x, x2: pts[i + 1].x, u: p.u}));
+  const qmax = d3.max(pts, p => Math.abs(p.q)) || 1;
+  const nA = 7, cell = L / nA;
+  const arrows = d3.range(nA).map(i => {
+    const x = cell * (i + 0.5), len = 0.8 * cell * Math.abs(q(x)) / qmax, s = Math.sign(q(x));
+    return {x1: x - s * len / 2, x2: x + s * len / 2, y: 0.5};
+  }).filter(a => Math.abs(a.x2 - a.x1) > 1e-4);
+  const band = Plot.plot({
+    width: W, height: 110, marginLeft: 55,
+    x: {label: "x (m) →", domain: [0, L]},
+    y: {axis: null, domain: [0, 1]},
+    color: {type: "linear", scheme: "RdYlBu", reverse: true, legend: true, label: "u (°C)"},
+    marks: [
+      Plot.rect(segs, {x1: "x1", x2: "x2", y1: 0, y2: 1, fill: "u", stroke: "u"}),
+      Plot.arrow(arrows, {x1: "x1", x2: "x2", y1: "y", y2: "y", stroke: "#1a1a1a",
+                          strokeWidth: 2.4, headLength: 10})
+    ]
+  });
+  return html`<div>${top}${band}</div>`;
+}
+```
+
+```{ojs}
+//| echo: false
+{
+  const {L, k, f, h, u, du, q} = heat;
+  const fmt = (v, d = 1) => (v < 0 ? "−" : "") + Math.abs(v).toFixed(d);
+  const inL = q(0), outR = q(L), made = f * L;
+  let bc;
+  if (hBC === "a") bc = `−κ u,x(0) = −${fmt(k, 1)} × (${fmt(du(0))}) = ${fmt(-k * du(0))} W/m² = h ✓  u(L) = ${fmt(u(L))} °C = g ✓`;
+  else if (hBC === "b") bc = `u(0) = ${fmt(u(0))} °C = g ✓  +κ u,x(L) = ${fmt(k, 1)} × ${fmt(du(L))} = ${fmt(k * du(L))} W/m² = h ✓`;
+  else bc = `u(0) = ${fmt(u(0))} °C ✓  u(L) = ${fmt(u(L))} °C ✓  (h is not used: Γₕ = ∅)`;
+  return html`<div style="font-size: 0.95rem; line-height: 1.6; margin: 0.4rem 0 1rem 0;">
+    <b>Boundary conditions:</b> ${bc}<br>
+    <b>Curvature:</b> u,xx = −f/κ = ${fmt(-f / k)} °C/m², everywhere in the wall<br>
+    <b>Energy balance</b> (per m² of wall): flux at x = 0 toward +x: ${fmt(inL, 0)} W/m²
+    &nbsp;+&nbsp; made inside ∫f dx: ${fmt(made, 0)} W/m²
+    &nbsp;=&nbsp; flux at x = L toward +x: ${fmt(outR, 0)} W/m²
+  </div>`;
+}
+```
+
+::: {.step .notes}
+- Set $f = 0$: the curve straightens and every flux arrow has the same length.
+- In (a), set $h = 0$: the curve arrives at $x = 0$ perfectly flat, as for an insulated
+  face.
+- Switch between (a) and (b) with the same $h$: the solution mirrors, and $h$ keeps its
+  sign, because it is still heat going *in*.
+- Halve $\kappa$: the Neumann slope doubles. A worse conductor needs a steeper gradient
+  to carry the same flux.
+:::

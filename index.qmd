@@ -36,3 +36,7 @@ computed on the page so that the text and the drawings always agree.
 | | |
 |---|---|
 | [Norms and Function Spaces](chapters/3_Support_FunctionSpaces.qmd) | Where the integrals in $L^2$ and $H^1$ come from |
+| [1D Poisson I: Heat Conduction Through a Wall](chapters/Poisson1D_Heat.qmd) | Hughes' model problem as steady heat flow: what $f$, $g$, and $h$ are, in pictures |
+| [1D Poisson II: The Wall, by Galerkin's Method](chapters/Poisson1D_Heat_FEM.qmd) | Weak form, Galerkin form, element arrays, assembly, and an interactive solver for the wall |
+| [1D Poisson III: An Axially Loaded Rod](chapters/Poisson1D_Rod.qmd) | The same model problem as a pile under load, and why $h$ changes sign when the problem is mirrored |
+| [1D Poisson IV: The Rod, by Galerkin's Method](chapters/Poisson1D_Rod_FEM.qmd) | The same steps read as virtual work, with the pile as the worked example |

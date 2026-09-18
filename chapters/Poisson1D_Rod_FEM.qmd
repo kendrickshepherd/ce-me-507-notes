@@ -1,0 +1,891 @@
+---
+title: "1D Poisson IV: The Rod, by Galerkin's Method"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import os
+import sys
+import math
+
+sys.path.append('.')
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+
+from notes_style import (use_chapter, save, tidy, INK, LOADCLR, REACTCLR,
+                         DIMCLR, DOMCLR, BDRYCLR, FLUXCLR, MESHCLR, BASISCLRS)
+import fem1d as F
+
+IMGDIR = use_chapter("Poisson1D_Rod_FEM")
+
+# the pile of the strong-form page (SI units; x runs down the pile)
+L, EA, fsk, P, g0 = 10.0, 30.0e9 * 0.09, -40.0e3, 900.0e3, 0.0
+pb = F.Problem(L, EA, lambda x: fsk + 0.0 * x, bc="a", h=P, g=g0)
+u_ex, du_ex = F.exact(pb)
+verts3 = F.make_mesh(L, 3)
+
+
+def arrow(ax, p_from, p_to, color=INK, lw=1.8, ms=13, z=6):
+    ax.annotate("", xy=p_to, xytext=p_from,
+                arrowprops=dict(arrowstyle="-|>", color=color, lw=lw,
+                                mutation_scale=ms, shrinkA=0, shrinkB=0),
+                zorder=z)
+```
+
+The [strong-form page](Poisson1D_Rod.qmd) set up an end-bearing pile as Hughes' model
+problem. This page solves it approximately, step by step, exactly as
+[the wall was solved](Poisson1D_Heat_FEM.qmd). The mathematics is the same, so this page
+concentrates on what each step means **mechanically**. There, the weak form is the
+principle of virtual work.
+
+::: {.derivation}
+$$
+(\mathrm{S})
+\;\Longleftrightarrow\;
+(\mathrm{W})
+\;\xrightarrow{\;\text{finite-dimensional}\;}\;
+(\mathrm{G})
+\;\xrightarrow{\;\text{basis functions}\;}\;
+\mathbf{K}\mathbf{d} = \mathbf{F}
+\;\xleftarrow{\;\text{assembly}\;}\;
+\mathbf{k}^e,\; \mathbf{f}^e
+\;\xrightarrow{\;\text{solve}\;}\;
+u^h
+$$
+:::
+
+The running example is the pile, in Hughes' arrangement (a), with $x$ pointing down:
+
+::: {.derivation}
+$$
+(\mathrm{S}) \qquad
+\left(EA\,u_{,x}\right)_{,x} + f = 0 \;\text{ on } ]0, L[
+\qquad
+u(L) = g
+\qquad
+-EA\,u_{,x}(0) = h
+$$
+$$
+L = 10\ \text{m},\quad EA = 2.7\times10^{9}\ \text{N},\quad
+f = -40\ \text{kN/m},\quad h = +900\ \text{kN},\quad g = 0
+$$
+:::
+
+## The weak form: virtual work
+
+### Displacements and virtual displacements
+
+::: {.derivation}
+$$
+\mathcal{S} = \left\{\, u \;\middle|\; u \in H^1(\Omega),\; u(L) = g \,\right\}
+\qquad\qquad
+\mathcal{V} = \left\{\, w \;\middle|\; w \in H^1(\Omega),\; w(L) = 0 \,\right\}
+$$
+:::
+
+```{python fig_spaces}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(1, 2, figsize=(10.4, 3.9))
+xx = np.linspace(0, L, 300)
+s = (L - xx) / L
+ax = axes[0]
+for k, uu in enumerate([3.0e-3 * s, 2.0e-3 * s ** 2 + 1.0e-3 * s,
+                        1.2e-3 * np.sin(1.5 * np.pi * s) + 1.5e-3 * s,
+                        4.0e-3 * s - 1.5e-3 * s ** 3]):
+    ax.plot(xx, uu * 1e3, color=BASISCLRS[k], lw=1.5, ls="--")
+ax.plot(xx, u_ex(xx) * 1e3, color=INK, lw=2.6, label="the solution $u$")
+ax.plot([L], [0], "o", color=BDRYCLR, ms=9, zorder=5)
+ax.text(0.2, -0.85, "every $u \\in \\mathcal{S}$ has $u(L) = 0$ at the rock",
+        ha="left", va="bottom", fontsize=10, color=BDRYCLR)
+ax.legend(frameon=False, fontsize=10, loc="upper right")
+ax.set_ylim(-1.0, 4.2)
+ax.set_title(r"displacements $u \in \mathcal{S}$", fontsize=11.5)
+F.graph(ax, "$x$ (m, down the pile)", "$u$ (mm)")
+
+ax = axes[1]
+for k, ww in enumerate([s, np.sin(np.pi * s) * 0.9, s ** 2 * 0.8,
+                        np.sin(2.5 * np.pi * s) * 0.7]):
+    ax.plot(xx, ww, color=BASISCLRS[k], lw=1.8)
+ax.axhline(0, color=DIMCLR, lw=0.7)
+ax.plot([L], [0], "o", color=BDRYCLR, ms=9, zorder=5)
+ax.text(L - 0.15, -0.12, "every $w \\in \\mathcal{V}$ is\nzero at the rock",
+        ha="right", va="top", fontsize=10, color=BDRYCLR)
+ax.set_ylim(-1.0, 1.15)
+ax.set_title(r"virtual displacements $w \in \mathcal{V}$", fontsize=11.5)
+F.graph(ax, "$x$ (m, down the pile)", "$w$")
+fig.tight_layout(w_pad=2.5)
+fig_spaces_path = save(fig, "RF_Fig1_Spaces.png")
+```
+
+![Left: members of $\mathcal{S}$, displacement fields that respect the support. The real
+one is among them. Right: members of $\mathcal{V}$, **virtual displacements**: imagined
+motions that the supports would allow, and so are zero at the
+rock.](`{python} fig_spaces_path`){#fig-rf-spaces width=96%}
+
+::: {.step}
+In structural mechanics $w$ has a name and a meaning. It is a **virtual displacement**, a
+small motion you imagine imposing, consistent with the supports. Since the rock does not
+move, neither may $w$ at $x = L$.
+:::
+
+### Multiply, integrate, and integrate by parts
+
+Multiply the equilibrium equation by $w$ and integrate down the pile:
+
+::: {.derivation}
+$$
+0 = \int_0^L w\left[\left(EA\,u_{,x}\right)_{,x} + f\right] dx
+\;\;\xrightarrow{\;\text{by parts}\;}\;\;
+\int_0^L w_{,x}\,EA\,u_{,x}\,dx
+= \int_0^L w f\,dx + w(L)\,EA\,u_{,x}(L) - w(0)\,EA\,u_{,x}(0)
+$$
+:::
+
+```{python fig_boundary}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(9.6, 4.2))
+Ld = 6.0
+ax.add_patch(Rectangle((0, -0.3), Ld, 0.6, facecolor="#d9d9d9", edgecolor=INK,
+                       lw=1.4))
+xs = np.linspace(0, Ld, 100)
+ax.plot(xs, 0.55 + 1.3 * (1 - xs / Ld) ** 1.4, color=REACTCLR, lw=2.0)
+ax.text(1.0, 1.75, "a virtual displacement $w$", color=REACTCLR, fontsize=10.5)
+ax.plot([0], [1.85], "o", color=REACTCLR, ms=6)
+ax.plot([Ld], [0.55], "o", color=REACTCLR, ms=6)
+arrow(ax, (-1.6, 0), (-0.02, 0), color=LOADCLR, lw=2.6, ms=16)
+ax.text(-0.8, -0.45, "known column load:\n$-EA\\,u_{,x}(0) = h$", ha="center",
+        va="top", fontsize=11, color=LOADCLR)
+ax.text(-0.8, -1.55, "so $-w(0)\\,EA\\,u_{,x}(0)$\nbecomes $w(0)\\,h$",
+        ha="center", va="top", fontsize=11.5)
+arrow(ax, (Ld + 1.6, 0), (Ld + 0.02, 0), color=DIMCLR, lw=2.6, ms=16)
+ax.text(Ld + 0.8, 0.2, "?", ha="center", va="bottom", fontsize=16, color=DIMCLR)
+ax.text(Ld + 0.8, -0.45, "unknown rock reaction:\n$EA\\,u_{,x}(L) = N(L)$",
+        ha="center", va="top", fontsize=11, color=DIMCLR)
+ax.text(Ld + 0.8, -1.55, "but $w(L) = 0$, so\nit does no virtual work",
+        ha="center", va="top", fontsize=11.5)
+ax.text(Ld / 2, -0.02, "pile", ha="center", va="center", fontsize=11)
+tidy(ax)
+ax.set_xlim(-2.4, Ld + 2.8)
+ax.set_ylim(-2.5, 2.2)
+fig_boundary_path = save(fig, "RF_Fig2_BoundaryTerm.png")
+```
+
+![The boundary term, one end at a time. At the head, the force is data, so its term
+becomes $w(0)\,h$: the virtual work of the column load. At the toe, the force is the
+unknown rock reaction, and a support reaction does no work through a virtual displacement
+the support forbids.](`{python} fig_boundary_path`){#fig-rf-boundary width=90%}
+
+::: {.derivation}
+$$
+(\mathrm{W}) \qquad
+\underbrace{\int_0^L w_{,x}\,EA\,u_{,x}\,dx}_{a(w,\,u)\;=\;\text{internal virtual work}}
+\;=\;
+\underbrace{\int_0^L w\,f\,dx + w(0)\,h}_{(w,\,f)\,+\,w(0)h\;=\;\text{external virtual work}}
+\qquad \forall\, w \in \mathcal{V}
+$$
+:::
+
+::: {.step .notes}
+- **Internal virtual work.** $w_{,x}$ is the virtual strain and $EA\,u_{,x} = N$ is the
+  real axial force, so $a(w,u) = \int N\,\delta\varepsilon\,dx$.
+- **External virtual work.** The distributed load moves through $w$ along the pile; the
+  column load moves through $w(0)$ at the head.
+- $(\mathrm{W})$ is the **principle of virtual work**: a displacement field that respects
+  the supports is the equilibrium one exactly when internal and external virtual work
+  agree for *every* admissible virtual displacement.
+- **Units:** N·m (joules) times the units of $w$ per meter of $u$, on both sides.
+:::
+
+| Arrangement | $\mathcal{S}$ | $\mathcal{V}$ | External virtual work |
+|---|---|---|---|
+| (a) Hughes: $h$ at $x=0$, $g$ at $x=L$ | $u(L) = g$ | $w(L) = 0$ | $(w, f) + w(0)\,h$ |
+| (b) $g$ at $x=0$, $h$ at $x=L$ | $u(0) = g$ | $w(0) = 0$ | $(w, f) + w(L)\,h$ |
+| (c) $g$ at both ends | $u(0) = g_0$, $u(L) = g$ | $w(0) = w(L) = 0$ | $(w, f)$ |
+
+## The Galerkin form
+
+### Elements, nodes, and Lagrange basis functions
+
+The pile is cut into $n_{el}$ elements with Lagrange polynomials of degree $p$ on each,
+exactly as for the wall. There are $n_{en} = p + 1$ nodes per element and
+$n_{np} = p\,n_{el} + 1$ nodes in all, with node $n_{np}$ at the rock.
+
+```{python fig_basis}
+#| echo: false
+#| output: false
+
+fig_basis_path = F.fig_basis(verts3, "a", "RF_Fig3_Basis.png",
+                             xlabel="$x$ (m, down the pile)")
+```
+
+![Top: Lagrange functions on the parent element, $p$ = 1, 2, 3. Bottom: the global basis
+functions they make on three elements down the pile. The dashed function belongs to the
+node at the rock (filled dot), which carries the known $g = 0$ rather than an
+unknown.](`{python} fig_basis_path`){#fig-rf-basis width=100%}
+
+### The Galerkin form, $(\mathrm{G})$
+
+::: {.derivation}
+$$
+w^h = \sum_{A=1}^{n} c_A\,N_A,
+\qquad
+u^h = v^h + g^h = \sum_{B=1}^{n} d_B\,N_B + g\,N_{n+1}
+$$
+$$
+(\mathrm{G}) \qquad
+a(w^h, v^h) = (w^h, f) + w^h(0)\,h - a(w^h, g^h)
+\qquad \forall\, w^h \in \mathcal{V}^h
+$$
+:::
+
+::: {.step}
+Here each $d_B$ is the **displacement of node $B$**, and each $N_A$ is a virtual
+displacement pattern: move node $A$ by one unit and leave every other node where it is.
+Galerkin's method asks for virtual work to balance for each of these patterns, not for
+every conceivable one.
+:::
+
+```{python fig_build}
+#| echo: false
+#| output: false
+
+fig_build_path = F.fig_build(pb, verts3, "RF_Fig4_Build.png", uscale=1e3,
+                             ulabel="$u$ (mm)", xlabel="$x$ (m, down the pile)")
+```
+
+![What $u^h$ is made of for the pile on three elements: each basis function scaled by its
+nodal displacement $d_A$, summed. With $p = 1$ the pile's displacement is a broken line
+through the exact nodal values; with $p = 2$ it is exact, because the true displacement is
+quadratic for uniform friction.](`{python} fig_build_path`){#fig-rf-build width=98%}
+
+## From $(\mathrm{G})$ to $\mathbf{K}\mathbf{d} = \mathbf{F}$
+
+Substituting the expansions and using the linearity of $a$ and $(\cdot,\cdot)$ in each
+slot:
+
+::: {.derivation}
+$$
+\sum_{A=1}^{n} c_A \left[\, \sum_{B=1}^{n} a(N_A, N_B)\,d_B
+- (N_A, f) - N_A(0)\,h + a(N_A, N_{n+1})\,g \right] = 0
+\qquad \text{for all } c_A
+$$
+$$
+\boxed{\;\mathbf{K}\,\mathbf{d} = \mathbf{F}\;}
+\qquad
+K_{AB} = \int_0^L N_{A,x}\,EA\,N_{B,x}\,dx
+\qquad
+F_A = \int_0^L N_A\,f\,dx + \delta_{A1}\,h - \int_0^L N_{A,x}\,EA\,N_{n+1,x}\,dx\;g
+$$
+:::
+
+::: {.step .notes}
+- $\mathbf{K}$ is the **stiffness matrix**, N/m: $K_{AB}$ is the force at node $A$
+  needed to hold the pile in the shape "node $B$ moved by one meter, every other node
+  fixed".
+- $\mathbf{F}$ is the vector of **equivalent nodal forces**, N. $(N_A, f)$ is the share
+  of the skin friction that node $A$ carries, and the column load goes to node 1 only.
+- **Symmetric** (Maxwell–Betti reciprocity), **banded**, and **positive definite**
+  because the rock holds the pile. With both ends free, arrangement (d), a rigid-body
+  translation $\mathbf{d} = \{1, 1, \dots, 1\}$ gives $\mathbf{K}\mathbf{d} = 0$, so
+  $\mathbf{K}$ is singular: the floating pile, in matrix form.
+:::
+
+## The element point of view
+
+::: {.derivation}
+$$
+k^e_{ab} = \int_{\Omega^e} N_{a,x}\,EA\,N_{b,x}\,dx
+= \int_{-1}^{1} N_{a,\xi}\,EA\,N_{b,\xi}\,\frac{2}{h^e}\,d\xi
+\qquad\qquad
+f^e_a = \int_{\Omega^e} N_a\,f\,dx + \delta_{e1}\,\delta_{a1}\,h - \sum_b k^e_{ab}\,g^e_b
+$$
+:::
+
+```{python fig_map}
+#| echo: false
+#| output: false
+
+fig_map_path = F.fig_parent_map("RF_Fig5_ParentMap.png", verts=(3.0, 6.0), p=2)
+```
+
+![The isoparametric map for one quadratic element of the pile, from 3 m to 6 m depth, with
+its Gauss points.](`{python} fig_map_path`){#fig-rf-map width=88%}
+
+For constant $EA$ and $f$, these are the familiar bar elements:
+
+::: {.derivation}
+$$
+p = 1:\;\;
+\mathbf{k}^e = \frac{EA}{h^e}\begin{bmatrix} 1 & -1 \\ -1 & 1 \end{bmatrix},\;\;
+\mathbf{f}^e_{\text{body}} = \frac{f\,h^e}{2}\begin{Bmatrix} 1 \\ 1 \end{Bmatrix}
+\qquad\quad
+p = 2:\;\;
+\mathbf{k}^e = \frac{EA}{3h^e}\begin{bmatrix} 7 & -8 & 1 \\ -8 & 16 & -8 \\ 1 & -8 & 7 \end{bmatrix},\;\;
+\mathbf{f}^e_{\text{body}} = \frac{f\,h^e}{6}\begin{Bmatrix} 1 \\ 4 \\ 1 \end{Bmatrix}
+$$
+$$
+p = 3:\;\;
+\mathbf{k}^e = \frac{EA}{40h^e}\begin{bmatrix}
+148 & -189 & 54 & -13 \\ -189 & 432 & -297 & 54 \\ 54 & -297 & 432 & -189 \\ -13 & 54 & -189 & 148
+\end{bmatrix},\;\;
+\mathbf{f}^e_{\text{body}} = \frac{f\,h^e}{8}\begin{Bmatrix} 1 \\ 3 \\ 3 \\ 1 \end{Bmatrix}
+$$
+:::
+
+::: {.step .notes}
+- $p = 1$ is the spring $k = EA/h^e$ from mechanics of materials: the linear element
+  *is* an axial spring.
+- Each row of $\mathbf{k}^e$ sums to zero, because a rigid translation of the element
+  needs no force.
+- The body terms add up to $f\,h^e$, the element's total friction, shared among its
+  nodes.
+:::
+
+### Assembly with ID, IEN, and LM
+
+The arrays and the assembly operator are identical to the wall's (see the
+[wall page](Poisson1D_Heat_FEM.qmd) for the table). $k^e_{ab}$ is added into $K_{PQ}$ with
+$P = \mathrm{LM}(a,e)$ and $Q = \mathrm{LM}(b,e)$, and anything with a zero index is skipped:
+
+::: {.derivation}
+$$
+\mathbf{K} = \mathop{\Large\mathsf{A}}_{e=1}^{n_{el}}\left(\mathbf{k}^e\right),
+\qquad
+\mathbf{F} = \mathop{\Large\mathsf{A}}_{e=1}^{n_{el}}\left(\mathbf{f}^e\right),
+\qquad
+\mathrm{LM}(a,e) = \mathrm{ID}\big(\mathrm{IEN}(a,e)\big)
+$$
+:::
+
+```{python fig_assembly}
+#| echo: false
+#| output: false
+
+fig_assembly_path = F.fig_assembly("a", "RF_Fig6_Assembly.png", nel=4)
+```
+
+![Element stiffness matrices tiling the global stiffness for four elements of each degree.
+Where two squares overlap, two elements share a node, like two springs joined end to end.
+The hatched row and column belong to the node at the rock: its displacement is known, and
+its row would be the reaction equation.](`{python} fig_assembly_path`){#fig-rf-assembly width=100%}
+
+## Worked example: the pile on three linear elements
+
+```{python example}
+#| echo: false
+#| output: false
+
+sol3 = F.solve(pb, 1, verts3)
+exact_nodes = u_ex(sol3["X"])
+kN = 1e-3
+
+
+def vec(v, s=1.0, d=2):
+    return r"\begin{Bmatrix}" + r" \\ ".join("%.*f" % (d, x * s) if abs(x) > 1e-9 else "0"
+                                            for x in v) + r"\end{Bmatrix}"
+
+
+def mat(M, s=1.0):
+    return r"\begin{bmatrix}" + r" \\ ".join(" & ".join(F.num(x * s) for x in r)
+                                            for r in M) + r"\end{bmatrix}"
+
+
+e_last = sol3["nel"] - 1
+Ue = sol3["U"][sol3["IEN"][:, e_last] - 1]
+reaction = sol3["ke"][e_last][-1] @ Ue - sol3["fe"][e_last]["body"][-1]
+Nh_last = EA * (sol3["U"][-1] - sol3["U"][-2]) / (verts3[-1] - verts3[-2])
+Nh_first = EA * (sol3["U"][1] - sol3["U"][0]) / (verts3[1] - verts3[0])
+```
+
+Three elements, $h^e = 10/3$ m, nodes at depths 0, 3.33, 6.67, 10 m, and node 4 on the
+rock. The ID, IEN, and LM arrays are exactly those of the wall example:
+$\mathrm{ID} = \{1, 2, 3, 0\}$, and $\mathrm{LM}(\cdot, 3) = \{3, 0\}$. Each element has
+$EA/h^e = 8.1\times10^{8}$ N/m and $f h^e/2 = -66.67$ kN:
+
+```{python example_elements}
+#| echo: false
+#| output: asis
+
+fe = sol3["fe"]
+print(r"""
+::: {.derivation}
+$$
+\mathbf{k}^1 = \mathbf{k}^2 = \mathbf{k}^3 = 10^{8}\times%s\ \tfrac{\text{N}}{\text{m}}
+$$
+$$
+\mathbf{f}^1 = %s + \underbrace{%s}_{h\ \text{at the head}} = %s
+\qquad
+\mathbf{f}^2 = %s
+\qquad
+\mathbf{f}^3 = %s - \underbrace{\mathbf{k}^3\begin{Bmatrix} 0 \\ 0 \end{Bmatrix}}_{g\,=\,0} = %s
+\quad [\text{kN}]
+$$
+:::
+""" % (mat(sol3["ke"][0], 1e-8),
+       vec(fe[0]["body"], kN), vec(fe[0]["h"], kN), vec(fe[0]["total"], kN),
+       vec(fe[1]["total"], kN), vec(fe[2]["body"], kN), vec(fe[2]["total"], kN)))
+```
+
+```{python example_global}
+#| echo: false
+#| output: asis
+
+print(r"""
+::: {.derivation}
+$$
+\underbrace{10^{8}\times%s}_{\mathbf{K}\ [\text{N/m}]}
+\begin{Bmatrix} d_1 \\ d_2 \\ d_3 \end{Bmatrix}
+= \underbrace{10^{3}\times%s}_{\mathbf{F}\ [\text{N}]}
+\qquad\Longrightarrow\qquad
+\mathbf{d} = %s\ \text{mm}
+$$
+:::
+""" % (mat(sol3["K"], 1e-8), vec(sol3["F"], kN), vec(sol3["d"], 1e3, 4)))
+```
+
+```{python fig_result}
+#| echo: false
+#| output: false
+
+fig_result_path, _ = F.fig_result(
+    pb, 1, verts3, "RF_Fig7_Result.png", flux=lambda du: EA * du,
+    uscale=1e3, fscale=1e-3, ulabel="displacement $u$ (mm)",
+    flabel="axial force $N$ (kN)", xlabel="$x$ (m, down the pile)",
+    neu_label=(0.0, -P, "exact $N(0) = -h$ = −900 kN"))
+```
+
+![The strong-form pictures, redrawn for $u^h$. Top: nodal displacements on the exact curve,
+joined by straight lines. Bottom: the axial force $N^h = EA\,u^h_{,x}$, constant on each
+element: the classic stepped force diagram of a bar model.](`{python} fig_result_path`){#fig-rf-result width=80%}
+
+```{python example_text}
+#| echo: false
+#| output: asis
+
+m = lambda v, d=1: ("%.*f" % (d, v)).replace("-", "−")
+print(r"""
+::: {.step .notes}
+- **The nodal displacements are exact**: the exact solution at the three unknown nodes is
+  %s mm. Linear elements with constant $EA$ are nodally exact in one dimension.
+- **The force at the head is only weakly right.** On element 1, $N^h$ = %s kN, not
+  $-h$ = −900 kN; it is the average compression over the top 3.33 m. Refining the mesh
+  brings it to −900 kN.
+- **The discarded equation is the rock reaction.** Row 4 of the full system,
+  $\sum_b k^3_{2b} U^3_b - f^3_{\text{body},2}$, is the boundary term $N(L)$ that
+  $w(L) = 0$ removed. It evaluates to %s kN, the exact force delivered to the rock.
+  Differentiating $u^h$ on element 3 gives %s kN. This is how structural codes report
+  support reactions.
+- With $p = 2$, a single element is exact, because the true displacement is quadratic
+  (@fig-rf-build).
+:::
+""" % (", ".join(m(v * 1e3, 4) for v in exact_nodes[:3]), m(Nh_first * kN),
+       m(reaction * kN), m(Nh_last * kN)))
+```
+
+## How the error shrinks
+
+Uniform friction makes the answer a quadratic, which $p \ge 2$ reproduces exactly. So give
+the soil a **stiff layer** instead: a band of extra friction around 6 m depth,
+$f = -40 - 150\,e^{-((x - 6)/0.6)^2}$ kN/m. Its exact solution is not a polynomial:
+
+```{python fig_convergence}
+#| echo: false
+#| output: false
+
+pb_layer = F.Problem(L, EA, lambda x: -40.0e3 - 150.0e3 * np.exp(-((x - 6.0) / 0.6) ** 2),
+                     bc="a", h=P, g=g0)
+fig_conv_path, rates = F.fig_convergence(pb_layer, "RF_Fig8_Convergence.png",
+                                         hlabel="element size $h^e$ (m)")
+```
+
+![Displacement error (left) and strain error (right) against element size, on log-log
+axes. Each halving of the elements divides the displacement error by $2^{p+1}$ and the
+strain, or force, error by $2^{p}$, once the elements are small enough to resolve the stiff
+layer.](`{python} fig_conv_path`){#fig-rf-convergence width=96%}
+
+::: {.derivation}
+$$
+\|u - u^h\|_{L^2} \le C\,h^{p+1}
+\qquad\qquad
+|u - u^h|_{H^1} = \left(\int_0^L \left(\varepsilon - \varepsilon^h\right)^2 dx\right)^{1/2} \le C\,h^{p}
+$$
+:::
+
+## Explore the Galerkin method
+
+Choose the data and the discretization, then look through the tabs. **Solution** redraws
+the pile before and after loading, now with $u^h$. **Force** compares $N^h$ with the exact
+axial force. **Error** and **Convergence** measure the difference. **Basis** and
+**Matrices** show how the system is built. With 15 or more unknowns, only the first rows
+and columns of $\mathbf{K}$ are printed, plus a zoom around the highlighted element.
+
+```{ojs}
+//| echo: false
+import {makeMesh, exact, solve, evaluate, errors, shape, parentNodes,
+        texMatrix, texVector, texSymbols, niceScale, num} from "./fem1d.js"
+```
+
+**The problem**
+
+```{ojs}
+//| echo: false
+viewof bc = Inputs.radio(new Map([
+  ["(a) Hughes: h at x = 0, g at x = L", "a"],
+  ["(b) g at x = 0, h at x = L", "b"],
+  ["(c) g at both ends", "c"]
+]), {value: "a", label: "Boundary conditions"})
+viewof forcing = Inputs.select(new Map([
+  ["uniform friction, f₀", "uniform"],
+  ["friction growing with depth, f₀·x/L", "linear"],
+  ["stiff layer at 6 m, f₀ + 150·f₀/40·exp(…)", "layer"]
+]), {value: "uniform", label: "Forcing f(x)"})
+viewof f0 = Inputs.range([-150, 150],   {value: -40, step: 5,   label: "f₀ (kN/m, toward +x)"})
+viewof hN = Inputs.range([-1500, 1500], {value: 900, step: 25,  label: "h (kN, toward +x)"})
+viewof gD = Inputs.range([-3, 3],       {value: 0,   step: 0.1, label: "g (mm)"})
+viewof gD0 = Inputs.range([-3, 3],      {value: 2,   step: 0.1, label: "g at x = 0 in (c) (mm)"})
+viewof EAin = Inputs.range([0.5, 10],   {value: 2.7, step: 0.1, label: "EA (×10⁹ N)"})
+```
+
+**The discretization**
+
+```{ojs}
+//| echo: false
+viewof p = Inputs.radio([1, 2, 3], {value: 1, label: "Degree p"})
+viewof nelIn = Inputs.range([1, 40], {value: 3, step: 1, label: "Elements nₑₗ"})
+viewof meshKind = Inputs.select(new Map([
+  ["uniform", "uniform"],
+  ["crowded toward the head, x = 0", "left"],
+  ["crowded toward the toe, x = L", "right"],
+  ["custom: type the interior vertices below", "custom"]
+]), {value: "uniform", label: "Element spacing"})
+viewof customText = Inputs.text({label: "Custom interior vertices (m)",
+  value: "2, 5, 5.5, 6, 6.5, 7", placeholder: "e.g. 2, 5, 6, 7"})
+viewof eSel = Inputs.range([1, 40], {value: 1, step: 1, label: "Highlight element e"})
+```
+
+```{ojs}
+//| echo: false
+L = 10
+fx = {
+  const f = f0 * 1e3;
+  if (forcing === "linear") return x => f * x / L;
+  if (forcing === "layer") return x => f + (150 / 40) * f * Math.exp(-(((x - 6) / 0.6) ** 2));
+  return x => f;
+}
+pb = ({L, K: EAin * 1e9, f: fx, bc, h: hN * 1e3, g: gD / 1e3, g0: gD0 / 1e3})
+verts = meshKind === "custom"
+  ? makeMesh(L, 0, "custom", customText.split(/[,\s]+/).map(Number).filter(Number.isFinite))
+  : makeMesh(L, nelIn, meshKind)
+sol = solve(pb, p, verts)
+ex = exact(pb)
+samples = evaluate(sol, 32)
+err = errors(sol, ex)
+eHi = Math.min(eSel, sol.nel)
+EAv = EAin * 1e9
+exactPts = d3.range(301).map(i => { const x = L * i / 300; return {x, u: 1e3 * ex.u(x), N: EAv * ex.du(x) / 1e3}; })
+fmt = (v, d = 2) => (v < 0 ? "−" : "") + Math.abs(v).toFixed(d)
+colors = ["#1f6feb", "#c0392b", "#0d9488", "#e67e22", "#8a5a20", "#7c3aed"]
+```
+
+```{ojs}
+//| echo: false
+html`<div style="font-size:0.95rem; margin:0.3rem 0 0.6rem 0; padding:0.5rem 0.8rem; background:#fff; border-left:4px solid #4a7ba7;">
+  <b>${sol.nel}</b> elements of degree <b>${p}</b> &rarr; <b>${sol.nnp}</b> nodes, <b>${sol.neq}</b> unknowns.
+  &nbsp; Error: ‖u − uʰ‖<sub>L²</sub> = ${(err.l2 * 1e3).toExponential(2)} mm·m<sup>½</sup>,
+  &nbsp; |u − uʰ|<sub>H¹</sub> (strain) = ${err.h1.toExponential(2)} m<sup>½</sup>/m
+</div>`
+```
+
+::: {.panel-tabset}
+
+### Solution
+
+```{ojs}
+//| echo: false
+{
+  const W = Math.min(width, 780);
+  const uhPts = samples.flatMap(s => s.x.map((x, i) => ({x, u: 1e3 * s.uh[i], e: s.e})));
+  const nodes = sol.X.map((x, i) => ({x, u: 1e3 * sol.U[i], dir: sol.ID[i] === 0}));
+  const ys = [...exactPts.map(d => d.u), ...uhPts.map(d => d.u)];
+  const lo0 = Math.min(...ys), hi0 = Math.max(...ys), pad = 0.06 * (hi0 - lo0 || 1);
+  const yLo = showBasis ? Math.min(lo0, 0) - pad : lo0 - pad, yHi = Math.max(hi0, showBasis ? 0 : hi0) + pad;
+  const marks = [
+    Plot.rect([{x1: verts[eHi - 1], x2: verts[eHi], y1: yLo, y2: yHi}], {x1: "x1", x2: "x2", y1: "y1", y2: "y2", fill: "#f6e3c7", fillOpacity: 0.6}),
+    Plot.ruleY([0], {stroke: "#ccc"}),
+    Plot.ruleX(verts, {stroke: "#8a5a20", strokeOpacity: 0.5, strokeDasharray: "2,3"}),
+    Plot.line(exactPts, {x: "x", y: "u", stroke: "#bbb", strokeWidth: 7, strokeLinecap: "round"})
+  ];
+  if (showBasis) {
+    samples.forEach((s, e) => {
+      for (let a = 0; a < p + 1; a++) {
+        const A = sol.IEN[e][a];
+        const pts = s.x.map((x, i) => ({x, y: 1e3 * sol.U[A - 1] * shape(p, -1 + 2 * i / (s.x.length - 1)).N[a]}));
+        marks.push(Plot.line(pts, {x: "x", y: "y", stroke: colors[(A - 1) % 6], strokeWidth: 1,
+          strokeDasharray: sol.ID[A - 1] === 0 ? "5,3" : null}));
+      }
+    });
+  }
+  marks.push(Plot.line(uhPts, {x: "x", y: "u", z: "e", stroke: "#c0392b", strokeWidth: 2.6}));
+  marks.push(Plot.dot(nodes, {x: "x", y: "u", r: 4, fill: d => d.dir ? "#4a7ba7" : "white", stroke: d => d.dir ? "#4a7ba7" : "#c0392b", strokeWidth: 1.6}));
+  const xn = bc === "a" ? 0 : bc === "b" ? L : null;
+  if (xn !== null) {
+    const d = (xn === 0 ? 1 : -1) * 2.5;
+    const se = samples[xn === 0 ? 0 : samples.length - 1], k = xn === 0 ? 0 : se.x.length - 1;
+    marks.push(Plot.line([{x: xn, y: 1e3 * ex.u(xn)}, {x: xn + d, y: 1e3 * (ex.u(xn) + ex.du(xn) * d)}],
+      {x: "x", y: "y", stroke: "#0d9488", strokeWidth: 2.2, strokeDasharray: "6,4"}));
+    marks.push(Plot.line([{x: xn, y: 1e3 * se.uh[k]}, {x: xn + d, y: 1e3 * (se.uh[k] + se.duh[k] * d)}],
+      {x: "x", y: "y", stroke: "#c0392b", strokeWidth: 1.6, strokeDasharray: "2,3"}));
+  }
+  const top = Plot.plot({width: W, height: 320, marginLeft: 55,
+    x: {label: "x (m) →", domain: [0, L]},
+    y: {label: "↑ displacement (mm)", domain: [yLo, yHi], grid: true}, marks});
+
+  // the pile before and after, coloured by N^h on each element
+  const umax = Math.max(...sol.U.map(Math.abs), 1e-12);
+  const exag = 0.35 / umax;
+  const segs = samples.flatMap(s => s.x.slice(0, -1).map((x, i) => ({x1: x + exag * s.uh[i], x2: s.x[i + 1] + exag * s.uh[i + 1],
+                                                                      N: EAv * s.duh[i] / 1e3})));
+  const ticks = sol.X.map((x, i) => ({x0: x, x1: x + exag * sol.U[i]}));
+  const Nmax = Math.max(...segs.map(d => Math.abs(d.N)), 1e-9);
+  const band = Plot.plot({width: W, height: 140, marginLeft: 55,
+    x: {label: `the pile before (grey) and after (displacements ×${exag.toFixed(0)}), shaded by Nʰ`, domain: [-0.5, L + 0.5]},
+    y: {axis: null, domain: [0, 2]},
+    color: {type: "diverging", scheme: "RdBu", reverse: true, domain: [-Nmax, Nmax], legend: true, label: "Nʰ (kN): red tension, blue compression"},
+    marks: [
+      Plot.rect([{x1: 0, x2: L}], {x1: "x1", x2: "x2", y1: 1.2, y2: 1.8, fill: "#e2e2e2", stroke: "#999"}),
+      Plot.ruleX(ticks, {x: "x0", y1: 1.2, y2: 1.8, stroke: "#888", strokeWidth: 1.2}),
+      Plot.rect(segs, {x1: "x1", x2: "x2", y1: 0.2, y2: 0.8, fill: "N", stroke: "N"}),
+      Plot.ruleX(ticks, {x: "x1", y1: 0.2, y2: 0.8, stroke: "#1a1a1a", strokeWidth: 1.4}),
+      Plot.link(ticks, {x1: "x0", y1: 1.2, x2: "x1", y2: 0.8, stroke: "#aaa", strokeDasharray: "2,2"})
+    ]});
+  return html`<div>${top}${band}
+  <div style="font-size:0.88rem; color:#555">Grey: exact u. Red: uʰ. Open dots are unknown nodal displacements d<sub>A</sub>; blue dots are prescribed.
+  ${showBasis ? "Thin lines: each d<sub>A</sub>N<sub>A</sub>. " : ""}
+  ${xn !== null ? "At the Neumann end: teal dashes are the exact strain, red dots the strain of uʰ. " : ""}
+  In the lower picture, the ticks are the nodes, and every element is coloured by its own Nʰ = EA uʰ,ₓ.</div></div>`;
+}
+```
+
+```{ojs}
+//| echo: false
+viewof showBasis = Inputs.toggle({label: "Draw each dₐNₐ", value: true})
+```
+
+### Force
+
+```{ojs}
+//| echo: false
+{
+  const W = Math.min(width, 780);
+  const Nh = samples.flatMap(s => s.x.map((x, i) => ({x, N: EAv * s.duh[i] / 1e3, e: s.e})));
+  const marks = [
+    Plot.ruleY([0], {stroke: "#bbb"}),
+    Plot.ruleX(verts, {stroke: "#8a5a20", strokeOpacity: 0.5, strokeDasharray: "2,3"}),
+    Plot.line(exactPts, {x: "x", y: "N", stroke: "#bbb", strokeWidth: 7, strokeLinecap: "round"}),
+    Plot.line(Nh, {x: "x", y: "N", z: "e", stroke: "#1f6feb", strokeWidth: 2.6})
+  ];
+  let note = "";
+  if (bc !== "c") {
+    const xn = bc === "a" ? 0 : L, Nn = bc === "a" ? -hN : hN;
+    const s = samples[bc === "a" ? 0 : samples.length - 1];
+    const Nf = EAv * s.duh[bc === "a" ? 0 : s.duh.length - 1] / 1e3;
+    marks.push(Plot.dot([{x: xn, N: Nn}], {x: "x", y: "N", r: 6, fill: "#1a1a1a"}));
+    note = `At the loaded end x = ${xn} m the data require N = ${fmt(Nn, 1)} kN (black dot); uʰ gives ${fmt(Nf, 1)} kN.
+            The force boundary condition holds only weakly.`;
+  }
+  // reactions from the equations the Dirichlet nodes would have had
+  const reac = [];
+  for (const [A, gval] of sol.gnode) {
+    let R = 0;
+    sol.IEN.forEach((row, e) => row.forEach((B, a) => {
+      if (B !== A) return;
+      const Ue = row.map(C => sol.U[C - 1]);
+      R += sol.ke[e][a].reduce((s, v, b) => s + v * Ue[b], 0) - sol.fe[e].body[a];
+    }));
+    const xA = sol.X[A - 1], n = xA === 0 ? -1 : 1;
+    reac.push(`x = ${xA} m: support force ${fmt(R / 1e3, 1)} kN toward +x (exact ${fmt(n * EAv * ex.du(xA) / 1e3, 1)} kN)`);
+  }
+  return html`<div>${Plot.plot({width: W, height: 330, marginLeft: 60,
+    x: {label: "x (m) →", domain: [0, L]}, y: {label: "↑ axial force N (kN)", grid: true}, marks})}
+    <div style="font-size:0.88rem; color:#555">Grey: exact N = EA u,ₓ. Blue: Nʰ = EA uʰ,ₓ, discontinuous at the nodes. ${note}<br>
+    Reactions from the discarded (Dirichlet) equations: ${reac.join("; ")}.</div></div>`;
+}
+```
+
+### Error
+
+```{ojs}
+//| echo: false
+{
+  const W = Math.min(width, 780);
+  const eu = samples.flatMap(s => s.x.map((x, i) => ({x, e: 1e3 * (ex.u(x) - s.uh[i]), el: s.e})));
+  const eN = samples.flatMap(s => s.x.map((x, i) => ({x, e: EAv * (ex.du(x) - s.duh[i]) / 1e3, el: s.e})));
+  const nodal = sol.X.map((x, i) => ({x, e: 1e3 * (ex.u(x) - sol.U[i])}));
+  const maxNodal = Math.max(...nodal.map(d => Math.abs(d.e)));
+  const p1 = Plot.plot({width: W, height: 250, marginLeft: 75,
+    x: {label: "x (m) →", domain: [0, L]}, y: {label: "↑ u − uʰ (mm)", grid: true},
+    marks: [Plot.ruleY([0], {stroke: "#bbb"}), Plot.ruleX(verts, {stroke: "#8a5a20", strokeOpacity: 0.5, strokeDasharray: "2,3"}),
+            Plot.areaY(eu, {x: "x", y: "e", z: "el", fill: "#c0392b", fillOpacity: 0.15}),
+            Plot.line(eu, {x: "x", y: "e", z: "el", stroke: "#c0392b", strokeWidth: 2}),
+            Plot.dot(nodal, {x: "x", y: "e", r: 3.5, fill: "#1a1a1a"})]});
+  const p2 = Plot.plot({width: W, height: 220, marginLeft: 75,
+    x: {label: "x (m) →", domain: [0, L]}, y: {label: "↑ N − Nʰ (kN)", grid: true},
+    marks: [Plot.ruleY([0], {stroke: "#bbb"}), Plot.ruleX(verts, {stroke: "#8a5a20", strokeOpacity: 0.5, strokeDasharray: "2,3"}),
+            Plot.line(eN, {x: "x", y: "e", z: "el", stroke: "#1f6feb", strokeWidth: 2})]});
+  return html`<div>${p1}${p2}<div style="font-size:0.88rem; color:#555">
+    Largest displacement error at the nodes (black dots): ${maxNodal.toExponential(2)} mm.
+    ${p === 1 && maxNodal < 1e-9 ? "Linear elements with constant EA are nodally exact in 1D." : ""}
+    The force error jumps at every node, because Nʰ does.</div></div>`;
+}
+```
+
+### Convergence
+
+```{ojs}
+//| echo: false
+{
+  const W = Math.min(width, 780);
+  const kind = meshKind === "custom" ? "uniform" : meshKind, rows = [];
+  for (const pp of [1, 2, 3]) for (const n of [1, 2, 4, 8, 16, 32, 64]) {
+    const s = solve(pb, pp, makeMesh(L, n, kind)), e = errors(s, ex);
+    rows.push({p: `p = ${pp}`, h: L / n, l2: Math.max(e.l2, 1e-18), h1: Math.max(e.h1, 1e-18)});
+  }
+  const here = [{h: L / sol.nel, l2: Math.max(err.l2, 1e-18), h1: Math.max(err.h1, 1e-18)}];
+  const mk = (key, lab) => Plot.plot({width: W / 2 - 10, height: 300, marginLeft: 60,
+    x: {type: "log", label: "average element size (m) →", tickFormat: ".0e"}, y: {type: "log", label: lab, grid: true, tickFormat: ".0e"},
+    color: {domain: ["p = 1", "p = 2", "p = 3"], range: colors.slice(0, 3), legend: key === "l2"},
+    marks: [Plot.line(rows, {x: "h", y: key, stroke: "p", strokeWidth: 2}),
+            Plot.dot(rows, {x: "h", y: key, fill: "p", r: 3}),
+            Plot.dot(here, {x: "h", y: key, r: 8, stroke: "#1a1a1a", strokeWidth: 2.5})]});
+  return html`<div style="display:flex; flex-wrap:wrap; gap:16px">${mk("l2", "↑ ‖u − uʰ‖ in L² (m·m½)")}${mk("h1", "↑ strain error |u − uʰ| in H¹")}</div>
+   <div style="font-size:0.88rem; color:#555">Meshes with 1, 2, 4, …, 64 elements (${kind} spacing), for the current data; the ringed point is the current mesh.
+   Slope p + 1 on the left and p on the right. Uniform friction gives a quadratic answer, so the p ≥ 2 curves sit at round-off. Try the stiff layer.</div>`;
+}
+```
+
+### Basis
+
+```{ojs}
+//| echo: false
+{
+  const W = Math.min(width, 780), lines = [];
+  for (let e = 0; e < sol.nel; e++) for (let a = 0; a < p + 1; a++) {
+    const A = sol.IEN[e][a];
+    for (let i = 0; i < 25; i++) {
+      const xi = -1 + 2 * i / 24;
+      lines.push({x: verts[e] + (xi + 1) * (verts[e + 1] - verts[e]) / 2, y: shape(p, xi).N[a],
+                  key: `${A}-${e}`, A, dir: sol.ID[A - 1] === 0, hi: e + 1 === eHi});
+    }
+  }
+  const global = Plot.plot({width: W, height: 240, marginLeft: 45,
+    x: {label: "x (m) →", domain: [0, L]}, y: {label: "↑ N_A(x)", domain: [-0.35, 1.15]},
+    marks: [Plot.rect([{x1: verts[eHi - 1], x2: verts[eHi], y1: -0.35, y2: 1.15}], {x1: "x1", x2: "x2", y1: "y1", y2: "y2", fill: "#f6e3c7", fillOpacity: 0.6}),
+            Plot.ruleY([0], {stroke: "#bbb"}), Plot.ruleX(verts, {stroke: "#8a5a20", strokeOpacity: 0.5, strokeDasharray: "2,3"}),
+            Plot.line(lines, {x: "x", y: "y", z: "key", stroke: d => colors[(d.A - 1) % 6],
+                              strokeWidth: d => d.hi ? 3 : 1.4, strokeDasharray: d => d.dir ? "5,3" : null}),
+            Plot.dot(sol.X.map((x, i) => ({x, y: 0, dir: sol.ID[i] === 0})), {x: "x", y: "y", r: 3.5,
+                     fill: d => d.dir ? "#4a7ba7" : "white", stroke: "#1a1a1a"})]});
+  const par = [];
+  for (let a = 0; a < p + 1; a++) for (let i = 0; i < 61; i++) {
+    const xi = -1 + 2 * i / 60;
+    par.push({xi, y: shape(p, xi).N[a], a: `N${a + 1}`, A: sol.IEN[eHi - 1][a]});
+  }
+  const parent = Plot.plot({width: Math.min(W, 420), height: 200, marginLeft: 45,
+    x: {label: "ξ →", domain: [-1, 1]}, y: {label: "↑ Nₐ(ξ)", domain: [-0.35, 1.15]},
+    marks: [Plot.ruleY([0], {stroke: "#bbb"}),
+            Plot.line(par, {x: "xi", y: "y", z: "a", stroke: d => colors[(d.A - 1) % 6], strokeWidth: 2.2}),
+            Plot.dot(parentNodes(p).map(xi => ({xi, y: 1})), {x: "xi", y: "y", r: 3, fill: "#7c3aed"})]});
+  const iens = sol.IEN[eHi - 1];
+  return html`<div>${global}
+    <div style="font-size:0.88rem; color:#555; margin-bottom:0.6rem">All ${sol.nnp} global basis functions N<sub>A</sub>: unit virtual displacement patterns, one per node.
+    Dashed ones sit on a support. Element ${eHi}'s functions are drawn thick.</div>
+    <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap">${parent}
+    <div style="font-size:0.9rem">On element ${eHi}, the parent functions become<br>
+    ${iens.map((A, a) => `N<sub>${a + 1}</sub>(ξ) → N<sub>${A}</sub>(x)`).join("<br>")}<br>
+    through x(ξ) = Σ Nₐ(ξ) xₐᵉ, with x,<sub>ξ</sub> = hᵉ/2 = ${fmt((verts[eHi] - verts[eHi - 1]) / 2, 4)} m.</div></div></div>`;
+}
+```
+
+### Matrices
+
+```{ojs}
+//| echo: false
+{
+  const e = eHi - 1, lm = sol.LM[e];
+  const ke = sol.ke[e], fe = sol.fe[e];
+  const hi = "#c0392b";
+  const inE = new Set(lm.filter(P => P > 0).map(P => P - 1));
+  const sK = niceScale(sol.K), sF = niceScale([sol.F]);
+  const pre = s => s === 1 ? "" : `10^{${Math.round(Math.log10(s))}}\\times`;
+  const skE = niceScale(ke);
+  const Ktex = texMatrix(sol.K, {scale: sK, color: (i, j) => inE.has(i) && inE.has(j) ? hi : null});
+  const Ftex = texVector(sol.F, {scale: sF, color: i => inE.has(i) ? hi : null});
+  const dtex = texSymbols(sol.neq, "d");
+  const dval = texVector(sol.d.map(v => 1e3 * v), {sig: 5});
+  const kNv = v => texVector(v.map(x => x / 1e3), {sig: 4});
+  const scroll = x => html`<div style="overflow-x:auto; max-width:100%">${x}</div>`;
+  const colsE = Math.min(sol.nel, 12);
+  const cell = (k, s) => `<td style="padding:0 8px; ${k === e ? "color:#c0392b; font-weight:700" : ""}">${s}</td>`;
+  const table = `<table style="font-size:0.85rem; margin:0.4rem 0 0.8rem 0; white-space:nowrap">
+      <tr><th style="text-align:left">e</th>${d3.range(colsE).map(k => cell(k, k + 1)).join("")}${sol.nel > colsE ? "<td>…</td>" : ""}</tr>
+      <tr><th style="text-align:left; padding-right:10px">IEN(·, e)</th>${d3.range(colsE).map(k => cell(k, sol.IEN[k].join(", "))).join("")}${sol.nel > colsE ? "<td>…</td>" : ""}</tr>
+      <tr><th style="text-align:left; padding-right:10px">LM(·, e)</th>${d3.range(colsE).map(k => cell(k, sol.LM[k].join(", "))).join("")}${sol.nel > colsE ? "<td>…</td>" : ""}</tr></table>`;
+  let zoom = "";
+  const eqs = lm.filter(P => P > 0);
+  if (sol.neq >= 15 && eqs.length) {
+    const lo = Math.max(1, Math.min(...eqs) - 1), hi2 = Math.min(sol.neq, Math.max(...eqs) + 1);
+    const rng = d3.range(lo - 1, hi2);
+    const hiSet = new Set(eqs.map(P => P - 1));
+    zoom = html`<h4>Zoom: equations ${lo} to ${hi2}, around element ${eHi}</h4>
+      ${scroll(tex.block`${pre(sK)}${texMatrix(rng.map(i => rng.map(j => sol.K[i][j])), {scale: sK, color: (i, j) => hiSet.has(rng[i]) && hiSet.has(rng[j]) ? hi : null})}
+        \begin{bmatrix}${rng.map(i => `d_{${i + 1}}`).join(" \\\\ ")}\end{bmatrix}
+        = ${pre(sF)}${texVector(rng.map(i => sol.F[i]), {scale: sF, color: i => hiSet.has(rng[i]) ? hi : null})}`)}`;
+  }
+  return html`<div>
+    <h4 style="margin-top:0.4rem">Bookkeeping</h4>
+    <div style="font-size:0.85rem">ID = [${sol.ID.slice(0, 30).join(", ")}${sol.nnp > 30 ? ", …" : ""}] &nbsp;(0 marks a supported node)</div>
+    ${scroll(html`${table}`)}
+    <h4>Element ${eHi}: x from ${fmt(verts[e], 3)} to ${fmt(verts[e + 1], 3)} m, hᵉ = ${fmt(verts[e + 1] - verts[e], 3)} m</h4>
+    <div style="font-size:0.95rem">LM(·, ${eHi}) = {${lm.join(", ")}}: row and column a of the element arrays go to equation LM(a, ${eHi}); a 0 means "supported node: skip".</div>
+    ${scroll(tex.block`\mathbf{k}^{${eHi}} = ${pre(skE)}${texMatrix(ke, {scale: skE})}\ \tfrac{\text{N}}{\text{m}}`)}
+    ${scroll(tex.block`\mathbf{f}^{${eHi}} = \underbrace{${kNv(fe.body)}}_{\int N_a f\,dx}
+      + \underbrace{${kNv(fe.h)}}_{h\ \text{term}} - \underbrace{${kNv(fe.g)}}_{\mathbf{k}^{e}\mathbf{g}^{e}}
+      = ${kNv(fe.total)}\ \text{kN}`)}
+    <h4>Global system: ${sol.neq} equations${sol.neq >= 15 ? " (first rows and columns shown)" : ""}</h4>
+    ${scroll(tex.block`${pre(sK)}${Ktex}\,${dtex} = ${pre(sF)}${Ftex}`)}
+    <div style="font-size:0.88rem; color:#555">K in N/m, F in N. Red entries are where element ${eHi}'s k<sup>e</sup> and f<sup>e</sup> were added, through LM(·, ${eHi}).
+    ${sol.neq >= 15 && lm.some(P => P > 6) ? ` Element ${eHi}'s rows are beyond those printed; see the zoom below.` : ""}</div>
+    ${zoom}
+    ${tex.block`\mathbf{d} = \mathbf{K}^{-1}\mathbf{F} = ${dval}\ \text{mm}`}
+  </div>`;
+}
+```
+
+:::
+
+::: {.step .notes}
+- $p = 1$, 3 elements is the worked example above. Open **Force** and compare the stepped
+  $N^h$ with the exact line. The reaction printed underneath is exact even so.
+- Choose the **stiff layer** and a custom mesh that clusters vertices around 6 m (the
+  default custom list does). Compare the error with a uniform mesh with the same number
+  of elements.
+- Switch to arrangement (b) with $h$ = +900 kN: the load now pulls the far end, and the
+  band turns red (tension).
+- On **Matrices**, step through the elements. Every $\mathbf{k}^e$ of a $p = 1$ element is
+  the spring $\frac{EA}{h^e}\begin{bmatrix} 1 & -1 \\ -1 & 1\end{bmatrix}$, and the global
+  $\mathbf{K}$ is those springs connected end to end.
+:::

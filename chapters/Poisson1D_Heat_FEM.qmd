@@ -1,0 +1,1059 @@
+---
+title: "1D Poisson II: The Wall, by Galerkin's Method"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import os
+import sys
+import math
+
+sys.path.append('.')
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+
+from notes_style import (use_chapter, save, tidy, INK, LOADCLR, REACTCLR,
+                         DIMCLR, DOMCLR, BDRYCLR, FLUXCLR, MESHCLR, BASISCLRS)
+import fem1d as F
+
+IMGDIR = use_chapter("Poisson1D_Heat_FEM")
+
+# the wall of the strong-form page (SI units)
+L, kappa, f0, h0, g0 = 0.30, 1.4, 500.0, 50.0, 20.0
+pb = F.Problem(L, kappa, lambda x: f0 + 0.0 * x, bc="a", h=h0, g=g0)
+u_ex, du_ex = F.exact(pb)
+verts3 = F.make_mesh(L, 3)
+
+
+def arrow(ax, p_from, p_to, color=INK, lw=1.8, ms=13, z=6):
+    ax.annotate("", xy=p_to, xytext=p_from,
+                arrowprops=dict(arrowstyle="-|>", color=color, lw=lw,
+                                mutation_scale=ms, shrinkA=0, shrinkB=0),
+                zorder=z)
+```
+
+The [strong-form page](Poisson1D_Heat.qmd) set up heat conduction through a concrete wall
+as Hughes' model problem. This page solves it approximately, following Hughes, Chapter 1,
+step by step:
+
+::: {.derivation}
+$$
+(\mathrm{S})
+\;\Longleftrightarrow\;
+(\mathrm{W})
+\;\xrightarrow{\;\text{finite-dimensional}\;}\;
+(\mathrm{G})
+\;\xrightarrow{\;\text{basis functions}\;}\;
+\mathbf{K}\mathbf{d} = \mathbf{F}
+\;\xleftarrow{\;\text{assembly}\;}\;
+\mathbf{k}^e,\; \mathbf{f}^e
+\;\xrightarrow{\;\text{solve}\;}\;
+u^h
+$$
+:::
+
+The running example throughout is the one from before, in Hughes' arrangement (a):
+
+::: {.derivation}
+$$
+(\mathrm{S}) \qquad
+\left(\kappa\,u_{,x}\right)_{,x} + f = 0 \;\text{ on } ]0, L[
+\qquad
+u(L) = g
+\qquad
+-\kappa\,u_{,x}(0) = h
+$$
+$$
+L = 0.30\ \text{m},\quad \kappa = 1.4\ \text{W/(m·K)},\quad
+f = 500\ \text{W/m}^3,\quad h = 50\ \text{W/m}^2,\quad g = 20\ {}^\circ\text{C}
+$$
+:::
+
+At the bottom of the page there is an explorer where you choose the element degree, the
+number and spacing of the elements, and the data, and see the matrices, the
+approximation, and its error update together.
+
+## The weak form
+
+### Two collections of functions
+
+The weak form looks for $u$ among **trial functions** and tests it against **weighting
+(test) functions**. The two collections differ only at the Dirichlet end:
+
+::: {.derivation}
+$$
+\mathcal{S} = \left\{\, u \;\middle|\; u \in H^1(\Omega),\; u(L) = g \,\right\}
+\qquad\qquad
+\mathcal{V} = \left\{\, w \;\middle|\; w \in H^1(\Omega),\; w(L) = 0 \,\right\}
+$$
+:::
+
+```{python fig_spaces}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(1, 2, figsize=(10.4, 3.9))
+xx = np.linspace(0, L, 300)
+s = (L - xx) / L
+ax = axes[0]
+for k, (uu, lab) in enumerate([
+        (g0 + 22 * s, None),
+        (g0 + 30 * s ** 2, None),
+        (g0 + 14 * np.sin(1.5 * np.pi * s) + 10 * s, None),
+        (g0 + 36 * s - 12 * s ** 3, None)]):
+    ax.plot(xx, uu, color=BASISCLRS[k], lw=1.5, ls="--")
+ax.plot(xx, u_ex(xx), color=INK, lw=2.6, label="the solution $u$")
+ax.plot([L], [g0], "o", color=BDRYCLR, ms=9, zorder=5)
+ax.text(L - 0.005, g0 - 1.5, "every $u \\in \\mathcal{S}$ passes\nthrough $g$ = 20 °C",
+        ha="right", va="top", fontsize=10, color=BDRYCLR)
+ax.legend(frameon=False, fontsize=10, loc="upper right")
+ax.set_ylim(8, 52)
+ax.set_title(r"trial functions $u \in \mathcal{S}$", fontsize=11.5)
+F.graph(ax, "$x$ (m)", "temperature (°C)")
+
+ax = axes[1]
+for k, ww in enumerate([s, np.sin(np.pi * s) * 0.9, s ** 2 * 0.8,
+                        np.sin(2.5 * np.pi * s) * 0.7]):
+    ax.plot(xx, ww, color=BASISCLRS[k], lw=1.8)
+ax.axhline(0, color=DIMCLR, lw=0.7)
+ax.plot([L], [0], "o", color=BDRYCLR, ms=9, zorder=5)
+ax.text(L - 0.005, -0.12, "every $w \\in \\mathcal{V}$ is\nzero at $x = L$",
+        ha="right", va="top", fontsize=10, color=BDRYCLR)
+ax.set_ylim(-1.0, 1.15)
+ax.set_title(r"weighting functions $w \in \mathcal{V}$", fontsize=11.5)
+F.graph(ax, "$x$ (m)", "$w$ (no units)")
+fig.tight_layout(w_pad=2.5)
+fig_spaces_path = save(fig, "HF_Fig1_Spaces.png")
+```
+
+![Left: a few members of $\mathcal{S}$. The solution is one of them, but so is every other
+reasonable temperature profile that is 20 °C at the room. Right: members of $\mathcal{V}$,
+the same kind of function with the Dirichlet value replaced by
+zero.](`{python} fig_spaces_path`){#fig-hf-spaces width=96%}
+
+::: {.step .notes}
+- $H^1(\Omega)$ asks only that $u$ and $u_{,x}$ be square-integrable. In one dimension
+  that means **continuous, with a slope that may jump** — exactly what a chain of
+  polynomial pieces looks like. The strong form needed $u_{,xx}$ everywhere; the weak form
+  will need only $u_{,x}$.
+- The Dirichlet condition is **built into** $\mathcal{S}$: every trial function already
+  satisfies it. That is what "essential" meant on the strong-form page.
+:::
+
+### Multiply, integrate, and integrate by parts
+
+Take the differential equation, multiply it by any $w \in \mathcal{V}$, and integrate
+through the wall:
+
+::: {.derivation}
+$$
+0 = \int_0^L w\left[\left(\kappa\,u_{,x}\right)_{,x} + f\right] dx
+\qquad \text{for every } w \in \mathcal{V}
+$$
+:::
+
+The product rule, $\left(w\,\kappa u_{,x}\right)_{,x} = w_{,x}\,\kappa u_{,x} +
+w\left(\kappa u_{,x}\right)_{,x}$, moves one derivative off $u$ and onto $w$:
+
+::: {.derivation}
+$$
+\int_0^L w_{,x}\,\kappa\,u_{,x}\,dx
+= \int_0^L w f\,dx
++ \Big[\, w\,\kappa\,u_{,x} \,\Big]_{x=0}^{x=L}
+= \int_0^L w f\,dx
++ w(L)\,\kappa u_{,x}(L) - w(0)\,\kappa u_{,x}(0)
+$$
+:::
+
+```{python fig_boundary}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(9.6, 4.2))
+Ld = 6.0
+ax.add_patch(Rectangle((0, -0.3), Ld, 0.6, facecolor=DOMCLR, edgecolor=BDRYCLR,
+                       lw=1.4))
+xs = np.linspace(0, Ld, 100)
+ax.plot(xs, 0.55 + 1.3 * (1 - xs / Ld) ** 1.4, color=REACTCLR, lw=2.0)
+ax.text(1.0, 1.75, "a weighting function $w$", color=REACTCLR, fontsize=10.5)
+ax.plot([0], [1.85], "o", color=REACTCLR, ms=6)
+ax.plot([Ld], [0.55], "o", color=REACTCLR, ms=6)
+# left end: flux is known
+arrow(ax, (-1.6, 0), (-0.02, 0), color=FLUXCLR, lw=2.6, ms=16)
+ax.text(-0.8, -0.45, "known:\n$-\\kappa u_{,x}(0) = h$", ha="center", va="top",
+        fontsize=11, color=FLUXCLR)
+ax.text(-0.8, -1.55, "so $-w(0)\\,\\kappa u_{,x}(0)$\nbecomes $w(0)\\,h$",
+        ha="center", va="top", fontsize=11.5)
+# right end: flux is unknown, but w vanishes there
+arrow(ax, (Ld + 0.02, 0), (Ld + 1.6, 0), color=DIMCLR, lw=2.6, ms=16)
+ax.text(Ld + 0.8, 0.2, "?", ha="center", va="bottom", fontsize=16, color=DIMCLR)
+ax.text(Ld + 0.8, -0.45, "unknown:\n$\\kappa u_{,x}(L)$ = heat to room",
+        ha="center", va="top", fontsize=11, color=DIMCLR)
+ax.text(Ld + 0.8, -1.55, "but $w(L) = 0$, so\n$w(L)\\,\\kappa u_{,x}(L)$ drops out",
+        ha="center", va="top", fontsize=11.5)
+ax.text(Ld / 2, -0.05, "wall", ha="center", va="center", fontsize=11,
+        color=BDRYCLR)
+tidy(ax)
+ax.set_xlim(-2.4, Ld + 2.6)
+ax.set_ylim(-2.5, 2.2)
+fig_boundary_path = save(fig, "HF_Fig2_BoundaryTerm.png")
+```
+
+![The boundary term, one end at a time. At the Neumann end the flux is data, so the term
+becomes $w(0)\,h$. At the Dirichlet end the flux is *not* known — it is the heat delivered
+to the room, part of the answer — and choosing $w(L) = 0$ is precisely what removes it.
+This is why $\mathcal{V}$ vanishes on $\Gamma_g$.](`{python} fig_boundary_path`){#fig-hf-boundary width=90%}
+
+With $-\kappa u_{,x}(0) = h$ and $w(L) = 0$, what remains is the weak form.
+
+::: {.derivation}
+$$
+(\mathrm{W}) \qquad
+\begin{aligned}
+&\text{Given } f,\ g,\ h,\ \kappa, \text{ find } u \in \mathcal{S} \text{ such that for all } w \in \mathcal{V}: \\[3pt]
+&\qquad \underbrace{\int_0^L w_{,x}\,\kappa\,u_{,x}\,dx}_{a(w,\,u)}
+= \underbrace{\int_0^L w\,f\,dx}_{(w,\,f)} + w(0)\,h
+\end{aligned}
+$$
+:::
+
+Hughes names the two integrals: the **bilinear form** $a(w, u)$ and the $L^2$ inner
+product $(w, f)$, so that $(\mathrm{W})$ reads compactly as
+
+::: {.derivation}
+$$
+a(w, u) = (w, f) + w(0)\,h \qquad \forall\, w \in \mathcal{V}
+$$
+:::
+
+The Neumann term follows the Neumann end. For each arrangement on the strong-form page:
+
+| Arrangement | $\mathcal{S}$ | $\mathcal{V}$ | Right-hand side |
+|---|---|---|---|
+| (a) Hughes: $h$ at $x=0$, $g$ at $x=L$ | $u(L) = g$ | $w(L) = 0$ | $(w, f) + w(0)\,h$ |
+| (b) $g$ at $x=0$, $h$ at $x=L$ | $u(0) = g$ | $w(0) = 0$ | $(w, f) + w(L)\,h$ |
+| (c) $g$ at both ends | $u(0) = g_0$, $u(L) = g$ | $w(0) = w(L) = 0$ | $(w, f)$ |
+
+::: {.step .notes}
+- **Units.** Every term of $(\mathrm{W})$ is W/m² times the units of $w$. With a
+  dimensionless $w$, it is a weighted heat balance per square metre of wall.
+- **Meaning.** $(\mathrm{W})$ is the energy balance averaged with weight $w$. One weight
+  checks the balance "on average"; *every* weight in $\mathcal{V}$ pins it down at every
+  point. That is the equivalence $(\mathrm{S}) \Leftrightarrow (\mathrm{W})$ proved in
+  [Classes 4](4_Class.qmd) and [5](5_Class.qmd).
+- **Only one derivative.** $u_{,x}$ and $w_{,x}$ appear; $u_{,xx}$ does not. A
+  temperature profile with a kink — two concrete mixes with different $\kappa$ — is now
+  admissible.
+:::
+
+## The Galerkin form
+
+$(\mathrm{W})$ still asks for a whole function. **Galerkin's method** replaces
+$\mathcal{S}$ and $\mathcal{V}$ by finite-dimensional collections $\mathcal{S}^h \subset
+\mathcal{S}$ and $\mathcal{V}^h \subset \mathcal{V}$, built from a small number of basis
+functions, so that finding $u^h$ means finding a list of numbers.
+
+### Elements, nodes, and Lagrange basis functions
+
+Cut $[0, L]$ into $n_{el}$ **elements** $\Omega^e = [x^e_1, x^e_{n_{en}}]$ of length
+$h^e$. On each element, use Lagrange polynomials of degree $p$, which need
+$n_{en} = p + 1$ element nodes, equally spaced. Neighbouring elements share their end
+nodes, so the mesh has
+
+::: {.derivation}
+$$
+n_{np} = p\,n_{el} + 1 \quad \text{nodes}, \qquad
+x_1 = 0 < x_2 < \cdots < x_{n_{np}} = L
+$$
+:::
+
+Each element is a copy of one **parent element**, $\xi \in [-1, 1]$, with nodes
+$\xi_a = -1 + 2(a-1)/p$. The Lagrange function for node $a$ is one there and zero at the
+other nodes:
+
+::: {.derivation}
+$$
+N_a(\xi) = \prod_{b \ne a} \frac{\xi - \xi_b}{\xi_a - \xi_b}
+\qquad\Longrightarrow\qquad N_a(\xi_b) = \delta_{ab}
+$$
+$$
+p = 1:\;\; N_1 = \tfrac12(1 - \xi),\;\; N_2 = \tfrac12(1 + \xi)
+\qquad\quad
+p = 2:\;\; N_1 = \tfrac12\xi(\xi - 1),\;\; N_2 = 1 - \xi^2,\;\; N_3 = \tfrac12\xi(\xi + 1)
+$$
+$$
+p = 3:\;\; N_{1,4} = \tfrac{1}{16}(1 \mp \xi)(9\xi^2 - 1),\qquad
+N_{2,3} = \tfrac{9}{16}(1 - \xi^2)(1 \mp 3\xi)
+$$
+:::
+
+```{python fig_basis}
+#| echo: false
+#| output: false
+
+fig_basis_path = F.fig_basis(verts3, "a", "HF_Fig3_Basis.png", xlabel="$x$ (m)")
+```
+
+![Top: the Lagrange functions on the parent element for $p$ = 1, 2, 3. Bottom: the global
+basis functions $N_A$ they make on a mesh of three elements through the wall. Each is one at
+its own node and zero at every other node. Functions at element-end nodes span two elements;
+interior nodes ($p \ge 2$) stay inside one. The dashed function sits on the Dirichlet node
+$x = L$ (filled dot): it will carry the known $g$, not an
+unknown.](`{python} fig_basis_path`){#fig-hf-basis width=100%}
+
+### The Galerkin form, $(\mathrm{G})$
+
+With Hughes' numbering, node $n_{np}$ is on $\Gamma_g$ and the other $n = n_{np} - 1$
+nodes carry unknowns. Build the approximations from the basis:
+
+::: {.derivation}
+$$
+w^h = \sum_{A=1}^{n} c_A\,N_A \;\in \mathcal{V}^h
+\qquad\qquad
+u^h = v^h + g^h,\qquad
+v^h = \sum_{B=1}^{n} d_B\,N_B \;\in \mathcal{V}^h,\qquad
+g^h = g\,N_{n+1}
+$$
+:::
+
+::: {.step}
+$g^h$ takes care of the Dirichlet value ($g^h(L) = g$, because $N_{n+1}(L) = 1$), and
+$v^h$ vanishes at $L$ like every member of $\mathcal{V}^h$. So $u^h \in \mathcal{S}^h$
+automatically. Substituting $u^h$ and $w^h$ into $(\mathrm{W})$, and moving the known part
+$g^h$ to the right, gives
+:::
+
+::: {.derivation}
+$$
+(\mathrm{G}) \qquad
+a(w^h, v^h) = (w^h, f) + w^h(0)\,h - a(w^h, g^h)
+\qquad \forall\, w^h \in \mathcal{V}^h
+$$
+:::
+
+```{python fig_build}
+#| echo: false
+#| output: false
+
+fig_build_path = F.fig_build(pb, verts3, "HF_Fig4_Build.png", ulabel="$u$ (°C)",
+                             xlabel="$x$ (m)")
+```
+
+![What $u^h$ is made of, for the wall on three elements. Each thin line is one basis
+function scaled by its coefficient $d_A$ — its nodal temperature — and the dashed one is
+$g\,N_{n+1}$. Their sum is $u^h$ (black). With $p = 1$ the sum is a broken line; with
+$p = 2$ it is piecewise quadratic, which here reproduces the exact quadratic profile (grey)
+perfectly.](`{python} fig_build_path`){#fig-hf-build width=98%}
+
+## From $(\mathrm{G})$ to $\mathbf{K}\mathbf{d} = \mathbf{F}$
+
+Put the expansions into $(\mathrm{G})$. Because $a(\cdot,\cdot)$ and $(\cdot,\cdot)$ are
+**linear in each slot**, the sums and constants come straight out:
+
+::: {.derivation}
+$$
+\sum_{A=1}^{n} c_A \left[\, \sum_{B=1}^{n} a(N_A, N_B)\,d_B
+- (N_A, f) - N_A(0)\,h + a(N_A, N_{n+1})\,g \right] = 0
+$$
+:::
+
+::: {.step}
+This must hold for **every** $w^h$, that is, for every choice of the $c_A$. Choose
+$c_A = 1$ for one $A$ and zero for the rest: the bracket for that $A$ must vanish. So there
+is one equation per unknown:
+:::
+
+::: {.derivation}
+$$
+\sum_{B=1}^{n} \underbrace{a(N_A, N_B)}_{K_{AB}}\;d_B
+= \underbrace{(N_A, f) + N_A(0)\,h - a(N_A, N_{n+1})\,g}_{F_A},
+\qquad A = 1, \dots, n
+$$
+$$
+\boxed{\;\mathbf{K}\,\mathbf{d} = \mathbf{F}\;}
+\qquad
+K_{AB} = \int_0^L N_{A,x}\,\kappa\,N_{B,x}\,dx
+\qquad
+F_A = \int_0^L N_A\,f\,dx + \delta_{A1}\,h - \int_0^L N_{A,x}\,\kappa\,N_{n+1,x}\,dx\;g
+$$
+:::
+
+::: {.step .notes}
+- $\mathbf{K}$ is the **conductivity (stiffness) matrix**, W/(m²·K); $\mathbf{d}$ holds
+  the unknown nodal temperatures, °C; $\mathbf{F}$ is the **heat-flux vector**, W/m².
+- $N_A(0) = \delta_{A1}$: only node 1 sits at $x = 0$, so $h$ enters only $F_1$.
+- **Symmetric**, since $a(N_A, N_B) = a(N_B, N_A)$.
+- **Banded.** $K_{AB} = 0$ unless $N_A$ and $N_B$ are both non-zero on some element
+  (@fig-hf-assembly).
+- **Positive definite**, because $\kappa > 0$ and $\Gamma_g$ is not empty. With two
+  Neumann ends, arrangement (d), the constant function makes $\mathbf{K}\mathbf{d} = 0$,
+  so $\mathbf{K}$ is singular: the non-uniqueness of the strong form, in matrix form.
+:::
+
+## The element point of view
+
+Every integral over $[0, L]$ is a sum of integrals over elements, and on element $e$ only
+its own $n_{en}$ functions are non-zero. So all the work reduces to small **element
+arrays**, in local numbering $a, b = 1, \dots, n_{en}$:
+
+::: {.derivation}
+$$
+k^e_{ab} = \int_{\Omega^e} N_{a,x}\,\kappa\,N_{b,x}\,dx
+\qquad\qquad
+f^e_a = \underbrace{\int_{\Omega^e} N_a\,f\,dx}_{\text{body}}
++ \underbrace{\delta_{e1}\,\delta_{a1}\,h}_{\text{Neumann end}}
+- \underbrace{\sum_{b} k^e_{ab}\,g^e_b}_{\text{Dirichlet end}}
+$$
+:::
+
+where $g^e_b$ is $g$ if local node $b$ is the Dirichlet node and zero otherwise.
+
+### The parent element, the Jacobian, and quadrature
+
+```{python fig_map}
+#| echo: false
+#| output: false
+
+fig_map_path = F.fig_parent_map("HF_Fig5_ParentMap.png", verts=(0.10, 0.20), p=2)
+```
+
+![The isoparametric map for a quadratic element. The same $N_a(\xi)$ that interpolate
+temperature also place the element in space. The crosses are the Gauss points, which
+follow the map.](`{python} fig_map_path`){#fig-hf-map width=88%}
+
+::: {.derivation}
+$$
+x(\xi) = \sum_{a=1}^{n_{en}} N_a(\xi)\,x^e_a,
+\qquad
+x_{,\xi} = \frac{h^e}{2},
+\qquad
+N_{a,x} = N_{a,\xi}\,\xi_{,x} = N_{a,\xi}\,\frac{2}{h^e}
+$$
+$$
+k^e_{ab} = \int_{-1}^{1} N_{a,\xi}\,\kappa\,N_{b,\xi}\,\left(x_{,\xi}\right)^{-1} d\xi
+\approx \sum_{l=1}^{n_{int}} N_{a,\xi}(\tilde\xi_l)\,\kappa\,N_{b,\xi}(\tilde\xi_l)\,
+\frac{2}{h^e}\,W_l
+\qquad
+f^e_a \approx \sum_{l=1}^{n_{int}} N_a(\tilde\xi_l)\,f\big(x(\tilde\xi_l)\big)\,\frac{h^e}{2}\,W_l
+$$
+:::
+
+::: {.step}
+An $n_{int}$-point Gauss rule is exact for polynomials up to degree $2n_{int} - 1$. The
+stiffness integrand has degree $2p - 2$, so $n_{int} = p$ points already integrate it
+exactly. The code here uses $p + 3$, so that non-polynomial $f$ is integrated accurately
+as well.
+:::
+
+For constant $\kappa$ and $f$, the integrals come out in closed form:
+
+::: {.derivation}
+$$
+p = 1:\quad
+\mathbf{k}^e = \frac{\kappa}{h^e}\begin{bmatrix} 1 & -1 \\ -1 & 1 \end{bmatrix},
+\qquad
+\mathbf{f}^e_{\text{body}} = \frac{f\,h^e}{2}\begin{Bmatrix} 1 \\ 1 \end{Bmatrix}
+$$
+$$
+p = 2:\quad
+\mathbf{k}^e = \frac{\kappa}{3h^e}\begin{bmatrix} 7 & -8 & 1 \\ -8 & 16 & -8 \\ 1 & -8 & 7 \end{bmatrix},
+\qquad
+\mathbf{f}^e_{\text{body}} = \frac{f\,h^e}{6}\begin{Bmatrix} 1 \\ 4 \\ 1 \end{Bmatrix}
+$$
+$$
+p = 3:\quad
+\mathbf{k}^e = \frac{\kappa}{40h^e}\begin{bmatrix}
+148 & -189 & 54 & -13 \\ -189 & 432 & -297 & 54 \\ 54 & -297 & 432 & -189 \\ -13 & 54 & -189 & 148
+\end{bmatrix},
+\qquad
+\mathbf{f}^e_{\text{body}} = \frac{f\,h^e}{8}\begin{Bmatrix} 1 \\ 3 \\ 3 \\ 1 \end{Bmatrix}
+$$
+:::
+
+::: {.step .notes}
+- Every row of $\mathbf{k}^e$ sums to zero: a uniform temperature carries no heat.
+- The entries of $\mathbf{f}^e_{\text{body}}$ add up to $f\,h^e$, the heat made in the
+  element. It is split among the nodes by how much of the element each basis function
+  "covers" (Simpson's weights 1, 4, 1 for $p = 2$).
+:::
+
+### Assembly: the ID, IEN, and LM arrays
+
+Hughes keeps the bookkeeping in three integer arrays:
+
+| Array | Maps | Meaning |
+|---|---|---|
+| $\mathrm{ID}(A)$ | global node $\to$ equation | $P$ if node $A$ is unknown number $P$; $0$ if $A$ is on $\Gamma_g$ |
+| $\mathrm{IEN}(a, e)$ | local node, element $\to$ global node | local node $a$ of element $e$ is global node $A$ |
+| $\mathrm{LM}(a, e)$ | local node, element $\to$ equation | $\mathrm{LM}(a,e) = \mathrm{ID}\big(\mathrm{IEN}(a,e)\big)$ |
+
+**Assembly** adds $k^e_{ab}$ into $K_{PQ}$ with $P = \mathrm{LM}(a,e)$ and
+$Q = \mathrm{LM}(b,e)$, and $f^e_a$ into $F_P$, skipping any zero (Dirichlet) index. Hughes
+writes the whole loop as
+
+::: {.derivation}
+$$
+\mathbf{K} = \mathop{\Large\mathsf{A}}_{e=1}^{n_{el}}\left(\mathbf{k}^e\right),
+\qquad
+\mathbf{F} = \mathop{\Large\mathsf{A}}_{e=1}^{n_{el}}\left(\mathbf{f}^e\right)
+$$
+:::
+
+```{python fig_assembly}
+#| echo: false
+#| output: false
+
+fig_assembly_path = F.fig_assembly("a", "HF_Fig6_Assembly.png", nel=4)
+```
+
+![Where each element matrix lands in the global matrix, for four elements of each degree
+(rows and columns are global node numbers $A$). The overlaps are the shared end nodes, and
+everything outside the coloured squares is zero, so $\mathbf{K}$ is banded. The hatched
+row and column belong to the Dirichlet node $x = L$. That row is not an equation, and the
+column's entries, multiplied by $g$, move to the right-hand side as
+$-k^e_{ab}\,g$.](`{python} fig_assembly_path`){#fig-hf-assembly width=100%}
+
+::: {.callout-note collapse="true"}
+## Hughes' notation and the class notation
+
+| Hughes (this appendix) | Class notes | |
+|---|---|---|
+| nodes $A = 1, \dots, n_{np}$; local $a = 1, \dots, n_{en}$ | $A = 0, \dots, n_{bf}-1$; $a = 0, \dots$ | 1-based vs 0-based (code) counting |
+| $\mathbf{k}^e = [k^e_{ab}]$, $\mathbf{f}^e = \{f^e_a\}$ | $K^e_{ab}$, $F^e_a$ | element arrays |
+| $x_{,\xi}$ | $J$, $DF$ | the Jacobian of the parent map |
+| $\tilde\xi_l$, $W_l$, $n_{int}$ | $\xi_g$, $w_g$, $n_{quad}$ | quadrature points and weights |
+| $\mathrm{IEN}(a,e)$, $\mathrm{LM}(a,e)$ | IEN | the class uses IEN and skips $\Gamma_g$ nodes directly |
+:::
+
+## Worked example: three linear elements
+
+```{python example}
+#| echo: false
+#| output: false
+
+sol3 = F.solve(pb, 1, verts3)
+exact_nodes = u_ex(sol3["X"])
+
+
+def vec(v):
+    return r"\begin{Bmatrix}" + r" \\ ".join(F.num(x) for x in v) + r"\end{Bmatrix}"
+
+
+def mat(M):
+    return r"\begin{bmatrix}" + r" \\ ".join(" & ".join(F.num(x) for x in r)
+                                            for r in M) + r"\end{bmatrix}"
+
+
+# the equation the Dirichlet node would have had: sum_b k_ab U_b - f_body_a
+e_last = sol3["nel"] - 1
+Ue = sol3["U"][sol3["IEN"][:, e_last] - 1]
+reaction = sol3["ke"][e_last][-1] @ Ue - sol3["fe"][e_last]["body"][-1]
+qh_last = -kappa * (sol3["U"][-1] - sol3["U"][-2]) / (verts3[-1] - verts3[-2])
+```
+
+Take $n_{el} = 3$ equal elements, $h^e$ = 0.10 m, and $p = 1$. Then there are four nodes, at
+$x$ = 0, 0.1, 0.2, 0.3 m, and node 4 is on $\Gamma_g$:
+
+| | $A = 1$ | $A = 2$ | $A = 3$ | $A = 4$ |
+|---|---|---|---|---|
+| $x_A$ (m) | 0 | 0.1 | 0.2 | 0.3 |
+| $\mathrm{ID}(A)$ | 1 | 2 | 3 | 0 |
+
+| | $e = 1$ | $e = 2$ | $e = 3$ |
+|---|---|---|---|
+| $\mathrm{IEN}(1, e)$, $\mathrm{IEN}(2, e)$ | 1, 2 | 2, 3 | 3, 4 |
+| $\mathrm{LM}(1, e)$, $\mathrm{LM}(2, e)$ | 1, 2 | 2, 3 | 3, **0** |
+
+Every element has $\kappa/h^e = 1.4/0.1 = 14$ W/(m²·K) and $f h^e/2 = 25$ W/m²:
+
+```{python example_elements}
+#| echo: false
+#| output: asis
+
+fe = sol3["fe"]
+print(r"""
+::: {.derivation}
+$$
+\mathbf{k}^1 = \mathbf{k}^2 = \mathbf{k}^3 = %s
+$$
+$$
+\mathbf{f}^1 = %s + \underbrace{%s}_{h\ \text{at node 1}} = %s
+\qquad
+\mathbf{f}^2 = %s
+\qquad
+\mathbf{f}^3 = %s - \underbrace{\mathbf{k}^3 %s}_{g\ \text{at node 4}} = %s
+$$
+:::
+""" % (mat(sol3["ke"][0]),
+       vec(fe[0]["body"]), vec(fe[0]["h"]), vec(fe[0]["total"]),
+       vec(fe[1]["total"]),
+       vec(fe[2]["body"]), vec([0, g0]), vec(fe[2]["total"])))
+```
+
+Assemble with the LM array. The second entry of $\mathbf{f}^3$ has
+$\mathrm{LM}(2,3) = 0$, so it is dropped:
+
+```{python example_global}
+#| echo: false
+#| output: asis
+
+print(r"""
+::: {.derivation}
+$$
+\underbrace{%s}_{\mathbf{K}\ [\text{W/(m}^2\text{K)}]}
+\begin{Bmatrix} d_1 \\ d_2 \\ d_3 \end{Bmatrix}
+= \underbrace{%s}_{\mathbf{F}\ [\text{W/m}^2]}
+\qquad\Longrightarrow\qquad
+\mathbf{d} = %s\ {}^\circ\text{C}
+$$
+:::
+""" % (mat(sol3["K"]), vec(sol3["F"]), vec(np.round(sol3["d"], 3))))
+```
+
+```{python fig_result}
+#| echo: false
+#| output: false
+
+fig_result_path, _ = F.fig_result(
+    pb, 1, verts3, "HF_Fig7_Result.png", flux=lambda du: -kappa * du,
+    ulabel="temperature $u$ (°C)", flabel="heat flux $q$ (W/m²)",
+    xlabel="$x$ (m)", neu_label=(0.0, h0, "exact $q(0) = h$ = 50 W/m²"))
+```
+
+![The strong-form pictures, redrawn for $u^h$. Top: the three-element temperature (red)
+over the exact profile (grey). Bottom: the heat flux $q^h = -\kappa u^h_{,x}$, constant
+on each element and jumping at the nodes.](`{python} fig_result_path`){#fig-hf-result width=80%}
+
+```{python example_text}
+#| echo: false
+#| output: asis
+
+m = lambda v, d=1: ("%.*f" % (d, v)).replace("-", "−")
+print(r"""
+::: {.step .notes}
+- **The nodal temperatures are exact.** The exact solution at $x$ = 0, 0.1, 0.2 m is
+  %s °C, identical to $\mathbf{d}$. This is special to one dimension with constant
+  $\kappa$: linear elements are *nodally exact* (Hughes, Section 1.10). Between the nodes,
+  $u^h$ is only a chord of the curve.
+- **The Neumann condition holds only weakly.** On element 1, $q^h$ = %s W/m², not the
+  prescribed $h$ = 50 W/m²: it is the element's *average* flux. $(\mathrm{G})$ builds $h$
+  into $\mathbf{F}$ but never forces $u^h_{,x}(0)$ to equal $-h/\kappa$. As the mesh is
+  refined, $q^h(0) \to h$.
+- **The Dirichlet condition holds exactly**, because it was built into $\mathcal{S}^h$.
+- **The discarded equation is the heat to the room.** Row 4 of the full system,
+  $\sum_b k^3_{2b} U^3_b - f^3_{\text{body},2}$, is the boundary term
+  $\kappa u_{,x}(L)$ that $w(L) = 0$ removed. Evaluated, it gives %s W/m², so
+  $q(L) = %s$ W/m², the exact value. Differentiating $u^h$ on element 3 gives only
+  %s W/m².
+- With $p = 2$, even a single element reproduces the exact quadratic profile (@fig-hf-build),
+  because the exact solution already lies in $\mathcal{S}^h$.
+:::
+""" % (", ".join("%.2f" % v for v in exact_nodes[:3]), m(-kappa * (sol3["U"][1] - sol3["U"][0]) / 0.1, 0),
+       m(reaction), m(-reaction), m(qh_last)))
+```
+
+## How the error shrinks
+
+The uniform $f$ above makes the exact solution a quadratic, which is too easy: $p \ge 2$
+gets it exactly. Use instead the **absorbed-radiation** forcing from the strong-form
+page, $f = f_0 e^{-x/\delta}$ with $f_0$ = 2000 W/m³ and $\delta$ = 4 cm, whose exact
+solution is not a polynomial:
+
+```{python fig_convergence}
+#| echo: false
+#| output: false
+
+pb_exp = F.Problem(L, kappa, lambda x: 2000.0 * np.exp(-x / 0.04), bc="a",
+                   h=h0, g=g0)
+fig_conv_path, rates = F.fig_convergence(pb_exp, "HF_Fig8_Convergence.png",
+                                         hlabel="element size $h^e$ (m)")
+```
+
+![Error against element size on uniform meshes, on log-log axes. Left: the error in
+temperature. Right: the error in its slope, and so in the heat flux. Halving the elements
+divides the temperature error by $2^{p+1}$ and the flux error by
+$2^{p}$.](`{python} fig_conv_path`){#fig-hf-convergence width=96%}
+
+::: {.derivation}
+$$
+\|u - u^h\|_{L^2} = \left(\int_0^L (u - u^h)^2\,dx\right)^{1/2} \le C\,h^{p+1}
+\qquad\qquad
+|u - u^h|_{H^1} = \left(\int_0^L (u_{,x} - u^h_{,x})^2\,dx\right)^{1/2} \le C\,h^{p}
+$$
+:::
+
+::: {.step}
+One more degree buys one more power of $h$. The flux, which is what a designer usually
+wants, always converges one order slower than the temperature.
+:::
+
+## Explore the Galerkin method
+
+Choose the data and the discretization, then look through the tabs. **Solution**,
+**Flux** and **Error** redraw the strong-form pictures for $u^h$. **Basis** shows the
+functions $u^h$ is built from. **Matrices** shows the element arrays, the ID/IEN/LM
+bookkeeping, and the assembled system for the highlighted element. When there are 15 or
+more unknowns, only the first rows and columns of the global system are printed.
+
+```{ojs}
+//| echo: false
+import {makeMesh, exact, solve, evaluate, errors, shape, parentNodes,
+        texMatrix, texVector, texSymbols, niceScale, num} from "./fem1d.js"
+```
+
+**The problem**
+
+```{ojs}
+//| echo: false
+viewof bc = Inputs.radio(new Map([
+  ["(a) Hughes: h at x = 0, g at x = L", "a"],
+  ["(b) g at x = 0, h at x = L", "b"],
+  ["(c) g at both faces", "c"]
+]), {value: "a", label: "Boundary conditions"})
+viewof forcing = Inputs.select(new Map([
+  ["uniform (heat of hydration)", "uniform"],
+  ["absorbed radiation, f₀·exp(−x/4 cm)", "exp"],
+  ["local source/sink at mid-thickness", "pipe"]
+]), {value: "uniform", label: "Forcing f(x)"})
+viewof f0 = Inputs.range([-3000, 3000], {value: 500, step: 50, label: "f₀ (W/m³)"})
+viewof hN = Inputs.range([-300, 300],   {value: 50,  step: 5,   label: "h (W/m², into wall)"})
+viewof gD = Inputs.range([0, 40],       {value: 20,  step: 1,   label: "g (°C)"})
+viewof gD0 = Inputs.range([0, 40],      {value: 35,  step: 1,   label: "g at x = 0 in (c) (°C)"})
+viewof kap = Inputs.range([0.2, 5],     {value: 1.4, step: 0.1, label: "κ (W/(m·K))"})
+```
+
+**The discretization**
+
+```{ojs}
+//| echo: false
+viewof p = Inputs.radio([1, 2, 3], {value: 1, label: "Degree p"})
+viewof nelIn = Inputs.range([1, 40], {value: 3, step: 1, label: "Elements nₑₗ"})
+viewof meshKind = Inputs.select(new Map([
+  ["uniform", "uniform"],
+  ["crowded toward x = 0", "left"],
+  ["crowded toward x = L", "right"],
+  ["custom: type the interior vertices below", "custom"]
+]), {value: "uniform", label: "Element spacing"})
+viewof customText = Inputs.text({label: "Custom interior vertices (m)",
+  value: "0.02, 0.05, 0.1, 0.2", placeholder: "e.g. 0.02, 0.05, 0.1, 0.2"})
+viewof eSel = Inputs.range([1, 40], {value: 1, step: 1, label: "Highlight element e"})
+```
+
+```{ojs}
+//| echo: false
+L = 0.30
+fx = {
+  if (forcing === "exp") return x => f0 * Math.exp(-x / 0.04);
+  if (forcing === "pipe") return x => f0 * Math.exp(-(((x - L / 2) / 0.025) ** 2));
+  return x => f0;
+}
+pb = ({L, K: kap, f: fx, bc, h: hN, g: gD, g0: gD0})
+verts = meshKind === "custom"
+  ? makeMesh(L, 0, "custom", customText.split(/[,\s]+/).map(Number).filter(Number.isFinite))
+  : makeMesh(L, nelIn, meshKind)
+sol = solve(pb, p, verts)
+ex = exact(pb)
+samples = evaluate(sol, 32)
+err = errors(sol, ex)
+eHi = Math.min(eSel, sol.nel)
+exactPts = d3.range(301).map(i => { const x = L * i / 300; return {x, u: ex.u(x), q: -kap * ex.du(x)}; })
+fmt = (v, d = 2) => (v < 0 ? "−" : "") + Math.abs(v).toFixed(d)
+colors = ["#1f6feb", "#c0392b", "#0d9488", "#e67e22", "#8a5a20", "#7c3aed"]
+```
+
+```{ojs}
+//| echo: false
+html`<div style="font-size:0.95rem; margin:0.3rem 0 0.6rem 0; padding:0.5rem 0.8rem; background:#fff; border-left:4px solid #4a7ba7;">
+  <b>${sol.nel}</b> elements of degree <b>${p}</b> &rarr; <b>${sol.nnp}</b> nodes, <b>${sol.neq}</b> unknowns.
+  &nbsp; Error: ‖u − uʰ‖<sub>L²</sub> = ${err.l2.toExponential(2)} °C·m<sup>½</sup>,
+  &nbsp; |u − uʰ|<sub>H¹</sub> = ${err.h1.toExponential(2)} °C/m<sup>½</sup>
+</div>`
+```
+
+::: {.panel-tabset}
+
+### Solution
+
+```{ojs}
+//| echo: false
+{
+  const W = Math.min(width, 780);
+  const uhPts = samples.flatMap(s => s.x.map((x, i) => ({x, u: s.uh[i], e: s.e})));
+  const nodes = sol.X.map((x, i) => ({x, u: sol.U[i], dir: sol.ID[i] === 0}));
+  const ys = [...exactPts.map(d => d.u), ...uhPts.map(d => d.u)];
+  const lo0 = Math.min(...ys), hi0 = Math.max(...ys), pad = 0.06 * (hi0 - lo0 || 1);
+  const yLo = showBasis ? Math.min(lo0, 0) - pad : lo0 - pad, yHi = hi0 + pad;
+  const marks = [
+    Plot.rect([{x1: verts[eHi - 1], x2: verts[eHi], y1: yLo, y2: yHi}], {x1: "x1", x2: "x2", y1: "y1", y2: "y2", fill: "#f6e3c7", fillOpacity: 0.6}),
+    Plot.ruleX(verts, {stroke: "#8a5a20", strokeOpacity: 0.5, strokeDasharray: "2,3"}),
+    Plot.line(exactPts, {x: "x", y: "u", stroke: "#bbb", strokeWidth: 7, strokeLinecap: "round"}),
+  ];
+  if (showBasis) {
+    samples.forEach((s, k) => {
+      const e = k;
+      for (let a = 0; a < p + 1; a++) {
+        const A = sol.IEN[e][a];
+        const pts = s.x.map((x, i) => {
+          const xi = -1 + 2 * i / (s.x.length - 1);
+          return {x, y: sol.U[A - 1] * shape(p, xi).N[a]};
+        });
+        marks.push(Plot.line(pts, {x: "x", y: "y", stroke: colors[(A - 1) % 6], strokeWidth: 1,
+          strokeDasharray: sol.ID[A - 1] === 0 ? "5,3" : null}));
+      }
+    });
+  }
+  marks.push(Plot.line(uhPts, {x: "x", y: "u", z: "e", stroke: "#c0392b", strokeWidth: 2.6}));
+  marks.push(Plot.dot(nodes, {x: "x", y: "u", r: 4, fill: d => d.dir ? "#4a7ba7" : "white", stroke: d => d.dir ? "#4a7ba7" : "#c0392b", strokeWidth: 1.6}));
+  // Neumann end: exact slope vs slope of u^h
+  const xn = bc === "a" ? 0 : bc === "b" ? L : null;
+  if (xn !== null) {
+    const d = (xn === 0 ? 1 : -1) * 0.07;
+    const se = samples[xn === 0 ? 0 : samples.length - 1];
+    const k = xn === 0 ? 0 : se.x.length - 1;
+    marks.push(Plot.line([{x: xn, y: ex.u(xn)}, {x: xn + d, y: ex.u(xn) + ex.du(xn) * d}],
+      {x: "x", y: "y", stroke: "#0d9488", strokeWidth: 2.2, strokeDasharray: "6,4"}));
+    marks.push(Plot.line([{x: xn, y: se.uh[k]}, {x: xn + d, y: se.uh[k] + se.duh[k] * d}],
+      {x: "x", y: "y", stroke: "#c0392b", strokeWidth: 1.6, strokeDasharray: "2,3"}));
+  }
+  const top = Plot.plot({width: W, height: 330, marginLeft: 55,
+    x: {label: "x (m) →", domain: [0, L]},
+    y: {label: "↑ temperature (°C)", domain: [yLo, yHi], grid: true},
+    marks});
+
+  // the wall, shaded by u^h, with one flux arrow per element
+  const segs = samples.flatMap(s => s.x.slice(0, -1).map((x, i) => ({x1: x, x2: s.x[i + 1], u: s.uh[i]})));
+  const qe = samples.map(s => ({xm: 0.5 * (s.x[0] + s.x[s.x.length - 1]), q: -kap * s.duh[Math.floor(s.x.length / 2)],
+                                w: s.x[s.x.length - 1] - s.x[0]}));
+  const qmax = Math.max(...qe.map(d => Math.abs(d.q)), 1e-9);
+  const arrows = qe.filter(d => Math.abs(d.q) > 1e-6 * qmax).map(d => {
+    const len = 0.8 * Math.min(d.w, L / 6) * Math.abs(d.q) / qmax, s = Math.sign(d.q);
+    return {x1: d.xm - s * len / 2, x2: d.xm + s * len / 2};
+  });
+  const band = Plot.plot({width: W, height: 110, marginLeft: 55,
+    x: {label: "the wall, shaded by uʰ; arrows: qʰ = −κ uʰ,ₓ on each element", domain: [0, L]},
+    y: {axis: null, domain: [0, 1]},
+    color: {type: "linear", scheme: "RdYlBu", reverse: true, legend: true, label: "uʰ (°C)"},
+    marks: [
+      Plot.rect(segs, {x1: "x1", x2: "x2", y1: 0, y2: 1, fill: "u", stroke: "u"}),
+      Plot.ruleX(verts, {stroke: "#555", strokeOpacity: 0.6}),
+      Plot.arrow(arrows, {x1: "x1", x2: "x2", y1: 0.5, y2: 0.5, stroke: "#1a1a1a", strokeWidth: 2.2, headLength: 9})
+    ]});
+  return html`<div>${top}${band}
+  <div style="font-size:0.88rem; color:#555">Grey: exact u. Red: uʰ. Open dots are unknowns d<sub>A</sub>; blue dots are Dirichlet values.
+  ${showBasis ? "Thin lines: each d<sub>A</sub>N<sub>A</sub> (dashed: g N<sub>A</sub> on Γ<sub>g</sub>). " : ""}
+  ${xn !== null ? "At the Neumann face: teal dashes are the exact slope −h/κ·n, red dots the slope of uʰ." : ""}
+  The shaded strip is element ${eHi}.</div></div>`;
+}
+```
+
+```{ojs}
+//| echo: false
+viewof showBasis = Inputs.toggle({label: "Draw each dₐNₐ", value: true})
+```
+
+### Flux
+
+```{ojs}
+//| echo: false
+{
+  const W = Math.min(width, 780);
+  const qh = samples.flatMap(s => s.x.map((x, i) => ({x, q: -kap * s.duh[i], e: s.e})));
+  const marks = [
+    Plot.ruleY([0], {stroke: "#bbb"}),
+    Plot.ruleX(verts, {stroke: "#8a5a20", strokeOpacity: 0.5, strokeDasharray: "2,3"}),
+    Plot.line(exactPts, {x: "x", y: "q", stroke: "#bbb", strokeWidth: 7, strokeLinecap: "round"}),
+    Plot.line(qh, {x: "x", y: "q", z: "e", stroke: "#0d9488", strokeWidth: 2.6})
+  ];
+  let note = "";
+  if (bc !== "c") {
+    const xn = bc === "a" ? 0 : L, qn = bc === "a" ? hN : -hN;
+    const s = samples[bc === "a" ? 0 : samples.length - 1];
+    const qfem = -kap * s.duh[bc === "a" ? 0 : s.duh.length - 1];
+    marks.push(Plot.dot([{x: xn, q: qn}], {x: "x", y: "q", r: 6, fill: "#1a1a1a"}));
+    note = `Neumann face x = ${xn}: the data require q = ${fmt(qn, 1)} W/m² there (black dot); uʰ gives ${fmt(qfem, 1)} W/m².
+            The Neumann condition is satisfied only weakly, and the gap closes as elements are added.`;
+  }
+  return html`<div>${Plot.plot({width: W, height: 340, marginLeft: 60,
+    x: {label: "x (m) →", domain: [0, L]}, y: {label: "↑ heat flux q (W/m²)", grid: true}, marks})}
+    <div style="font-size:0.88rem; color:#555">Grey: exact q = −κ u,ₓ. Teal: qʰ = −κ uʰ,ₓ, one polynomial of degree p − 1 per element,
+    discontinuous at the nodes. ${note}</div></div>`;
+}
+```
+
+### Error
+
+```{ojs}
+//| echo: false
+{
+  const W = Math.min(width, 780);
+  const eu = samples.flatMap(s => s.x.map((x, i) => ({x, e: ex.u(x) - s.uh[i], el: s.e})));
+  const eq = samples.flatMap(s => s.x.map((x, i) => ({x, e: -kap * (ex.du(x) - s.duh[i]), el: s.e})));
+  const nodal = sol.X.map((x, i) => ({x, e: ex.u(x) - sol.U[i]}));
+  const maxNodal = Math.max(...nodal.map(d => Math.abs(d.e)));
+  const p1 = Plot.plot({width: W, height: 250, marginLeft: 70,
+    x: {label: "x (m) →", domain: [0, L]}, y: {label: "↑ u − uʰ (°C)", grid: true},
+    marks: [Plot.ruleY([0], {stroke: "#bbb"}), Plot.ruleX(verts, {stroke: "#8a5a20", strokeOpacity: 0.5, strokeDasharray: "2,3"}),
+            Plot.areaY(eu, {x: "x", y: "e", z: "el", fill: "#c0392b", fillOpacity: 0.15}),
+            Plot.line(eu, {x: "x", y: "e", z: "el", stroke: "#c0392b", strokeWidth: 2}),
+            Plot.dot(nodal, {x: "x", y: "e", r: 3.5, fill: "#1a1a1a"})]});
+  const p2 = Plot.plot({width: W, height: 220, marginLeft: 70,
+    x: {label: "x (m) →", domain: [0, L]}, y: {label: "↑ q − qʰ (W/m²)", grid: true},
+    marks: [Plot.ruleY([0], {stroke: "#bbb"}), Plot.ruleX(verts, {stroke: "#8a5a20", strokeOpacity: 0.5, strokeDasharray: "2,3"}),
+            Plot.line(eq, {x: "x", y: "e", z: "el", stroke: "#0d9488", strokeWidth: 2})]});
+  return html`<div>${p1}${p2}<div style="font-size:0.88rem; color:#555">
+    Largest error at the nodes (black dots): ${maxNodal.toExponential(2)} °C.
+    ${p === 1 && maxNodal < 1e-9 ? "Linear elements with constant κ are nodally exact in 1D: the error lives entirely between the nodes." : ""}
+    The flux error jumps at every node, because qʰ does.</div></div>`;
+}
+```
+
+### Convergence
+
+```{ojs}
+//| echo: false
+{
+  const W = Math.min(width, 780);
+  const kind = meshKind === "custom" ? "uniform" : meshKind, rows = [];
+  for (const pp of [1, 2, 3]) for (const n of [1, 2, 4, 8, 16, 32, 64]) {
+    const s = solve(pb, pp, makeMesh(L, n, kind)), e = errors(s, ex);
+    rows.push({p: `p = ${pp}`, h: L / n, l2: Math.max(e.l2, 1e-16), h1: Math.max(e.h1, 1e-16)});
+  }
+  const here = [{h: L / sol.nel, l2: Math.max(err.l2, 1e-16), h1: Math.max(err.h1, 1e-16)}];
+  const mk = (key, lab) => Plot.plot({width: W / 2 - 10, height: 300, marginLeft: 60,
+    x: {type: "log", label: "average element size (m) →", tickFormat: ".0e"}, y: {type: "log", label: lab, grid: true, tickFormat: ".0e"},
+    color: {domain: ["p = 1", "p = 2", "p = 3"], range: colors.slice(0, 3), legend: key === "l2"},
+    marks: [Plot.line(rows, {x: "h", y: key, stroke: "p", strokeWidth: 2}),
+            Plot.dot(rows, {x: "h", y: key, fill: "p", r: 3}),
+            Plot.dot(here, {x: "h", y: key, r: 8, stroke: "#1a1a1a", strokeWidth: 2.5})]});
+  return html`<div style="display:flex; flex-wrap:wrap; gap:16px">${mk("l2", "↑ ‖u − uʰ‖ in L²")}${mk("h1", "↑ |u − uʰ| in H¹")}</div>
+   <div style="font-size:0.88rem; color:#555">Meshes with 1, 2, 4, …, 64 elements (${kind} spacing), for the current data.
+   The ringed point is the current mesh (average element size). Steeper is better: slope p + 1 on the left, p on the right.
+   With uniform forcing, the p ≥ 2 curves drop to round-off because the exact answer is a quadratic.</div>`;
+}
+```
+
+### Basis
+
+```{ojs}
+//| echo: false
+{
+  const W = Math.min(width, 780), lines = [];
+  for (let e = 0; e < sol.nel; e++) for (let a = 0; a < p + 1; a++) {
+    const A = sol.IEN[e][a];
+    for (let i = 0; i < 25; i++) {
+      const xi = -1 + 2 * i / 24;
+      lines.push({x: verts[e] + (xi + 1) * (verts[e + 1] - verts[e]) / 2, y: shape(p, xi).N[a],
+                  key: `${A}-${e}`, A, dir: sol.ID[A - 1] === 0, hi: e + 1 === eHi});
+    }
+  }
+  const global = Plot.plot({width: W, height: 240, marginLeft: 45,
+    x: {label: "x (m) →", domain: [0, L]}, y: {label: "↑ N_A(x)", domain: [-0.35, 1.15]},
+    marks: [Plot.rect([{x1: verts[eHi - 1], x2: verts[eHi], y1: -0.35, y2: 1.15}], {x1: "x1", x2: "x2", y1: "y1", y2: "y2", fill: "#f6e3c7", fillOpacity: 0.6}),
+            Plot.ruleY([0], {stroke: "#bbb"}), Plot.ruleX(verts, {stroke: "#8a5a20", strokeOpacity: 0.5, strokeDasharray: "2,3"}),
+            Plot.line(lines, {x: "x", y: "y", z: "key", stroke: d => colors[(d.A - 1) % 6],
+                              strokeWidth: d => d.hi ? 3 : 1.4, strokeDasharray: d => d.dir ? "5,3" : null}),
+            Plot.dot(sol.X.map((x, i) => ({x, y: 0, dir: sol.ID[i] === 0})), {x: "x", y: "y", r: 3.5,
+                     fill: d => d.dir ? "#4a7ba7" : "white", stroke: "#1a1a1a"})]});
+  const par = [];
+  for (let a = 0; a < p + 1; a++) for (let i = 0; i < 61; i++) {
+    const xi = -1 + 2 * i / 60;
+    par.push({xi, y: shape(p, xi).N[a], a: `N${a + 1}`, A: sol.IEN[eHi - 1][a]});
+  }
+  const parent = Plot.plot({width: Math.min(W, 420), height: 200, marginLeft: 45,
+    x: {label: "ξ →", domain: [-1, 1]}, y: {label: "↑ Nₐ(ξ)", domain: [-0.35, 1.15]},
+    marks: [Plot.ruleY([0], {stroke: "#bbb"}),
+            Plot.line(par, {x: "xi", y: "y", z: "a", stroke: d => colors[(d.A - 1) % 6], strokeWidth: 2.2}),
+            Plot.dot(parentNodes(p).map(xi => ({xi, y: 1})), {x: "xi", y: "y", r: 3, fill: "#7c3aed"})]});
+  const iens = sol.IEN[eHi - 1];
+  return html`<div>${global}
+    <div style="font-size:0.88rem; color:#555; margin-bottom:0.6rem">All ${sol.nnp} global basis functions N<sub>A</sub>, coloured by A.
+    Dashed ones sit on Γ<sub>g</sub>. Element ${eHi}'s ${p + 1} functions are drawn thick.</div>
+    <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap">${parent}
+    <div style="font-size:0.9rem">On element ${eHi}, the parent functions become<br>
+    ${iens.map((A, a) => `N<sub>${a + 1}</sub>(ξ) → N<sub>${A}</sub>(x)`).join("<br>")}<br>
+    through x(ξ) = Σ Nₐ(ξ) xₐᵉ, with x,<sub>ξ</sub> = hᵉ/2 = ${fmt((verts[eHi] - verts[eHi - 1]) / 2, 4)} m.</div></div></div>`;
+}
+```
+
+### Matrices
+
+```{ojs}
+//| echo: false
+{
+  const e = eHi - 1, nen = p + 1, lm = sol.LM[e], ien = sol.IEN[e];
+  const ke = sol.ke[e], fe = sol.fe[e];
+  const hi = "#c0392b";
+  const inE = new Set(lm.filter(P => P > 0).map(P => P - 1));
+  const sK = niceScale(sol.K), sF = niceScale([sol.F]);
+  const pre = s => s === 1 ? "" : `10^{${Math.round(Math.log10(s))}}\\times`;
+  const Ktex = texMatrix(sol.K, {scale: sK, color: (i, j) => inE.has(i) && inE.has(j) ? hi : null});
+  const Ftex = texVector(sol.F, {scale: sF, color: i => inE.has(i) ? hi : null});
+  const dtex = texSymbols(sol.neq, "d");
+  const dval = texVector(sol.d, {sig: 5});
+  const colsE = Math.min(sol.nel, 12);
+  const row = (name, f) => `<tr><th style="text-align:left; padding-right:10px">${name}</th>${
+      d3.range(colsE).map(k => `<td style="padding:0 8px; ${k === e ? "color:#c0392b; font-weight:700" : ""}">${f(k)}</td>`).join("")}${sol.nel > colsE ? "<td>…</td>" : ""}</tr>`;
+  const table = `<table style="font-size:0.85rem; margin:0.4rem 0 0.8rem 0; white-space:nowrap">
+      <tr><th style="text-align:left">e</th>${d3.range(colsE).map(k => `<td style="padding:0 8px; ${k === e ? "color:#c0392b; font-weight:700" : ""}">${k + 1}</td>`).join("")}${sol.nel > colsE ? "<td>…</td>" : ""}</tr>
+      ${row("IEN(·, e)", k => sol.IEN[k].join(", "))}
+      ${row("LM(·, e)", k => sol.LM[k].join(", "))}</table>`;
+  const idRow = `<div style="font-size:0.85rem">ID = [${sol.ID.slice(0, 30).join(", ")}${sol.nnp > 30 ? ", …" : ""}] &nbsp;(0 marks a Dirichlet node)</div>`;
+  const vec = v => texVector(v, {sig: 4});
+  const scroll = x => html`<div style="overflow-x:auto; max-width:100%">${x}</div>`;
+  let zoom = "";
+  const eqs = lm.filter(P => P > 0);
+  if (sol.neq >= 15 && eqs.length) {
+    const lo = Math.max(1, Math.min(...eqs) - 1), hi2 = Math.min(sol.neq, Math.max(...eqs) + 1);
+    const rng = d3.range(lo - 1, hi2);
+    const sub = rng.map(i => rng.map(j => sol.K[i][j]));
+    const subF = rng.map(i => sol.F[i]);
+    const hiSet = new Set(eqs.map(P => P - 1));
+    zoom = html`<h4>Zoom: equations ${lo} to ${hi2}, around element ${eHi}</h4>
+      ${scroll(tex.block`${pre(sK)}${texMatrix(sub, {scale: sK, color: (i, j) => hiSet.has(rng[i]) && hiSet.has(rng[j]) ? hi : null})}
+        \begin{bmatrix}${rng.map(i => `d_{${i + 1}}`).join(" \\\\ ")}\end{bmatrix}
+        = ${pre(sF)}${texVector(subF, {scale: sF, color: i => hiSet.has(rng[i]) ? hi : null})}`)}
+      <div style="font-size:0.88rem; color:#555">Each row is one equation of K d = F; only its neighbours' d's appear, because only neighbouring basis functions overlap.</div>`;
+  }
+  return html`<div>
+    <h4 style="margin-top:0.4rem">Bookkeeping</h4>${idRow}${scroll(html`${table}`)}
+    <h4>Element ${eHi}: x from ${fmt(verts[e], 4)} to ${fmt(verts[e + 1], 4)} m, hᵉ = ${fmt(verts[e + 1] - verts[e], 4)} m</h4>
+    <div style="font-size:0.95rem">LM(·, ${eHi}) = {${lm.join(", ")}}: row and column a of the element arrays go to equation LM(a, ${eHi}); a 0 means "Dirichlet node: skip".</div>
+    ${scroll(tex.block`\mathbf{k}^{${eHi}} = ${texMatrix(ke)}\ \tfrac{\text{W}}{\text{m}^2\text{K}}`)}
+    ${scroll(tex.block`\mathbf{f}^{${eHi}} = \underbrace{${vec(fe.body)}}_{\int N_a f\,dx}
+      + \underbrace{${vec(fe.h)}}_{h\ \text{term}} - \underbrace{${vec(fe.g)}}_{\mathbf{k}^{e}\mathbf{g}^{e}}
+      = ${vec(fe.total)}\ \tfrac{\text{W}}{\text{m}^2}`)}
+    <h4>Global system: ${sol.neq} equations${sol.neq >= 15 ? " (first rows and columns shown)" : ""}</h4>
+    ${scroll(tex.block`${pre(sK)}${Ktex}\,${dtex} = ${pre(sF)}${Ftex}`)}
+    <div style="font-size:0.88rem; color:#555">Red entries are where element ${eHi}'s k<sup>e</sup> and f<sup>e</sup> were added, through LM(·, ${eHi}).
+    Grey zeros show the band structure.${sol.neq >= 15 && lm.some(P => P > 6) ? ` Element ${eHi}'s rows are beyond those printed; see the zoom below.` : ""}</div>
+    ${zoom}
+    ${tex.block`\mathbf{d} = \mathbf{K}^{-1}\mathbf{F} = ${dval}\ {}^\circ\text{C}`}
+  </div>`;
+}
+```
+
+:::
+
+::: {.step .notes}
+- Start at $p = 1$ with 3 elements and page through the tabs: this is the worked example
+  above. Now try $p = 2$. The error drops to round-off, because the exact solution is
+  quadratic.
+- Switch the forcing to **absorbed radiation** and crowd the elements toward $x = 0$,
+  where $f$ changes fastest. For the same number of unknowns, the error falls well below
+  that of a uniform mesh.
+- On **Flux**, watch the black dot: with few elements, $q^h$ misses $h$ at the Neumann
+  face. That is the weak enforcement of the natural boundary condition.
+- On **Matrices**, step the highlighted element along the wall and watch its
+  $\mathbf{k}^e$ land in overlapping blocks of $\mathbf{K}$. At a Dirichlet element, one
+  entry of LM is 0, and its column shows up in $\mathbf{f}^e$ as $-\mathbf{k}^e\mathbf{g}^e$.
+:::

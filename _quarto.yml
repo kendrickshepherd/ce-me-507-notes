@@ -17,6 +17,12 @@ book:
       - chapters/8_Class.qmd
       - chapters/9_Class.qmd
       - chapters/10_Class.qmd
+      - section: "The 1D Poisson Problem"
+        contents:
+          - chapters/Poisson1D_Heat.qmd
+          - chapters/Poisson1D_Heat_FEM.qmd
+          - chapters/Poisson1D_Rod.qmd
+          - chapters/Poisson1D_Rod_FEM.qmd
 
   bread-crumbs: true
   back-to-top-navigation: true
@@ -34,6 +40,10 @@ book:
 
   appendices:
     - chapters/3_Support_FunctionSpaces.qmd
+    - chapters/Poisson1D_Heat.qmd
+    - chapters/Poisson1D_Heat_FEM.qmd
+    - chapters/Poisson1D_Rod.qmd
+    - chapters/Poisson1D_Rod_FEM.qmd
 
 format:
   html:
