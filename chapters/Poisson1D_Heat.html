@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Finite Element Methods">
+
+<title>Appendix B — 1D Poisson I: Heat Conduction Through a Wall – CE/ME 507 — Class Notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/Poisson1D_Heat_FEM.html" rel="next">
+<link href="../chapters/3_Support_FunctionSpaces.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-1c2f8626246c23d8ad7ee987acb82133.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+<script>
+window.MathJax = {
+  tex: {
+    tags: 'ams',
+    macros: {
+      RR: '{\\mathbb{R}}',
+      Om: '{\\Omega}'
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/Poisson1D_Heat.html"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">1D Poisson I: Heat Conduction Through a Wall</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">CE/ME 507 — Class Notes</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">CE/ME 507 — Class Notes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/2_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Class 2: Linear FEM</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Class 3: Index Notation, Function Spaces, and the Weak Form</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/4_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Class 4: Strong and Weak Forms of the Boundary Value Problem</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/5_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/6_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Class 6: Basis Functions and Lagrange Polynomials</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/7_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Class 7: From Galerkin to a Matrix Equation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/8_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Class 8: Assembly, Sparsity, and the Road to Quadrature</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/9_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Class 9: The Isoparametric Map and the Jacobian</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Class 10: Assembly with the IEN Array, and Quadrature on an Element</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">1D Poisson I: Heat Conduction Through a Wall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">1D Poisson II: The Wall, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">1D Poisson III: An Axially Loaded Rod</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#the-physical-problem" id="toc-the-physical-problem" class="nav-link active" data-scroll-target="#the-physical-problem"><span class="header-section-number">B.1</span> The physical problem</a></li>
+  <li><a href="#the-one-dimensional-domain" id="toc-the-one-dimensional-domain" class="nav-link" data-scroll-target="#the-one-dimensional-domain"><span class="header-section-number">B.2</span> The one-dimensional domain</a></li>
+  <li><a href="#the-quantities-and-their-units" id="toc-the-quantities-and-their-units" class="nav-link" data-scroll-target="#the-quantities-and-their-units"><span class="header-section-number">B.3</span> The quantities and their units</a></li>
+  <li><a href="#where-the-differential-equation-comes-from" id="toc-where-the-differential-equation-comes-from" class="nav-link" data-scroll-target="#where-the-differential-equation-comes-from"><span class="header-section-number">B.4</span> Where the differential equation comes from</a>
+  <ul class="collapse">
+  <li><a href="#conservation-of-energy-on-a-thin-slice" id="toc-conservation-of-energy-on-a-thin-slice" class="nav-link" data-scroll-target="#conservation-of-energy-on-a-thin-slice"><span class="header-section-number">B.4.1</span> Conservation of energy on a thin slice</a></li>
+  <li><a href="#fouriers-law-heat-flows-downhill" id="toc-fouriers-law-heat-flows-downhill" class="nav-link" data-scroll-target="#fouriers-law-heat-flows-downhill"><span class="header-section-number">B.4.2</span> Fourier’s law: heat flows downhill</a></li>
+  <li><a href="#what-the-equation-says-about-the-shape-of-u" id="toc-what-the-equation-says-about-the-shape-of-u" class="nav-link" data-scroll-target="#what-the-equation-says-about-the-shape-of-u"><span class="header-section-number">B.4.3</span> What the equation says about the shape of <span class="math inline">\(u\)</span></a></li>
+  </ul></li>
+  <li><a href="#the-forcing-function-f" id="toc-the-forcing-function-f" class="nav-link" data-scroll-target="#the-forcing-function-f"><span class="header-section-number">B.5</span> The forcing function <span class="math inline">\(f\)</span></a></li>
+  <li><a href="#boundary-conditions" id="toc-boundary-conditions" class="nav-link" data-scroll-target="#boundary-conditions"><span class="header-section-number">B.6</span> Boundary conditions</a>
+  <ul class="collapse">
+  <li><a href="#dirichlet-u-g-on-gamma_g-the-temperature-is-known" id="toc-dirichlet-u-g-on-gamma_g-the-temperature-is-known" class="nav-link" data-scroll-target="#dirichlet-u-g-on-gamma_g-the-temperature-is-known"><span class="header-section-number">B.6.1</span> Dirichlet: <span class="math inline">\(u = g\)</span> on <span class="math inline">\(\Gamma_g\)</span> — the temperature is known</a></li>
+  <li><a href="#neumann-kappa-u_xn-h-on-gamma_h-the-heat-flux-is-known" id="toc-neumann-kappa-u_xn-h-on-gamma_h-the-heat-flux-is-known" class="nav-link" data-scroll-target="#neumann-kappa-u_xn-h-on-gamma_h-the-heat-flux-is-known"><span class="header-section-number">B.6.2</span> Neumann: <span class="math inline">\((\kappa u_{,x})\,n = h\)</span> on <span class="math inline">\(\Gamma_h\)</span> — the heat flux is known</a></li>
+  <li><a href="#which-face-gets-which-condition" id="toc-which-face-gets-which-condition" class="nav-link" data-scroll-target="#which-face-gets-which-condition"><span class="header-section-number">B.6.3</span> Which face gets which condition</a></li>
+  </ul></li>
+  <li><a href="#the-strong-form-complete" id="toc-the-strong-form-complete" class="nav-link" data-scroll-target="#the-strong-form-complete"><span class="header-section-number">B.7</span> The strong form, complete</a></li>
+  <li><a href="#worked-example" id="toc-worked-example" class="nav-link" data-scroll-target="#worked-example"><span class="header-section-number">B.8</span> Worked example</a></li>
+  <li><a href="#explore-the-strong-form" id="toc-explore-the-strong-form" class="nav-link" data-scroll-target="#explore-the-strong-form"><span class="header-section-number">B.9</span> Explore the strong form</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/Poisson1D_Heat.html"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">1D Poisson I: Heat Conduction Through a Wall</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Appendix B — 1D Poisson I: Heat Conduction Through a Wall</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>This page and its companion, <a href="../chapters/Poisson1D_Rod.html">1D Poisson III: An Axially Loaded Rod</a>, read the same model problem — the one-dimensional Poisson equation of Hughes, <em>The Finite Element Method</em>, Chapter 1 — in two different physical settings. The mathematics is identical on both pages. The physics is not, and it is the physics that tells you what <span class="math inline">\(f\)</span>, <span class="math inline">\(g\)</span>, and <span class="math inline">\(h\)</span> <em>are</em>, what units they carry, and which way they point.</p>
+<p>Hughes states the model problem with every constant set to one:</p>
+<div class="derivation">
+<p><span class="math display">\[
+(\mathrm{S}) \qquad
+\begin{aligned}
+&amp;\text{Given } f : \bar\Omega \to \RR \text{ and constants } g \text{ and } h,
+\text{ find } u : \bar\Omega \to \RR \text{ such that} \\[2pt]
+&amp;\qquad u_{,xx} + f = 0 \quad \text{on } \Omega = \,]0,1[ \\
+&amp;\qquad u(1) = g \\
+&amp;\qquad -u_{,x}(0) = h
+\end{aligned}
+\]</span></p>
+</div>
+<p>Choosing a length of one and a material constant of one hides two things that the pictures below need, so we put them back: the domain becomes <span class="math inline">\(\Omega = \,]0, L[\)</span>, and a material constant <span class="math inline">\(K\)</span> appears inside the derivative, as in <a href="../chapters/4_Class.html">Class 4</a>:</p>
+<div class="derivation">
+<p><span class="math display">\[
+-\left(K u_{,x}\right)_{,x} = f \quad \text{in } \Omega
+\qquad\qquad
+u = g \quad \text{on } \Gamma_g
+\qquad\qquad
+\left(K u_{,x}\right) n = h \quad \text{on } \Gamma_h
+\]</span></p>
+</div>
+<p>On this page <span class="math inline">\(u\)</span> is a <strong>temperature</strong> and <span class="math inline">\(K = \kappa\)</span> is the <strong>thermal conductivity</strong>. Everything below is in SI units.</p>
+<section id="the-physical-problem" class="level2" data-number="B.1">
+<h2 data-number="B.1" class="anchored" data-anchor-id="the-physical-problem"><span class="header-section-number">B.1</span> The physical problem</h2>
+<div id="fig-h-wall" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h-wall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Heat/H_Fig1_Wall.png" class="img-fluid figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h-wall-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;B.1: A concrete wall, heated by the sun on its outside face, holding a room at 20 °C on its inside face, and generating heat internally as it cures.
+</figcaption>
+</figure>
+</div>
+<p>The wall is long and tall compared with its thickness. Far from its edges, nothing changes as you move along the wall or up it — temperature varies <strong>only through the thickness</strong>, in <span class="math inline">\(x\)</span>. So cut out a strip with a <span class="math inline">\(1\,\text{m} \times 1\,\text{m}\)</span> face and follow the temperature along it. Every quantity on this page is <strong>per square meter of wall face</strong>, which is why fluxes are in W/m² and not W.</p>
+<p>Three things act on the strip, and each becomes one piece of the strong form:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>What happens physically</th>
+<th>Where</th>
+<th>Becomes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Heat is generated inside the concrete as it cures</td>
+<td>throughout <span class="math inline">\(\Omega\)</span></td>
+<td>the forcing <span class="math inline">\(f\)</span></td>
+</tr>
+<tr class="even">
+<td>The interior face is held at the room’s temperature</td>
+<td><span class="math inline">\(x = L\)</span></td>
+<td>a Dirichlet condition <span class="math inline">\(u = g\)</span></td>
+</tr>
+<tr class="odd">
+<td>The sun pushes a known heat flux into the exterior face</td>
+<td><span class="math inline">\(x = 0\)</span></td>
+<td>a Neumann condition <span class="math inline">\((\kappa u_{,x})\,n = h\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="the-one-dimensional-domain" class="level2" data-number="B.2">
+<h2 data-number="B.2" class="anchored" data-anchor-id="the-one-dimensional-domain"><span class="header-section-number">B.2</span> The one-dimensional domain</h2>
+<div id="fig-h-domain" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h-domain-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Heat/H_Fig2_Domain.png" class="img-fluid figure-img" style="width:78.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h-domain-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;B.2: The domain <span class="math inline">\(\Omega\)</span> is the open interval through the thickness; its boundary <span class="math inline">\(\Gamma\)</span> is just the two faces, each with an outward unit normal.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><span class="math inline">\(\Omega = \,]0, L[\)</span> is the <strong>open</strong> interval — the inside of the wall, faces excluded. Hughes writes open intervals with outward-facing brackets.</li>
+<li><span class="math inline">\(\bar\Omega = [0, L]\)</span> is its <strong>closure</strong> — the wall including its two faces. The solution <span class="math inline">\(u\)</span> is defined on <span class="math inline">\(\bar\Omega\)</span>, since we need its value <em>at</em> the faces.</li>
+<li><span class="math inline">\(\Gamma = \{0, L\}\)</span> is the <strong>boundary</strong>: in one dimension, just two points.</li>
+<li>The <strong>outward unit normal</strong> <span class="math inline">\(n\)</span> points out of <span class="math inline">\(\Omega\)</span>: <span class="math inline">\(n = -1\)</span> at <span class="math inline">\(x = 0\)</span> and <span class="math inline">\(n = +1\)</span> at <span class="math inline">\(x = L\)</span>. It is only a sign in 1D, but that sign is what decides whether a Neumann condition reads <span class="math inline">\(-\kappa u_{,x}(0) = h\)</span> or <span class="math inline">\(+\kappa u_{,x}(L) = h\)</span>.</li>
+<li>Each point of <span class="math inline">\(\Gamma\)</span> gets <strong>exactly one</strong> boundary condition: <span class="math inline">\(\Gamma = \Gamma_g \cup \Gamma_h\)</span> and <span class="math inline">\(\Gamma_g \cap \Gamma_h = \emptyset\)</span>.</li>
+</ul>
+</div>
+</section>
+<section id="the-quantities-and-their-units" class="level2" data-number="B.3">
+<h2 data-number="B.3" class="anchored" data-anchor-id="the-quantities-and-their-units"><span class="header-section-number">B.3</span> The quantities and their units</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Symbol</th>
+<th>Meaning</th>
+<th>SI units</th>
+<th>This example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(x\)</span></td>
+<td>position through the thickness</td>
+<td>m</td>
+<td><span class="math inline">\(0 \le x \le L\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(L\)</span></td>
+<td>wall thickness</td>
+<td>m</td>
+<td>0.30 m</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(u(x)\)</span></td>
+<td>temperature (often written <span class="math inline">\(T\)</span>)</td>
+<td>°C (or K)</td>
+<td>unknown</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(u_{,x}\)</span></td>
+<td>temperature gradient</td>
+<td>°C/m</td>
+<td>unknown</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\kappa\)</span></td>
+<td>thermal conductivity (<span class="math inline">\(K\)</span> in class)</td>
+<td>W/(m·K)</td>
+<td>1.4 W/(m·K), concrete</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(q(x)\)</span></td>
+<td>heat flux in the <span class="math inline">\(+x\)</span> direction</td>
+<td>W/m²</td>
+<td>unknown</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(f(x)\)</span></td>
+<td>heat generated per unit volume</td>
+<td>W/m³</td>
+<td>500 W/m³</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(g\)</span></td>
+<td>prescribed face temperature</td>
+<td>°C</td>
+<td>20 °C</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(h\)</span></td>
+<td>prescribed heat flux <strong>into</strong> the wall</td>
+<td>W/m²</td>
+<td>50 W/m²</td>
+</tr>
+</tbody>
+</table>
+<p>Temperature <em>differences</em> are the same in °C and K, so <span class="math inline">\(\kappa\)</span> can be read as W/(m·°C) with no conversion.</p>
+</section>
+<section id="where-the-differential-equation-comes-from" class="level2" data-number="B.4">
+<h2 data-number="B.4" class="anchored" data-anchor-id="where-the-differential-equation-comes-from"><span class="header-section-number">B.4</span> Where the differential equation comes from</h2>
+<section id="conservation-of-energy-on-a-thin-slice" class="level3" data-number="B.4.1">
+<h3 data-number="B.4.1" class="anchored" data-anchor-id="conservation-of-energy-on-a-thin-slice"><span class="header-section-number">B.4.1</span> Conservation of energy on a thin slice</h3>
+<div id="fig-h-slice" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h-slice-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Heat/H_Fig3_Slice.png" class="img-fluid figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h-slice-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;B.3: A slice of the strip of thickness <span class="math inline">\(\Delta x\)</span>. At steady state, heat in plus heat made equals heat out.
+</figcaption>
+</figure>
+</div>
+<p>Let <span class="math inline">\(q(x)\)</span> be the <strong>heat flux</strong> — watts crossing each square meter of a plane at <span class="math inline">\(x\)</span>, counted positive when heat moves toward <span class="math inline">\(+x\)</span>. At steady state the slice’s temperature is not changing, so every watt that enters or is made inside it must leave:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\underbrace{q(x)\cdot 1}_{\text{in}}
++ \underbrace{f\,\Delta x \cdot 1}_{\text{generated}}
+- \underbrace{q(x+\Delta x)\cdot 1}_{\text{out}} = 0
+\qquad\xrightarrow[\;\text{divide by } \Delta x,\; \Delta x \to 0\;]{}\qquad
+-q_{,x} + f = 0
+\]</span></p>
+</div>
+<div class="step">
+<p>Each term is in watts: W/m² × 1 m² for the fluxes, and W/m³ × (Δx · 1 m²) for the generation. Read the result as <strong>“the flux grows exactly as fast as heat is being made”</strong>: <span class="math inline">\(q_{,x} = f\)</span>.</p>
+</div>
+</section>
+<section id="fouriers-law-heat-flows-downhill" class="level3" data-number="B.4.2">
+<h3 data-number="B.4.2" class="anchored" data-anchor-id="fouriers-law-heat-flows-downhill"><span class="header-section-number">B.4.2</span> Fourier’s law: heat flows downhill</h3>
+<p>The balance has one equation and two unknowns, <span class="math inline">\(q\)</span> and <span class="math inline">\(u\)</span>. The material supplies the second relation. <strong>Fourier’s law</strong> says heat flows from hot to cold, at a rate proportional to how steeply the temperature falls:</p>
+<div class="derivation">
+<p><span class="math display">\[
+q = -\kappa\, u_{,x}
+\]</span></p>
+</div>
+<div id="fig-h-fourier" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h-fourier-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Heat/H_Fig4_Fourier.png" class="img-fluid figure-img" style="width:92.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h-fourier-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;B.4: Fourier’s law. The coloured band is the wall, red where it is hot. Heat flows downhill on the temperature curve: the minus sign in <span class="math inline">\(q = -\kappa u_{,x}\)</span> makes the flux point opposite to the slope.
+</figcaption>
+</figure>
+</div>
+<p>Substituting Fourier’s law into the balance gives the differential equation of the strong form, in all three of the notations you will meet:</p>
+<div class="derivation">
+<p><span class="math display">\[
+-\left(\kappa\,u_{,x}\right)_{,x} = f
+\quad\Longleftrightarrow\quad
+\left(\kappa\,u_{,x}\right)_{,x} + f = 0
+\quad\xrightarrow{\;\kappa \text{ constant}\;}\quad
+\kappa\, u_{,xx} + f = 0
+\quad\xrightarrow{\;\kappa = 1\;}\quad
+u_{,xx} + f = 0 \;\;\text{(Hughes)}
+\]</span></p>
+</div>
+</section>
+<section id="what-the-equation-says-about-the-shape-of-u" class="level3" data-number="B.4.3">
+<h3 data-number="B.4.3" class="anchored" data-anchor-id="what-the-equation-says-about-the-shape-of-u"><span class="header-section-number">B.4.3</span> What the equation says about the shape of <span class="math inline">\(u\)</span></h3>
+<p>With <span class="math inline">\(\kappa\)</span> constant, <span class="math inline">\(u_{,xx} = -f/\kappa\)</span>: <strong>the forcing sets the curvature of the temperature profile</strong>, point by point.</p>
+<div id="fig-h-curvature" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h-curvature-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Heat/H_Fig5_Curvature.png" class="img-fluid figure-img" style="width:74.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h-curvature-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;B.5: Three walls with the same face temperatures and different forcing. With no source the profile is straight; a source bows it up; a sink bows it down. (<span class="math inline">\(\kappa\)</span> = 1.4 W/(m·K), <span class="math inline">\(L\)</span> = 0.30 m.)
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><span class="math inline">\(f = 0\)</span>: <span class="math inline">\(u_{,xx} = 0\)</span>, so the profile is a <strong>straight line</strong> and the flux <span class="math inline">\(q = -\kappa u_{,x}\)</span> is the same everywhere — what goes in one face comes out the other.</li>
+<li><span class="math inline">\(f &gt; 0\)</span>: <span class="math inline">\(u_{,xx} &lt; 0\)</span>, a <strong>hump</strong>. The wall is hotter inside than a straight line would predict, because the heat made inside has to flow out through the faces.</li>
+<li><span class="math inline">\(f &lt; 0\)</span>: <span class="math inline">\(u_{,xx} &gt; 0\)</span>, a <strong>dip</strong> — heat is being removed inside the wall.</li>
+</ul>
+</div>
+</section>
+</section>
+<section id="the-forcing-function-f" class="level2" data-number="B.5">
+<h2 data-number="B.5" class="anchored" data-anchor-id="the-forcing-function-f"><span class="header-section-number">B.5</span> The forcing function <span class="math inline">\(f\)</span></h2>
+<p><span class="math inline">\(f(x)\)</span> is heat <strong>generated per unit volume</strong>, in W/m³. It is the only term in the strong form that acts in the <em>interior</em> of <span class="math inline">\(\Omega\)</span>; <span class="math inline">\(g\)</span> and <span class="math inline">\(h\)</span> act only at the faces. Integrated through the thickness, it gives the heat made behind each square meter of wall, in W/m²:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\int_0^L f\,dx \quad \left[\tfrac{\text{W}}{\text{m}^3}\cdot\text{m}
+= \tfrac{\text{W}}{\text{m}^2}\right]
+\qquad\text{e.g.}\qquad 500 \times 0.30 = 150\ \text{W/m}^2
+\]</span></p>
+</div>
+<div id="fig-h-forcing" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h-forcing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Heat/H_Fig6_Forcing.png" class="img-fluid figure-img" style="width:96.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h-forcing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;B.6: Three forcing functions. Top: the wall with a <span class="math inline">\(+\)</span> mark for heat made and a <span class="math inline">\(-\)</span> mark for heat removed, at a density proportional to <span class="math inline">\(|f|\)</span>. Bottom: the same <span class="math inline">\(f(x)\)</span> as a graph.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><strong>Heat of hydration</strong> — cement releases heat as it cures, nearly uniformly through a freshly cast wall. This is the <span class="math inline">\(f\)</span> used in the example on this page.</li>
+<li><strong>Absorbed radiation</strong> — sunlight that penetrates a (semi-)transparent layer is absorbed over a short depth <span class="math inline">\(\delta\)</span>, so <span class="math inline">\(f = f_0 e^{-x/\delta}\)</span> is concentrated near the sunlit face.</li>
+<li><strong>Embedded heating or cooling</strong> — electric heating cables in the slab give <span class="math inline">\(f &gt; 0\)</span> where they run; a chilled-water pipe removes heat, <span class="math inline">\(f &lt; 0\)</span>.</li>
+<li><span class="math inline">\(f = 0\)</span> is the everyday case of an ordinary, inert wall.</li>
+</ul>
+</div>
+</section>
+<section id="boundary-conditions" class="level2" data-number="B.6">
+<h2 data-number="B.6" class="anchored" data-anchor-id="boundary-conditions"><span class="header-section-number">B.6</span> Boundary conditions</h2>
+<p>Each face gets exactly one condition: either its <strong>temperature</strong> is known, or the <strong>heat flux through it</strong> is known. Never both — and, as we will see, never <em>neither</em>.</p>
+<section id="dirichlet-u-g-on-gamma_g-the-temperature-is-known" class="level3" data-number="B.6.1">
+<h3 data-number="B.6.1" class="anchored" data-anchor-id="dirichlet-u-g-on-gamma_g-the-temperature-is-known"><span class="header-section-number">B.6.1</span> Dirichlet: <span class="math inline">\(u = g\)</span> on <span class="math inline">\(\Gamma_g\)</span> — the temperature is known</h3>
+<div id="fig-h-dirichlet" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h-dirichlet-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Heat/H_Fig7_Dirichlet.png" class="img-fluid figure-img" style="width:72.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h-dirichlet-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;B.7: A Dirichlet condition pins the <em>value</em> of <span class="math inline">\(u\)</span> at a face. Every one of these curves satisfies <span class="math inline">\(u(L) = 20\)</span> °C; the condition says nothing about the slope, which is left for the rest of the problem to decide.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><span class="math inline">\(g\)</span> is a <strong>temperature</strong>, in °C.</li>
+<li>Physically: the face touches something so large, or so well mixed, that the wall cannot change its temperature — and for the moment can be thought of as room air under a thermostat, an ice bath at 0 °C, flowing water, deep ground.</li>
+<li>It is called an <strong>essential</strong> boundary condition: it is imposed directly on the unknown <span class="math inline">\(u\)</span>. Later, in the weak form, it is built into the trial space <span class="math inline">\(\mathcal{S}\)</span> rather than appearing in any integral.</li>
+</ul>
+</div>
+</section>
+<section id="neumann-kappa-u_xn-h-on-gamma_h-the-heat-flux-is-known" class="level3" data-number="B.6.2">
+<h3 data-number="B.6.2" class="anchored" data-anchor-id="neumann-kappa-u_xn-h-on-gamma_h-the-heat-flux-is-known"><span class="header-section-number">B.6.2</span> Neumann: <span class="math inline">\((\kappa u_{,x})\,n = h\)</span> on <span class="math inline">\(\Gamma_h\)</span> — the heat flux is known</h3>
+<p>Here is the one relation that looks mysterious until you draw it. Start from Fourier’s law: <span class="math inline">\(q\)</span> is the flux toward <span class="math inline">\(+x\)</span>, so <span class="math inline">\(q\,n\)</span> is the flux leaving through a face (outward normal), and <span class="math inline">\(-q\,n\)</span> is the flux <strong>entering</strong> through it. The Neumann condition fixes the flux entering:</p>
+<div class="derivation">
+<p><span class="math display">\[
+h = -q\,n = -\left(-\kappa u_{,x}\right) n = \left(\kappa\,u_{,x}\right) n
+\]</span></p>
+</div>
+<p>So <span class="math inline">\((\kappa u_{,x})\,n = h\)</span> is not a new law; it is Fourier’s law evaluated at a face, with <span class="math inline">\(h\)</span> read as <strong>heat flux into the wall</strong>, in W/m². Now substitute the two possible normals:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\text{at } x = 0 \;(n = -1): \quad -\kappa\,u_{,x}(0) = h
+\qquad\qquad
+\text{at } x = L \;(n = +1): \quad +\kappa\,u_{,x}(L) = h
+\]</span></p>
+</div>
+<div id="fig-h-neumann" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h-neumann-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Heat/H_Fig8_Neumann.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h-neumann-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;B.8: The Neumann condition at either face, for heating, insulation, and cooling. The black curve is the temperature near the face and the dashed red line is its tangent there. Whichever face it acts on, heat entering (<span class="math inline">\(h &gt; 0\)</span>) makes the face the hot spot, so the temperature always falls <em>away from</em> the face into the wall — which is a negative slope on the left and a positive slope on the right. That sign flip is exactly the <span class="math inline">\(n\)</span>.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><span class="math inline">\(h\)</span> is a <strong>heat flux</strong>, in W/m², positive when heat goes <strong>in</strong>, on either face.</li>
+<li><span class="math inline">\(h = 0\)</span> is a perfectly <strong>insulated</strong> (adiabatic) face: the profile arrives with zero slope. By symmetry, this is also what the mid-plane of a wall heated equally from both sides looks like.</li>
+<li>The <strong>magnitude</strong> of the slope is <span class="math inline">\(|u_{,x}| = |h|/\kappa\)</span>. With <span class="math inline">\(h\)</span> = 50 W/m² and <span class="math inline">\(\kappa\)</span> = 1.4 W/(m·K), the temperature changes by 35.7 °C per meter — 0.36 °C over the first centimeter of the wall. A poorer conductor (smaller <span class="math inline">\(\kappa\)</span>) needs a steeper gradient to carry the same flux.</li>
+<li>It is called a <strong>natural</strong> boundary condition: in the weak form it will appear on its own as the boundary term <span class="math inline">\(w(0)\,h\)</span>, rather than being imposed on <span class="math inline">\(u\)</span>.</li>
+<li>A real face exchanging heat with air obeys <span class="math inline">\(h = h_c\,(u_\infty - u)\)</span>, which mixes the value and the slope. That is a Robin condition, and it is not part of Hughes’ model problem.</li>
+</ul>
+</div>
+</section>
+<section id="which-face-gets-which-condition" class="level3" data-number="B.6.3">
+<h3 data-number="B.6.3" class="anchored" data-anchor-id="which-face-gets-which-condition"><span class="header-section-number">B.6.3</span> Which face gets which condition</h3>
+<p>The model problem does not care which face is Dirichlet and which is Neumann — but the formulas do, through <span class="math inline">\(n\)</span>. There are four ways to assign the two faces:</p>
+<div id="fig-h-configs" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h-configs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Heat/H_Fig9_Configurations.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h-configs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;B.9: The four ways to assign the two faces, each with the same wall and the same <span class="math inline">\(f\)</span> = 500 W/m³. On the right, blue dots are Dirichlet values the curve must pass through; dashed teal lines are the slopes that Neumann data force on it.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><strong>(a) Hughes’ arrangement.</strong> Flux given at <span class="math inline">\(x = 0\)</span>, temperature at <span class="math inline">\(x = L\)</span>: <span class="math inline">\(\;u(L) = g,\;\; -\kappa u_{,x}(0) = h\)</span>.</li>
+<li><strong>(b) Swapped.</strong> Temperature given at <span class="math inline">\(x = 0\)</span>, flux at <span class="math inline">\(x = L\)</span>: <span class="math inline">\(\;u(0) = g,\;\; +\kappa u_{,x}(L) = h\)</span>. Only the sign in front of <span class="math inline">\(\kappa u_{,x}\)</span> changes. Note that (b) is the <em>mirror image</em> of (a), sun on the right instead of the left — and <span class="math inline">\(h\)</span> = +50 W/m² in both, because in both the sun pushes heat <strong>in</strong>. The sign of the heat-flux <span class="math inline">\(h\)</span> follows the wall, not the <span class="math inline">\(x\)</span>-axis.</li>
+<li><strong>(c) Two Dirichlet faces</strong> is a well-posed problem, with two values <span class="math inline">\(g_0 = u(0)\)</span> and <span class="math inline">\(g_L = u(L)\)</span>. Hughes’ notation then carries a <span class="math inline">\(g\)</span> for each point of <span class="math inline">\(\Gamma_g\)</span>.</li>
+<li><strong>(d) Two Neumann faces</strong> is <strong>not</strong> a well-posed problem, for two reasons:
+<ul>
+<li><em>Uniqueness fails.</em> Flux data only ever see <span class="math inline">\(u_{,x}\)</span>, so adding any constant to a solution gives another one. The temperature level is never pinned down.</li>
+<li><em>Existence needs luck.</em> At steady state, every watt in must come out: <span class="math inline">\(h_0 + h_L + \int_0^L f\,dx = 0\)</span>. The panel uses <span class="math inline">\(h_L\)</span> = −200 W/m² for exactly this reason (50 in, 150 made, 200 out). Any other <span class="math inline">\(h_L\)</span> has <strong>no</strong> steady solution at all — the wall just keeps heating up or cooling down.</li>
+</ul></li>
+<li>So <strong><span class="math inline">\(\Gamma_g\)</span> must not be empty</strong>: at least one face needs a known temperature.</li>
+</ul>
+</div>
+</section>
+</section>
+<section id="the-strong-form-complete" class="level2" data-number="B.7">
+<h2 data-number="B.7" class="anchored" data-anchor-id="the-strong-form-complete"><span class="header-section-number">B.7</span> The strong form, complete</h2>
+<p>Collecting the pieces, for Hughes’ arrangement (a):</p>
+<div class="derivation">
+<p><span class="math display">\[
+(\mathrm{S}) \qquad
+\begin{aligned}
+&amp;\text{Given } f : \bar\Omega \to \RR \;[\text{W/m}^3],\;
+  \kappa &gt; 0 \;[\text{W/(m·K)}],\;
+  g \;[{}^\circ\text{C}], \text{ and } h \;[\text{W/m}^2],
+  \text{ find } u : \bar\Omega \to \RR \;[{}^\circ\text{C}] \text{ such that} \\[3pt]
+&amp;\qquad \left(\kappa\,u_{,x}\right)_{,x} + f = 0
+   &amp;&amp; \text{on } \Omega = \,]0, L[ &amp;&amp; \text{(energy balance + Fourier)} \\
+&amp;\qquad u(L) = g &amp;&amp; &amp;&amp; \text{(Dirichlet: known temperature)} \\
+&amp;\qquad -\kappa\,u_{,x}(0) = h &amp;&amp; &amp;&amp; \text{(Neumann: known inflow)}
+\end{aligned}
+\]</span></p>
+</div>
+<p>and, for the swapped arrangement (b), replace the last two lines by <span class="math inline">\(u(0) = g\)</span> and <span class="math inline">\(+\kappa\,u_{,x}(L) = h\)</span>.</p>
+<div class="step notes">
+<ul>
+<li>It is called the <strong>strong</strong> form because the differential equation must hold <strong>at every point</strong> of <span class="math inline">\(\Omega\)</span>. That demands <span class="math inline">\(u_{,xx}\)</span> exist everywhere — a smooth solution. A wall made of two materials, with <span class="math inline">\(\kappa\)</span> jumping at an interface, already strains this requirement; the weak form relaxes it.</li>
+<li>With constant <span class="math inline">\(\kappa\)</span> and <span class="math inline">\(f\)</span>, integrating twice gives the exact solution of (a):</li>
+</ul>
+</div>
+<div class="derivation">
+<p><span class="math display">\[
+u(x) = g + \frac{h}{\kappa}\,(L - x) + \frac{f}{2\kappa}\,\left(L^2 - x^2\right)
+\]</span></p>
+</div>
+<div class="step">
+<p>which, with <span class="math inline">\(L = \kappa = 1\)</span>, is the <span class="math inline">\(u(x) = g + (1-x)h + \int_x^1\!\int_0^y f\,dz\,dy\)</span> of <a href="../chapters/4_Class.html">Class 4</a>.</p>
+</div>
+</section>
+<section id="worked-example" class="level2" data-number="B.8">
+<h2 data-number="B.8" class="anchored" data-anchor-id="worked-example"><span class="header-section-number">B.8</span> Worked example</h2>
+<p>The concrete wall of <a href="#fig-h-wall" class="quarto-xref">Figure&nbsp;<span>B.1</span></a>: <span class="math inline">\(L\)</span> = 0.30 m, <span class="math inline">\(\kappa\)</span> = 1.4 W/(m·K), curing at <span class="math inline">\(f\)</span> = 500 W/m³, with <span class="math inline">\(h\)</span> = 50 W/m² of sunlight absorbed at the outside face <span class="math inline">\(x = 0\)</span> and the inside face <span class="math inline">\(x = L\)</span> held at <span class="math inline">\(g\)</span> = 20 °C. This is arrangement (a).</p>
+<div class="derivation">
+<p><span class="math display">\[
+\begin{aligned}
+u(x) &amp;= 20 + \frac{50}{1.4}\,(0.30 - x) + \frac{500}{2(1.4)}\,(0.09 - x^2)
+  \quad [{}^\circ\text{C}] \\[4pt]
+u(0) &amp;= 20 + 10.71 + 16.07 = 46.8\ {}^\circ\text{C}
+  \qquad\qquad u_{,x}(0) = -\frac{h}{\kappa} = -35.7\ {}^\circ\text{C/m} \\[4pt]
+q(x) &amp;= -\kappa\,u_{,x} = 50 + 500\,x \quad [\text{W/m}^2]
+  \qquad\qquad q(L) = 200\ \text{W/m}^2
+\end{aligned}
+\]</span></p>
+</div>
+<div id="fig-h-example" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Heat/H_Fig10_Example.png" class="img-fluid figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;B.10: The solution of the worked example. Top: temperature, pinned at the inside face and leaving the outside face with the slope the sunlight dictates. Bottom: the heat flux <span class="math inline">\(q = -\kappa u_{,x}\)</span>, which grows by exactly the heat made inside the wall.
+</figcaption>
+</figure>
+</div>
+<p>Every line of the strong form can be checked on the picture:</p>
+<div class="step notes">
+<ul>
+<li><strong>The differential equation.</strong> <span class="math inline">\(\kappa u_{,xx} = -f\)</span>: the temperature curve bends down everywhere, at the same rate, because <span class="math inline">\(f\)</span> is uniform. Equivalently, <span class="math inline">\(q_{,x} = f\)</span> = 500 W/m³: the flux line in the lower panel is straight with slope 500.</li>
+<li><strong>The Dirichlet condition.</strong> The curve passes through 20 °C at <span class="math inline">\(x = L\)</span>.</li>
+<li><strong>The Neumann condition.</strong> At <span class="math inline">\(x = 0\)</span> the tangent drops 1.79 °C over the first 5 cm, a slope of −35.7 °C/m, and <span class="math inline">\(-\kappa u_{,x}(0) = -1.4 \times (-35.7) = 50\)</span> W/m² <span class="math inline">\(= h\)</span>.</li>
+<li><strong>The energy balance.</strong> 50 W/m² in through the sunlit face plus 150 W/m² made inside equals the 200 W/m² delivered to the room at <span class="math inline">\(x = L\)</span>.</li>
+</ul>
+</div>
+<p>The same wall with the sun on the other side is arrangement (b): <span class="math inline">\(u(0) = 20\)</span> °C, <span class="math inline">\(+\kappa u_{,x}(L) = 50\)</span> W/m², and <span class="math inline">\(u(x) = g + \frac{h + fL}{\kappa}\,x -
+\frac{f}{2\kappa}\,x^2\)</span> — the mirror image of the curve above, with the <em>same</em> <span class="math inline">\(h\)</span>. Compare this with the rod, where mirroring the problem flips the sign of <span class="math inline">\(h\)</span>.</p>
+</section>
+<section id="explore-the-strong-form" class="level2" data-number="B.9">
+<h2 data-number="B.9" class="anchored" data-anchor-id="explore-the-strong-form"><span class="header-section-number">B.9</span> Explore the strong form</h2>
+<p>Move the sliders and watch each line of the strong form act on the solution. The black curve is the exact <span class="math inline">\(u(x)\)</span>. A blue dot marks each Dirichlet face, and the dashed teal line is the slope that the Neumann condition forces on its face. The band below the curve is the wall, shaded by temperature, with arrows showing the heat flux <span class="math inline">\(q = -\kappa u_{,x}\)</span>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb1" data-startfrom="946" data-source-offset="-0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 945;"><span id="cb1-946"><a href="#cb1-946" aria-hidden="true" tabindex="-1"></a>viewof hBC <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">radio</span>(<span class="kw">new</span> <span class="bu">Map</span>([</span>
+<span id="cb1-947"><a href="#cb1-947" aria-hidden="true" tabindex="-1"></a>  [<span class="st">"(a) Hughes: h at x = 0, g at x = L"</span><span class="op">,</span> <span class="st">"a"</span>]<span class="op">,</span></span>
+<span id="cb1-948"><a href="#cb1-948" aria-hidden="true" tabindex="-1"></a>  [<span class="st">"(b) swapped: g at x = 0, h at x = L"</span><span class="op">,</span> <span class="st">"b"</span>]<span class="op">,</span></span>
+<span id="cb1-949"><a href="#cb1-949" aria-hidden="true" tabindex="-1"></a>  [<span class="st">"(c) g at both faces"</span><span class="op">,</span> <span class="st">"c"</span>]</span>
+<span id="cb1-950"><a href="#cb1-950" aria-hidden="true" tabindex="-1"></a>])<span class="op">,</span> {<span class="dt">value</span><span class="op">:</span> <span class="st">"a"</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"Boundary conditions"</span>})</span>
+<span id="cb1-951"><a href="#cb1-951" aria-hidden="true" tabindex="-1"></a>viewof hF  <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="op">-</span><span class="dv">2000</span><span class="op">,</span> <span class="dv">2000</span>]<span class="op">,</span> {<span class="dt">value</span><span class="op">:</span> <span class="dv">500</span><span class="op">,</span> <span class="dt">step</span><span class="op">:</span> <span class="dv">50</span><span class="op">,</span>  <span class="dt">label</span><span class="op">:</span> <span class="st">"f (W/m³)"</span>})</span>
+<span id="cb1-952"><a href="#cb1-952" aria-hidden="true" tabindex="-1"></a>viewof hH  <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="op">-</span><span class="dv">300</span><span class="op">,</span> <span class="dv">300</span>]<span class="op">,</span>   {<span class="dt">value</span><span class="op">:</span> <span class="dv">50</span><span class="op">,</span>  <span class="dt">step</span><span class="op">:</span> <span class="dv">5</span><span class="op">,</span>   <span class="dt">label</span><span class="op">:</span> <span class="st">"h (W/m², into wall)"</span>})</span>
+<span id="cb1-953"><a href="#cb1-953" aria-hidden="true" tabindex="-1"></a>viewof hG  <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="dv">0</span><span class="op">,</span> <span class="dv">40</span>]<span class="op">,</span>       {<span class="dt">value</span><span class="op">:</span> <span class="dv">20</span><span class="op">,</span>  <span class="dt">step</span><span class="op">:</span> <span class="dv">1</span><span class="op">,</span>   <span class="dt">label</span><span class="op">:</span> <span class="st">"g (°C)"</span>})</span>
+<span id="cb1-954"><a href="#cb1-954" aria-hidden="true" tabindex="-1"></a>viewof hG0 <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="dv">0</span><span class="op">,</span> <span class="dv">40</span>]<span class="op">,</span>       {<span class="dt">value</span><span class="op">:</span> <span class="dv">35</span><span class="op">,</span>  <span class="dt">step</span><span class="op">:</span> <span class="dv">1</span><span class="op">,</span>   <span class="dt">label</span><span class="op">:</span> <span class="st">"g at x = 0 in (c) (°C)"</span>})</span>
+<span id="cb1-955"><a href="#cb1-955" aria-hidden="true" tabindex="-1"></a>viewof hK  <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="fl">0.2</span><span class="op">,</span> <span class="dv">5</span>]<span class="op">,</span>      {<span class="dt">value</span><span class="op">:</span> <span class="fl">1.4</span><span class="op">,</span> <span class="dt">step</span><span class="op">:</span> <span class="fl">0.1</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"κ (W/(m·K))"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-1" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-2" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-3" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-4" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-5" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-6" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb2" data-startfrom="959" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 958;"><span id="cb2-959"><a href="#cb2-959" aria-hidden="true" tabindex="-1"></a>heat <span class="op">=</span> {</span>
+<span id="cb2-960"><a href="#cb2-960" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> L <span class="op">=</span> <span class="fl">0.30</span><span class="op">,</span> k <span class="op">=</span> hK<span class="op">,</span> f <span class="op">=</span> hF<span class="op">,</span> h <span class="op">=</span> hH<span class="op">,</span> g <span class="op">=</span> hG<span class="op">,</span> g0 <span class="op">=</span> hG0<span class="op">;</span></span>
+<span id="cb2-961"><a href="#cb2-961" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> u<span class="op">,</span> du<span class="op">;</span></span>
+<span id="cb2-962"><a href="#cb2-962" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (hBC <span class="op">===</span> <span class="st">"a"</span>) {</span>
+<span id="cb2-963"><a href="#cb2-963" aria-hidden="true" tabindex="-1"></a>    u  <span class="op">=</span> x <span class="kw">=&gt;</span> g <span class="op">+</span> h <span class="op">/</span> k <span class="op">*</span> (L <span class="op">-</span> x) <span class="op">+</span> f <span class="op">/</span> (<span class="dv">2</span> <span class="op">*</span> k) <span class="op">*</span> (L <span class="op">*</span> L <span class="op">-</span> x <span class="op">*</span> x)<span class="op">;</span></span>
+<span id="cb2-964"><a href="#cb2-964" aria-hidden="true" tabindex="-1"></a>    du <span class="op">=</span> x <span class="kw">=&gt;</span> <span class="op">-</span>h <span class="op">/</span> k <span class="op">-</span> f <span class="op">*</span> x <span class="op">/</span> k<span class="op">;</span></span>
+<span id="cb2-965"><a href="#cb2-965" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (hBC <span class="op">===</span> <span class="st">"b"</span>) {</span>
+<span id="cb2-966"><a href="#cb2-966" aria-hidden="true" tabindex="-1"></a>    u  <span class="op">=</span> x <span class="kw">=&gt;</span> g <span class="op">+</span> (h <span class="op">+</span> f <span class="op">*</span> L) <span class="op">/</span> k <span class="op">*</span> x <span class="op">-</span> f <span class="op">/</span> (<span class="dv">2</span> <span class="op">*</span> k) <span class="op">*</span> x <span class="op">*</span> x<span class="op">;</span></span>
+<span id="cb2-967"><a href="#cb2-967" aria-hidden="true" tabindex="-1"></a>    du <span class="op">=</span> x <span class="kw">=&gt;</span> (h <span class="op">+</span> f <span class="op">*</span> L) <span class="op">/</span> k <span class="op">-</span> f <span class="op">*</span> x <span class="op">/</span> k<span class="op">;</span></span>
+<span id="cb2-968"><a href="#cb2-968" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb2-969"><a href="#cb2-969" aria-hidden="true" tabindex="-1"></a>    u  <span class="op">=</span> x <span class="kw">=&gt;</span> g0 <span class="op">+</span> (g <span class="op">-</span> g0) <span class="op">*</span> x <span class="op">/</span> L <span class="op">+</span> f <span class="op">/</span> (<span class="dv">2</span> <span class="op">*</span> k) <span class="op">*</span> x <span class="op">*</span> (L <span class="op">-</span> x)<span class="op">;</span></span>
+<span id="cb2-970"><a href="#cb2-970" aria-hidden="true" tabindex="-1"></a>    du <span class="op">=</span> x <span class="kw">=&gt;</span> (g <span class="op">-</span> g0) <span class="op">/</span> L <span class="op">+</span> f <span class="op">*</span> (L <span class="op">-</span> <span class="dv">2</span> <span class="op">*</span> x) <span class="op">/</span> (<span class="dv">2</span> <span class="op">*</span> k)<span class="op">;</span></span>
+<span id="cb2-971"><a href="#cb2-971" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb2-972"><a href="#cb2-972" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> q <span class="op">=</span> x <span class="kw">=&gt;</span> <span class="op">-</span>k <span class="op">*</span> <span class="fu">du</span>(x)<span class="op">;</span></span>
+<span id="cb2-973"><a href="#cb2-973" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> pts <span class="op">=</span> d3<span class="op">.</span><span class="fu">range</span>(<span class="dv">121</span>)<span class="op">.</span><span class="fu">map</span>(i <span class="kw">=&gt;</span> { <span class="kw">const</span> x <span class="op">=</span> L <span class="op">*</span> i <span class="op">/</span> <span class="dv">120</span><span class="op">;</span> <span class="cf">return</span> {x<span class="op">,</span> <span class="dt">u</span><span class="op">:</span> <span class="fu">u</span>(x)<span class="op">,</span> <span class="dt">q</span><span class="op">:</span> <span class="fu">q</span>(x)}<span class="op">;</span> })<span class="op">;</span></span>
+<span id="cb2-974"><a href="#cb2-974" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> {L<span class="op">,</span> k<span class="op">,</span> f<span class="op">,</span> h<span class="op">,</span> g<span class="op">,</span> g0<span class="op">,</span> u<span class="op">,</span> du<span class="op">,</span> q<span class="op">,</span> pts}<span class="op">;</span></span>
+<span id="cb2-975"><a href="#cb2-975" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-2" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb3" data-startfrom="980" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 979;"><span id="cb3-980"><a href="#cb3-980" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb3-981"><a href="#cb3-981" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> {L<span class="op">,</span> u<span class="op">,</span> du<span class="op">,</span> q<span class="op">,</span> pts} <span class="op">=</span> heat<span class="op">;</span></span>
+<span id="cb3-982"><a href="#cb3-982" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> W <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">min</span>(width<span class="op">,</span> <span class="dv">760</span>)<span class="op">;</span></span>
+<span id="cb3-983"><a href="#cb3-983" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> dirX <span class="op">=</span> hBC <span class="op">===</span> <span class="st">"a"</span> <span class="op">?</span> [L] <span class="op">:</span> hBC <span class="op">===</span> <span class="st">"b"</span> <span class="op">?</span> [<span class="dv">0</span>] <span class="op">:</span> [<span class="dv">0</span><span class="op">,</span> L]<span class="op">;</span></span>
+<span id="cb3-984"><a href="#cb3-984" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> neuX <span class="op">=</span> hBC <span class="op">===</span> <span class="st">"a"</span> <span class="op">?</span> <span class="dv">0</span> <span class="op">:</span> hBC <span class="op">===</span> <span class="st">"b"</span> <span class="op">?</span> L <span class="op">:</span> <span class="kw">null</span><span class="op">;</span></span>
+<span id="cb3-985"><a href="#cb3-985" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> marks <span class="op">=</span> [</span>
+<span id="cb3-986"><a href="#cb3-986" aria-hidden="true" tabindex="-1"></a>    Plot<span class="op">.</span><span class="fu">line</span>(pts<span class="op">,</span> {<span class="dt">x</span><span class="op">:</span> <span class="st">"x"</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="st">"u"</span><span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> <span class="st">"#1a1a1a"</span><span class="op">,</span> <span class="dt">strokeWidth</span><span class="op">:</span> <span class="fl">2.6</span>})<span class="op">,</span></span>
+<span id="cb3-987"><a href="#cb3-987" aria-hidden="true" tabindex="-1"></a>    Plot<span class="op">.</span><span class="fu">dot</span>(dirX<span class="op">.</span><span class="fu">map</span>(x <span class="kw">=&gt;</span> ({x<span class="op">,</span> <span class="dt">u</span><span class="op">:</span> <span class="fu">u</span>(x)}))<span class="op">,</span> {<span class="dt">x</span><span class="op">:</span> <span class="st">"x"</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="st">"u"</span><span class="op">,</span> <span class="dt">r</span><span class="op">:</span> <span class="dv">6</span><span class="op">,</span> <span class="dt">fill</span><span class="op">:</span> <span class="st">"#4a7ba7"</span>})</span>
+<span id="cb3-988"><a href="#cb3-988" aria-hidden="true" tabindex="-1"></a>  ]<span class="op">;</span></span>
+<span id="cb3-989"><a href="#cb3-989" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (neuX <span class="op">!==</span> <span class="kw">null</span>) {</span>
+<span id="cb3-990"><a href="#cb3-990" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> d <span class="op">=</span> (neuX <span class="op">===</span> <span class="dv">0</span> <span class="op">?</span> <span class="dv">1</span> <span class="op">:</span> <span class="op">-</span><span class="dv">1</span>) <span class="op">*</span> <span class="fl">0.08</span><span class="op">;</span></span>
+<span id="cb3-991"><a href="#cb3-991" aria-hidden="true" tabindex="-1"></a>    marks<span class="op">.</span><span class="fu">push</span>(Plot<span class="op">.</span><span class="fu">line</span>([{<span class="dt">x</span><span class="op">:</span> neuX<span class="op">,</span> <span class="dt">u</span><span class="op">:</span> <span class="fu">u</span>(neuX)}<span class="op">,</span> {<span class="dt">x</span><span class="op">:</span> neuX <span class="op">+</span> d<span class="op">,</span> <span class="dt">u</span><span class="op">:</span> <span class="fu">u</span>(neuX) <span class="op">+</span> <span class="fu">du</span>(neuX) <span class="op">*</span> d}]<span class="op">,</span></span>
+<span id="cb3-992"><a href="#cb3-992" aria-hidden="true" tabindex="-1"></a>      {<span class="dt">x</span><span class="op">:</span> <span class="st">"x"</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="st">"u"</span><span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> <span class="st">"#0d9488"</span><span class="op">,</span> <span class="dt">strokeWidth</span><span class="op">:</span> <span class="fl">2.4</span><span class="op">,</span> <span class="dt">strokeDasharray</span><span class="op">:</span> <span class="st">"7,4"</span>}))<span class="op">;</span></span>
+<span id="cb3-993"><a href="#cb3-993" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-994"><a href="#cb3-994" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> top <span class="op">=</span> Plot<span class="op">.</span><span class="fu">plot</span>({</span>
+<span id="cb3-995"><a href="#cb3-995" aria-hidden="true" tabindex="-1"></a>    <span class="dt">width</span><span class="op">:</span> W<span class="op">,</span> <span class="dt">height</span><span class="op">:</span> <span class="dv">300</span><span class="op">,</span> <span class="dt">marginLeft</span><span class="op">:</span> <span class="dv">55</span><span class="op">,</span></span>
+<span id="cb3-996"><a href="#cb3-996" aria-hidden="true" tabindex="-1"></a>    <span class="dt">x</span><span class="op">:</span> {<span class="dt">label</span><span class="op">:</span> <span class="st">"x (m) →"</span><span class="op">,</span> <span class="dt">domain</span><span class="op">:</span> [<span class="dv">0</span><span class="op">,</span> L]}<span class="op">,</span></span>
+<span id="cb3-997"><a href="#cb3-997" aria-hidden="true" tabindex="-1"></a>    <span class="dt">y</span><span class="op">:</span> {<span class="dt">label</span><span class="op">:</span> <span class="st">"↑ temperature u (°C)"</span><span class="op">,</span> <span class="dt">grid</span><span class="op">:</span> <span class="kw">true</span>}<span class="op">,</span></span>
+<span id="cb3-998"><a href="#cb3-998" aria-hidden="true" tabindex="-1"></a>    marks</span>
+<span id="cb3-999"><a href="#cb3-999" aria-hidden="true" tabindex="-1"></a>  })<span class="op">;</span></span>
+<span id="cb3-1000"><a href="#cb3-1000" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-1001"><a href="#cb3-1001" aria-hidden="true" tabindex="-1"></a>  <span class="co">// the wall, shaded by temperature, with flux arrows</span></span>
+<span id="cb3-1002"><a href="#cb3-1002" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> segs <span class="op">=</span> pts<span class="op">.</span><span class="fu">slice</span>(<span class="dv">0</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span>)<span class="op">.</span><span class="fu">map</span>((p<span class="op">,</span> i) <span class="kw">=&gt;</span> ({<span class="dt">x1</span><span class="op">:</span> p<span class="op">.</span><span class="at">x</span><span class="op">,</span> <span class="dt">x2</span><span class="op">:</span> pts[i <span class="op">+</span> <span class="dv">1</span>]<span class="op">.</span><span class="at">x</span><span class="op">,</span> <span class="dt">u</span><span class="op">:</span> p<span class="op">.</span><span class="at">u</span>}))<span class="op">;</span></span>
+<span id="cb3-1003"><a href="#cb3-1003" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> qmax <span class="op">=</span> d3<span class="op">.</span><span class="fu">max</span>(pts<span class="op">,</span> p <span class="kw">=&gt;</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">abs</span>(p<span class="op">.</span><span class="at">q</span>)) <span class="op">||</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb3-1004"><a href="#cb3-1004" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> nA <span class="op">=</span> <span class="dv">7</span><span class="op">,</span> cell <span class="op">=</span> L <span class="op">/</span> nA<span class="op">;</span></span>
+<span id="cb3-1005"><a href="#cb3-1005" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> arrows <span class="op">=</span> d3<span class="op">.</span><span class="fu">range</span>(nA)<span class="op">.</span><span class="fu">map</span>(i <span class="kw">=&gt;</span> {</span>
+<span id="cb3-1006"><a href="#cb3-1006" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> x <span class="op">=</span> cell <span class="op">*</span> (i <span class="op">+</span> <span class="fl">0.5</span>)<span class="op">,</span> len <span class="op">=</span> <span class="fl">0.8</span> <span class="op">*</span> cell <span class="op">*</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">abs</span>(<span class="fu">q</span>(x)) <span class="op">/</span> qmax<span class="op">,</span> s <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sign</span>(<span class="fu">q</span>(x))<span class="op">;</span></span>
+<span id="cb3-1007"><a href="#cb3-1007" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="dt">x1</span><span class="op">:</span> x <span class="op">-</span> s <span class="op">*</span> len <span class="op">/</span> <span class="dv">2</span><span class="op">,</span> <span class="dt">x2</span><span class="op">:</span> x <span class="op">+</span> s <span class="op">*</span> len <span class="op">/</span> <span class="dv">2</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="fl">0.5</span>}<span class="op">;</span></span>
+<span id="cb3-1008"><a href="#cb3-1008" aria-hidden="true" tabindex="-1"></a>  })<span class="op">.</span><span class="fu">filter</span>(a <span class="kw">=&gt;</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">abs</span>(a<span class="op">.</span><span class="at">x2</span> <span class="op">-</span> a<span class="op">.</span><span class="at">x1</span>) <span class="op">&gt;</span> <span class="fl">1e-4</span>)<span class="op">;</span></span>
+<span id="cb3-1009"><a href="#cb3-1009" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> band <span class="op">=</span> Plot<span class="op">.</span><span class="fu">plot</span>({</span>
+<span id="cb3-1010"><a href="#cb3-1010" aria-hidden="true" tabindex="-1"></a>    <span class="dt">width</span><span class="op">:</span> W<span class="op">,</span> <span class="dt">height</span><span class="op">:</span> <span class="dv">110</span><span class="op">,</span> <span class="dt">marginLeft</span><span class="op">:</span> <span class="dv">55</span><span class="op">,</span></span>
+<span id="cb3-1011"><a href="#cb3-1011" aria-hidden="true" tabindex="-1"></a>    <span class="dt">x</span><span class="op">:</span> {<span class="dt">label</span><span class="op">:</span> <span class="st">"x (m) →"</span><span class="op">,</span> <span class="dt">domain</span><span class="op">:</span> [<span class="dv">0</span><span class="op">,</span> L]}<span class="op">,</span></span>
+<span id="cb3-1012"><a href="#cb3-1012" aria-hidden="true" tabindex="-1"></a>    <span class="dt">y</span><span class="op">:</span> {<span class="dt">axis</span><span class="op">:</span> <span class="kw">null</span><span class="op">,</span> <span class="dt">domain</span><span class="op">:</span> [<span class="dv">0</span><span class="op">,</span> <span class="dv">1</span>]}<span class="op">,</span></span>
+<span id="cb3-1013"><a href="#cb3-1013" aria-hidden="true" tabindex="-1"></a>    <span class="dt">color</span><span class="op">:</span> {<span class="dt">type</span><span class="op">:</span> <span class="st">"linear"</span><span class="op">,</span> <span class="dt">scheme</span><span class="op">:</span> <span class="st">"RdYlBu"</span><span class="op">,</span> <span class="dt">reverse</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">legend</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"u (°C)"</span>}<span class="op">,</span></span>
+<span id="cb3-1014"><a href="#cb3-1014" aria-hidden="true" tabindex="-1"></a>    <span class="dt">marks</span><span class="op">:</span> [</span>
+<span id="cb3-1015"><a href="#cb3-1015" aria-hidden="true" tabindex="-1"></a>      Plot<span class="op">.</span><span class="fu">rect</span>(segs<span class="op">,</span> {<span class="dt">x1</span><span class="op">:</span> <span class="st">"x1"</span><span class="op">,</span> <span class="dt">x2</span><span class="op">:</span> <span class="st">"x2"</span><span class="op">,</span> <span class="dt">y1</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span> <span class="dt">y2</span><span class="op">:</span> <span class="dv">1</span><span class="op">,</span> <span class="dt">fill</span><span class="op">:</span> <span class="st">"u"</span><span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> <span class="st">"u"</span>})<span class="op">,</span></span>
+<span id="cb3-1016"><a href="#cb3-1016" aria-hidden="true" tabindex="-1"></a>      Plot<span class="op">.</span><span class="fu">arrow</span>(arrows<span class="op">,</span> {<span class="dt">x1</span><span class="op">:</span> <span class="st">"x1"</span><span class="op">,</span> <span class="dt">x2</span><span class="op">:</span> <span class="st">"x2"</span><span class="op">,</span> <span class="dt">y1</span><span class="op">:</span> <span class="st">"y"</span><span class="op">,</span> <span class="dt">y2</span><span class="op">:</span> <span class="st">"y"</span><span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> <span class="st">"#1a1a1a"</span><span class="op">,</span></span>
+<span id="cb3-1017"><a href="#cb3-1017" aria-hidden="true" tabindex="-1"></a>                          <span class="dt">strokeWidth</span><span class="op">:</span> <span class="fl">2.4</span><span class="op">,</span> <span class="dt">headLength</span><span class="op">:</span> <span class="dv">10</span>})</span>
+<span id="cb3-1018"><a href="#cb3-1018" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb3-1019"><a href="#cb3-1019" aria-hidden="true" tabindex="-1"></a>  })<span class="op">;</span></span>
+<span id="cb3-1020"><a href="#cb3-1020" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="fu">html</span><span class="vs">`&lt;div&gt;</span><span class="sc">${</span>top<span class="sc">}${</span>band<span class="sc">}</span><span class="vs">&lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb3-1021"><a href="#cb3-1021" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-3" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb4" data-startfrom="1026" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 1025;"><span id="cb4-1026"><a href="#cb4-1026" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb4-1027"><a href="#cb4-1027" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> {L<span class="op">,</span> k<span class="op">,</span> f<span class="op">,</span> h<span class="op">,</span> u<span class="op">,</span> du<span class="op">,</span> q} <span class="op">=</span> heat<span class="op">;</span></span>
+<span id="cb4-1028"><a href="#cb4-1028" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> fmt <span class="op">=</span> (v<span class="op">,</span> d <span class="op">=</span> <span class="dv">1</span>) <span class="kw">=&gt;</span> (v <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">?</span> <span class="st">"−"</span> <span class="op">:</span> <span class="st">""</span>) <span class="op">+</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">abs</span>(v)<span class="op">.</span><span class="fu">toFixed</span>(d)<span class="op">;</span></span>
+<span id="cb4-1029"><a href="#cb4-1029" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> inL <span class="op">=</span> <span class="fu">q</span>(<span class="dv">0</span>)<span class="op">,</span> outR <span class="op">=</span> <span class="fu">q</span>(L)<span class="op">,</span> made <span class="op">=</span> f <span class="op">*</span> L<span class="op">;</span></span>
+<span id="cb4-1030"><a href="#cb4-1030" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> bc<span class="op">;</span></span>
+<span id="cb4-1031"><a href="#cb4-1031" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (hBC <span class="op">===</span> <span class="st">"a"</span>) bc <span class="op">=</span> <span class="vs">`−κ u,x(0) = −</span><span class="sc">${</span><span class="fu">fmt</span>(k<span class="op">,</span> <span class="dv">1</span>)<span class="sc">}</span><span class="vs"> × (</span><span class="sc">${</span><span class="fu">fmt</span>(<span class="fu">du</span>(<span class="dv">0</span>))<span class="sc">}</span><span class="vs">) = </span><span class="sc">${</span><span class="fu">fmt</span>(<span class="op">-</span>k <span class="op">*</span> <span class="fu">du</span>(<span class="dv">0</span>))<span class="sc">}</span><span class="vs"> W/m² = h ✓  u(L) = </span><span class="sc">${</span><span class="fu">fmt</span>(<span class="fu">u</span>(L))<span class="sc">}</span><span class="vs"> °C = g ✓`</span><span class="op">;</span></span>
+<span id="cb4-1032"><a href="#cb4-1032" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="cf">if</span> (hBC <span class="op">===</span> <span class="st">"b"</span>) bc <span class="op">=</span> <span class="vs">`u(0) = </span><span class="sc">${</span><span class="fu">fmt</span>(<span class="fu">u</span>(<span class="dv">0</span>))<span class="sc">}</span><span class="vs"> °C = g ✓  +κ u,x(L) = </span><span class="sc">${</span><span class="fu">fmt</span>(k<span class="op">,</span> <span class="dv">1</span>)<span class="sc">}</span><span class="vs"> × </span><span class="sc">${</span><span class="fu">fmt</span>(<span class="fu">du</span>(L))<span class="sc">}</span><span class="vs"> = </span><span class="sc">${</span><span class="fu">fmt</span>(k <span class="op">*</span> <span class="fu">du</span>(L))<span class="sc">}</span><span class="vs"> W/m² = h ✓`</span><span class="op">;</span></span>
+<span id="cb4-1033"><a href="#cb4-1033" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> bc <span class="op">=</span> <span class="vs">`u(0) = </span><span class="sc">${</span><span class="fu">fmt</span>(<span class="fu">u</span>(<span class="dv">0</span>))<span class="sc">}</span><span class="vs"> °C ✓  u(L) = </span><span class="sc">${</span><span class="fu">fmt</span>(<span class="fu">u</span>(L))<span class="sc">}</span><span class="vs"> °C ✓  (h is not used: Γₕ = ∅)`</span><span class="op">;</span></span>
+<span id="cb4-1034"><a href="#cb4-1034" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="fu">html</span><span class="vs">`&lt;div style="font-size: 0.95rem; line-height: 1.6; margin: 0.4rem 0 1rem 0;"&gt;</span></span>
+<span id="cb4-1035"><a href="#cb4-1035" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;b&gt;Boundary conditions:&lt;/b&gt; </span><span class="sc">${</span>bc<span class="sc">}</span><span class="vs">&lt;br&gt;</span></span>
+<span id="cb4-1036"><a href="#cb4-1036" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;b&gt;Curvature:&lt;/b&gt; u,xx = −f/κ = </span><span class="sc">${</span><span class="fu">fmt</span>(<span class="op">-</span>f <span class="op">/</span> k)<span class="sc">}</span><span class="vs"> °C/m², everywhere in the wall&lt;br&gt;</span></span>
+<span id="cb4-1037"><a href="#cb4-1037" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;b&gt;Energy balance&lt;/b&gt; (per m² of wall): flux at x = 0 toward +x: </span><span class="sc">${</span><span class="fu">fmt</span>(inL<span class="op">,</span> <span class="dv">0</span>)<span class="sc">}</span><span class="vs"> W/m²</span></span>
+<span id="cb4-1038"><a href="#cb4-1038" aria-hidden="true" tabindex="-1"></a><span class="vs">    &amp;nbsp;+&amp;nbsp; made inside ∫f dx: </span><span class="sc">${</span><span class="fu">fmt</span>(made<span class="op">,</span> <span class="dv">0</span>)<span class="sc">}</span><span class="vs"> W/m²</span></span>
+<span id="cb4-1039"><a href="#cb4-1039" aria-hidden="true" tabindex="-1"></a><span class="vs">    &amp;nbsp;=&amp;nbsp; flux at x = L toward +x: </span><span class="sc">${</span><span class="fu">fmt</span>(outR<span class="op">,</span> <span class="dv">0</span>)<span class="sc">}</span><span class="vs"> W/m²</span></span>
+<span id="cb4-1040"><a href="#cb4-1040" aria-hidden="true" tabindex="-1"></a><span class="vs">  &lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb4-1041"><a href="#cb4-1041" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-4" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+<div class="step notes">
+<ul>
+<li>Set <span class="math inline">\(f = 0\)</span>: the curve straightens and every flux arrow has the same length.</li>
+<li>In (a), set <span class="math inline">\(h = 0\)</span>: the curve arrives at <span class="math inline">\(x = 0\)</span> perfectly flat, as for an insulated face.</li>
+<li>Switch between (a) and (b) with the same <span class="math inline">\(h\)</span>: the solution mirrors, and <span class="math inline">\(h\)</span> keeps its sign, because it is still heat going <em>in</em>.</li>
+<li>Halve <span class="math inline">\(\kappa\)</span>: the Neumann slope doubles. A worse conductor needs a steeper gradient to carry the same flux.</li>
+</ul>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InZpZXdvZiBoQkMgPSBJbnB1dHMucmFkaW8obmV3IE1hcChbXG4gIFtcIihhKSBIdWdoZXM6IGggYXQgeCA9IDAsIGcgYXQgeCA9IExcIiwgXCJhXCJdLFxuICBbXCIoYikgc3dhcHBlZDogZyBhdCB4ID0gMCwgaCBhdCB4ID0gTFwiLCBcImJcIl0sXG4gIFtcIihjKSBnIGF0IGJvdGggZmFjZXNcIiwgXCJjXCJdXG5dKSwge3ZhbHVlOiBcImFcIiwgbGFiZWw6IFwiQm91bmRhcnkgY29uZGl0aW9uc1wifSlcbnZpZXdvZiBoRiAgPSBJbnB1dHMucmFuZ2UoWy0yMDAwLCAyMDAwXSwge3ZhbHVlOiA1MDAsIHN0ZXA6IDUwLCAgbGFiZWw6IFwiZiAoVy9twrMpXCJ9KVxudmlld29mIGhIICA9IElucHV0cy5yYW5nZShbLTMwMCwgMzAwXSwgICB7dmFsdWU6IDUwLCAgc3RlcDogNSwgICBsYWJlbDogXCJoIChXL23CsiwgaW50byB3YWxsKVwifSlcbnZpZXdvZiBoRyAgPSBJbnB1dHMucmFuZ2UoWzAsIDQwXSwgICAgICAge3ZhbHVlOiAyMCwgIHN0ZXA6IDEsICAgbGFiZWw6IFwiZyAowrBDKVwifSlcbnZpZXdvZiBoRzAgPSBJbnB1dHMucmFuZ2UoWzAsIDQwXSwgICAgICAge3ZhbHVlOiAzNSwgIHN0ZXA6IDEsICAgbGFiZWw6IFwiZyBhdCB4ID0gMCBpbiAoYykgKMKwQylcIn0pXG52aWV3b2YgaEsgID0gSW5wdXRzLnJhbmdlKFswLjIsIDVdLCAgICAgIHt2YWx1ZTogMS40LCBzdGVwOiAwLjEsIGxhYmVsOiBcIs66IChXLyhtwrdLKSlcIn0pXG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTIiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJoZWF0ID0ge1xuICBjb25zdCBMID0gMC4zMCwgayA9IGhLLCBmID0gaEYsIGggPSBoSCwgZyA9IGhHLCBnMCA9IGhHMDtcbiAgbGV0IHUsIGR1O1xuICBpZiAoaEJDID09PSBcImFcIikge1xuICAgIHUgID0geCA9PiBnICsgaCAvIGsgKiAoTCAtIHgpICsgZiAvICgyICogaykgKiAoTCAqIEwgLSB4ICogeCk7XG4gICAgZHUgPSB4ID0+IC1oIC8gayAtIGYgKiB4IC8gaztcbiAgfSBlbHNlIGlmIChoQkMgPT09IFwiYlwiKSB7XG4gICAgdSAgPSB4ID0+IGcgKyAoaCArIGYgKiBMKSAvIGsgKiB4IC0gZiAvICgyICogaykgKiB4ICogeDtcbiAgICBkdSA9IHggPT4gKGggKyBmICogTCkgLyBrIC0gZiAqIHggLyBrO1xuICB9IGVsc2Uge1xuICAgIHUgID0geCA9PiBnMCArIChnIC0gZzApICogeCAvIEwgKyBmIC8gKDIgKiBrKSAqIHggKiAoTCAtIHgpO1xuICAgIGR1ID0geCA9PiAoZyAtIGcwKSAvIEwgKyBmICogKEwgLSAyICogeCkgLyAoMiAqIGspO1xuICB9XG4gIGNvbnN0IHEgPSB4ID0+IC1rICogZHUoeCk7XG4gIGNvbnN0IHB0cyA9IGQzLnJhbmdlKDEyMSkubWFwKGkgPT4geyBjb25zdCB4ID0gTCAqIGkgLyAxMjA7IHJldHVybiB7eCwgdTogdSh4KSwgcTogcSh4KX07IH0pO1xuICByZXR1cm4ge0wsIGssIGYsIGgsIGcsIGcwLCB1LCBkdSwgcSwgcHRzfTtcbn1cbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMyIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6IntcbiAgY29uc3Qge0wsIHUsIGR1LCBxLCBwdHN9ID0gaGVhdDtcbiAgY29uc3QgVyA9IE1hdGgubWluKHdpZHRoLCA3NjApO1xuICBjb25zdCBkaXJYID0gaEJDID09PSBcImFcIiA/IFtMXSA6IGhCQyA9PT0gXCJiXCIgPyBbMF0gOiBbMCwgTF07XG4gIGNvbnN0IG5ldVggPSBoQkMgPT09IFwiYVwiID8gMCA6IGhCQyA9PT0gXCJiXCIgPyBMIDogbnVsbDtcbiAgY29uc3QgbWFya3MgPSBbXG4gICAgUGxvdC5saW5lKHB0cywge3g6IFwieFwiLCB5OiBcInVcIiwgc3Ryb2tlOiBcIiMxYTFhMWFcIiwgc3Ryb2tlV2lkdGg6IDIuNn0pLFxuICAgIFBsb3QuZG90KGRpclgubWFwKHggPT4gKHt4LCB1OiB1KHgpfSkpLCB7eDogXCJ4XCIsIHk6IFwidVwiLCByOiA2LCBmaWxsOiBcIiM0YTdiYTdcIn0pXG4gIF07XG4gIGlmIChuZXVYICE9PSBudWxsKSB7XG4gICAgY29uc3QgZCA9IChuZXVYID09PSAwID8gMSA6IC0xKSAqIDAuMDg7XG4gICAgbWFya3MucHVzaChQbG90LmxpbmUoW3t4OiBuZXVYLCB1OiB1KG5ldVgpfSwge3g6IG5ldVggKyBkLCB1OiB1KG5ldVgpICsgZHUobmV1WCkgKiBkfV0sXG4gICAgICB7eDogXCJ4XCIsIHk6IFwidVwiLCBzdHJva2U6IFwiIzBkOTQ4OFwiLCBzdHJva2VXaWR0aDogMi40LCBzdHJva2VEYXNoYXJyYXk6IFwiNyw0XCJ9KSk7XG4gIH1cbiAgY29uc3QgdG9wID0gUGxvdC5wbG90KHtcbiAgICB3aWR0aDogVywgaGVpZ2h0OiAzMDAsIG1hcmdpbkxlZnQ6IDU1LFxuICAgIHg6IHtsYWJlbDogXCJ4IChtKSDihpJcIiwgZG9tYWluOiBbMCwgTF19LFxuICAgIHk6IHtsYWJlbDogXCLihpEgdGVtcGVyYXR1cmUgdSAowrBDKVwiLCBncmlkOiB0cnVlfSxcbiAgICBtYXJrc1xuICB9KTtcblxuICAvLyB0aGUgd2FsbCwgc2hhZGVkIGJ5IHRlbXBlcmF0dXJlLCB3aXRoIGZsdXggYXJyb3dzXG4gIGNvbnN0IHNlZ3MgPSBwdHMuc2xpY2UoMCwgLTEpLm1hcCgocCwgaSkgPT4gKHt4MTogcC54LCB4MjogcHRzW2kgKyAxXS54LCB1OiBwLnV9KSk7XG4gIGNvbnN0IHFtYXggPSBkMy5tYXgocHRzLCBwID0+IE1hdGguYWJzKHAucSkpIHx8IDE7XG4gIGNvbnN0IG5BID0gNywgY2VsbCA9IEwgLyBuQTtcbiAgY29uc3QgYXJyb3dzID0gZDMucmFuZ2UobkEpLm1hcChpID0+IHtcbiAgICBjb25zdCB4ID0gY2VsbCAqIChpICsgMC41KSwgbGVuID0gMC44ICogY2VsbCAqIE1hdGguYWJzKHEoeCkpIC8gcW1heCwgcyA9IE1hdGguc2lnbihxKHgpKTtcbiAgICByZXR1cm4ge3gxOiB4IC0gcyAqIGxlbiAvIDIsIHgyOiB4ICsgcyAqIGxlbiAvIDIsIHk6IDAuNX07XG4gIH0pLmZpbHRlcihhID0+IE1hdGguYWJzKGEueDIgLSBhLngxKSA+IDFlLTQpO1xuICBjb25zdCBiYW5kID0gUGxvdC5wbG90KHtcbiAgICB3aWR0aDogVywgaGVpZ2h0OiAxMTAsIG1hcmdpbkxlZnQ6IDU1LFxuICAgIHg6IHtsYWJlbDogXCJ4IChtKSDihpJcIiwgZG9tYWluOiBbMCwgTF19LFxuICAgIHk6IHtheGlzOiBudWxsLCBkb21haW46IFswLCAxXX0sXG4gICAgY29sb3I6IHt0eXBlOiBcImxpbmVhclwiLCBzY2hlbWU6IFwiUmRZbEJ1XCIsIHJldmVyc2U6IHRydWUsIGxlZ2VuZDogdHJ1ZSwgbGFiZWw6IFwidSAowrBDKVwifSxcbiAgICBtYXJrczogW1xuICAgICAgUGxvdC5yZWN0KHNlZ3MsIHt4MTogXCJ4MVwiLCB4MjogXCJ4MlwiLCB5MTogMCwgeTI6IDEsIGZpbGw6IFwidVwiLCBzdHJva2U6IFwidVwifSksXG4gICAgICBQbG90LmFycm93KGFycm93cywge3gxOiBcIngxXCIsIHgyOiBcIngyXCIsIHkxOiBcInlcIiwgeTI6IFwieVwiLCBzdHJva2U6IFwiIzFhMWExYVwiLFxuICAgICAgICAgICAgICAgICAgICAgICAgICBzdHJva2VXaWR0aDogMi40LCBoZWFkTGVuZ3RoOiAxMH0pXG4gICAgXVxuICB9KTtcbiAgcmV0dXJuIGh0bWxgPGRpdj4ke3RvcH0ke2JhbmR9PC9kaXY+YDtcbn1cbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtNCIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6IntcbiAgY29uc3Qge0wsIGssIGYsIGgsIHUsIGR1LCBxfSA9IGhlYXQ7XG4gIGNvbnN0IGZtdCA9ICh2LCBkID0gMSkgPT4gKHYgPCAwID8gXCLiiJJcIiA6IFwiXCIpICsgTWF0aC5hYnModikudG9GaXhlZChkKTtcbiAgY29uc3QgaW5MID0gcSgwKSwgb3V0UiA9IHEoTCksIG1hZGUgPSBmICogTDtcbiAgbGV0IGJjO1xuICBpZiAoaEJDID09PSBcImFcIikgYmMgPSBg4oiSzrogdSx4KDApID0g4oiSJHtmbXQoaywgMSl9IMOXICgke2ZtdChkdSgwKSl9KSA9ICR7Zm10KC1rICogZHUoMCkpfSBXL23CsiA9IGgg4pyT4oCD4oCDdShMKSA9ICR7Zm10KHUoTCkpfSDCsEMgPSBnIOKck2A7XG4gIGVsc2UgaWYgKGhCQyA9PT0gXCJiXCIpIGJjID0gYHUoMCkgPSAke2ZtdCh1KDApKX0gwrBDID0gZyDinJPigIPigIMrzrogdSx4KEwpID0gJHtmbXQoaywgMSl9IMOXICR7Zm10KGR1KEwpKX0gPSAke2ZtdChrICogZHUoTCkpfSBXL23CsiA9IGgg4pyTYDtcbiAgZWxzZSBiYyA9IGB1KDApID0gJHtmbXQodSgwKSl9IMKwQyDinJPigIPigIN1KEwpID0gJHtmbXQodShMKSl9IMKwQyDinJPigIPigIMoaCBpcyBub3QgdXNlZDogzpPigpUgPSDiiIUpYDtcbiAgcmV0dXJuIGh0bWxgPGRpdiBzdHlsZT1cImZvbnQtc2l6ZTogMC45NXJlbTsgbGluZS1oZWlnaHQ6IDEuNjsgbWFyZ2luOiAwLjRyZW0gMCAxcmVtIDA7XCI+XG4gICAgPGI+Qm91bmRhcnkgY29uZGl0aW9uczo8L2I+ICR7YmN9PGJyPlxuICAgIDxiPkN1cnZhdHVyZTo8L2I+IHUseHggPSDiiJJmL866ID0gJHtmbXQoLWYgLyBrKX0gwrBDL23CsiwgZXZlcnl3aGVyZSBpbiB0aGUgd2FsbDxicj5cbiAgICA8Yj5FbmVyZ3kgYmFsYW5jZTwvYj4gKHBlciBtwrIgb2Ygd2FsbCk6IGZsdXggYXQgeCA9IDAgdG93YXJkICt4OiAke2ZtdChpbkwsIDApfSBXL23CslxuICAgICZuYnNwOysmbmJzcDsgbWFkZSBpbnNpZGUg4oirZiBkeDogJHtmbXQobWFkZSwgMCl9IFcvbcKyXG4gICAgJm5ic3A7PSZuYnNwOyBmbHV4IGF0IHggPSBMIHRvd2FyZCAreDogJHtmbXQob3V0UiwgMCl9IFcvbcKyXG4gIDwvZGl2PmA7XG59XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InNoaW55SW5wdXQoJ2hCQycpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCdoRicpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCdoSCcpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCdoRycpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCdoRzAnKSJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgnaEsnKSJ9XX0=
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../chapters";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/3_Support_FunctionSpaces.html" class="pagination-link" aria-label="Support: Norms and Function Spaces">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/Poisson1D_Heat_FEM.html" class="pagination-link" aria-label="1D Poisson II: The Wall, by Galerkin's Method">
+        <span class="nav-page-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">1D Poisson II: The Wall, by Galerkin’s Method</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

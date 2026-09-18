@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Finite Element Methods">
+
+<title>Appendix D — 1D Poisson III: An Axially Loaded Rod – CE/ME 507 — Class Notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/Poisson1D_Rod_FEM.html" rel="next">
+<link href="../chapters/Poisson1D_Heat_FEM.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-1c2f8626246c23d8ad7ee987acb82133.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+<script>
+window.MathJax = {
+  tex: {
+    tags: 'ams',
+    macros: {
+      RR: '{\\mathbb{R}}',
+      Om: '{\\Omega}'
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/Poisson1D_Rod.html"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">1D Poisson III: An Axially Loaded Rod</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">CE/ME 507 — Class Notes</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">CE/ME 507 — Class Notes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/2_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Class 2: Linear FEM</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Class 3: Index Notation, Function Spaces, and the Weak Form</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/4_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Class 4: Strong and Weak Forms of the Boundary Value Problem</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/5_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/6_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Class 6: Basis Functions and Lagrange Polynomials</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/7_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Class 7: From Galerkin to a Matrix Equation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/8_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Class 8: Assembly, Sparsity, and the Road to Quadrature</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/9_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Class 9: The Isoparametric Map and the Jacobian</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Class 10: Assembly with the IEN Array, and Quadrature on an Element</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">1D Poisson I: Heat Conduction Through a Wall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">1D Poisson II: The Wall, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">1D Poisson III: An Axially Loaded Rod</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#the-physical-problem" id="toc-the-physical-problem" class="nav-link active" data-scroll-target="#the-physical-problem"><span class="header-section-number">D.1</span> The physical problem</a></li>
+  <li><a href="#the-one-dimensional-domain" id="toc-the-one-dimensional-domain" class="nav-link" data-scroll-target="#the-one-dimensional-domain"><span class="header-section-number">D.2</span> The one-dimensional domain</a></li>
+  <li><a href="#the-quantities-and-their-units" id="toc-the-quantities-and-their-units" class="nav-link" data-scroll-target="#the-quantities-and-their-units"><span class="header-section-number">D.3</span> The quantities and their units</a></li>
+  <li><a href="#where-the-differential-equation-comes-from" id="toc-where-the-differential-equation-comes-from" class="nav-link" data-scroll-target="#where-the-differential-equation-comes-from"><span class="header-section-number">D.4</span> Where the differential equation comes from</a>
+  <ul class="collapse">
+  <li><a href="#kinematics-displacement-and-strain" id="toc-kinematics-displacement-and-strain" class="nav-link" data-scroll-target="#kinematics-displacement-and-strain"><span class="header-section-number">D.4.1</span> Kinematics: displacement and strain</a></li>
+  <li><a href="#material-hookes-law-from-stress-to-force" id="toc-material-hookes-law-from-stress-to-force" class="nav-link" data-scroll-target="#material-hookes-law-from-stress-to-force"><span class="header-section-number">D.4.2</span> Material: Hooke’s law, from stress to force</a></li>
+  <li><a href="#equilibrium-of-a-thin-slice" id="toc-equilibrium-of-a-thin-slice" class="nav-link" data-scroll-target="#equilibrium-of-a-thin-slice"><span class="header-section-number">D.4.3</span> Equilibrium of a thin slice</a></li>
+  <li><a href="#what-the-equation-says-about-the-shape-of-u" id="toc-what-the-equation-says-about-the-shape-of-u" class="nav-link" data-scroll-target="#what-the-equation-says-about-the-shape-of-u"><span class="header-section-number">D.4.4</span> What the equation says about the shape of <span class="math inline">\(u\)</span></a></li>
+  </ul></li>
+  <li><a href="#the-forcing-function-f" id="toc-the-forcing-function-f" class="nav-link" data-scroll-target="#the-forcing-function-f"><span class="header-section-number">D.5</span> The forcing function <span class="math inline">\(f\)</span></a></li>
+  <li><a href="#boundary-conditions" id="toc-boundary-conditions" class="nav-link" data-scroll-target="#boundary-conditions"><span class="header-section-number">D.6</span> Boundary conditions</a>
+  <ul class="collapse">
+  <li><a href="#dirichlet-u-g-on-gamma_g-the-displacement-is-known" id="toc-dirichlet-u-g-on-gamma_g-the-displacement-is-known" class="nav-link" data-scroll-target="#dirichlet-u-g-on-gamma_g-the-displacement-is-known"><span class="header-section-number">D.6.1</span> Dirichlet: <span class="math inline">\(u = g\)</span> on <span class="math inline">\(\Gamma_g\)</span> — the displacement is known</a></li>
+  <li><a href="#sec-rod-neumann" id="toc-sec-rod-neumann" class="nav-link" data-scroll-target="#sec-rod-neumann"><span class="header-section-number">D.6.2</span> Neumann: <span class="math inline">\((EA\,u_{,x})\,n = h\)</span> on <span class="math inline">\(\Gamma_h\)</span> — the end force is known</a></li>
+  <li><a href="#which-end-gets-which-condition" id="toc-which-end-gets-which-condition" class="nav-link" data-scroll-target="#which-end-gets-which-condition"><span class="header-section-number">D.6.3</span> Which end gets which condition</a></li>
+  </ul></li>
+  <li><a href="#the-strong-form-complete" id="toc-the-strong-form-complete" class="nav-link" data-scroll-target="#the-strong-form-complete"><span class="header-section-number">D.7</span> The strong form, complete</a></li>
+  <li><a href="#worked-example-the-pile" id="toc-worked-example-the-pile" class="nav-link" data-scroll-target="#worked-example-the-pile"><span class="header-section-number">D.8</span> Worked example: the pile</a></li>
+  <li><a href="#explore-the-strong-form" id="toc-explore-the-strong-form" class="nav-link" data-scroll-target="#explore-the-strong-form"><span class="header-section-number">D.9</span> Explore the strong form</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/Poisson1D_Rod.html"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">1D Poisson III: An Axially Loaded Rod</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Appendix D — 1D Poisson III: An Axially Loaded Rod</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>This page is the companion to <a href="../chapters/Poisson1D_Heat.html">1D Poisson I: Heat Conduction Through a Wall</a>. Both read Hughes’ one-dimensional model problem,</p>
+<div class="derivation">
+<p><span class="math display">\[
+(\mathrm{S}) \qquad
+\begin{aligned}
+&amp;\text{Given } f : \bar\Omega \to \RR \text{ and constants } g \text{ and } h,
+\text{ find } u : \bar\Omega \to \RR \text{ such that} \\[2pt]
+&amp;\qquad u_{,xx} + f = 0 \quad \text{on } \Omega = \,]0,1[ \\
+&amp;\qquad u(1) = g \\
+&amp;\qquad -u_{,x}(0) = h
+\end{aligned}
+\]</span></p>
+</div>
+<p>or, with the length and the material constant put back, as in <a href="../chapters/4_Class.html">Class 4</a>,</p>
+<div class="derivation">
+<p><span class="math display">\[
+-\left(K u_{,x}\right)_{,x} = f \quad \text{in } \Omega = \,]0, L[
+\qquad\qquad
+u = g \quad \text{on } \Gamma_g
+\qquad\qquad
+\left(K u_{,x}\right) n = h \quad \text{on } \Gamma_h
+\]</span></p>
+</div>
+<p>On this page <span class="math inline">\(u\)</span> is an <strong>axial displacement</strong> and <span class="math inline">\(K = EA\)</span> is the <strong>axial stiffness</strong>. The equations are letter-for-letter those of the wall. The difference is in what <span class="math inline">\(h\)</span> <em>means</em>, and it changes the sign of <span class="math inline">\(h\)</span> in a way that trips people up; see <a href="#sec-rod-neumann">the boundary conditions</a> below.</p>
+<section id="the-physical-problem" class="level2" data-number="D.1">
+<h2 data-number="D.1" class="anchored" data-anchor-id="the-physical-problem"><span class="header-section-number">D.1</span> The physical problem</h2>
+<div id="fig-r-pile" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-r-pile-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Rod/R_Fig1_Pile.png" class="img-fluid figure-img" style="width:98.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-r-pile-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;D.1: A concrete pile carrying a column load to rock. The load comes in at the head, part of it is shed into the soil along the shaft by friction, and the rest is delivered to the rock at the toe. On the right, the same pile as a one-dimensional model.
+</figcaption>
+</figure>
+</div>
+<p>The pile is long and slender, and the loads act along its axis, so the only motion that matters is along the axis. Every cross-section at depth <span class="math inline">\(x\)</span> moves the same distance <span class="math inline">\(u(x)\)</span> down the pile: one number per cross-section, a function of one variable.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>What happens physically</th>
+<th>Where</th>
+<th>Becomes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Soil grips the shaft and resists its downward motion</td>
+<td>throughout <span class="math inline">\(\Omega\)</span></td>
+<td>the forcing <span class="math inline">\(f\)</span></td>
+</tr>
+<tr class="even">
+<td>The toe sits on rock that does not move</td>
+<td><span class="math inline">\(x = L\)</span></td>
+<td>a Dirichlet condition <span class="math inline">\(u = g = 0\)</span></td>
+</tr>
+<tr class="odd">
+<td>The column pushes down on the head with a known force</td>
+<td><span class="math inline">\(x = 0\)</span></td>
+<td>a Neumann condition <span class="math inline">\((EA\,u_{,x})\,n = h\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Nothing about the equation cares that the pile is vertical. <span class="math inline">\(x\)</span> can point any way, as long as every sign is read relative to it. Here <span class="math inline">\(+x\)</span> is <strong>down</strong>.</p>
+</section>
+<section id="the-one-dimensional-domain" class="level2" data-number="D.2">
+<h2 data-number="D.2" class="anchored" data-anchor-id="the-one-dimensional-domain"><span class="header-section-number">D.2</span> The one-dimensional domain</h2>
+<div id="fig-r-domain" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-r-domain-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Rod/R_Fig2_Domain.png" class="img-fluid figure-img" style="width:78.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-r-domain-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;D.2: The same domain as for the wall: the open interval <span class="math inline">\(\Omega\)</span>, its two end points <span class="math inline">\(\Gamma\)</span>, and the outward unit normal at each.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><span class="math inline">\(\Omega = \,]0, L[\)</span> is the inside of the rod; <span class="math inline">\(\bar\Omega = [0, L]\)</span> adds its two ends.</li>
+<li><span class="math inline">\(\Gamma = \{0, L\}\)</span>, with outward normals <span class="math inline">\(n = -1\)</span> at <span class="math inline">\(x = 0\)</span> and <span class="math inline">\(n = +1\)</span> at <span class="math inline">\(x = L\)</span>.</li>
+<li>Each end gets exactly one condition: its <strong>displacement</strong> is known, or the <strong>force on it</strong> is known. <span class="math inline">\(\Gamma = \Gamma_g \cup \Gamma_h\)</span>, <span class="math inline">\(\Gamma_g \cap \Gamma_h = \emptyset\)</span>.</li>
+</ul>
+</div>
+</section>
+<section id="the-quantities-and-their-units" class="level2" data-number="D.3">
+<h2 data-number="D.3" class="anchored" data-anchor-id="the-quantities-and-their-units"><span class="header-section-number">D.3</span> The quantities and their units</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Symbol</th>
+<th>Meaning</th>
+<th>SI units</th>
+<th>This example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(x\)</span></td>
+<td>position along the axis</td>
+<td>m</td>
+<td><span class="math inline">\(0 \le x \le L\)</span>, down the pile</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(L\)</span></td>
+<td>length</td>
+<td>m</td>
+<td>10 m</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(u(x)\)</span></td>
+<td>axial displacement, positive toward <span class="math inline">\(+x\)</span></td>
+<td>m (report in mm)</td>
+<td>unknown</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\varepsilon = u_{,x}\)</span></td>
+<td>axial strain</td>
+<td>m/m (dimensionless)</td>
+<td>unknown</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\sigma = E\varepsilon\)</span></td>
+<td>axial stress, tension positive</td>
+<td>Pa (MPa)</td>
+<td>unknown</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(E\)</span></td>
+<td>Young’s modulus</td>
+<td>Pa (GPa)</td>
+<td>30 GPa, concrete</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(A\)</span></td>
+<td>cross-sectional area</td>
+<td>m²</td>
+<td>0.09 m² (300 × 300 mm)</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(K = EA\)</span></td>
+<td>axial stiffness</td>
+<td>N</td>
+<td><span class="math inline">\(2.7\times10^{9}\)</span> N</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(N = EA\,u_{,x}\)</span></td>
+<td>internal axial force, tension positive</td>
+<td>N (kN)</td>
+<td>unknown</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(f(x)\)</span></td>
+<td>distributed axial load per unit length, positive toward <span class="math inline">\(+x\)</span></td>
+<td>N/m (kN/m)</td>
+<td>−40 kN/m</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(g\)</span></td>
+<td>prescribed end displacement</td>
+<td>m</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(h\)</span></td>
+<td>prescribed end force, positive toward <span class="math inline">\(+x\)</span></td>
+<td>N (kN)</td>
+<td>+900 kN</td>
+</tr>
+</tbody>
+</table>
+<div class="step">
+<p>Hughes’ elasticity chapter writes the same problem <strong>per unit area</strong>: <span class="math inline">\(\sigma_{,x} + b = 0\)</span>, with a body force <span class="math inline">\(b\)</span> in N/m³ and a traction <span class="math inline">\(h\)</span> in Pa. For a rod of constant <span class="math inline">\(A\)</span>, multiply through by <span class="math inline">\(A\)</span>: <span class="math inline">\(f = bA\)</span> in N/m, and <span class="math inline">\(h\)</span> becomes a force in N. The pictures are the same.</p>
+</div>
+</section>
+<section id="where-the-differential-equation-comes-from" class="level2" data-number="D.4">
+<h2 data-number="D.4" class="anchored" data-anchor-id="where-the-differential-equation-comes-from"><span class="header-section-number">D.4</span> Where the differential equation comes from</h2>
+<section id="kinematics-displacement-and-strain" class="level3" data-number="D.4.1">
+<h3 data-number="D.4.1" class="anchored" data-anchor-id="kinematics-displacement-and-strain"><span class="header-section-number">D.4.1</span> Kinematics: displacement and strain</h3>
+<div id="fig-r-kinematics" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-r-kinematics-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Rod/R_Fig3_Kinematics.png" class="img-fluid figure-img" style="width:84.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-r-kinematics-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;D.3: Top: a rod before and after loading (displacements greatly exaggerated). Each material point <span class="math inline">\(x_i\)</span> moves to <span class="math inline">\(x_i + u(x_i)\)</span>. Bottom: the same displacements as a function. Where the curve is steep, neighbouring points separate fast — the rod is stretched there.
+</figcaption>
+</figure>
+</div>
+<p>The <strong>displacement</strong> <span class="math inline">\(u(x)\)</span> is how far the material point that started at <span class="math inline">\(x\)</span> has moved along the axis. Two neighbouring points <span class="math inline">\(\Delta x\)</span> apart end up <span class="math inline">\(\Delta x + \Delta u\)</span> apart, so the <strong>strain</strong> — change in length per unit length — is the slope of the displacement:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\varepsilon = \lim_{\Delta x \to 0} \frac{\left(\Delta x + \Delta u\right) - \Delta x}{\Delta x}
+= u_{,x}
+\qquad\qquad
+u_{,x} &gt; 0 \;\text{stretched (tension)}, \qquad u_{,x} &lt; 0 \;\text{shortened (compression)}
+\]</span></p>
+</div>
+<div class="step">
+<p>A <strong>uniform</strong> shift of the whole rod, $u = $ constant, has <span class="math inline">\(u_{,x} = 0\)</span>: it moves the rod without straining it. Hold on to this; it is why a rod with no support is not a solvable problem.</p>
+</div>
+</section>
+<section id="material-hookes-law-from-stress-to-force" class="level3" data-number="D.4.2">
+<h3 data-number="D.4.2" class="anchored" data-anchor-id="material-hookes-law-from-stress-to-force"><span class="header-section-number">D.4.2</span> Material: Hooke’s law, from stress to force</h3>
+<div id="fig-r-hooke" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-r-hooke-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Rod/R_Fig4_Hooke.png" class="img-fluid figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-r-hooke-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;D.4: Left: a linear elastic material, <span class="math inline">\(\sigma = E\varepsilon\)</span>. Right: the stress on a cut, added up over the cross-section, is the internal axial force <span class="math inline">\(N\)</span> — drawn here in tension, pulling outward on the cut face.
+</figcaption>
+</figure>
+</div>
+<div class="derivation">
+<p><span class="math display">\[
+N = \sigma A = E A\,\varepsilon = EA\,u_{,x}
+\qquad\qquad [\text{Pa}\cdot\text{m}^2 = \text{N}]
+\]</span></p>
+</div>
+<p>This is the rod’s version of Fourier’s law, with one sign difference: here there is <strong>no minus sign</strong>. Heat flows <em>down</em> the temperature gradient, but a rod pulls back <em>along</em> its stretch.</p>
+</section>
+<section id="equilibrium-of-a-thin-slice" class="level3" data-number="D.4.3">
+<h3 data-number="D.4.3" class="anchored" data-anchor-id="equilibrium-of-a-thin-slice"><span class="header-section-number">D.4.3</span> Equilibrium of a thin slice</h3>
+<div id="fig-r-slice" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-r-slice-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Rod/R_Fig5_Slice.png" class="img-fluid figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-r-slice-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;D.5: Free body of a slice of length <span class="math inline">\(\Delta x\)</span>. The rest of the rod pulls on each face with the internal force <span class="math inline">\(N\)</span>; the distributed load contributes <span class="math inline">\(f\,\Delta x\)</span>.
+</figcaption>
+</figure>
+</div>
+<p>Sum the forces in <span class="math inline">\(+x\)</span>. The rod to the left pulls the slice toward <span class="math inline">\(-x\)</span> with <span class="math inline">\(N(x)\)</span>; the rod to the right pulls it toward <span class="math inline">\(+x\)</span> with <span class="math inline">\(N(x+\Delta x)\)</span>:</p>
+<div class="derivation">
+<p><span class="math display">\[
+-N(x) + N(x + \Delta x) + f\,\Delta x = 0
+\qquad\xrightarrow[\;\text{divide by } \Delta x,\; \Delta x \to 0\;]{}\qquad
+N_{,x} + f = 0
+\]</span></p>
+</div>
+<div class="step">
+<p>Read it as <strong>“the internal force drops by exactly the load applied along the way”</strong>: <span class="math inline">\(N_{,x} = -f\)</span>. In the pile, friction pushes up (<span class="math inline">\(f &lt; 0\)</span>), so <span class="math inline">\(N\)</span> grows toward <span class="math inline">\(+x\)</span>. The compression is largest at the head and the soil takes some of it off as you go down.</p>
+</div>
+<p>Substituting <span class="math inline">\(N = EA\,u_{,x}\)</span> gives the differential equation of the strong form:</p>
+<div class="derivation">
+<p><span class="math display">\[
+-\left(EA\,u_{,x}\right)_{,x} = f
+\quad\Longleftrightarrow\quad
+\left(EA\,u_{,x}\right)_{,x} + f = 0
+\quad\xrightarrow{\;EA \text{ constant}\;}\quad
+EA\,u_{,xx} + f = 0
+\quad\xrightarrow{\;EA = 1\;}\quad
+u_{,xx} + f = 0 \;\;\text{(Hughes)}
+\]</span></p>
+</div>
+</section>
+<section id="what-the-equation-says-about-the-shape-of-u" class="level3" data-number="D.4.4">
+<h3 data-number="D.4.4" class="anchored" data-anchor-id="what-the-equation-says-about-the-shape-of-u"><span class="header-section-number">D.4.4</span> What the equation says about the shape of <span class="math inline">\(u\)</span></h3>
+<div id="fig-r-curvature" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-r-curvature-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Rod/R_Fig6_Curvature.png" class="img-fluid figure-img" style="width:74.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-r-curvature-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;D.6: Three rods with the same end displacements and different distributed loads (<span class="math inline">\(EA = 2.7\times10^9\)</span> N, <span class="math inline">\(L\)</span> = 10 m). With no load the displacement is linear and the strain is the same everywhere; a load bows it.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><span class="math inline">\(u_{,xx} = -f/EA\)</span>: the load sets the <strong>curvature</strong> of the displacement, just as heat generation set the curvature of the temperature.</li>
+<li><span class="math inline">\(f = 0\)</span>: <span class="math inline">\(u\)</span> is linear, <span class="math inline">\(\varepsilon\)</span> and <span class="math inline">\(N\)</span> are constant — the familiar <span class="math inline">\(\delta = PL/EA\)</span> bar.</li>
+<li><span class="math inline">\(f \ne 0\)</span>: the strain, and therefore <span class="math inline">\(N\)</span>, changes along the rod at the rate <span class="math inline">\(-f\)</span>.</li>
+</ul>
+</div>
+</section>
+</section>
+<section id="the-forcing-function-f" class="level2" data-number="D.5">
+<h2 data-number="D.5" class="anchored" data-anchor-id="the-forcing-function-f"><span class="header-section-number">D.5</span> The forcing function <span class="math inline">\(f\)</span></h2>
+<p><span class="math inline">\(f(x)\)</span> is an axial load <strong>per unit length</strong> of rod, in N/m, positive when it points toward <span class="math inline">\(+x\)</span>. It is the only data that acts in the interior of <span class="math inline">\(\Omega\)</span>. Integrated over the length, it is the total distributed force, in N:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\int_0^L f\,dx \quad \left[\tfrac{\text{N}}{\text{m}}\cdot\text{m} = \text{N}\right]
+\qquad\text{e.g.}\qquad (-40\ \text{kN/m})(10\ \text{m}) = -400\ \text{kN}
+\quad\text{(400 kN carried by friction, upward)}
+\]</span></p>
+</div>
+<div id="fig-r-forcing" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-r-forcing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Rod/R_Fig7_Forcing.png" class="img-fluid figure-img" style="width:98.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-r-forcing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;D.7: Three distributed axial loads. Arrow length is proportional to <span class="math inline">\(|f|\)</span>, and the sign of <span class="math inline">\(f\)</span> is read against the <span class="math inline">\(x\)</span> arrow drawn in each panel.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><strong>Self-weight</strong> of a vertical member: <span class="math inline">\(f = \rho g A\)</span>. It is often negligible — 38.5 N/m for a 500 mm² steel rod — but not for long hoist cables or tall columns.</li>
+<li><strong>Skin friction</strong> along a pile or ground anchor: the soil resists the motion, so <span class="math inline">\(f\)</span> points opposite to the motion.</li>
+<li><strong>Inertial (centrifugal) load</strong> on a spinning member: <span class="math inline">\(f = \rho A\omega^2 x\)</span>, which grows with distance from the hub.</li>
+<li>Loads that act at a <strong>point</strong> (a bracket bolted halfway along) are not an <span class="math inline">\(f\)</span> in the strong form: <span class="math inline">\(f\)</span> would have to be a delta function, and <span class="math inline">\(u_{,xx}\)</span> would not exist there. The weak form handles them naturally; the strong form does not.</li>
+</ul>
+</div>
+</section>
+<section id="boundary-conditions" class="level2" data-number="D.6">
+<h2 data-number="D.6" class="anchored" data-anchor-id="boundary-conditions"><span class="header-section-number">D.6</span> Boundary conditions</h2>
+<p>Each end gets exactly one condition: either its <strong>displacement</strong> is known, or the <strong>force applied to it</strong> is known. Never both, and never neither.</p>
+<section id="dirichlet-u-g-on-gamma_g-the-displacement-is-known" class="level3" data-number="D.6.1">
+<h3 data-number="D.6.1" class="anchored" data-anchor-id="dirichlet-u-g-on-gamma_g-the-displacement-is-known"><span class="header-section-number">D.6.1</span> Dirichlet: <span class="math inline">\(u = g\)</span> on <span class="math inline">\(\Gamma_g\)</span> — the displacement is known</h3>
+<div id="fig-r-dirichlet" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-r-dirichlet-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Rod/R_Fig8_Dirichlet.png" class="img-fluid figure-img" style="width:96.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-r-dirichlet-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;D.8: Two Dirichlet conditions. Left: a support that does not move. Right: an end driven a known distance, drawn exaggerated; the dashed outline is where the rod was.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><span class="math inline">\(g\)</span> is a <strong>displacement</strong>, in m. <span class="math inline">\(g = 0\)</span> is the ordinary fixed support.</li>
+<li>A Dirichlet condition pins the <em>value</em> of <span class="math inline">\(u\)</span> and says nothing about the slope, and so nothing about the force there. The force the support supplies — the <strong>reaction</strong> — is an output, found after solving: <span class="math inline">\(N\)</span> at that end.</li>
+<li>It is an <strong>essential</strong> boundary condition. In the weak form, it is built into the trial space <span class="math inline">\(\mathcal{S}\)</span>.</li>
+</ul>
+</div>
+</section>
+<section id="sec-rod-neumann" class="level3" data-number="D.6.2">
+<h3 data-number="D.6.2" class="anchored" data-anchor-id="sec-rod-neumann"><span class="header-section-number">D.6.2</span> Neumann: <span class="math inline">\((EA\,u_{,x})\,n = h\)</span> on <span class="math inline">\(\Gamma_h\)</span> — the end force is known</h3>
+<p>At an end with no support, the only thing holding the rod in equilibrium is the applied force. Take a sliver of rod right at the end. The applied force <span class="math inline">\(h\)</span> acts on its outer face, and the rest of the rod pulls on its inner face with <span class="math inline">\(N\)</span>, toward the inside:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\text{at } x = L:\quad h - N(L) = 0
+\qquad\qquad
+\text{at } x = 0:\quad h + N(0) = 0
+\]</span></p>
+</div>
+<p>Both are one statement, <span class="math inline">\(N\,n = h\)</span>. With <span class="math inline">\(N = EA\,u_{,x}\)</span>, that is exactly the Neumann condition of the strong form:</p>
+<div class="derivation">
+<p><span class="math display">\[
+h = \sigma A\, n = \left(EA\,u_{,x}\right) n
+\qquad\Longrightarrow\qquad
+\text{at } x = 0:\; -EA\,u_{,x}(0) = h
+\qquad\qquad
+\text{at } x = L:\; +EA\,u_{,x}(L) = h
+\]</span></p>
+</div>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span><span class="math inline">\(h\)</span> means something different here than for the wall
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>For the <strong>rod</strong>, <span class="math inline">\(h = \sigma A\,n\)</span> is the <span class="math inline">\(x\)</span>-component of the applied <strong>force vector</strong>: <span class="math inline">\(h &gt; 0\)</span> means the force points toward <span class="math inline">\(+x\)</span>, <strong>whichever end</strong> it acts on. So <span class="math inline">\(h &gt; 0\)</span> <strong>pushes</strong> on the left end (compression) but <strong>pulls</strong> on the right end (tension).</p>
+<p>For the <strong>wall</strong>, <span class="math inline">\(h = -q\,n\)</span> is the heat flux <strong>into</strong> the body: <span class="math inline">\(h &gt; 0\)</span> means heat enters, whichever face it acts on.</p>
+<p>The equations <span class="math inline">\(\mp K u_{,x} = h\)</span> are identical, so the <em>slopes</em> in the two problems behave identically. What changes is which way the arrow in the picture points.</p>
+</div>
+</div>
+<div id="fig-r-neumann" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-r-neumann-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Rod/R_Fig9_Neumann.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-r-neumann-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;D.9: The Neumann condition at either end of a rod. The black curve is the displacement near the end and the dashed red line its tangent — the strain there. Compare row by row with the same figure for the wall: the slopes are identical, but for the rod a positive <span class="math inline">\(h\)</span> always points toward <span class="math inline">\(+x\)</span>, so on the right end it pulls, where for the wall it pushed heat in.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><span class="math inline">\(h\)</span> is a <strong>force</strong>, in N, positive toward <span class="math inline">\(+x\)</span> (or, per unit area, a traction in Pa).</li>
+<li><span class="math inline">\(h = 0\)</span> is a <strong>free end</strong>: no force, so zero strain — the displacement curve arrives flat.</li>
+<li>The <strong>magnitude</strong> of the slope is <span class="math inline">\(|h|/EA\)</span>. For the pile, <span class="math inline">\(900\ \text{kN} / 2.7\times10^9\
+\text{N} = 3.33\times10^{-4}\)</span>: the head is shortened by 0.33 mm per meter.</li>
+<li>It is a <strong>natural</strong> boundary condition. In the weak form it appears as the boundary term <span class="math inline">\(w(0)\,h\)</span>.</li>
+<li>A spring support, <span class="math inline">\(h = -k_s\,u\)</span>, mixes value and slope. That is a Robin condition and is not part of the model problem.</li>
+</ul>
+</div>
+</section>
+<section id="which-end-gets-which-condition" class="level3" data-number="D.6.3">
+<h3 data-number="D.6.3" class="anchored" data-anchor-id="which-end-gets-which-condition"><span class="header-section-number">D.6.3</span> Which end gets which condition</h3>
+<div id="fig-r-configs" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-r-configs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Rod/R_Fig10_Configurations.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-r-configs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;D.10: The four ways to assign the two ends, for the pile of <a href="#fig-r-pile" class="quarto-xref">Figure&nbsp;<span>D.1</span></a>. Blue dots are Dirichlet values; dashed red lines are the slopes (strains) that Neumann data force on the curve.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><strong>(a) Hughes’ arrangement.</strong> Force given at <span class="math inline">\(x = 0\)</span>, displacement at <span class="math inline">\(x = L\)</span>: <span class="math inline">\(\;u(L) = g,\;\; -EA\,u_{,x}(0) = h\)</span>. This is the pile: 900 kN pushing down (toward <span class="math inline">\(+x\)</span>) on the head, the toe fixed on rock.</li>
+<li><strong>(b) Swapped.</strong> Displacement given at <span class="math inline">\(x = 0\)</span>, force at <span class="math inline">\(x = L\)</span>: <span class="math inline">\(\;u(0) = g,\;\; +EA\,u_{,x}(L) = h\)</span>. Drawn here as the <strong>mirror image</strong> of (a) — the same pile, stood on its head. Because <span class="math inline">\(x\)</span> now runs from the toe to the head, the column load points toward <span class="math inline">\(-x\)</span> and <strong><span class="math inline">\(h\)</span> = −900 kN</strong>; the friction flips too, <span class="math inline">\(f\)</span> = +40 kN/m. Compare the wall, where the mirror image kept <span class="math inline">\(h\)</span> = +50 W/m². A force has a direction in space; a heat inflow does not.</li>
+<li><strong>(c) Two Dirichlet ends</strong> is well-posed: here the head is jacked down 2 mm and the toe is fixed. The curve is a straight line plus the small bow from the friction.</li>
+<li><strong>(d) Two Neumann ends</strong> is <strong>not</strong> well-posed:
+<ul>
+<li><em>Uniqueness fails.</em> Force data see only <span class="math inline">\(u_{,x}\)</span>, so any rigid-body shift <span class="math inline">\(u + C\)</span> is also a solution. Nothing stops the pile from floating.</li>
+<li><em>Existence needs equilibrium.</em> The applied forces must balance: <span class="math inline">\(h_0 + h_L + \int_0^L f\,dx = 0\)</span>. The panel uses <span class="math inline">\(h_L\)</span> = −500 kN — the rock’s reaction, handed in as data — so that <span class="math inline">\(900 - 500 - 400 = 0\)</span>. Any other <span class="math inline">\(h_L\)</span> and the rod accelerates, and there is no static solution.</li>
+</ul></li>
+<li>So <strong><span class="math inline">\(\Gamma_g\)</span> must not be empty</strong>: at least one end must be held.</li>
+</ul>
+</div>
+</section>
+</section>
+<section id="the-strong-form-complete" class="level2" data-number="D.7">
+<h2 data-number="D.7" class="anchored" data-anchor-id="the-strong-form-complete"><span class="header-section-number">D.7</span> The strong form, complete</h2>
+<p>For Hughes’ arrangement (a):</p>
+<div class="derivation">
+<p><span class="math display">\[
+(\mathrm{S}) \qquad
+\begin{aligned}
+&amp;\text{Given } f : \bar\Omega \to \RR \;[\text{N/m}],\;
+  EA &gt; 0 \;[\text{N}],\;
+  g \;[\text{m}], \text{ and } h \;[\text{N}],
+  \text{ find } u : \bar\Omega \to \RR \;[\text{m}] \text{ such that} \\[3pt]
+&amp;\qquad \left(EA\,u_{,x}\right)_{,x} + f = 0
+   &amp;&amp; \text{on } \Omega = \,]0, L[ &amp;&amp; \text{(equilibrium + Hooke)} \\
+&amp;\qquad u(L) = g &amp;&amp; &amp;&amp; \text{(Dirichlet: known displacement)} \\
+&amp;\qquad -EA\,u_{,x}(0) = h &amp;&amp; &amp;&amp; \text{(Neumann: known end force)}
+\end{aligned}
+\]</span></p>
+</div>
+<p>and, for the swapped arrangement (b), <span class="math inline">\(u(0) = g\)</span> and <span class="math inline">\(+EA\,u_{,x}(L) = h\)</span>.</p>
+<div class="step notes">
+<ul>
+<li><strong>Strong</strong> because the equation must hold at every point, which demands <span class="math inline">\(u_{,xx}\)</span> everywhere. A rod whose area steps from one size to another, or a point load partway along, already breaks this; the weak form will not mind.</li>
+<li>With constant <span class="math inline">\(EA\)</span> and <span class="math inline">\(f\)</span>, the exact solution of (a) is</li>
+</ul>
+</div>
+<div class="derivation">
+<p><span class="math display">\[
+u(x) = g + \frac{h}{EA}\,(L - x) + \frac{f}{2EA}\,\left(L^2 - x^2\right)
+\qquad\qquad
+N(x) = EA\,u_{,x} = -h - f\,x
+\]</span></p>
+</div>
+</section>
+<section id="worked-example-the-pile" class="level2" data-number="D.8">
+<h2 data-number="D.8" class="anchored" data-anchor-id="worked-example-the-pile"><span class="header-section-number">D.8</span> Worked example: the pile</h2>
+<p>The pile of <a href="#fig-r-pile" class="quarto-xref">Figure&nbsp;<span>D.1</span></a>: <span class="math inline">\(L\)</span> = 10 m, <span class="math inline">\(E\)</span> = 30 GPa, <span class="math inline">\(A\)</span> = 0.09 m², so <span class="math inline">\(EA = 2.7\times10^{9}\)</span> N. A column pushes down on the head with 900 kN (<span class="math inline">\(h\)</span> = +900 kN, toward <span class="math inline">\(+x\)</span>); skin friction of 40 kN/m acts upward (<span class="math inline">\(f\)</span> = −40 kN/m); the toe sits on rock (<span class="math inline">\(g\)</span> = 0).</p>
+<div class="derivation">
+<p><span class="math display">\[
+\begin{aligned}
+u(x) &amp;= \frac{900\times10^{3}}{2.7\times10^{9}}\,(10 - x)
+  + \frac{-40\times10^{3}}{2(2.7\times10^{9})}\,(100 - x^2) \quad [\text{m}] \\[4pt]
+u(0) &amp;= 3.333 - 0.741 = 2.59\ \text{mm (the head settles)}
+  \qquad\qquad u_{,x}(0) = -\frac{h}{EA} = -3.333\times10^{-4} \\[4pt]
+N(x) &amp;= EA\,u_{,x} = -900 + 40\,x \quad [\text{kN}]
+  \qquad\qquad N(0) = -900\ \text{kN}, \quad N(L) = -500\ \text{kN}
+\end{aligned}
+\]</span></p>
+</div>
+<div id="fig-r-example" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-r-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson1D_Rod/R_Fig11_Example.png" class="img-fluid figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-r-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;D.11: The pile’s solution. Top: displacement, zero at the rock and leaving the head with the slope the column load dictates. Bottom: the internal axial force <span class="math inline">\(N = EA\,u_{,x}\)</span>, all compression, decreasing in magnitude as friction takes load into the soil.
+</figcaption>
+</figure>
+</div>
+<p>Every line of the strong form, checked on the picture:</p>
+<div class="step notes">
+<ul>
+<li><strong>The differential equation.</strong> <span class="math inline">\(EA\,u_{,xx} = -f &gt; 0\)</span>: the displacement curve bends upward uniformly. Equivalently <span class="math inline">\(N_{,x} = -f\)</span> = +40 kN/m: the force line in the lower panel is straight.</li>
+<li><strong>The Dirichlet condition.</strong> <span class="math inline">\(u = 0\)</span> at the rock.</li>
+<li><strong>The Neumann condition.</strong> At the head the tangent drops 0.67 mm over 2 m, a slope of <span class="math inline">\(-3.33\times10^{-4}\)</span>, and <span class="math inline">\(-EA\,u_{,x}(0) = -2.7\times10^{9}\times(-3.33\times10^{-4})
+= 900\)</span> kN <span class="math inline">\(= h\)</span>.</li>
+<li><strong>Equilibrium of the whole pile.</strong> 900 kN down at the head = 400 kN of friction + 500 kN at the toe. The Dirichlet end’s reaction, 500 kN, came <em>out</em> of the solution.</li>
+</ul>
+</div>
+</section>
+<section id="explore-the-strong-form" class="level2" data-number="D.9">
+<h2 data-number="D.9" class="anchored" data-anchor-id="explore-the-strong-form"><span class="header-section-number">D.9</span> Explore the strong form</h2>
+<p>The black curve is the exact <span class="math inline">\(u(x)\)</span> for the settings below, with the pile’s <span class="math inline">\(L\)</span> = 10 m. Blue dots are Dirichlet ends; the dashed red line is the strain a Neumann condition forces on its end. Under the plots, the rod is drawn twice: grey ticks are material points before loading, and black ticks are the same points after, with the displacements exaggerated. The band is shaded by the internal force: red for tension, blue for compression.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb1" data-startfrom="1062" data-source-offset="-0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 1061;"><span id="cb1-1062"><a href="#cb1-1062" aria-hidden="true" tabindex="-1"></a>viewof rBC <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">radio</span>(<span class="kw">new</span> <span class="bu">Map</span>([</span>
+<span id="cb1-1063"><a href="#cb1-1063" aria-hidden="true" tabindex="-1"></a>  [<span class="st">"(a) Hughes: h at x = 0, g at x = L"</span><span class="op">,</span> <span class="st">"a"</span>]<span class="op">,</span></span>
+<span id="cb1-1064"><a href="#cb1-1064" aria-hidden="true" tabindex="-1"></a>  [<span class="st">"(b) swapped: g at x = 0, h at x = L"</span><span class="op">,</span> <span class="st">"b"</span>]<span class="op">,</span></span>
+<span id="cb1-1065"><a href="#cb1-1065" aria-hidden="true" tabindex="-1"></a>  [<span class="st">"(c) g at both ends"</span><span class="op">,</span> <span class="st">"c"</span>]</span>
+<span id="cb1-1066"><a href="#cb1-1066" aria-hidden="true" tabindex="-1"></a>])<span class="op">,</span> {<span class="dt">value</span><span class="op">:</span> <span class="st">"a"</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"Boundary conditions"</span>})</span>
+<span id="cb1-1067"><a href="#cb1-1067" aria-hidden="true" tabindex="-1"></a>viewof rF  <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="op">-</span><span class="dv">150</span><span class="op">,</span> <span class="dv">150</span>]<span class="op">,</span>   {<span class="dt">value</span><span class="op">:</span> <span class="op">-</span><span class="dv">40</span><span class="op">,</span>  <span class="dt">step</span><span class="op">:</span> <span class="dv">5</span><span class="op">,</span>   <span class="dt">label</span><span class="op">:</span> <span class="st">"f (kN/m, toward +x)"</span>})</span>
+<span id="cb1-1068"><a href="#cb1-1068" aria-hidden="true" tabindex="-1"></a>viewof rH  <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="op">-</span><span class="dv">1500</span><span class="op">,</span> <span class="dv">1500</span>]<span class="op">,</span> {<span class="dt">value</span><span class="op">:</span> <span class="dv">900</span><span class="op">,</span>  <span class="dt">step</span><span class="op">:</span> <span class="dv">25</span><span class="op">,</span>  <span class="dt">label</span><span class="op">:</span> <span class="st">"h (kN, toward +x)"</span>})</span>
+<span id="cb1-1069"><a href="#cb1-1069" aria-hidden="true" tabindex="-1"></a>viewof rG  <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="op">-</span><span class="dv">3</span><span class="op">,</span> <span class="dv">3</span>]<span class="op">,</span>       {<span class="dt">value</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span>    <span class="dt">step</span><span class="op">:</span> <span class="fl">0.1</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"g (mm)"</span>})</span>
+<span id="cb1-1070"><a href="#cb1-1070" aria-hidden="true" tabindex="-1"></a>viewof rG0 <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="op">-</span><span class="dv">3</span><span class="op">,</span> <span class="dv">3</span>]<span class="op">,</span>       {<span class="dt">value</span><span class="op">:</span> <span class="dv">2</span><span class="op">,</span>    <span class="dt">step</span><span class="op">:</span> <span class="fl">0.1</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"g at x = 0 in (c) (mm)"</span>})</span>
+<span id="cb1-1071"><a href="#cb1-1071" aria-hidden="true" tabindex="-1"></a>viewof rEA <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="fl">0.5</span><span class="op">,</span> <span class="dv">10</span>]<span class="op">,</span>     {<span class="dt">value</span><span class="op">:</span> <span class="fl">2.7</span><span class="op">,</span>  <span class="dt">step</span><span class="op">:</span> <span class="fl">0.1</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"EA (×10⁹ N)"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-1" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-2" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-3" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-4" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-5" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-1-6" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb2" data-startfrom="1075" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 1074;"><span id="cb2-1075"><a href="#cb2-1075" aria-hidden="true" tabindex="-1"></a>rod <span class="op">=</span> {</span>
+<span id="cb2-1076"><a href="#cb2-1076" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> L <span class="op">=</span> <span class="dv">10</span><span class="op">,</span> K <span class="op">=</span> rEA <span class="op">*</span> <span class="fl">1e9</span><span class="op">,</span> f <span class="op">=</span> rF <span class="op">*</span> <span class="fl">1e3</span><span class="op">,</span> h <span class="op">=</span> rH <span class="op">*</span> <span class="fl">1e3</span><span class="op">,</span> g <span class="op">=</span> rG <span class="op">/</span> <span class="fl">1e3</span><span class="op">,</span> g0 <span class="op">=</span> rG0 <span class="op">/</span> <span class="fl">1e3</span><span class="op">;</span></span>
+<span id="cb2-1077"><a href="#cb2-1077" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> u<span class="op">,</span> du<span class="op">;</span></span>
+<span id="cb2-1078"><a href="#cb2-1078" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (rBC <span class="op">===</span> <span class="st">"a"</span>) {</span>
+<span id="cb2-1079"><a href="#cb2-1079" aria-hidden="true" tabindex="-1"></a>    u  <span class="op">=</span> x <span class="kw">=&gt;</span> g <span class="op">+</span> h <span class="op">/</span> K <span class="op">*</span> (L <span class="op">-</span> x) <span class="op">+</span> f <span class="op">/</span> (<span class="dv">2</span> <span class="op">*</span> K) <span class="op">*</span> (L <span class="op">*</span> L <span class="op">-</span> x <span class="op">*</span> x)<span class="op">;</span></span>
+<span id="cb2-1080"><a href="#cb2-1080" aria-hidden="true" tabindex="-1"></a>    du <span class="op">=</span> x <span class="kw">=&gt;</span> <span class="op">-</span>h <span class="op">/</span> K <span class="op">-</span> f <span class="op">*</span> x <span class="op">/</span> K<span class="op">;</span></span>
+<span id="cb2-1081"><a href="#cb2-1081" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> <span class="cf">if</span> (rBC <span class="op">===</span> <span class="st">"b"</span>) {</span>
+<span id="cb2-1082"><a href="#cb2-1082" aria-hidden="true" tabindex="-1"></a>    u  <span class="op">=</span> x <span class="kw">=&gt;</span> g <span class="op">+</span> (h <span class="op">+</span> f <span class="op">*</span> L) <span class="op">/</span> K <span class="op">*</span> x <span class="op">-</span> f <span class="op">/</span> (<span class="dv">2</span> <span class="op">*</span> K) <span class="op">*</span> x <span class="op">*</span> x<span class="op">;</span></span>
+<span id="cb2-1083"><a href="#cb2-1083" aria-hidden="true" tabindex="-1"></a>    du <span class="op">=</span> x <span class="kw">=&gt;</span> (h <span class="op">+</span> f <span class="op">*</span> L) <span class="op">/</span> K <span class="op">-</span> f <span class="op">*</span> x <span class="op">/</span> K<span class="op">;</span></span>
+<span id="cb2-1084"><a href="#cb2-1084" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb2-1085"><a href="#cb2-1085" aria-hidden="true" tabindex="-1"></a>    u  <span class="op">=</span> x <span class="kw">=&gt;</span> g0 <span class="op">+</span> (g <span class="op">-</span> g0) <span class="op">*</span> x <span class="op">/</span> L <span class="op">+</span> f <span class="op">/</span> (<span class="dv">2</span> <span class="op">*</span> K) <span class="op">*</span> x <span class="op">*</span> (L <span class="op">-</span> x)<span class="op">;</span></span>
+<span id="cb2-1086"><a href="#cb2-1086" aria-hidden="true" tabindex="-1"></a>    du <span class="op">=</span> x <span class="kw">=&gt;</span> (g <span class="op">-</span> g0) <span class="op">/</span> L <span class="op">+</span> f <span class="op">*</span> (L <span class="op">-</span> <span class="dv">2</span> <span class="op">*</span> x) <span class="op">/</span> (<span class="dv">2</span> <span class="op">*</span> K)<span class="op">;</span></span>
+<span id="cb2-1087"><a href="#cb2-1087" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb2-1088"><a href="#cb2-1088" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> N <span class="op">=</span> x <span class="kw">=&gt;</span> K <span class="op">*</span> <span class="fu">du</span>(x)<span class="op">;</span></span>
+<span id="cb2-1089"><a href="#cb2-1089" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> pts <span class="op">=</span> d3<span class="op">.</span><span class="fu">range</span>(<span class="dv">121</span>)<span class="op">.</span><span class="fu">map</span>(i <span class="kw">=&gt;</span> { <span class="kw">const</span> x <span class="op">=</span> L <span class="op">*</span> i <span class="op">/</span> <span class="dv">120</span><span class="op">;</span> <span class="cf">return</span> {x<span class="op">,</span> <span class="dt">u</span><span class="op">:</span> <span class="fl">1e3</span> <span class="op">*</span> <span class="fu">u</span>(x)<span class="op">,</span> <span class="dt">N</span><span class="op">:</span> <span class="fu">N</span>(x) <span class="op">/</span> <span class="fl">1e3</span>}<span class="op">;</span> })<span class="op">;</span></span>
+<span id="cb2-1090"><a href="#cb2-1090" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> {L<span class="op">,</span> K<span class="op">,</span> f<span class="op">,</span> h<span class="op">,</span> u<span class="op">,</span> du<span class="op">,</span> N<span class="op">,</span> pts}<span class="op">;</span></span>
+<span id="cb2-1091"><a href="#cb2-1091" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-2" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb3" data-startfrom="1096" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 1095;"><span id="cb3-1096"><a href="#cb3-1096" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb3-1097"><a href="#cb3-1097" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> {L<span class="op">,</span> u<span class="op">,</span> du<span class="op">,</span> N<span class="op">,</span> pts} <span class="op">=</span> rod<span class="op">;</span></span>
+<span id="cb3-1098"><a href="#cb3-1098" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> W <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">min</span>(width<span class="op">,</span> <span class="dv">760</span>)<span class="op">;</span></span>
+<span id="cb3-1099"><a href="#cb3-1099" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> dirX <span class="op">=</span> rBC <span class="op">===</span> <span class="st">"a"</span> <span class="op">?</span> [L] <span class="op">:</span> rBC <span class="op">===</span> <span class="st">"b"</span> <span class="op">?</span> [<span class="dv">0</span>] <span class="op">:</span> [<span class="dv">0</span><span class="op">,</span> L]<span class="op">;</span></span>
+<span id="cb3-1100"><a href="#cb3-1100" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> neuX <span class="op">=</span> rBC <span class="op">===</span> <span class="st">"a"</span> <span class="op">?</span> <span class="dv">0</span> <span class="op">:</span> rBC <span class="op">===</span> <span class="st">"b"</span> <span class="op">?</span> L <span class="op">:</span> <span class="kw">null</span><span class="op">;</span></span>
+<span id="cb3-1101"><a href="#cb3-1101" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> marks <span class="op">=</span> [</span>
+<span id="cb3-1102"><a href="#cb3-1102" aria-hidden="true" tabindex="-1"></a>    Plot<span class="op">.</span><span class="fu">ruleY</span>([<span class="dv">0</span>]<span class="op">,</span> {<span class="dt">stroke</span><span class="op">:</span> <span class="st">"#bbb"</span>})<span class="op">,</span></span>
+<span id="cb3-1103"><a href="#cb3-1103" aria-hidden="true" tabindex="-1"></a>    Plot<span class="op">.</span><span class="fu">line</span>(pts<span class="op">,</span> {<span class="dt">x</span><span class="op">:</span> <span class="st">"x"</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="st">"u"</span><span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> <span class="st">"#1a1a1a"</span><span class="op">,</span> <span class="dt">strokeWidth</span><span class="op">:</span> <span class="fl">2.6</span>})<span class="op">,</span></span>
+<span id="cb3-1104"><a href="#cb3-1104" aria-hidden="true" tabindex="-1"></a>    Plot<span class="op">.</span><span class="fu">dot</span>(dirX<span class="op">.</span><span class="fu">map</span>(x <span class="kw">=&gt;</span> ({x<span class="op">,</span> <span class="dt">u</span><span class="op">:</span> <span class="fl">1e3</span> <span class="op">*</span> <span class="fu">u</span>(x)}))<span class="op">,</span> {<span class="dt">x</span><span class="op">:</span> <span class="st">"x"</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="st">"u"</span><span class="op">,</span> <span class="dt">r</span><span class="op">:</span> <span class="dv">6</span><span class="op">,</span> <span class="dt">fill</span><span class="op">:</span> <span class="st">"#4a7ba7"</span>})</span>
+<span id="cb3-1105"><a href="#cb3-1105" aria-hidden="true" tabindex="-1"></a>  ]<span class="op">;</span></span>
+<span id="cb3-1106"><a href="#cb3-1106" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (neuX <span class="op">!==</span> <span class="kw">null</span>) {</span>
+<span id="cb3-1107"><a href="#cb3-1107" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> d <span class="op">=</span> (neuX <span class="op">===</span> <span class="dv">0</span> <span class="op">?</span> <span class="dv">1</span> <span class="op">:</span> <span class="op">-</span><span class="dv">1</span>) <span class="op">*</span> <span class="dv">3</span><span class="op">;</span></span>
+<span id="cb3-1108"><a href="#cb3-1108" aria-hidden="true" tabindex="-1"></a>    marks<span class="op">.</span><span class="fu">push</span>(Plot<span class="op">.</span><span class="fu">line</span>([{<span class="dt">x</span><span class="op">:</span> neuX<span class="op">,</span> <span class="dt">u</span><span class="op">:</span> <span class="fl">1e3</span> <span class="op">*</span> <span class="fu">u</span>(neuX)}<span class="op">,</span> {<span class="dt">x</span><span class="op">:</span> neuX <span class="op">+</span> d<span class="op">,</span> <span class="dt">u</span><span class="op">:</span> <span class="fl">1e3</span> <span class="op">*</span> (<span class="fu">u</span>(neuX) <span class="op">+</span> <span class="fu">du</span>(neuX) <span class="op">*</span> d)}]<span class="op">,</span></span>
+<span id="cb3-1109"><a href="#cb3-1109" aria-hidden="true" tabindex="-1"></a>      {<span class="dt">x</span><span class="op">:</span> <span class="st">"x"</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="st">"u"</span><span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> <span class="st">"#c0392b"</span><span class="op">,</span> <span class="dt">strokeWidth</span><span class="op">:</span> <span class="fl">2.4</span><span class="op">,</span> <span class="dt">strokeDasharray</span><span class="op">:</span> <span class="st">"7,4"</span>}))<span class="op">;</span></span>
+<span id="cb3-1110"><a href="#cb3-1110" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-1111"><a href="#cb3-1111" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> top <span class="op">=</span> Plot<span class="op">.</span><span class="fu">plot</span>({</span>
+<span id="cb3-1112"><a href="#cb3-1112" aria-hidden="true" tabindex="-1"></a>    <span class="dt">width</span><span class="op">:</span> W<span class="op">,</span> <span class="dt">height</span><span class="op">:</span> <span class="dv">280</span><span class="op">,</span> <span class="dt">marginLeft</span><span class="op">:</span> <span class="dv">55</span><span class="op">,</span></span>
+<span id="cb3-1113"><a href="#cb3-1113" aria-hidden="true" tabindex="-1"></a>    <span class="dt">x</span><span class="op">:</span> {<span class="dt">label</span><span class="op">:</span> <span class="st">"x (m) →"</span><span class="op">,</span> <span class="dt">domain</span><span class="op">:</span> [<span class="op">-</span><span class="fl">0.5</span><span class="op">,</span> L <span class="op">+</span> <span class="fl">0.5</span>]}<span class="op">,</span></span>
+<span id="cb3-1114"><a href="#cb3-1114" aria-hidden="true" tabindex="-1"></a>    <span class="dt">y</span><span class="op">:</span> {<span class="dt">label</span><span class="op">:</span> <span class="st">"↑ displacement u (mm)"</span><span class="op">,</span> <span class="dt">grid</span><span class="op">:</span> <span class="kw">true</span>}<span class="op">,</span></span>
+<span id="cb3-1115"><a href="#cb3-1115" aria-hidden="true" tabindex="-1"></a>    marks</span>
+<span id="cb3-1116"><a href="#cb3-1116" aria-hidden="true" tabindex="-1"></a>  })<span class="op">;</span></span>
+<span id="cb3-1117"><a href="#cb3-1117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-1118"><a href="#cb3-1118" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> Nplot <span class="op">=</span> Plot<span class="op">.</span><span class="fu">plot</span>({</span>
+<span id="cb3-1119"><a href="#cb3-1119" aria-hidden="true" tabindex="-1"></a>    <span class="dt">width</span><span class="op">:</span> W<span class="op">,</span> <span class="dt">height</span><span class="op">:</span> <span class="dv">200</span><span class="op">,</span> <span class="dt">marginLeft</span><span class="op">:</span> <span class="dv">55</span><span class="op">,</span></span>
+<span id="cb3-1120"><a href="#cb3-1120" aria-hidden="true" tabindex="-1"></a>    <span class="dt">x</span><span class="op">:</span> {<span class="dt">label</span><span class="op">:</span> <span class="st">"x (m) →"</span><span class="op">,</span> <span class="dt">domain</span><span class="op">:</span> [<span class="op">-</span><span class="fl">0.5</span><span class="op">,</span> L <span class="op">+</span> <span class="fl">0.5</span>]}<span class="op">,</span></span>
+<span id="cb3-1121"><a href="#cb3-1121" aria-hidden="true" tabindex="-1"></a>    <span class="dt">y</span><span class="op">:</span> {<span class="dt">label</span><span class="op">:</span> <span class="st">"↑ axial force N (kN)"</span><span class="op">,</span> <span class="dt">grid</span><span class="op">:</span> <span class="kw">true</span>}<span class="op">,</span></span>
+<span id="cb3-1122"><a href="#cb3-1122" aria-hidden="true" tabindex="-1"></a>    <span class="dt">marks</span><span class="op">:</span> [</span>
+<span id="cb3-1123"><a href="#cb3-1123" aria-hidden="true" tabindex="-1"></a>      Plot<span class="op">.</span><span class="fu">ruleY</span>([<span class="dv">0</span>]<span class="op">,</span> {<span class="dt">stroke</span><span class="op">:</span> <span class="st">"#bbb"</span>})<span class="op">,</span></span>
+<span id="cb3-1124"><a href="#cb3-1124" aria-hidden="true" tabindex="-1"></a>      Plot<span class="op">.</span><span class="fu">areaY</span>(pts<span class="op">,</span> {<span class="dt">x</span><span class="op">:</span> <span class="st">"x"</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="st">"N"</span><span class="op">,</span> <span class="dt">fill</span><span class="op">:</span> <span class="st">"#1f6feb"</span><span class="op">,</span> <span class="dt">fillOpacity</span><span class="op">:</span> <span class="fl">0.12</span>})<span class="op">,</span></span>
+<span id="cb3-1125"><a href="#cb3-1125" aria-hidden="true" tabindex="-1"></a>      Plot<span class="op">.</span><span class="fu">line</span>(pts<span class="op">,</span> {<span class="dt">x</span><span class="op">:</span> <span class="st">"x"</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="st">"N"</span><span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> <span class="st">"#1f6feb"</span><span class="op">,</span> <span class="dt">strokeWidth</span><span class="op">:</span> <span class="fl">2.4</span>})</span>
+<span id="cb3-1126"><a href="#cb3-1126" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb3-1127"><a href="#cb3-1127" aria-hidden="true" tabindex="-1"></a>  })<span class="op">;</span></span>
+<span id="cb3-1128"><a href="#cb3-1128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-1129"><a href="#cb3-1129" aria-hidden="true" tabindex="-1"></a>  <span class="co">// the rod before and after, coloured by N</span></span>
+<span id="cb3-1130"><a href="#cb3-1130" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> umax <span class="op">=</span> d3<span class="op">.</span><span class="fu">max</span>(pts<span class="op">,</span> p <span class="kw">=&gt;</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">abs</span>(p<span class="op">.</span><span class="at">u</span>)) <span class="op">||</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb3-1131"><a href="#cb3-1131" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> exag <span class="op">=</span> <span class="fl">0.35</span> <span class="op">/</span> (umax <span class="op">/</span> <span class="fl">1e3</span>)<span class="op">;</span>           <span class="co">// biggest movement drawn as 0.35 m</span></span>
+<span id="cb3-1132"><a href="#cb3-1132" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> segs <span class="op">=</span> pts<span class="op">.</span><span class="fu">slice</span>(<span class="dv">0</span><span class="op">,</span> <span class="op">-</span><span class="dv">1</span>)<span class="op">.</span><span class="fu">map</span>((p<span class="op">,</span> i) <span class="kw">=&gt;</span> ({<span class="dt">x1</span><span class="op">:</span> p<span class="op">.</span><span class="at">x</span> <span class="op">+</span> exag <span class="op">*</span> p<span class="op">.</span><span class="at">u</span> <span class="op">/</span> <span class="fl">1e3</span><span class="op">,</span></span>
+<span id="cb3-1133"><a href="#cb3-1133" aria-hidden="true" tabindex="-1"></a>    <span class="dt">x2</span><span class="op">:</span> pts[i <span class="op">+</span> <span class="dv">1</span>]<span class="op">.</span><span class="at">x</span> <span class="op">+</span> exag <span class="op">*</span> pts[i <span class="op">+</span> <span class="dv">1</span>]<span class="op">.</span><span class="at">u</span> <span class="op">/</span> <span class="fl">1e3</span><span class="op">,</span> <span class="dt">N</span><span class="op">:</span> p<span class="op">.</span><span class="at">N</span>}))<span class="op">;</span></span>
+<span id="cb3-1134"><a href="#cb3-1134" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> ticks <span class="op">=</span> d3<span class="op">.</span><span class="fu">range</span>(<span class="dv">0</span><span class="op">,</span> <span class="dv">11</span>)<span class="op">.</span><span class="fu">map</span>(i <span class="kw">=&gt;</span> L <span class="op">*</span> i <span class="op">/</span> <span class="dv">10</span>)<span class="op">;</span></span>
+<span id="cb3-1135"><a href="#cb3-1135" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> Nmax <span class="op">=</span> d3<span class="op">.</span><span class="fu">max</span>(pts<span class="op">,</span> p <span class="kw">=&gt;</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">abs</span>(p<span class="op">.</span><span class="at">N</span>)) <span class="op">||</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb3-1136"><a href="#cb3-1136" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> band <span class="op">=</span> Plot<span class="op">.</span><span class="fu">plot</span>({</span>
+<span id="cb3-1137"><a href="#cb3-1137" aria-hidden="true" tabindex="-1"></a>    <span class="dt">width</span><span class="op">:</span> W<span class="op">,</span> <span class="dt">height</span><span class="op">:</span> <span class="dv">130</span><span class="op">,</span> <span class="dt">marginLeft</span><span class="op">:</span> <span class="dv">55</span><span class="op">,</span></span>
+<span id="cb3-1138"><a href="#cb3-1138" aria-hidden="true" tabindex="-1"></a>    <span class="dt">x</span><span class="op">:</span> {<span class="dt">label</span><span class="op">:</span> <span class="vs">`x (m) → — displacements exaggerated ×</span><span class="sc">${</span>exag<span class="op">.</span><span class="fu">toFixed</span>(<span class="dv">0</span>)<span class="sc">}</span><span class="vs">`</span><span class="op">,</span> <span class="dt">domain</span><span class="op">:</span> [<span class="op">-</span><span class="fl">0.5</span><span class="op">,</span> L <span class="op">+</span> <span class="fl">0.5</span>]}<span class="op">,</span></span>
+<span id="cb3-1139"><a href="#cb3-1139" aria-hidden="true" tabindex="-1"></a>    <span class="dt">y</span><span class="op">:</span> {<span class="dt">axis</span><span class="op">:</span> <span class="kw">null</span><span class="op">,</span> <span class="dt">domain</span><span class="op">:</span> [<span class="dv">0</span><span class="op">,</span> <span class="dv">2</span>]}<span class="op">,</span></span>
+<span id="cb3-1140"><a href="#cb3-1140" aria-hidden="true" tabindex="-1"></a>    <span class="dt">color</span><span class="op">:</span> {<span class="dt">type</span><span class="op">:</span> <span class="st">"diverging"</span><span class="op">,</span> <span class="dt">scheme</span><span class="op">:</span> <span class="st">"RdBu"</span><span class="op">,</span> <span class="dt">reverse</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">domain</span><span class="op">:</span> [<span class="op">-</span>Nmax<span class="op">,</span> Nmax]<span class="op">,</span></span>
+<span id="cb3-1141"><a href="#cb3-1141" aria-hidden="true" tabindex="-1"></a>            <span class="dt">legend</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"N (kN): red tension, blue compression"</span>}<span class="op">,</span></span>
+<span id="cb3-1142"><a href="#cb3-1142" aria-hidden="true" tabindex="-1"></a>    <span class="dt">marks</span><span class="op">:</span> [</span>
+<span id="cb3-1143"><a href="#cb3-1143" aria-hidden="true" tabindex="-1"></a>      Plot<span class="op">.</span><span class="fu">rect</span>([{<span class="dt">x1</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span> <span class="dt">x2</span><span class="op">:</span> L}]<span class="op">,</span> {<span class="dt">x1</span><span class="op">:</span> <span class="st">"x1"</span><span class="op">,</span> <span class="dt">x2</span><span class="op">:</span> <span class="st">"x2"</span><span class="op">,</span> <span class="dt">y1</span><span class="op">:</span> <span class="fl">1.2</span><span class="op">,</span> <span class="dt">y2</span><span class="op">:</span> <span class="fl">1.8</span><span class="op">,</span> <span class="dt">fill</span><span class="op">:</span> <span class="st">"#e2e2e2"</span><span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> <span class="st">"#999"</span>})<span class="op">,</span></span>
+<span id="cb3-1144"><a href="#cb3-1144" aria-hidden="true" tabindex="-1"></a>      Plot<span class="op">.</span><span class="fu">ruleX</span>(ticks<span class="op">,</span> {<span class="dt">x</span><span class="op">:</span> d <span class="kw">=&gt;</span> d<span class="op">,</span> <span class="dt">y1</span><span class="op">:</span> <span class="fl">1.2</span><span class="op">,</span> <span class="dt">y2</span><span class="op">:</span> <span class="fl">1.8</span><span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> <span class="st">"#888"</span><span class="op">,</span> <span class="dt">strokeWidth</span><span class="op">:</span> <span class="fl">1.5</span>})<span class="op">,</span></span>
+<span id="cb3-1145"><a href="#cb3-1145" aria-hidden="true" tabindex="-1"></a>      Plot<span class="op">.</span><span class="fu">rect</span>(segs<span class="op">,</span> {<span class="dt">x1</span><span class="op">:</span> <span class="st">"x1"</span><span class="op">,</span> <span class="dt">x2</span><span class="op">:</span> <span class="st">"x2"</span><span class="op">,</span> <span class="dt">y1</span><span class="op">:</span> <span class="fl">0.2</span><span class="op">,</span> <span class="dt">y2</span><span class="op">:</span> <span class="fl">0.8</span><span class="op">,</span> <span class="dt">fill</span><span class="op">:</span> <span class="st">"N"</span><span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> <span class="st">"N"</span>})<span class="op">,</span></span>
+<span id="cb3-1146"><a href="#cb3-1146" aria-hidden="true" tabindex="-1"></a>      Plot<span class="op">.</span><span class="fu">ruleX</span>(ticks<span class="op">,</span> {<span class="dt">x</span><span class="op">:</span> d <span class="kw">=&gt;</span> d <span class="op">+</span> exag <span class="op">*</span> <span class="fu">u</span>(d)<span class="op">,</span> <span class="dt">y1</span><span class="op">:</span> <span class="fl">0.2</span><span class="op">,</span> <span class="dt">y2</span><span class="op">:</span> <span class="fl">0.8</span><span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> <span class="st">"#1a1a1a"</span><span class="op">,</span> <span class="dt">strokeWidth</span><span class="op">:</span> <span class="fl">1.5</span>})<span class="op">,</span></span>
+<span id="cb3-1147"><a href="#cb3-1147" aria-hidden="true" tabindex="-1"></a>      Plot<span class="op">.</span><span class="fu">link</span>(ticks<span class="op">,</span> {<span class="dt">x1</span><span class="op">:</span> d <span class="kw">=&gt;</span> d<span class="op">,</span> <span class="dt">y1</span><span class="op">:</span> <span class="fl">1.2</span><span class="op">,</span> <span class="dt">x2</span><span class="op">:</span> d <span class="kw">=&gt;</span> d <span class="op">+</span> exag <span class="op">*</span> <span class="fu">u</span>(d)<span class="op">,</span> <span class="dt">y2</span><span class="op">:</span> <span class="fl">0.8</span><span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> <span class="st">"#aaa"</span><span class="op">,</span> <span class="dt">strokeDasharray</span><span class="op">:</span> <span class="st">"2,2"</span>})</span>
+<span id="cb3-1148"><a href="#cb3-1148" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb3-1149"><a href="#cb3-1149" aria-hidden="true" tabindex="-1"></a>  })<span class="op">;</span></span>
+<span id="cb3-1150"><a href="#cb3-1150" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="fu">html</span><span class="vs">`&lt;div&gt;</span><span class="sc">${</span>top<span class="sc">}${</span>Nplot<span class="sc">}${</span>band<span class="sc">}</span><span class="vs">&lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb3-1151"><a href="#cb3-1151" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-3" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb4" data-startfrom="1156" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 1155;"><span id="cb4-1156"><a href="#cb4-1156" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb4-1157"><a href="#cb4-1157" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> {L<span class="op">,</span> K<span class="op">,</span> f<span class="op">,</span> h<span class="op">,</span> u<span class="op">,</span> du<span class="op">,</span> N} <span class="op">=</span> rod<span class="op">;</span></span>
+<span id="cb4-1158"><a href="#cb4-1158" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> fmt <span class="op">=</span> (v<span class="op">,</span> d <span class="op">=</span> <span class="dv">1</span>) <span class="kw">=&gt;</span> (v <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">?</span> <span class="st">"−"</span> <span class="op">:</span> <span class="st">""</span>) <span class="op">+</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">abs</span>(v)<span class="op">.</span><span class="fu">toFixed</span>(d)<span class="op">;</span></span>
+<span id="cb4-1159"><a href="#cb4-1159" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> bc<span class="op">;</span></span>
+<span id="cb4-1160"><a href="#cb4-1160" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (rBC <span class="op">===</span> <span class="st">"a"</span>) bc <span class="op">=</span> <span class="vs">`−EA u,x(0) = </span><span class="sc">${</span><span class="fu">fmt</span>(<span class="op">-</span><span class="fu">N</span>(<span class="dv">0</span>) <span class="op">/</span> <span class="fl">1e3</span><span class="op">,</span> <span class="dv">0</span>)<span class="sc">}</span><span class="vs"> kN = h ✓</span><span class="sc">\u2003\u2003</span><span class="vs">u(L) = </span><span class="sc">${</span><span class="fu">fmt</span>(<span class="fl">1e3</span> <span class="op">*</span> <span class="fu">u</span>(L)<span class="op">,</span> <span class="dv">2</span>)<span class="sc">}</span><span class="vs"> mm = g ✓`</span><span class="op">;</span></span>
+<span id="cb4-1161"><a href="#cb4-1161" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> <span class="cf">if</span> (rBC <span class="op">===</span> <span class="st">"b"</span>) bc <span class="op">=</span> <span class="vs">`u(0) = </span><span class="sc">${</span><span class="fu">fmt</span>(<span class="fl">1e3</span> <span class="op">*</span> <span class="fu">u</span>(<span class="dv">0</span>)<span class="op">,</span> <span class="dv">2</span>)<span class="sc">}</span><span class="vs"> mm = g ✓</span><span class="sc">\u2003\u2003</span><span class="vs">+EA u,x(L) = </span><span class="sc">${</span><span class="fu">fmt</span>(<span class="fu">N</span>(L) <span class="op">/</span> <span class="fl">1e3</span><span class="op">,</span> <span class="dv">0</span>)<span class="sc">}</span><span class="vs"> kN = h ✓`</span><span class="op">;</span></span>
+<span id="cb4-1162"><a href="#cb4-1162" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> bc <span class="op">=</span> <span class="vs">`u(0) = </span><span class="sc">${</span><span class="fu">fmt</span>(<span class="fl">1e3</span> <span class="op">*</span> <span class="fu">u</span>(<span class="dv">0</span>)<span class="op">,</span> <span class="dv">2</span>)<span class="sc">}</span><span class="vs"> mm ✓</span><span class="sc">\u2003\u2003</span><span class="vs">u(L) = </span><span class="sc">${</span><span class="fu">fmt</span>(<span class="fl">1e3</span> <span class="op">*</span> <span class="fu">u</span>(L)<span class="op">,</span> <span class="dv">2</span>)<span class="sc">}</span><span class="vs"> mm ✓</span><span class="sc">\u2003\u2003</span><span class="vs">(h is not used: Γₕ = ∅)`</span><span class="op">;</span></span>
+<span id="cb4-1163"><a href="#cb4-1163" aria-hidden="true" tabindex="-1"></a>  <span class="co">// external forces on the rod, toward +x: at x = 0 the force is -N(0), at x = L it is +N(L)</span></span>
+<span id="cb4-1164"><a href="#cb4-1164" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> F0 <span class="op">=</span> <span class="op">-</span><span class="fu">N</span>(<span class="dv">0</span>) <span class="op">/</span> <span class="fl">1e3</span><span class="op">,</span> FL <span class="op">=</span> <span class="fu">N</span>(L) <span class="op">/</span> <span class="fl">1e3</span><span class="op">,</span> Ff <span class="op">=</span> f <span class="op">*</span> L <span class="op">/</span> <span class="fl">1e3</span><span class="op">;</span></span>
+<span id="cb4-1165"><a href="#cb4-1165" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="fu">html</span><span class="vs">`&lt;div style="font-size: 0.95rem; line-height: 1.6; margin: 0.4rem 0 1rem 0;"&gt;</span></span>
+<span id="cb4-1166"><a href="#cb4-1166" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;b&gt;Boundary conditions:&lt;/b&gt; </span><span class="sc">${</span>bc<span class="sc">}</span><span class="vs">&lt;br&gt;</span></span>
+<span id="cb4-1167"><a href="#cb4-1167" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;b&gt;Curvature:&lt;/b&gt; u,xx = −f/EA = </span><span class="sc">${</span><span class="fu">fmt</span>(<span class="op">-</span>f <span class="op">/</span> K <span class="op">*</span> <span class="fl">1e6</span><span class="op">,</span> <span class="dv">2</span>)<span class="sc">}</span><span class="vs"> × 10⁻⁶ per m, everywhere&lt;br&gt;</span></span>
+<span id="cb4-1168"><a href="#cb4-1168" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;b&gt;Equilibrium&lt;/b&gt; (forces toward +x): at x = 0: </span><span class="sc">${</span><span class="fu">fmt</span>(F0<span class="op">,</span> <span class="dv">0</span>)<span class="sc">}</span><span class="vs"> kN &amp;nbsp;+&amp;nbsp; along the rod ∫f dx: </span><span class="sc">${</span><span class="fu">fmt</span>(Ff<span class="op">,</span> <span class="dv">0</span>)<span class="sc">}</span><span class="vs"> kN</span></span>
+<span id="cb4-1169"><a href="#cb4-1169" aria-hidden="true" tabindex="-1"></a><span class="vs">    &amp;nbsp;+&amp;nbsp; at x = L: </span><span class="sc">${</span><span class="fu">fmt</span>(FL<span class="op">,</span> <span class="dv">0</span>)<span class="sc">}</span><span class="vs"> kN &amp;nbsp;=&amp;nbsp; </span><span class="sc">${</span><span class="fu">fmt</span>(F0 <span class="op">+</span> Ff <span class="op">+</span> FL<span class="op">,</span> <span class="dv">0</span>)<span class="sc">}</span><span class="vs"> kN&lt;br&gt;</span></span>
+<span id="cb4-1170"><a href="#cb4-1170" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;span style="color:#666"&gt;Whichever end is Dirichlet, its force above is the support reaction: an output of the solve, not an input.&lt;/span&gt;</span></span>
+<span id="cb4-1171"><a href="#cb4-1171" aria-hidden="true" tabindex="-1"></a><span class="vs">  &lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb4-1172"><a href="#cb4-1172" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-4" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+<div class="step notes">
+<ul>
+<li>In (a), set <span class="math inline">\(h = 0\)</span>: a free head. The displacement arrives flat and the whole rod is in tension or compression only from friction.</li>
+<li>Switch from (a) to (b) with the same <span class="math inline">\(h\)</span> = +900 kN: the load now <strong>pulls</strong> the far end of the rod, the band turns red, and the curve changes shape, not just side. To get the mirror image of the pile you must also flip the signs of <span class="math inline">\(h\)</span> and <span class="math inline">\(f\)</span>.</li>
+<li>In (a) or (b), double <span class="math inline">\(EA\)</span>: every displacement halves, and <span class="math inline">\(N\)</span> does not change at all. The forces are set by equilibrium alone; the stiffness only decides how far the rod moves to carry them. In (c), where both ends are held, the stiffness does change <span class="math inline">\(N\)</span>.</li>
+</ul>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InZpZXdvZiByQkMgPSBJbnB1dHMucmFkaW8obmV3IE1hcChbXG4gIFtcIihhKSBIdWdoZXM6IGggYXQgeCA9IDAsIGcgYXQgeCA9IExcIiwgXCJhXCJdLFxuICBbXCIoYikgc3dhcHBlZDogZyBhdCB4ID0gMCwgaCBhdCB4ID0gTFwiLCBcImJcIl0sXG4gIFtcIihjKSBnIGF0IGJvdGggZW5kc1wiLCBcImNcIl1cbl0pLCB7dmFsdWU6IFwiYVwiLCBsYWJlbDogXCJCb3VuZGFyeSBjb25kaXRpb25zXCJ9KVxudmlld29mIHJGICA9IElucHV0cy5yYW5nZShbLTE1MCwgMTUwXSwgICB7dmFsdWU6IC00MCwgIHN0ZXA6IDUsICAgbGFiZWw6IFwiZiAoa04vbSwgdG93YXJkICt4KVwifSlcbnZpZXdvZiBySCAgPSBJbnB1dHMucmFuZ2UoWy0xNTAwLCAxNTAwXSwge3ZhbHVlOiA5MDAsICBzdGVwOiAyNSwgIGxhYmVsOiBcImggKGtOLCB0b3dhcmQgK3gpXCJ9KVxudmlld29mIHJHICA9IElucHV0cy5yYW5nZShbLTMsIDNdLCAgICAgICB7dmFsdWU6IDAsICAgIHN0ZXA6IDAuMSwgbGFiZWw6IFwiZyAobW0pXCJ9KVxudmlld29mIHJHMCA9IElucHV0cy5yYW5nZShbLTMsIDNdLCAgICAgICB7dmFsdWU6IDIsICAgIHN0ZXA6IDAuMSwgbGFiZWw6IFwiZyBhdCB4ID0gMCBpbiAoYykgKG1tKVwifSlcbnZpZXdvZiByRUEgPSBJbnB1dHMucmFuZ2UoWzAuNSwgMTBdLCAgICAge3ZhbHVlOiAyLjcsICBzdGVwOiAwLjEsIGxhYmVsOiBcIkVBICjDlzEw4oG5IE4pXCJ9KVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC0yIiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoicm9kID0ge1xuICBjb25zdCBMID0gMTAsIEsgPSByRUEgKiAxZTksIGYgPSByRiAqIDFlMywgaCA9IHJIICogMWUzLCBnID0gckcgLyAxZTMsIGcwID0gckcwIC8gMWUzO1xuICBsZXQgdSwgZHU7XG4gIGlmIChyQkMgPT09IFwiYVwiKSB7XG4gICAgdSAgPSB4ID0+IGcgKyBoIC8gSyAqIChMIC0geCkgKyBmIC8gKDIgKiBLKSAqIChMICogTCAtIHggKiB4KTtcbiAgICBkdSA9IHggPT4gLWggLyBLIC0gZiAqIHggLyBLO1xuICB9IGVsc2UgaWYgKHJCQyA9PT0gXCJiXCIpIHtcbiAgICB1ICA9IHggPT4gZyArIChoICsgZiAqIEwpIC8gSyAqIHggLSBmIC8gKDIgKiBLKSAqIHggKiB4O1xuICAgIGR1ID0geCA9PiAoaCArIGYgKiBMKSAvIEsgLSBmICogeCAvIEs7XG4gIH0gZWxzZSB7XG4gICAgdSAgPSB4ID0+IGcwICsgKGcgLSBnMCkgKiB4IC8gTCArIGYgLyAoMiAqIEspICogeCAqIChMIC0geCk7XG4gICAgZHUgPSB4ID0+IChnIC0gZzApIC8gTCArIGYgKiAoTCAtIDIgKiB4KSAvICgyICogSyk7XG4gIH1cbiAgY29uc3QgTiA9IHggPT4gSyAqIGR1KHgpO1xuICBjb25zdCBwdHMgPSBkMy5yYW5nZSgxMjEpLm1hcChpID0+IHsgY29uc3QgeCA9IEwgKiBpIC8gMTIwOyByZXR1cm4ge3gsIHU6IDFlMyAqIHUoeCksIE46IE4oeCkgLyAxZTN9OyB9KTtcbiAgcmV0dXJuIHtMLCBLLCBmLCBoLCB1LCBkdSwgTiwgcHRzfTtcbn1cbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMyIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6IntcbiAgY29uc3Qge0wsIHUsIGR1LCBOLCBwdHN9ID0gcm9kO1xuICBjb25zdCBXID0gTWF0aC5taW4od2lkdGgsIDc2MCk7XG4gIGNvbnN0IGRpclggPSByQkMgPT09IFwiYVwiID8gW0xdIDogckJDID09PSBcImJcIiA/IFswXSA6IFswLCBMXTtcbiAgY29uc3QgbmV1WCA9IHJCQyA9PT0gXCJhXCIgPyAwIDogckJDID09PSBcImJcIiA/IEwgOiBudWxsO1xuICBjb25zdCBtYXJrcyA9IFtcbiAgICBQbG90LnJ1bGVZKFswXSwge3N0cm9rZTogXCIjYmJiXCJ9KSxcbiAgICBQbG90LmxpbmUocHRzLCB7eDogXCJ4XCIsIHk6IFwidVwiLCBzdHJva2U6IFwiIzFhMWExYVwiLCBzdHJva2VXaWR0aDogMi42fSksXG4gICAgUGxvdC5kb3QoZGlyWC5tYXAoeCA9PiAoe3gsIHU6IDFlMyAqIHUoeCl9KSksIHt4OiBcInhcIiwgeTogXCJ1XCIsIHI6IDYsIGZpbGw6IFwiIzRhN2JhN1wifSlcbiAgXTtcbiAgaWYgKG5ldVggIT09IG51bGwpIHtcbiAgICBjb25zdCBkID0gKG5ldVggPT09IDAgPyAxIDogLTEpICogMztcbiAgICBtYXJrcy5wdXNoKFBsb3QubGluZShbe3g6IG5ldVgsIHU6IDFlMyAqIHUobmV1WCl9LCB7eDogbmV1WCArIGQsIHU6IDFlMyAqICh1KG5ldVgpICsgZHUobmV1WCkgKiBkKX1dLFxuICAgICAge3g6IFwieFwiLCB5OiBcInVcIiwgc3Ryb2tlOiBcIiNjMDM5MmJcIiwgc3Ryb2tlV2lkdGg6IDIuNCwgc3Ryb2tlRGFzaGFycmF5OiBcIjcsNFwifSkpO1xuICB9XG4gIGNvbnN0IHRvcCA9IFBsb3QucGxvdCh7XG4gICAgd2lkdGg6IFcsIGhlaWdodDogMjgwLCBtYXJnaW5MZWZ0OiA1NSxcbiAgICB4OiB7bGFiZWw6IFwieCAobSkg4oaSXCIsIGRvbWFpbjogWy0wLjUsIEwgKyAwLjVdfSxcbiAgICB5OiB7bGFiZWw6IFwi4oaRIGRpc3BsYWNlbWVudCB1IChtbSlcIiwgZ3JpZDogdHJ1ZX0sXG4gICAgbWFya3NcbiAgfSk7XG5cbiAgY29uc3QgTnBsb3QgPSBQbG90LnBsb3Qoe1xuICAgIHdpZHRoOiBXLCBoZWlnaHQ6IDIwMCwgbWFyZ2luTGVmdDogNTUsXG4gICAgeDoge2xhYmVsOiBcInggKG0pIOKGklwiLCBkb21haW46IFstMC41LCBMICsgMC41XX0sXG4gICAgeToge2xhYmVsOiBcIuKGkSBheGlhbCBmb3JjZSBOIChrTilcIiwgZ3JpZDogdHJ1ZX0sXG4gICAgbWFya3M6IFtcbiAgICAgIFBsb3QucnVsZVkoWzBdLCB7c3Ryb2tlOiBcIiNiYmJcIn0pLFxuICAgICAgUGxvdC5hcmVhWShwdHMsIHt4OiBcInhcIiwgeTogXCJOXCIsIGZpbGw6IFwiIzFmNmZlYlwiLCBmaWxsT3BhY2l0eTogMC4xMn0pLFxuICAgICAgUGxvdC5saW5lKHB0cywge3g6IFwieFwiLCB5OiBcIk5cIiwgc3Ryb2tlOiBcIiMxZjZmZWJcIiwgc3Ryb2tlV2lkdGg6IDIuNH0pXG4gICAgXVxuICB9KTtcblxuICAvLyB0aGUgcm9kIGJlZm9yZSBhbmQgYWZ0ZXIsIGNvbG91cmVkIGJ5IE5cbiAgY29uc3QgdW1heCA9IGQzLm1heChwdHMsIHAgPT4gTWF0aC5hYnMocC51KSkgfHwgMTtcbiAgY29uc3QgZXhhZyA9IDAuMzUgLyAodW1heCAvIDFlMyk7ICAgICAgICAgICAvLyBiaWdnZXN0IG1vdmVtZW50IGRyYXduIGFzIDAuMzUgbVxuICBjb25zdCBzZWdzID0gcHRzLnNsaWNlKDAsIC0xKS5tYXAoKHAsIGkpID0+ICh7eDE6IHAueCArIGV4YWcgKiBwLnUgLyAxZTMsXG4gICAgeDI6IHB0c1tpICsgMV0ueCArIGV4YWcgKiBwdHNbaSArIDFdLnUgLyAxZTMsIE46IHAuTn0pKTtcbiAgY29uc3QgdGlja3MgPSBkMy5yYW5nZSgwLCAxMSkubWFwKGkgPT4gTCAqIGkgLyAxMCk7XG4gIGNvbnN0IE5tYXggPSBkMy5tYXgocHRzLCBwID0+IE1hdGguYWJzKHAuTikpIHx8IDE7XG4gIGNvbnN0IGJhbmQgPSBQbG90LnBsb3Qoe1xuICAgIHdpZHRoOiBXLCBoZWlnaHQ6IDEzMCwgbWFyZ2luTGVmdDogNTUsXG4gICAgeDoge2xhYmVsOiBgeCAobSkg4oaSIOKAlCBkaXNwbGFjZW1lbnRzIGV4YWdnZXJhdGVkIMOXJHtleGFnLnRvRml4ZWQoMCl9YCwgZG9tYWluOiBbLTAuNSwgTCArIDAuNV19LFxuICAgIHk6IHtheGlzOiBudWxsLCBkb21haW46IFswLCAyXX0sXG4gICAgY29sb3I6IHt0eXBlOiBcImRpdmVyZ2luZ1wiLCBzY2hlbWU6IFwiUmRCdVwiLCByZXZlcnNlOiB0cnVlLCBkb21haW46IFstTm1heCwgTm1heF0sXG4gICAgICAgICAgICBsZWdlbmQ6IHRydWUsIGxhYmVsOiBcIk4gKGtOKTogcmVkIHRlbnNpb24sIGJsdWUgY29tcHJlc3Npb25cIn0sXG4gICAgbWFya3M6IFtcbiAgICAgIFBsb3QucmVjdChbe3gxOiAwLCB4MjogTH1dLCB7eDE6IFwieDFcIiwgeDI6IFwieDJcIiwgeTE6IDEuMiwgeTI6IDEuOCwgZmlsbDogXCIjZTJlMmUyXCIsIHN0cm9rZTogXCIjOTk5XCJ9KSxcbiAgICAgIFBsb3QucnVsZVgodGlja3MsIHt4OiBkID0+IGQsIHkxOiAxLjIsIHkyOiAxLjgsIHN0cm9rZTogXCIjODg4XCIsIHN0cm9rZVdpZHRoOiAxLjV9KSxcbiAgICAgIFBsb3QucmVjdChzZWdzLCB7eDE6IFwieDFcIiwgeDI6IFwieDJcIiwgeTE6IDAuMiwgeTI6IDAuOCwgZmlsbDogXCJOXCIsIHN0cm9rZTogXCJOXCJ9KSxcbiAgICAgIFBsb3QucnVsZVgodGlja3MsIHt4OiBkID0+IGQgKyBleGFnICogdShkKSwgeTE6IDAuMiwgeTI6IDAuOCwgc3Ryb2tlOiBcIiMxYTFhMWFcIiwgc3Ryb2tlV2lkdGg6IDEuNX0pLFxuICAgICAgUGxvdC5saW5rKHRpY2tzLCB7eDE6IGQgPT4gZCwgeTE6IDEuMiwgeDI6IGQgPT4gZCArIGV4YWcgKiB1KGQpLCB5MjogMC44LCBzdHJva2U6IFwiI2FhYVwiLCBzdHJva2VEYXNoYXJyYXk6IFwiMiwyXCJ9KVxuICAgIF1cbiAgfSk7XG4gIHJldHVybiBodG1sYDxkaXY+JHt0b3B9JHtOcGxvdH0ke2JhbmR9PC9kaXY+YDtcbn1cbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtNCIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6IntcbiAgY29uc3Qge0wsIEssIGYsIGgsIHUsIGR1LCBOfSA9IHJvZDtcbiAgY29uc3QgZm10ID0gKHYsIGQgPSAxKSA9PiAodiA8IDAgPyBcIuKIklwiIDogXCJcIikgKyBNYXRoLmFicyh2KS50b0ZpeGVkKGQpO1xuICBsZXQgYmM7XG4gIGlmIChyQkMgPT09IFwiYVwiKSBiYyA9IGDiiJJFQSB1LHgoMCkgPSAke2ZtdCgtTigwKSAvIDFlMywgMCl9IGtOID0gaCDinJNcXHUyMDAzXFx1MjAwM3UoTCkgPSAke2ZtdCgxZTMgKiB1KEwpLCAyKX0gbW0gPSBnIOKck2A7XG4gIGVsc2UgaWYgKHJCQyA9PT0gXCJiXCIpIGJjID0gYHUoMCkgPSAke2ZtdCgxZTMgKiB1KDApLCAyKX0gbW0gPSBnIOKck1xcdTIwMDNcXHUyMDAzK0VBIHUseChMKSA9ICR7Zm10KE4oTCkgLyAxZTMsIDApfSBrTiA9IGgg4pyTYDtcbiAgZWxzZSBiYyA9IGB1KDApID0gJHtmbXQoMWUzICogdSgwKSwgMil9IG1tIOKck1xcdTIwMDNcXHUyMDAzdShMKSA9ICR7Zm10KDFlMyAqIHUoTCksIDIpfSBtbSDinJNcXHUyMDAzXFx1MjAwMyhoIGlzIG5vdCB1c2VkOiDOk+KClSA9IOKIhSlgO1xuICAvLyBleHRlcm5hbCBmb3JjZXMgb24gdGhlIHJvZCwgdG93YXJkICt4OiBhdCB4ID0gMCB0aGUgZm9yY2UgaXMgLU4oMCksIGF0IHggPSBMIGl0IGlzICtOKEwpXG4gIGNvbnN0IEYwID0gLU4oMCkgLyAxZTMsIEZMID0gTihMKSAvIDFlMywgRmYgPSBmICogTCAvIDFlMztcbiAgcmV0dXJuIGh0bWxgPGRpdiBzdHlsZT1cImZvbnQtc2l6ZTogMC45NXJlbTsgbGluZS1oZWlnaHQ6IDEuNjsgbWFyZ2luOiAwLjRyZW0gMCAxcmVtIDA7XCI+XG4gICAgPGI+Qm91bmRhcnkgY29uZGl0aW9uczo8L2I+ICR7YmN9PGJyPlxuICAgIDxiPkN1cnZhdHVyZTo8L2I+IHUseHggPSDiiJJmL0VBID0gJHtmbXQoLWYgLyBLICogMWU2LCAyKX0gw5cgMTDigbvigbYgcGVyIG0sIGV2ZXJ5d2hlcmU8YnI+XG4gICAgPGI+RXF1aWxpYnJpdW08L2I+IChmb3JjZXMgdG93YXJkICt4KTogYXQgeCA9IDA6ICR7Zm10KEYwLCAwKX0ga04gJm5ic3A7KyZuYnNwOyBhbG9uZyB0aGUgcm9kIOKIq2YgZHg6ICR7Zm10KEZmLCAwKX0ga05cbiAgICAmbmJzcDsrJm5ic3A7IGF0IHggPSBMOiAke2ZtdChGTCwgMCl9IGtOICZuYnNwOz0mbmJzcDsgJHtmbXQoRjAgKyBGZiArIEZMLCAwKX0ga048YnI+XG4gICAgPHNwYW4gc3R5bGU9XCJjb2xvcjojNjY2XCI+V2hpY2hldmVyIGVuZCBpcyBEaXJpY2hsZXQsIGl0cyBmb3JjZSBhYm92ZSBpcyB0aGUgc3VwcG9ydCByZWFjdGlvbjogYW4gb3V0cHV0IG9mIHRoZSBzb2x2ZSwgbm90IGFuIGlucHV0Ljwvc3Bhbj5cbiAgPC9kaXY+YDtcbn1cbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgnckJDJykifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InNoaW55SW5wdXQoJ3JGJykifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InNoaW55SW5wdXQoJ3JIJykifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InNoaW55SW5wdXQoJ3JHJykifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InNoaW55SW5wdXQoJ3JHMCcpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCdyRUEnKSJ9XX0=
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../chapters";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/Poisson1D_Heat_FEM.html" class="pagination-link" aria-label="1D Poisson II: The Wall, by Galerkin's Method">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">1D Poisson II: The Wall, by Galerkin’s Method</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/Poisson1D_Rod_FEM.html" class="pagination-link" aria-label="1D Poisson IV: The Rod, by Galerkin's Method">
+        <span class="nav-page-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
