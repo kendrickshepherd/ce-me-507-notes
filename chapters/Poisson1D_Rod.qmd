@@ -796,7 +796,7 @@ in.](`{python} fig_neu_path`){#fig-r-neumann width=100%}
 - $h = 0$ is a **free end**: no force, so zero strain — the displacement curve arrives
   flat.
 - The **magnitude** of the slope is $|h|/EA$. For the pile, $900\ \text{kN} / 2.7\times10^9\
-  \text{N} = 3.33\times10^{-4}$: the head is shortened by 0.33 mm per metre.
+  \text{N} = 3.33\times10^{-4}$: the head is shortened by 0.33 mm per meter.
 - It is a **natural** boundary condition. In the weak form it appears as the boundary term
   $w(0)\,h$.
 - A spring support, $h = -k_s\,u$, mixes value and slope. That is a Robin condition and is

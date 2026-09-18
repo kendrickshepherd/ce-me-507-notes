@@ -15,3 +15,7 @@ quarto render
 
 Generated Quarto output and private class reference material are excluded by
 `.gitignore`.
+
+## Visualization
+
+The content provided in this website can be found at https://kendrickshepherd.github.io/ce-me-507-notes/
