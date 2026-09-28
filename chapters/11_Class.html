@@ -8,7 +8,7 @@
 
 <meta name="description" content="Finite Element Methods">
 
-<title>5&nbsp; Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method – CE/ME 507 — Class Notes</title>
+<title>11&nbsp; Class 11: Tensor-Product Basis Functions in 2D – CE/ME 507 — Class Notes</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -37,8 +37,8 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../chapters/6_Class.html" rel="next">
-<link href="../chapters/4_Class.html" rel="prev">
+<link href="../chapters/3_Support_FunctionSpaces.html" rel="next">
+<link href="../chapters/10_Class.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
@@ -87,6 +87,7 @@ window.MathJax = {
   }
 };
 </script>
+<script src="plotly.min.js"></script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
@@ -129,7 +130,7 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/5_Class.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/11_Class.html"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Class 11: Tensor-Product Basis Functions in 2D</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -139,7 +140,7 @@ window.Quarto = {
   </nav>
 </header>
 <!-- content -->
-<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full">
 <!-- sidebar -->
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
@@ -180,7 +181,7 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/5_Class.html" class="sidebar-item-text sidebar-link active">
+  <a href="../chapters/5_Class.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method</span></span></a>
   </div>
 </li>
@@ -216,7 +217,7 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/11_Class.html" class="sidebar-item-text sidebar-link">
+  <a href="../chapters/11_Class.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Class 11: Tensor-Product Basis Functions in 2D</span></span></a>
   </div>
 </li>
@@ -271,28 +272,24 @@ window.Quarto = {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#weak-form-rightarrow-strong-form" id="toc-weak-form-rightarrow-strong-form" class="nav-link active" data-scroll-target="#weak-form-rightarrow-strong-form"><span class="header-section-number">6</span> Weak form <span class="math inline">\(\Rightarrow\)</span> strong form</a>
-  <ul class="collapse">
-  <li><a href="#recovering-the-pde-on-omega" id="toc-recovering-the-pde-on-omega" class="nav-link" data-scroll-target="#recovering-the-pde-on-omega"><span class="header-section-number">6.1</span> Recovering the PDE on <span class="math inline">\(\Omega\)</span></a></li>
-  <li><a href="#recovering-the-flux-condition-on-gamma_h" id="toc-recovering-the-flux-condition-on-gamma_h" class="nav-link" data-scroll-target="#recovering-the-flux-condition-on-gamma_h"><span class="header-section-number">6.2</span> Recovering the flux condition on <span class="math inline">\(\Gamma_h\)</span></a></li>
-  <li><a href="#summarizing" id="toc-summarizing" class="nav-link" data-scroll-target="#summarizing"><span class="header-section-number">6.3</span> Summarizing</a></li>
-  </ul></li>
-  <li><a href="#the-galerkin-method" id="toc-the-galerkin-method" class="nav-link" data-scroll-target="#the-galerkin-method"><span class="header-section-number">7</span> The Galerkin method</a></li>
-  <li><a href="#the-galerkin-form" id="toc-the-galerkin-form" class="nav-link" data-scroll-target="#the-galerkin-form"><span class="header-section-number">8</span> The Galerkin form</a></li>
+  <li><a href="#the-1d-factors" id="toc-the-1d-factors" class="nav-link active" data-scroll-target="#the-1d-factors"><span class="header-section-number">11.1</span> The 1D factors</a></li>
+  <li><a href="#strides-from-ab-to-a" id="toc-strides-from-ab-to-a" class="nav-link" data-scroll-target="#strides-from-ab-to-a"><span class="header-section-number">11.2</span> Strides: from <span class="math inline">\((a,b)\)</span> to <span class="math inline">\(A\)</span></a></li>
+  <li><a href="#things-to-try" id="toc-things-to-try" class="nav-link" data-scroll-target="#things-to-try"><span class="header-section-number">11.3</span> Things to try</a></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
+<main class="content column-body" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method</span></h1>
+<h1 class="title"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Class 11: Tensor-Product Basis Functions in 2D</span></h1>
+<p class="subtitle lead">Building 2D Lagrange bases from 1D ones</p>
 </div>
 
 
 
-<div class="quarto-title-meta">
+<div class="quarto-title-meta column-body">
 
     
   
@@ -304,186 +301,293 @@ window.Quarto = {
 </header>
 
 
-<p>Last time, given <span class="math inline">\(f\)</span>, <span class="math inline">\(g\)</span>, <span class="math inline">\(h\)</span>, and <span class="math inline">\(\underline{\underline{K}}\)</span>, we let</p>
-<div class="derivation">
+<p>A 2D Lagrange basis function on the parent square <span class="math inline">\([-1,1]^2\)</span> is the product of one 1D basis function in <span class="math inline">\(\xi\)</span> and one in <span class="math inline">\(\eta\)</span>:</p>
 <p><span class="math display">\[
-\mathcal{S} = \left\{\, u \in H^1(\Omega) \;\middle|\; u = g \text{ on } \Gamma_g \,\right\}
-\qquad\qquad
-\mathcal{V} = \left\{\, w \in H^1(\Omega) \;\middle|\; w = 0 \text{ on } \Gamma_g \,\right\}
+N_A(\xi,\eta) = N_a(\xi)\,N_b(\eta), \qquad A = a + (p_\xi+1)\,b .
 \]</span></p>
-</div>
-<p>and showed that if <span class="math inline">\(u\)</span> solves the strong form, then it also satisfies: find <span class="math inline">\(u \in \mathcal{S}\)</span> such that for every <span class="math inline">\(w \in \mathcal{V}\)</span>,</p>
-<div class="derivation">
-<p><span class="math display">\[
-(\mathrm{W}) \qquad
-\int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega
-= \int_\Omega wf\;d\Omega + \int_{\Gamma_h} wh\;d\Gamma
-\]</span></p>
-</div>
-<div class="step">
-<p>Write the strong form and weak form of the BVP on the left board, for reference throughout class.</p>
-</div>
-<p><strong>Goals:</strong></p>
-<div class="step notes">
+<p>The index <span class="math inline">\(\xi\)</span> varies fastest. <!--, which matches `ExtractMultiIndexFromSingleIndex`
+from HW6. --> The interpolation points are equally spaced.</p>
+<p>In the 3D plot:</p>
 <ul>
-<li>Strong form <span class="math inline">\(\Rightarrow\)</span> Weak form</li>
-<li>Weak form <span class="math inline">\(\Rightarrow\)</span> Strong form</li>
-<li>Weak form <span class="math inline">\(\Rightarrow\)</span> Galerkin form</li>
+<li><strong>Blue curve on the back wall</strong> (<span class="math inline">\(\eta = 1\)</span>): the 1D factor <span class="math inline">\(N_a(\xi)\)</span>.</li>
+<li><strong>Orange curve on the side wall</strong> (<span class="math inline">\(\xi = -1\)</span>): the 1D factor <span class="math inline">\(N_b(\eta)\)</span>.</li>
+<li><strong>Dashed slices</strong>: every cut through the surface is a 1D function times a constant, <span class="math inline">\(N_A(\xi,\eta_0) = N_b(\eta_0)\,N_a(\xi)\)</span> and <span class="math inline">\(N_A(\xi_0,\eta) = N_a(\xi_0)\,N_b(\eta)\)</span>.</li>
+<li><strong>Nodes</strong>: <span class="math inline">\(N_A = 1\)</span> at its own node (gold) and <span class="math inline">\(0\)</span> at every other node (black).</li>
 </ul>
+<p>Drag the 3D plot to rotate it; the view is kept when you change a slider. Hover over the surface or curves to read values.</p>
+<style>
+.tpb-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 28px;
+  padding:14px 16px;border:1px solid #dde1e7;border-radius:8px;background:#f8f9fb;margin-bottom:14px}
+.tpb-row{display:grid;grid-template-columns:110px 1fr 48px;align-items:center;gap:10px}
+.tpb-row output{font-family:monospace;text-align:right}
+.tpb-toggles{display:flex;flex-wrap:wrap;gap:4px 16px}
+.tpb-toggles label{display:flex;gap:5px;align-items:center}
+.tpb-readout{font-family:monospace;font-size:0.9em;margin:4px 0 0}
+.tpb-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:800px){.tpb-pair{grid-template-columns:1fr}}
+</style>
+
+<div class="tpb-controls">
+  <div>
+    <div class="tpb-row"><label for="pxi">p<sub>ξ</sub> (degree)</label><input id="pxi" type="range" min="1" max="6" step="1" value="2"><output id="pxi_o"></output></div>
+    <div class="tpb-row"><label for="peta">p<sub>η</sub> (degree)</label><input id="peta" type="range" min="1" max="6" step="1" value="2"><output id="peta_o"></output></div>
+  </div>
+  <div>
+    <div class="tpb-row"><label for="a">a (ξ index)</label><input id="a" type="range" min="0" max="2" step="1" value="1"><output id="a_o"></output></div>
+    <div class="tpb-row"><label for="b">b (η index)</label><input id="b" type="range" min="0" max="2" step="1" value="2"><output id="b_o"></output></div>
+  </div>
+  <div>
+    <div class="tpb-row"><label for="xi0">slice ξ<sub>0</sub></label><input id="xi0" type="range" min="-1" max="1" step="0.01" value="0.3"><output id="xi0_o"></output></div>
+    <div class="tpb-row"><label for="eta0">slice η<sub>0</sub></label><input id="eta0" type="range" min="-1" max="1" step="0.01" value="-0.4"><output id="eta0_o"></output></div>
+  </div>
+  <div class="tpb-toggles">
+    <label><input type="checkbox" id="t_walls" checked=""> 1D factors on walls</label>
+    <label><input type="checkbox" id="t_slices" checked=""> slices</label>
+    <label><input type="checkbox" id="t_nodes" checked=""> nodes</label>
+    <label><input type="checkbox" id="t_others" checked=""> other 1D bases</label>
+    <label><input type="checkbox" id="t_mesh"> surface mesh lines</label>
+  </div>
 </div>
-<div class="step">
-<p>The first of these was written out at the end of Class 4 but not worked through in class, so it is carried over here; the rest of this class takes the other two.</p>
-</div>
-<section id="weak-form-rightarrow-strong-form" class="level1" data-number="6">
-<h1 data-number="6"><span class="header-section-number">6</span> Weak form <span class="math inline">\(\Rightarrow\)</span> strong form</h1>
-<p>Run the previous class’s steps in <strong>reverse</strong>, starting from <span class="math inline">\((\mathrm{W})\)</span> written in multivariate-calculus form:</p>
-<div class="derivation">
-<p><span class="math display">\[
-\int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega
-= \int_\Omega wf\;d\Omega + \int_{\Gamma_h} wh\;d\Gamma
-\]</span></p>
-</div>
-<div class="step">
-<p>Recall <span class="math inline">\(w(x) = 0\)</span> on <span class="math inline">\(\Gamma_g\)</span>, and <span class="math inline">\(\Gamma_g \cup \Gamma_h = \Gamma\)</span>, so the right-hand boundary term can be extended to the whole boundary <span class="math inline">\(\Gamma\)</span> without changing anything:</p>
-</div>
-<div class="derivation">
-<p><span class="math display">\[
-\int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega
-= \int_\Omega wf\;d\Omega + \int_{\Gamma} wh\;d\Gamma
-\qquad\Longrightarrow\qquad
-0 = \int_\Omega \left(wf - \nabla w\cdot\underline{\underline{K}}\nabla u\right) d\Omega
-    + \int_\Gamma wh\;d\Gamma
-\]</span></p>
-</div>
-<p>Now run the <strong>Divergence Theorem</strong> in reverse — the same identity used last time, applied to pull <span class="math inline">\(\nabla w \cdot \underline{\underline{K}}\nabla u\)</span> back into a divergence:</p>
-<div class="derivation">
-<p><span class="math display">\[
-0 = \int_\Omega \left(wf + w\,\nabla\cdot\left(\underline{\underline{K}}\nabla u\right)\right) d\Omega
-    + \int_\Gamma \left(wh - w\left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n}\right)d\Gamma
-\]</span></p>
-</div>
-<div class="step">
-<p>Now, the above holds for <strong>every</strong> <span class="math inline">\(w \in \mathcal{V}\)</span>. This freedom to choose <span class="math inline">\(w\)</span> is what lets us tease the two boundary conditions apart, using the <strong>fundamental lemma of the calculus of variations</strong>: if <span class="math inline">\(\int_\Omega \beta\,\phi\;d\Omega = 0\)</span> for every admissible <span class="math inline">\(\phi \ge 0\)</span>, then <span class="math inline">\(\beta = 0\)</span> everywhere <span class="math inline">\(\phi\)</span> can be positive.</p>
-</div>
-<section id="recovering-the-pde-on-omega" class="level2" data-number="6.1">
-<h2 data-number="6.1" class="anchored" data-anchor-id="recovering-the-pde-on-omega"><span class="header-section-number">6.1</span> Recovering the PDE on <span class="math inline">\(\Omega\)</span></h2>
-<p>Pick <span class="math inline">\(w = \left[f + \nabla\cdot(\underline{\underline{K}}\nabla u)\right]\phi\)</span> for some smooth <span class="math inline">\(\phi\)</span> with <span class="math inline">\(\phi &gt; 0\)</span> on <span class="math inline">\(\Omega\)</span> and <span class="math inline">\(\phi = 0\)</span> on <span class="math inline">\(\Gamma\)</span> (so that <span class="math inline">\(w \in \mathcal{V} \cap H^1(\Omega)\)</span>). This choice makes the boundary integral vanish identically, leaving</p>
-<div class="derivation">
-<p><span class="math display">\[
-0 = \int_\Omega \left(f + \nabla\cdot\left(\underline{\underline{K}}\nabla u\right)\right)^2 \phi\;d\Omega
-\]</span></p>
-</div>
-<div class="step">
-<p>But <span class="math inline">\(\phi &gt; 0\)</span> on <span class="math inline">\(\Omega\)</span> and <span class="math inline">\(\left(f + \nabla\cdot(\underline{\underline{K}}\nabla u)\right)^2 \ge 0\)</span> everywhere. An integral of a non-negative quantity that comes out to zero forces the integrand itself to be zero:</p>
-</div>
-<div class="derivation">
-<p><span class="math display">\[
-\Longrightarrow \qquad
-\left(f + \nabla\cdot\left(\underline{\underline{K}}\nabla u\right)\right)^2 = 0
-\qquad\Longrightarrow\qquad
-\boxed{-\nabla\cdot\left(\underline{\underline{K}}\nabla u\right) = f} \qquad \text{on } \Omega
-\]</span></p>
+
+<div id="plot3d" style="width:100%;height:640px;"></div>
+<section id="the-1d-factors" class="level2" data-number="11.1">
+<h2 data-number="11.1" class="anchored" data-anchor-id="the-1d-factors"><span class="header-section-number">11.1</span> The 1D factors</h2>
+<p>Each panel shows every 1D basis function of that degree (grey), the active one (solid), and the 2D slice along that direction (dashed), which is the active one scaled by the printed constant.</p>
+<div class="tpb-pair">
+  <div><div class="tpb-readout" id="ro_xi"></div><div id="plot_xi" style="width:100%;height:370px;"></div></div>
+  <div><div class="tpb-readout" id="ro_eta"></div><div id="plot_eta" style="width:100%;height:370px;"></div></div>
 </div>
 </section>
-<section id="recovering-the-flux-condition-on-gamma_h" class="level2" data-number="6.2">
-<h2 data-number="6.2" class="anchored" data-anchor-id="recovering-the-flux-condition-on-gamma_h"><span class="header-section-number">6.2</span> Recovering the flux condition on <span class="math inline">\(\Gamma_h\)</span></h2>
-<p>Next, pick <span class="math inline">\(w = \left[h - \left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n}\right]\psi\)</span> for some smooth <span class="math inline">\(\psi\)</span> with <span class="math inline">\(\psi &gt; 0\)</span> on <span class="math inline">\(\Gamma_h\)</span> and <span class="math inline">\(\psi = 0\)</span> on <span class="math inline">\(\Gamma_g\)</span>. Because the PDE result above already makes the domain integral vanish for <strong>any</strong> <span class="math inline">\(w\)</span>, this choice leaves only</p>
-<div class="derivation">
+<section id="strides-from-ab-to-a" class="level2" data-number="11.2">
+<h2 data-number="11.2" class="anchored" data-anchor-id="strides-from-ab-to-a"><span class="header-section-number">11.2</span> Strides: from <span class="math inline">\((a,b)\)</span> to <span class="math inline">\(A\)</span></h2>
+<p>Looking straight down on the element, the basis functions sit on a <span class="math inline">\((p_\xi+1)\times(p_\eta+1)\)</span> grid of nodes. Each direction gets a stride, <span class="math inline">\(s_0 = 1\)</span> and <span class="math inline">\(s_i = \prod_{j=0}^{i-1}(p_j+1)\)</span>, so</p>
 <p><span class="math display">\[
-0 = \int_{\Gamma_h} \left[h - \left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n}\right]^2 \psi\;d\Gamma
+A = \sum_i a_i\,s_i = a\cdot 1 + b\,(p_\xi+1)\;\big[\,+\;c\,(p_\xi+1)(p_\eta+1)\text{ in 3D}\big],
+\qquad a_i = (A \,/\!/\, s_i) \bmod (p_i+1).
 \]</span></p>
+<p>A step in <span class="math inline">\(\xi\)</span> changes <span class="math inline">\(A\)</span> by 1; a step in <span class="math inline">\(\eta\)</span> jumps a whole row, <span class="math inline">\(p_\xi+1\)</span>. The plot is the current <span class="math inline">\(N_A\)</span> seen from above, with each node labelled by its <span class="math inline">\(A\)</span>. Click any node to select that basis function; the sliders and plots above follow.</p>
+<div class="tpb-pair">
+  <div id="plot_top" style="width:100%;height:440px;"></div>
+  <div>
+    
+<table class="table table-sm caption-top" style="font-family:monospace;max-width:420px">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">direction</th>
+<th data-quarto-table-cell-role="th">index</th>
+<th data-quarto-table-cell-role="th">stride s<sub>i</sub></th>
+</tr>
+</thead>
+<tbody id="stride_rows">
+</tbody>
+</table>
+
+    <div class="tpb-readout" id="ro_stride" style="white-space:pre"></div>
+  </div>
 </div>
-<div class="step">
-<p>By the same argument — <span class="math inline">\(\psi &gt; 0\)</span> on <span class="math inline">\(\Gamma_h\)</span>, and the bracketed quantity is squared —</p>
-</div>
-<div class="derivation">
-<p><span class="math display">\[
-\Longrightarrow \qquad
-\boxed{\left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n} = h} \qquad \text{on } \Gamma_h
-\]</span></p>
-</div>
+
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+
+// equally spaced points on [-1, 1]
+const lin = n => Array.from({length: n}, (_, i) => -1 + 2*i/(n-1));
+const S = lin(61);
+
+// 1D Lagrange basis function a of degree p through equally spaced points
+function lagrange(p, a, x){
+  const pts = lin(p + 1);
+  let v = 1;
+  for (let j = 0; j <= p; j++) if (j !== a) v *= (x - pts[j])/(pts[a] - pts[j]);
+  return v;
+}
+
+const colors = {xi:"#1f5fbf", eta:"#c2410c", node:"#e0a800", ink:"#18202b",
+                grey:"#9aa3ae", neg:"#2f6db5", mid:"#f2f2f0", pos:"#b8322a"};
+
+function render(){
+  const pxi = +$("pxi").value, peta = +$("peta").value;
+  // keep a <= p_xi and b <= p_eta
+  $("a").max = pxi; $("b").max = peta;
+  if (+$("a").value > pxi) $("a").value = pxi;
+  if (+$("b").value > peta) $("b").value = peta;
+  const a = +$("a").value, b = +$("b").value;
+  const xi0 = +$("xi0").value, eta0 = +$("eta0").value;
+  const on = {walls:$("t_walls").checked, slices:$("t_slices").checked, nodes:$("t_nodes").checked,
+              others:$("t_others").checked, mesh:$("t_mesh").checked};
+  const c = colors;
+  const A = a + (pxi + 1)*b;
+  for (const id of ["pxi","peta","a","b"]) $(id + "_o").textContent = $(id).value;
+  $("xi0_o").textContent = xi0.toFixed(2); $("eta0_o").textContent = eta0.toFixed(2);
+
+  const Na = S.map(x => lagrange(pxi, a, x));
+  const Nb = S.map(y => lagrange(peta, b, y));
+  const Z = Nb.map(nb => Na.map(na => nb*na));      // Z[j][i] = N_b(eta_j) N_a(xi_i)
+  const Na0 = lagrange(pxi, a, xi0), Nb0 = lagrange(peta, b, eta0);
+
+  // largest magnitude over the surface and all 1D functions, so N = 0
+  // sits at the middle of the color scale
+  let zabs = 1;
+  for (const r of Z) for (const v of r) zabs = Math.max(zabs, Math.abs(v));
+  for (let k = 0; k <= pxi; k++) for (const x of S) zabs = Math.max(zabs, Math.abs(lagrange(pxi, k, x)));
+  for (let k = 0; k <= peta; k++) for (const y of S) zabs = Math.max(zabs, Math.abs(lagrange(peta, k, y)));
+
+  // ---------- 3D surface with the 1D factors, slices and nodes ----------
+  const ones = S.map(() => 1), negs = S.map(() => -1);
+  const traces = [{
+    type:"surface", x:S, y:S, z:Z, cmin:-zabs, cmax:zabs,
+    colorscale:[[0, c.neg], [0.5, c.mid], [1, c.pos]], opacity:0.93,
+    colorbar:{thickness:10, len:0.6},
+    contours:{x:{show:on.mesh, color:"#555", start:-1, end:1, size:0.1},
+              y:{show:on.mesh, color:"#555", start:-1, end:1, size:0.1}},
+    hovertemplate:"ξ=%{x:.2f}<br>η=%{y:.2f}<br>N=%{z:.4f}<extra></extra>", name:"N_A"
+  }];
+  if (on.walls){
+    if (on.others){
+      for (let k = 0; k <= pxi; k++) if (k !== a)
+        traces.push({type:"scatter3d", mode:"lines", x:S, y:ones, z:S.map(x => lagrange(pxi, k, x)),
+          line:{color:c.xi, width:2}, opacity:0.25, hoverinfo:"skip", showlegend:false});
+      for (let k = 0; k <= peta; k++) if (k !== b)
+        traces.push({type:"scatter3d", mode:"lines", x:negs, y:S, z:S.map(y => lagrange(peta, k, y)),
+          line:{color:c.eta, width:2}, opacity:0.25, hoverinfo:"skip", showlegend:false});
+    }
+    traces.push({type:"scatter3d", mode:"lines", x:S, y:ones, z:Na,
+      line:{color:c.xi, width:7}, name:`N${a}(ξ) on wall η = 1`});
+    traces.push({type:"scatter3d", mode:"lines", x:negs, y:S, z:Nb,
+      line:{color:c.eta, width:7}, name:`N${b}(η) on wall ξ = −1`});
+  }
+  if (on.slices){
+    traces.push({type:"scatter3d", mode:"lines", x:S, y:S.map(() => eta0), z:Na.map(v => Nb0*v),
+      line:{color:c.xi, width:6, dash:"dash"}, name:`slice η = ${eta0.toFixed(2)}`});
+    traces.push({type:"scatter3d", mode:"lines", x:S.map(() => xi0), y:S, z:Nb.map(v => Na0*v),
+      line:{color:c.eta, width:6, dash:"dash"}, name:`slice ξ = ${xi0.toFixed(2)}`});
+  }
+  if (on.nodes){
+    const px = lin(pxi + 1), py = lin(peta + 1), nx = [], ny = [], nz = [], txt = [];
+    for (let j = 0; j <= peta; j++) for (let i = 0; i <= pxi; i++){
+      if (i === a && j === b) continue;
+      nx.push(px[i]); ny.push(py[j]); nz.push(0); txt.push(`A=${i + (pxi + 1)*j} (a=${i}, b=${j})`);
+    }
+    traces.push({type:"scatter3d", mode:"markers", x:nx, y:ny, z:nz, text:txt,
+      marker:{size:4, color:c.ink}, name:"nodes (N = 0)",
+      hovertemplate:"%{text}<br>N_A = 0<extra></extra>"});
+    traces.push({type:"scatter3d", mode:"markers", x:[px[a]], y:[py[b]], z:[1],
+      marker:{size:7, color:c.node, line:{color:c.ink, width:1}}, name:`node A=${A} (N = 1)`});
+  }
+  const zmin = Math.min(-0.35, -0.4*zabs) - 0.05;
+  Plotly.react("plot3d", traces, {
+    uirevision:"keep-camera",
+    title:{text:`N<sub>${A}</sub>(ξ,η) = N<sub>${a}</sub>(ξ) · N<sub>${b}</sub>(η),   p<sub>ξ</sub>=${pxi}, p<sub>η</sub>=${peta}`},
+    margin:{l:0, r:0, t:40, b:0}, legend:{x:0, y:1},
+    scene:{xaxis:{title:"ξ", range:[-1, 1]}, yaxis:{title:"η", range:[-1, 1]},
+      zaxis:{title:"N", range:[zmin, zabs + 0.05]},
+      aspectmode:"manual", aspectratio:{x:1, y:1, z:0.75},
+      camera:{eye:{x:-1.45, y:-1.65, z:0.95}}}
+  }, {responsive:true, displaylogo:false});
+
+  // ---------- 1D panels ----------
+  draw1D("plot_xi", pxi, a, xi0, Nb0, "ξ", "η", c.xi, on);
+  draw1D("plot_eta", peta, b, eta0, Na0, "η", "ξ", c.eta, on);
+  $("ro_xi").textContent = `N${A}(ξ, η₀=${eta0.toFixed(2)}) = N${b}(η₀)·N${a}(ξ) = ${Nb0.toFixed(4)}·N${a}(ξ)`;
+  $("ro_eta").textContent = `N${A}(ξ₀=${xi0.toFixed(2)}, η) = N${a}(ξ₀)·N${b}(η) = ${Na0.toFixed(4)}·N${b}(η)`;
+
+  // ---------- top-down view with strides ----------
+  drawTop(pxi, peta, a, b, A, Z, zabs);
+}
+
+// all degree-p basis functions, the active one k highlighted, and the
+// 2D slice (active one times scale) dashed
+function draw1D(div, p, k, s0, scale, v, ov, color, on){
+  const tr = [];
+  if (on.others)
+    for (let j = 0; j <= p; j++) if (j !== k)
+      tr.push({x:S, y:S.map(x => lagrange(p, j, x)), mode:"lines",
+        line:{color:colors.grey, width:1.2}, name:`N${j}(${v})`, showlegend:false});
+  const act = S.map(x => lagrange(p, k, x));
+  tr.push({x:S, y:act, mode:"lines", line:{color, width:3}, name:`N${k}(${v})`});
+  if (on.slices)
+    tr.push({x:S, y:act.map(y => scale*y), mode:"lines", line:{color, width:2, dash:"dash"},
+      name:`N_A at ${ov}₀ (= ${scale.toFixed(3)}·N${k}(${v}))`});
+  const pts = lin(p + 1);
+  tr.push({x:pts, y:pts.map((_, i) => i === k ? 1 : 0), mode:"markers", showlegend:false,
+    marker:{size:pts.map((_, i) => i === k ? 11 : 7), color:pts.map((_, i) => i === k ? colors.node : colors.ink)}});
+  const shapes = on.slices ? [{type:"line", x0:s0, x1:s0, yref:"paper", y0:0, y1:1,
+    line:{color:colors.grey, width:1, dash:"dot"}}] : [];
+  Plotly.react(div, tr, {
+    title:{text:`1D factor in ${v} (degree ${p})`, font:{size:14}},
+    margin:{l:44, r:10, t:40, b:70}, shapes,
+    xaxis:{title:v, range:[-1.03, 1.03]}, legend:{orientation:"h", x:0, y:-0.3}
+  }, {responsive:true, displaylogo:false, displayModeBar:false});
+}
+
+// N_A seen from above, nodes labelled by global index A, with arrows
+// showing the stride in each direction from the selected node
+function drawTop(pxi, peta, a, b, A, Z, zabs){
+  const c = colors, px = lin(pxi + 1), py = lin(peta + 1);
+  const nx = [], ny = [], txt = [], cd = [], col = [], size = [];
+  for (let j = 0; j <= peta; j++) for (let i = 0; i <= pxi; i++){
+    const sel = (i === a && j === b);
+    nx.push(px[i]); ny.push(py[j]); txt.push(String(i + (pxi + 1)*j)); cd.push([i, j]);
+    col.push(sel ? c.node : c.ink); size.push(sel ? 16 : 9);
+  }
+  const traces = [
+    {type:"heatmap", x:S, y:S, z:Z, zmin:-zabs, zmax:zabs, zsmooth:"best",
+     colorscale:[[0, c.neg], [0.5, c.mid], [1, c.pos]], showscale:false, hoverinfo:"skip"},
+    {type:"scatter", mode:"markers+text", x:nx, y:ny, text:txt, customdata:cd,
+     textposition:"top right", textfont:{size:13, color:c.ink},
+     marker:{size, color:col, line:{color:"#fff", width:1.5}},
+     hovertemplate:"A=%{text}  (a=%{customdata[0]}, b=%{customdata[1]})<extra>click to select</extra>"}
+  ];
+  const arrow = (i, j, label, color) => ({x:px[i], y:py[j], ax:px[a], ay:py[b], xref:"x", yref:"y",
+    axref:"x", ayref:"y", showarrow:true, arrowhead:2, arrowwidth:2.5, arrowcolor:color, text:"",
+    standoff:9, startstandoff:9});
+  const note = (i, j, label, color, xs, ys) => ({x:(px[a] + px[i])/2, y:(py[b] + py[j])/2, text:label,
+    showarrow:false, font:{color, size:13}, xshift:xs, yshift:ys, bgcolor:"rgba(255,255,255,0.8)"});
+  const ann = [];
+  const ia = a < pxi ? a + 1 : a - 1, jb = b < peta ? b + 1 : b - 1;
+  ann.push(arrow(ia, b, "", c.xi), note(ia, b, (ia > a ? "+" : "−") + "1", c.xi, 0, -14));
+  ann.push(arrow(a, jb, "", c.eta), note(a, jb, (jb > b ? "+" : "−") + (pxi + 1), c.eta, 16, 0));
+  Plotly.react("plot_top", traces, {
+    title:{text:`top-down view of N<sub>${A}</sub>`, font:{size:14}},
+    margin:{l:40, r:10, t:40, b:40}, annotations:ann, showlegend:false,
+    xaxis:{title:"ξ", range:[-1.12, 1.12], zeroline:false, showgrid:false},
+    yaxis:{title:"η", range:[-1.15, 1.25], zeroline:false, showgrid:false, scaleanchor:"x"}
+  }, {responsive:true, displaylogo:false, displayModeBar:false});
+
+  const s1 = pxi + 1, s2 = (pxi + 1)*(peta + 1);
+  $("stride_rows").innerHTML =
+    `<tr><td>ξ</td><td>a = ${a}</td><td>s₀ = 1</td></tr>` +
+    `<tr><td>η</td><td>b = ${b}</td><td>s₁ = p_ξ+1 = ${s1}</td></tr>` +
+    `<tr style="opacity:.55"><td>ζ (3D)</td><td>c</td><td>s₂ = (p_ξ+1)(p_η+1) = ${s2}</td></tr>`;
+  $("ro_stride").textContent =
+    `A = ${a}·1 + ${b}·${s1} = ${A}\n` +
+    `a = (${A} // 1) mod ${pxi + 1} = ${a}\n` +
+    `b = (${A} // ${s1}) mod ${peta + 1} = ${b}\n` +
+    `Python:  r, a = divmod(${A}, ${pxi + 1})  ->  r = ${Math.floor(A/(pxi + 1))}, a = ${a}\n` +
+    `         r, b = divmod(${Math.floor(A/(pxi + 1))}, ${peta + 1})  ->  r = 0, b = ${b}`;
+}
+
+for (const id of ["pxi","peta","a","b","xi0","eta0"]) $(id).addEventListener("input", render);
+for (const id of ["t_walls","t_slices","t_nodes","t_others","t_mesh"]) $(id).addEventListener("change", render);
+render();
+$("plot_top").on("plotly_click", e => {
+  const pt = e.points.find(q => q.customdata);
+  if (!pt) return;
+  $("a").value = pt.customdata[0]; $("b").value = pt.customdata[1];
+  render();
+});
+})();
+</script>
 </section>
-<section id="summarizing" class="level2" data-number="6.3">
-<h2 data-number="6.3" class="anchored" data-anchor-id="summarizing"><span class="header-section-number">6.3</span> Summarizing</h2>
-<div class="derivation">
-<p><span class="math display">\[
--\nabla\cdot\left(\underline{\underline{K}}\nabla u\right) = f \quad \text{on } \Omega
-\qquad\text{(from the domain argument)}
-\]</span></p>
-<p><span class="math display">\[
-\left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n} = h \quad \text{on } \Gamma_h
-\qquad\text{(from the boundary argument)}
-\]</span></p>
-<p><span class="math display">\[
-u(x) = g(x) \quad \text{on } \Gamma_g
-\qquad\text{(because } u \in \mathcal{S} \text{ by assumption)}
-\]</span></p>
-</div>
-<div class="step">
-<p>In sum: if we pick <strong>two really, really good choices</strong> for <span class="math inline">\(w \in \mathcal{V}\)</span>, we exactly recover the strong form for <span class="math inline">\(u \in \mathcal{S}\)</span>. Together with last class’s argument, this shows <span class="math inline">\((\mathrm{S}) \Leftrightarrow (\mathrm{W})\)</span> — the two formulations are truly equivalent, not merely “the weak form is an approximation.”</p>
-</div>
-</section>
-</section>
-<section id="the-galerkin-method" class="level1" data-number="7">
-<h1 data-number="7"><span class="header-section-number">7</span> The Galerkin method</h1>
-<p>Typically, we don’t know the really, really good choices for <span class="math inline">\(w\)</span> to test <span class="math inline">\(u\)</span> against — if we did, we’d already know the solution to our problem, most likely. Instead, we want to pick <strong>“good” choices that can approximate with arbitrary accuracy.</strong></p>
-<div class="step notes">
-<ul>
-<li>sines and cosines <span class="math inline">\(\leftarrow\)</span> Fourier series</li>
-<li>piecewise polynomials of a fixed degree</li>
-</ul>
-</div>
-<p>We want functions that are <strong>“dense”</strong> in a <strong>“complete”</strong> space.</p>
-<div class="step notes">
-<ul>
-<li><strong>Complete:</strong> we take limits of functions and still end up with a function in the space. (<span class="math inline">\(C^\infty\)</span> functions are not complete, nor are <span class="math inline">\(C^0\)</span>; <span class="math inline">\(H^1(\Omega)\)</span> and <span class="math inline">\(L^2(\Omega)\)</span> are complete.)</li>
-<li><strong>Dense:</strong> any function in the space is arbitrarily close to our specified choice of function.</li>
-</ul>
-</div>
-<div class="step">
-<p>Piecewise polynomials are “complete” (in the sense we want) — think of a computer screen and pixels.</p>
-</div>
-<div id="fig-c5-dense" class="quarto-float quarto-figure quarto-figure-center anchored">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-c5-dense-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="generated_images/Class5/C5_Fig1_PiecewiseApprox.png" class="img-fluid figure-img" style="width:95.0%">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c5-dense-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;7.1: Piecewise-constant approximations of a smooth target: as the number of pieces grows, the approximation gets arbitrarily close — this is “density.”
-</figcaption>
-</figure>
-</div>
-</section>
-<section id="the-galerkin-form" class="level1" data-number="8">
-<h1 data-number="8"><span class="header-section-number">8</span> The Galerkin form</h1>
-<div class="derivation">
-<p><span class="math display">\[
-(\mathrm{G}) \qquad
-\begin{array}{l}
-\text{Given } f,\, g,\, h,\, \underline{\underline{K}} \text{ as in } (\mathrm{W}),
-\text{ find } u^h = v^h + g^h, \text{ with } v^h \in \mathcal{V}^h \subset \mathcal{V},\;
-g^h \in \mathcal{S}^h \subset \mathcal{S} \\[6pt]
-\text{such that } \forall\, w^h \in \mathcal{V}^h \subset \mathcal{V}, \\[6pt]
-\qquad \displaystyle\int_\Omega w^h_{,i}\,K_{ij}\,u^h_{,j}\;d\Omega
-= \int_\Omega w^h f\;d\Omega + \int_{\Gamma_h} w^h h\;d\Gamma
-\end{array}
-\]</span></p>
-</div>
-<p>Typically, we choose</p>
-<div class="derivation">
-<p><span class="math display">\[
-v^h = \sum_A \underset{\substack{\uparrow \\ \text{coefficients}}}{d_A}\;
-      \underset{\substack{\uparrow \\ \text{"basis" functions}}}{N_A(x)}
-\qquad\qquad
-g^h(x) = \sum_B g_B\,N_B(x)
-\]</span></p>
-</div>
-<div class="step">
-<p>where the <span class="math inline">\(N_B\)</span> appearing in <span class="math inline">\(g^h\)</span> are <strong>nonzero on <span class="math inline">\(\Gamma_g\)</span></strong> and <strong>zero away from <span class="math inline">\(\Gamma_g\)</span></strong> — they are exactly the basis functions that carry the known boundary data.</p>
-</div>
-<div class="step">
-<p>Next class picks up with this idea concretely: <strong>Lagrange polynomials</strong> as a basis for piecewise-polynomial spaces.</p>
-</div>
+<section id="things-to-try" class="level2" data-number="11.3">
+<h2 data-number="11.3" class="anchored" data-anchor-id="things-to-try"><span class="header-section-number">11.3</span> Things to try</h2>
+<ol type="1">
+<li>Set <span class="math inline">\(p_\xi = p_\eta = 1\)</span>. Every basis function is a bilinear “tent corner”, and each slice is a straight line.</li>
+<li>Set <span class="math inline">\(p_\xi = p_\eta = 2\)</span> and pick the center node <span class="math inline">\((a,b) = (1,1)\)</span>. This is the interior “bubble” function; it is zero on the whole boundary of the element.</li>
+<li>Pick an edge node such as <span class="math inline">\((a,b) = (1,0)\)</span> and move <span class="math inline">\(\eta_0\)</span> onto <span class="math inline">\(\eta = 0\)</span> or <span class="math inline">\(\eta = 1\)</span>. The dashed <span class="math inline">\(\xi\)</span>-slice collapses to zero, because <span class="math inline">\(N_0(\eta)\)</span> vanishes at the other <span class="math inline">\(\eta\)</span> nodes.</li>
+<li>Raise the degree to 5 or 6 and look at a basis function next to the boundary. The large oscillations in the 1D factors (the Runge effect) carry straight over into the 2D surface.</li>
+</ol>
+<!-- A matplotlib version with the same controls is in `Tensor_Product_Basis_Viewer.py`. -->
 
 
 </section>
@@ -889,15 +993,15 @@ g^h(x) = \sum_B g_B\,N_B(x)
     }
   });
   </script>
-<nav class="page-navigation">
+<nav class="page-navigation column-body">
   <div class="nav-page nav-page-previous">
-      <a href="../chapters/4_Class.html" class="pagination-link" aria-label="Class 4: Strong and Weak Forms of the Boundary Value Problem">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Class 4: Strong and Weak Forms of the Boundary Value Problem</span></span>
+      <a href="../chapters/10_Class.html" class="pagination-link" aria-label="Class 10: Assembly with the IEN Array, and Quadrature on an Element">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Class 10: Assembly with the IEN Array, and Quadrature on an Element</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../chapters/6_Class.html" class="pagination-link" aria-label="Class 6: Basis Functions and Lagrange Polynomials">
-        <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Class 6: Basis Functions and Lagrange Polynomials</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../chapters/3_Support_FunctionSpaces.html" class="pagination-link" aria-label="Support: Norms and Function Spaces">
+        <span class="nav-page-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

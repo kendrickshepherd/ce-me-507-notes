@@ -48,7 +48,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-a31abcdf578e1f292f7262060f8a409d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-5a6c5cd077c1ead4086784ad1389866e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -214,6 +214,12 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Class 10: Assembly with the IEN Array, and Quadrature on an Element</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Class 11: Tensor-Product Basis Functions in 2D</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
@@ -267,9 +273,16 @@ window.Quarto = {
   <ul>
   <li><a href="#a-one-dimensional-example" id="toc-a-one-dimensional-example" class="nav-link active" data-scroll-target="#a-one-dimensional-example"><span class="header-section-number">9</span> A one-dimensional example</a>
   <ul class="collapse">
-  <li><a href="#simplifying-based-on-the-supports-of-the-functions" id="toc-simplifying-based-on-the-supports-of-the-functions" class="nav-link" data-scroll-target="#simplifying-based-on-the-supports-of-the-functions"><span class="header-section-number">9.1</span> Simplifying based on the supports of the functions</a></li>
+  <li><a href="#the-basis-functions-on-this-mesh" id="toc-the-basis-functions-on-this-mesh" class="nav-link" data-scroll-target="#the-basis-functions-on-this-mesh"><span class="header-section-number">9.1</span> The basis functions on this mesh</a></li>
+  <li><a href="#the-derivatives-of-the-basis-functions" id="toc-the-derivatives-of-the-basis-functions" class="nav-link" data-scroll-target="#the-derivatives-of-the-basis-functions"><span class="header-section-number">9.2</span> The derivatives of the basis functions</a></li>
+  <li><a href="#writing-out-underlineunderlinekunderlined-underlinef" id="toc-writing-out-underlineunderlinekunderlined-underlinef" class="nav-link" data-scroll-target="#writing-out-underlineunderlinekunderlined-underlinef"><span class="header-section-number">9.3</span> Writing out <span class="math inline">\(\underline{\underline{K}}\,\underline{d} = \underline{F}\)</span></a></li>
+  <li><a href="#simplifying-based-on-the-supports-of-the-functions" id="toc-simplifying-based-on-the-supports-of-the-functions" class="nav-link" data-scroll-target="#simplifying-based-on-the-supports-of-the-functions"><span class="header-section-number">9.4</span> Simplifying based on the supports of the functions</a></li>
+  <li><a href="#evaluating-the-entries" id="toc-evaluating-the-entries" class="nav-link" data-scroll-target="#evaluating-the-entries"><span class="header-section-number">9.5</span> Evaluating the entries</a></li>
   </ul></li>
-  <li><a href="#the-local-view-appearance-on-a-single-element" id="toc-the-local-view-appearance-on-a-single-element" class="nav-link" data-scroll-target="#the-local-view-appearance-on-a-single-element"><span class="header-section-number">10</span> The local view: appearance on a single element</a></li>
+  <li><a href="#the-local-view-appearance-on-a-single-element" id="toc-the-local-view-appearance-on-a-single-element" class="nav-link" data-scroll-target="#the-local-view-appearance-on-a-single-element"><span class="header-section-number">10</span> The local view: appearance on a single element</a>
+  <ul class="collapse">
+  <li><a href="#the-element-stiffness-matrix" id="toc-the-element-stiffness-matrix" class="nav-link" data-scroll-target="#the-element-stiffness-matrix"><span class="header-section-number">10.1</span> The element stiffness matrix</a></li>
+  </ul></li>
   <li><a href="#numerical-quadrature" id="toc-numerical-quadrature" class="nav-link" data-scroll-target="#numerical-quadrature"><span class="header-section-number">11</span> Numerical quadrature</a></li>
   </ul>
 </nav>
@@ -299,7 +312,8 @@ window.Quarto = {
 <p>We now know</p>
 <div class="derivation">
 <p><span class="math display">\[
-(\mathrm{S}) \Longleftrightarrow (\mathrm{W}) \;\xRightarrow{\text{approximate}}\; (\mathrm{G})
+(\mathrm{S}) \Longleftrightarrow (\mathrm{W})
+\;\overset{\text{approximate}}{\Longrightarrow}\; (\mathrm{G})
 \;\Longrightarrow\; (\mathrm{M})
 \]</span></p>
 </div>
@@ -307,11 +321,12 @@ window.Quarto = {
 \mathbb{R}^{n_{sd}\times n_{sd}}\)</span>, find <span class="math inline">\(\underline{d}\)</span> such that <span class="math inline">\(\underline{\underline{K}}\,\underline{d} = \underline{F}\)</span>, where</p>
 <div class="derivation">
 <p><span class="math display">\[
-K_{AB} = \int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega
-\qquad\qquad
-F_A = \int_\Omega N_A f\;d\Omega + \int_{\Gamma_h} N_A h\;d\Gamma
-      - \int_\Omega \nabla N_A \cdot \underline{\underline{K}}
-        \left(\sum_{B \in \Gamma_g} g_B N_B\right) d\Omega
+\begin{aligned}
+K_{AB} &amp;= \int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega \\[6pt]
+F_A &amp;= \int_\Omega N_A f\;d\Omega + \int_{\Gamma_h} N_A h\;d\Gamma \\[2pt]
+    &amp;\qquad - \int_\Omega \nabla N_A \cdot \underline{\underline{K}}
+      \left(\sum_{B \in \Gamma_g} g_B N_B\right) d\Omega
+\end{aligned}
 \]</span></p>
 </div>
 <p>For a given problem, this becomes a matrix equation with <span class="math inline">\(n_{unk}\)</span> rows and <span class="math inline">\(n_{unk}\)</span> columns (note the symmetry — this will be shown to be sparse).</p>
@@ -327,6 +342,76 @@ Figure&nbsp;9.1: Three elements, lengths <span class="math inline">\(\ell_0+\ell
 </figcaption>
 </figure>
 </div>
+<section id="the-basis-functions-on-this-mesh" class="level2" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="the-basis-functions-on-this-mesh"><span class="header-section-number">9.1</span> The basis functions on this mesh</h2>
+<p>The four nodes sit at <span class="math inline">\(x_0 = 0\)</span>, <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span>, and <span class="math inline">\(x_3 = L\)</span>, and the three elements between them have lengths <span class="math inline">\(\ell_e = x_{e+1} - x_e\)</span>. Each node carries one basis function: <span class="math inline">\(N_A\)</span> is the piecewise-linear function that is <span class="math inline">\(1\)</span> at its own node and <span class="math inline">\(0\)</span> at every other node,</p>
+<div class="derivation">
+<p><span class="math display">\[
+N_A(x_B) = \delta_{AB} =
+\begin{cases} 1, &amp; A = B \\ 0, &amp; A \neq B \end{cases}
+\]</span></p>
+</div>
+<div class="step">
+<p>“Linear on each element”, plus that one requirement, fixes all four functions completely.</p>
+</div>
+<div id="fig-c8-basis" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c8-basis-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class8/C8_Fig2_BasisFunctions.png" class="img-fluid figure-img" style="width:84.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c8-basis-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.2: One basis function per plot, on the mesh of <a href="#fig-c8-setup" class="quarto-xref">Figure&nbsp;<span>9.1</span></a>. Each <span class="math inline">\(N_A\)</span> rises to <span class="math inline">\(1\)</span> at its own node, falls back to <span class="math inline">\(0\)</span> at its neighbours, and is zero everywhere else. The two end functions, <span class="math inline">\(N_0\)</span> and <span class="math inline">\(N_3\)</span>, are half of a hat.
+</figcaption>
+</figure>
+</div>
+<p>Written out, each one is a straight line on every element it touches:</p>
+<div class="derivation">
+<p><span class="math display">\[
+N_A(x) =
+\begin{cases}
+\dfrac{x - x_{A-1}}{\ell_{A-1}}, &amp; x_{A-1} \le x \le x_A \quad (\text{if } A &gt; 0) \\[10pt]
+\dfrac{x_{A+1} - x}{\ell_A}, &amp; x_A \le x \le x_{A+1} \quad (\text{if } A &lt; 3) \\[10pt]
+0, &amp; \text{otherwise.}
+\end{cases}
+\]</span></p>
+</div>
+<p>The end functions, <span class="math inline">\(N_0\)</span> and <span class="math inline">\(N_3\)</span>, simply lose one of the two branches, because there is no element on the far side of their node.</p>
+<div class="step">
+<p>Two properties to keep hold of: each <span class="math inline">\(N_A\)</span> is <strong>zero outside the one or two elements that touch node <span class="math inline">\(A\)</span></strong> (this is what will make <span class="math inline">\(\underline{\underline{K}}\)</span> sparse), and at every <span class="math inline">\(x\)</span> the four functions <strong>sum to one</strong>, <span class="math inline">\(\sum_A N_A(x) = 1\)</span>.</p>
+</div>
+</section>
+<section id="the-derivatives-of-the-basis-functions" class="level2" data-number="9.2">
+<h2 data-number="9.2" class="anchored" data-anchor-id="the-derivatives-of-the-basis-functions"><span class="header-section-number">9.2</span> The derivatives of the basis functions</h2>
+<p>Each branch above is linear in <span class="math inline">\(x\)</span>, so each derivative is a <strong>constant on each element</strong>: differentiating <span class="math inline">\((x - x_{A-1})/\ell_{A-1}\)</span> gives <span class="math inline">\(+1/\ell_{A-1}\)</span>, and differentiating <span class="math inline">\((x_{A+1} - x)/\ell_A\)</span> gives <span class="math inline">\(-1/\ell_A\)</span>. The shorter the element, the steeper the ramp and the larger that constant.</p>
+<div class="derivation">
+<p><span class="math display">\[
+N_{A,x}(x) =
+\begin{cases}
++\dfrac{1}{\ell_{A-1}}, &amp; x_{A-1} &lt; x &lt; x_A \quad (\text{if } A &gt; 0) \\[10pt]
+-\dfrac{1}{\ell_A}, &amp; x_A &lt; x &lt; x_{A+1} \quad (\text{if } A &lt; 3) \\[10pt]
+0, &amp; \text{otherwise.}
+\end{cases}
+\]</span></p>
+</div>
+<div id="fig-c8-derivs" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c8-derivs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class8/C8_Fig3_Derivatives.png" class="img-fluid figure-img" style="width:84.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c8-derivs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9.3: The derivative of each basis function: one constant per element, jumping at the nodes. The sign flips where the hat turns from rising to falling, and the size is set by the length of the element.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li>At the nodes themselves the derivative jumps and is undefined. Those are finitely many points, so no integral ever notices them — which is precisely why the weak form, needing only one derivative, is the right setting for these functions.</li>
+<li>On any one element the four values add to zero. That follows from <span class="math inline">\(\sum_A N_A = 1\)</span>: differentiate both sides, and <span class="math inline">\(\sum_A N_{A,x} = 0\)</span> on every element. It is also why the all-node matrix below is singular until a Dirichlet value is imposed.</li>
+</ul>
+</div>
+</section>
+<section id="writing-out-underlineunderlinekunderlined-underlinef" class="level2" data-number="9.3">
+<h2 data-number="9.3" class="anchored" data-anchor-id="writing-out-underlineunderlinekunderlined-underlinef"><span class="header-section-number">9.3</span> Writing out <span class="math inline">\(\underline{\underline{K}}\,\underline{d} = \underline{F}\)</span></h2>
 <div class="derivation">
 <p><span class="math display">\[
 \begin{bmatrix}
@@ -336,15 +421,21 @@ Figure&nbsp;9.1: Three elements, lengths <span class="math inline">\(\ell_0+\ell
 \end{bmatrix}
 \begin{bmatrix} d_0 \\ d_1 \\ d_2 \end{bmatrix}
 =
-\begin{bmatrix}
-\int_0^L N_0 f\,dx + N_0(0)h - g\int_0^L N_{0,x}N_{3,x}\,dx \\[4pt]
-\int_0^L N_1 f\,dx - g\int_0^L N_{1,x}N_{3,x}\,dx \\[4pt]
-\int_0^L N_2 f\,dx - g\int_0^L N_{2,x}N_{3,x}\,dx
-\end{bmatrix}
+\begin{bmatrix} F_0 \\ F_1 \\ F_2 \end{bmatrix}
 \]</span></p>
 </div>
-<section id="simplifying-based-on-the-supports-of-the-functions" class="level2" data-number="9.1">
-<h2 data-number="9.1" class="anchored" data-anchor-id="simplifying-based-on-the-supports-of-the-functions"><span class="header-section-number">9.1</span> Simplifying based on the supports of the functions</h2>
+<div class="derivation">
+<p><span class="math display">\[
+\begin{aligned}
+F_0 &amp;= \int_0^L N_0 f\,dx + N_0(0)h - g\int_0^L N_{0,x}N_{3,x}\,dx \\[4pt]
+F_1 &amp;= \int_0^L N_1 f\,dx - g\int_0^L N_{1,x}N_{3,x}\,dx \\[4pt]
+F_2 &amp;= \int_0^L N_2 f\,dx - g\int_0^L N_{2,x}N_{3,x}\,dx
+\end{aligned}
+\]</span></p>
+</div>
+</section>
+<section id="simplifying-based-on-the-supports-of-the-functions" class="level2" data-number="9.4">
+<h2 data-number="9.4" class="anchored" data-anchor-id="simplifying-based-on-the-supports-of-the-functions"><span class="header-section-number">9.4</span> Simplifying based on the supports of the functions</h2>
 <div class="step">
 <p><span class="math inline">\(N_0\)</span> and <span class="math inline">\(N_2\)</span> are <strong>not adjacent</strong> — their supports (elements 0–1 and 1–2 respectively) share at most a single point, so <span class="math inline">\(\int_\Omega N_{0,x}N_{2,x}\,d\Omega = 0\)</span>. The same holds for <span class="math inline">\(N_0\)</span>/<span class="math inline">\(N_3\)</span> and <span class="math inline">\(N_1\)</span>/<span class="math inline">\(N_3\)</span>. This is the origin of <strong>sparsity</strong>: most entries of <span class="math inline">\(K_{AB}\)</span> vanish because most pairs of basis functions don’t overlap.</p>
 </div>
@@ -357,12 +448,64 @@ Figure&nbsp;9.1: Three elements, lengths <span class="math inline">\(\ell_0+\ell
 \end{bmatrix}
 \begin{bmatrix} d_0 \\ d_1 \\ d_2 \end{bmatrix}
 =
+\begin{bmatrix} F_0 \\ F_1 \\ F_2 \end{bmatrix}
+\]</span></p>
+</div>
+<div class="derivation">
+<p><span class="math display">\[
+\begin{aligned}
+F_0 &amp;= \int_0^L N_0 f\,dx + h \\[4pt]
+F_1 &amp;= \int_0^L N_1 f\,dx \\[4pt]
+F_2 &amp;= \int_0^L N_2 f\,dx - g\int_0^L N_{2,x}N_{3,x}\,dx
+\end{aligned}
+\]</span></p>
+</div>
+</section>
+<section id="evaluating-the-entries" class="level2" data-number="9.5">
+<h2 data-number="9.5" class="anchored" data-anchor-id="evaluating-the-entries"><span class="header-section-number">9.5</span> Evaluating the entries</h2>
+<p>Every integrand left in <span class="math inline">\(\underline{\underline{K}}\)</span> is a product of two of the piecewise-constant derivatives in <a href="#fig-c8-derivs" class="quarto-xref">Figure&nbsp;<span>9.3</span></a>. On any one element that product is itself <strong>a constant</strong>, so the integral over that element is just the constant times the element’s length:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\int_{x_e}^{x_{e+1}} N_{A,x}\,N_{B,x}\;dx
+= \underbrace{N_{A,x}\,N_{B,x}}_{\text{constant on element } e}\;\ell_e .
+\]</span></p>
+</div>
+<div class="derivation">
+<p><span class="math display">\[
+\begin{aligned}
+K_{11} &amp;= \int_0^L N_{1,x}N_{1,x}\,dx
+= \left(\frac{1}{\ell_0}\right)^{2}\ell_0 + \left(-\frac{1}{\ell_1}\right)^{2}\ell_1
+= \frac{1}{\ell_0} + \frac{1}{\ell_1}, \\[6pt]
+K_{12} &amp;= \int_0^L N_{1,x}N_{2,x}\,dx
+= \left(-\frac{1}{\ell_1}\right)\left(+\frac{1}{\ell_1}\right)\ell_1
+= -\frac{1}{\ell_1}, \\[6pt]
+K_{02} &amp;= \int_0^L N_{0,x}N_{2,x}\,dx = 0 .
+\end{aligned}
+\]</span></p>
+</div>
+<div class="step">
+<p>In general <span class="math inline">\(K_{AA} = \dfrac{1}{\ell_{A-1}} + \dfrac{1}{\ell_A}\)</span> (drop whichever term does not exist, at the two ends), <span class="math inline">\(K_{A,A+1} = K_{A+1,A} = -\dfrac{1}{\ell_A}\)</span>, and every other entry is zero. Nothing here depends on <span class="math inline">\(f\)</span>, <span class="math inline">\(g\)</span>, or <span class="math inline">\(h\)</span>: <strong>the stiffness matrix is a property of the mesh alone.</strong></p>
+</div>
+<p>With the lengths of <a href="#fig-c8-setup" class="quarto-xref">Figure&nbsp;<span>9.1</span></a>, <span class="math inline">\(\ell_0 = 1.5\)</span>, <span class="math inline">\(\ell_1 = 2\)</span>, and <span class="math inline">\(\ell_2 = 2.5\)</span>, so <span class="math inline">\(1/\ell_0 = 2/3\)</span>, <span class="math inline">\(1/\ell_1 = 1/2\)</span>, and <span class="math inline">\(1/\ell_2 = 2/5\)</span>. Striking out the row and column of the Dirichlet node leaves the system that is actually solved:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\begin{bmatrix}
+\frac{2}{3} &amp; -\frac{2}{3} &amp; 0 \\[4pt]
+-\frac{2}{3} &amp; \frac{7}{6} &amp; -\frac{1}{2} \\[4pt]
+0 &amp; -\frac{1}{2} &amp; \frac{9}{10}
+\end{bmatrix}
+\begin{bmatrix} d_0 \\ d_1 \\ d_2 \end{bmatrix}
+=
 \begin{bmatrix}
 \int_0^L N_0 f\,dx + h \\[4pt]
 \int_0^L N_1 f\,dx \\[4pt]
-\int_0^L N_2 f\,dx - g\int_0^L N_{2,x}N_{3,x}\,dx
+\int_0^L N_2 f\,dx + \frac{2}{5}\,g
 \end{bmatrix}
 \]</span></p>
+</div>
+<div class="step">
+<p>The <span class="math inline">\(g\)</span> term changed sign on its way across the equals sign, because the entry it came from is negative: <span class="math inline">\(-g\int_0^L N_{2,x}N_{3,x}\,dx = -g\left(-\frac{1}{\ell_2}\right)
+= +\frac{g}{\ell_2}\)</span>. Every entry of the matrix is now a number. The only integrals still standing are the ones containing <span class="math inline">\(f\)</span>, and those are what quadrature is for.</p>
 </div>
 <div class="step">
 <p>Notice that <strong>all the integrals in <span class="math inline">\(\underline{\underline{K}}\)</span> look the same</strong>, in some way:</p>
@@ -385,7 +528,7 @@ Figure&nbsp;9.1: Three elements, lengths <span class="math inline">\(\ell_0+\ell
 <div id="fig-c8-local" class="quarto-float quarto-figure quarto-figure-center anchored" width="45%">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-c8-local-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="generated_images/Class8/C8_Fig2_LocalView.png" id="fig-c8-local" class="img-fluid figure-img" style="width:45.0%">
+<img src="generated_images/Class8/C8_Fig4_LocalView.png" id="fig-c8-local" class="img-fluid figure-img" style="width:45.0%">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-c8-local-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;10.1
@@ -405,10 +548,37 @@ Figure&nbsp;10.1
 <div class="derivation">
 <p><span class="math display">\[
 \int_{x_i}^{x_{i+1}} N_i\,f\;dx = \int_{x_0^e}^{x_1^e} N_0^e\,f\;dx
-\qquad\qquad
+\qquad
 \int_{x_i}^{x_{i+1}} N_{i+1}\,f\;dx = \int_{x_0^e}^{x_1^e} N_1^e\,f\;dx
 \]</span></p>
 </div>
+<section id="the-element-stiffness-matrix" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="the-element-stiffness-matrix"><span class="header-section-number">10.1</span> The element stiffness matrix</h2>
+<p>On element <span class="math inline">\(e\)</span>, of length <span class="math inline">\(\ell_e = x_1^e - x_0^e\)</span>, the two local functions and their derivatives are</p>
+<div class="derivation">
+<p><span class="math display">\[
+\begin{aligned}
+N_0^e(x) &amp;= \frac{x_1^e - x}{\ell_e}, &amp;\qquad N_1^e(x) &amp;= \frac{x - x_0^e}{\ell_e}, \\[6pt]
+N_{0,x}^e &amp;= -\frac{1}{\ell_e}, &amp;\qquad N_{1,x}^e &amp;= +\frac{1}{\ell_e} .
+\end{aligned}
+\]</span></p>
+</div>
+<p>The four local integrals <span class="math inline">\(\int_{x_0^e}^{x_1^e} N_{s,x}^e N_{t,x}^e\,dx\)</span> are then four constants times <span class="math inline">\(\ell_e\)</span>, and they fit in one small matrix:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\underline{\underline{k}}^e =
+\begin{bmatrix}
+\left(-\frac{1}{\ell_e}\right)^{2}\ell_e &amp; \left(-\frac{1}{\ell_e}\right)\left(\frac{1}{\ell_e}\right)\ell_e \\[6pt]
+\left(\frac{1}{\ell_e}\right)\left(-\frac{1}{\ell_e}\right)\ell_e &amp; \left(\frac{1}{\ell_e}\right)^{2}\ell_e
+\end{bmatrix}
+= \frac{1}{\ell_e}
+\begin{bmatrix} 1 &amp; -1 \\ -1 &amp; 1 \end{bmatrix}
+\]</span></p>
+</div>
+<div class="step">
+<p>Every element of every mesh of this kind has that same matrix; only <span class="math inline">\(\ell_e\)</span> changes. Adding each <span class="math inline">\(\underline{\underline{k}}^e\)</span> into the rows and columns of its own two nodes rebuilds the global matrix, one element at a time — <strong>assembly</strong>, which <a href="../chapters/10_Class.html">Class 10</a> takes up with the IEN array.</p>
+</div>
+</section>
 </section>
 <section id="numerical-quadrature" class="level1" data-number="11">
 <h1 data-number="11"><span class="header-section-number">11</span> Numerical quadrature</h1>
@@ -419,7 +589,7 @@ Figure&nbsp;10.1
 <div id="fig-c8-riemann" class="quarto-float quarto-figure quarto-figure-center anchored" width="68%">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-c8-riemann-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="generated_images/Class8/C8_Fig3_Riemann.png" id="fig-c8-riemann" class="img-fluid figure-img" style="width:68.0%">
+<img src="generated_images/Class8/C8_Fig5_Riemann.png" id="fig-c8-riemann" class="img-fluid figure-img" style="width:68.0%">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-c8-riemann-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;11.1
