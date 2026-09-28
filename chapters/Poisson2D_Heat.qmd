@@ -1,0 +1,2231 @@
+---
+title: "2D Poisson I: Heat Flow in a Battery Cell"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import os
+import sys
+import math
+
+sys.path.append('.')
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon as MplPolygon, Rectangle, Circle
+from matplotlib.colors import Normalize, TwoSlopeNorm
+from matplotlib.ticker import MaxNLocator
+
+from notes_style import (use_chapter, save, tidy, iso, dim_x,
+                         INK, LOADCLR, REACTCLR, DIMCLR,
+                         DOMCLR, BDRYCLR, FLUXCLR)
+import heat2d as H2
+
+IMGDIR = use_chapter("Poisson2D_Heat")
+
+# ---- the worked example used throughout this page (SI units) ---------------
+W     = 0.10      # m        cell width,  0 <= x1 <= W
+H     = 0.20      # m        cell height, 0 <= x2 <= H
+T     = 0.027     # m        cell thickness, out of the plane
+kappa = 25.0      # W/(m K)  in-plane conductivity of the electrode stack
+f0    = 25000.0   # W/m^3    heat generated during a fast charge
+g0    = 25.0      # deg C    temperature held by the cooling plate at x1 = 0
+h_tab = 5000.0    # W/m^2    heat flux into the cell through each tab
+TABS  = ((0.015, 0.035), (0.065, 0.085))     # the tab footprints on x2 = H
+EX    = dict(W=W, H=H, kappa=kappa, f=f0, g0=g0, h_tab=h_tab, tabs=TABS)
+
+HOTCLR = "#e67e22"    # the tabs and the heat they bring in
+TCMAP  = "RdYlBu_r"   # temperature: blue is cold, red is hot
+PLATE  = "#dbe7f3"    # the cooling plate / a Dirichlet reservoir
+
+# the exact solution of the worked example on a fine grid
+xs = np.linspace(0, W, 201)
+ys = np.linspace(0, H, 401)
+XX, YY = np.meshgrid(xs, ys)
+SOL = H2.series(XX, YY, **EX)
+U = SOL["u"]
+Q1, Q2 = -kappa * SOL["u1"], -kappa * SOL["u2"]
+
+
+def at(x1, x2, M=4000, **kw):
+    """The exact solution and its derivatives at one point, as floats."""
+    return {k: float(v) for k, v in H2.series(x1, x2, **{**EX, **kw}, M=M).items()}
+
+
+def arrow(ax, p_from, p_to, color=INK, lw=1.8, ms=13, z=6, style="-|>"):
+    ax.annotate("", xy=p_to, xytext=p_from,
+                arrowprops=dict(arrowstyle=style, color=color, lw=lw,
+                                mutation_scale=ms, shrinkA=0, shrinkB=0),
+                zorder=z)
+
+
+def graph(ax, xlabel=None, ylabel=None):
+    """A plotted function: left and bottom axes only."""
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+    for s in ("left", "bottom"):
+        ax.spines[s].set_linewidth(0.9)
+    if xlabel:
+        ax.set_xlabel(xlabel, fontsize=11)
+    if ylabel:
+        ax.set_ylabel(ylabel, fontsize=11)
+    ax.tick_params(labelsize=9.5)
+
+
+def cell_axes(ax, xlabel=True, ylabel=True):
+    """A map of the cell cross-section, in meters, at true proportions."""
+    ax.set_aspect("equal")
+    ax.set_xlim(-0.004, W + 0.004)
+    ax.set_ylim(-0.004, H + 0.004)
+    for s in ax.spines.values():
+        s.set_visible(False)
+    ax.set_xticks([0, 0.05, 0.10])
+    ax.set_yticks([0, 0.05, 0.10, 0.15, 0.20])
+    ax.tick_params(labelsize=9, length=2.5)
+    if xlabel:
+        ax.set_xlabel("$x_1$ (m)", fontsize=10.5)
+    if ylabel:
+        ax.set_ylabel("$x_2$ (m)", fontsize=10.5)
+
+
+def edges(ax, dirichlet=("left",), tabs=TABS, lw=3.2, z=7):
+    """Color the boundary: Gamma_g blue, Gamma_h teal, the tabs orange."""
+    segs = {"left": ([0, 0], [0, H]), "right": ([W, W], [0, H]),
+            "bottom": ([0, W], [0, 0]), "top": ([0, W], [H, H])}
+    for e, (sx, sy) in segs.items():
+        if e not in dirichlet:
+            ax.plot(sx, sy, color=FLUXCLR, lw=lw, zorder=z, solid_capstyle="butt")
+    if "top" not in dirichlet:
+        for a, b in tabs:
+            ax.plot([a, b], [H, H], color=HOTCLR, lw=lw * 1.9, zorder=z + 1,
+                    solid_capstyle="butt")
+    for e in dirichlet:
+        sx, sy = segs[e]
+        ax.plot(sx, sy, color=BDRYCLR, lw=lw * 1.45, zorder=z + 2,
+                solid_capstyle="projecting")
+
+
+def tmap(ax, Uf, levels, X=None, Y=None, alpha=1.0, norm=None, lines=True,
+         lw=0.7, label_every=None):
+    """Filled temperature map with isotherms."""
+    X = XX if X is None else X
+    Y = YY if Y is None else Y
+    norm = norm or Normalize(levels[0], levels[-1])
+    cf = ax.contourf(X, Y, Uf, levels=np.linspace(norm.vmin, norm.vmax, 60),
+                     cmap=TCMAP, norm=norm, alpha=alpha, zorder=0,
+                     extend="both")
+    if lines:
+        cs = ax.contour(X, Y, Uf, levels=levels, colors=INK, linewidths=lw,
+                        alpha=0.75, zorder=2)
+        if label_every:
+            ax.clabel(cs, levels[::label_every], fmt="%g °C", fontsize=8.5,
+                      inline=True, inline_spacing=2)
+    return cf
+
+
+rng = np.random.default_rng(7)
+
+
+def sources(ax, fxy, x0, x1, y0, y1, fmax, n=90, ms=5.5, z=3):
+    """Scatter + (source) or - (sink) marks with density proportional to |f|."""
+    px = rng.uniform(x0, x1, 60 * n)
+    py = rng.uniform(y0, y1, 60 * n)
+    keep = rng.uniform(0, 1, 60 * n) < np.abs(fxy(px, py)) / fmax
+    px, py = px[keep][:n], py[keep][:n]
+    pos = fxy(px, py) > 0
+    ax.plot(px[pos], py[pos], "+", color=LOADCLR, ms=ms, mew=1.2, zorder=z)
+    ax.plot(px[~pos], py[~pos], "_", color=REACTCLR, ms=ms, mew=1.4, zorder=z)
+```
+
+This page is the two-dimensional sequel to
+[1D Poisson I: Heat Conduction Through a Wall](Poisson1D_Heat.qmd). The wall was a
+problem in one coordinate: temperature changed only through its thickness. Here heat
+flows through the cross-section of a lithium-ion battery cell, and temperature changes in
+two directions at once. The physics is the same two ideas — **energy is conserved**, and
+**heat flows from hot to cold**. What changes is the calculus. Each derivative in the 1D
+strong form becomes a **gradient**, a **divergence**, or a **Laplacian**, and the wall's
+two boundary points become a boundary *curve*. The goal of this page is to make each of
+those objects something you can see.
+
+Hughes states the model problem for any number of space dimensions $n_{sd}$ (Chapter 2),
+in index notation:
+
+::: {.derivation}
+$$
+(\mathrm{S}) \qquad
+\begin{aligned}
+&\text{Given } f : \Omega \to \RR,\; g : \Gamma_g \to \RR, \text{ and } h : \Gamma_h \to \RR, \\
+&\text{find } u : \bar\Omega \to \RR \text{ such that} \\[2pt]
+&\qquad q_{i,i} = f \quad \text{in } \Omega \\
+&\qquad u = g \quad \text{on } \Gamma_g \\
+&\qquad -q_i\,n_i = h \quad \text{on } \Gamma_h \\[2pt]
+&\text{where } q_i = -K_{ij}\,u_{,j}
+\end{aligned}
+$$
+:::
+
+Hughes writes the conductivity as $\kappa_{ij}$; the class notes write $K_{ij}$.
+Substituting the last relation into the others gives the form used in
+[Class 4](4_Class.qmd), shown here in both notations:
+
+::: {.derivation}
+$$
+\begin{aligned}
+-\nabla\cdot\left(\underline{\underline{K}}\,\nabla u\right) = f
+ \quad&\Longleftrightarrow\quad -\left(K_{ij}\,u_{,j}\right)_{,i} = f
+ && \text{in } \Omega \\
+u = g \quad& && \text{on } \Gamma_g \\
+\left(\underline{\underline{K}}\,\nabla u\right)\cdot\underline{n} = h
+ \quad&\Longleftrightarrow\quad K_{ij}\,u_{,j}\,n_i = h
+ && \text{on } \Gamma_h
+\end{aligned}
+$$
+:::
+
+For most of this page the material conducts equally well in every direction — it is
+**isotropic** — so $K_{ij} = \kappa\,\delta_{ij}$ and the differential equation becomes
+
+::: {.derivation}
+$$
+\begin{aligned}
+-\nabla\cdot\left(\kappa\nabla u\right) = f
+\quad&\Longleftrightarrow\quad
+-\left(\kappa\,u_{,i}\right)_{,i} = f \\
+\xrightarrow{\;\kappa \text{ constant}\;}\quad
+-\kappa\,\Delta u = f
+\quad&\Longleftrightarrow\quad
+-\kappa\,u_{,ii} = f
+\end{aligned}
+$$
+:::
+
+In one dimension the index has a single value, $i = 1$, and every sum above has one
+term: $q_{i,i}$ is $q_{,x}$, and $K_{ij}u_{,j}n_i$ is $K u_{,x}\,n$. That is the wall. On
+this page $i$ runs over 1 and 2, $u$ is a **temperature**, $q_i$ is the **heat flux
+vector**, and everything is in SI units.
+
+## The physical problem
+
+```{python fig_module}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(9.6, 7.0))
+KW = dict(ang=150.0, k=0.55)
+Wd, Hd, Td, gap, ncell = 2.2, 4.0, 0.5, 0.07, 6
+Dd = ncell * (Td + gap) - gap
+tp, pad = 0.2, 0.22        # plate thickness, foam thickness
+
+
+def P(x, y, z):
+    return iso(x, y, z, **KW)
+
+
+def face(pts, fc, ec=INK, lw=0.9, z=2, alpha=1.0, ls="-", hatch=None):
+    ax.add_patch(MplPolygon([P(*p) for p in pts], closed=True, facecolor=fc,
+                            edgecolor=ec, lw=lw, zorder=z, alpha=alpha, ls=ls,
+                            hatch=hatch))
+
+
+def block(x0, x1, y0, y1, z0, z1, front, top, left, ec=INK, lw=0.9, z=2,
+          hatch=None):
+    """The three faces of a box visible from the front-left-above."""
+    face([(x0, y0, z0), (x0, y1, z0), (x0, y1, z1), (x0, y0, z1)], left,
+         ec=ec, lw=lw, z=z, hatch=hatch)
+    face([(x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)], top,
+         ec=ec, lw=lw, z=z, hatch=hatch)
+    face([(x0, y0, z0), (x1, y0, z0), (x1, y0, z1), (x0, y0, z1)], front,
+         ec=ec, lw=lw, z=z, hatch=hatch)
+
+
+FOAM, FOAMEC = "#fff3cd", "#b8860b"
+# foam under the cells and along their far side: insulated
+block(Wd, Wd + pad, 0, Dd, -pad, Hd, FOAM, FOAM, FOAM, ec=FOAMEC, lw=0.8,
+      hatch="xxx")
+block(0, Wd, 0, Dd, -pad, 0, FOAM, FOAM, FOAM, ec=FOAMEC, lw=0.8, hatch="xxx")
+
+# the cells, back to front
+for k in reversed(range(ncell)):
+    y0 = k * (Td + gap)
+    block(0, Wd, y0, y0 + Td, 0, Hd, "#eeeeee", "#f7f7f7", "#e2e2e2")
+    for a, b in TABS:
+        xa, xb = a / W * Wd, b / W * Wd
+        block(xa, xb, y0 + 0.1, y0 + Td - 0.1, Hd, Hd + 0.16,
+              "#c9c9c9", "#dcdcdc", "#bdbdbd", lw=0.7)
+
+# busbars joining the tabs (a parallel group), far bar first
+for a, b in reversed(TABS):
+    xa, xb = a / W * Wd + 0.03, b / W * Wd - 0.03
+    block(xa, xb, 0.02, Dd - 0.02, Hd + 0.16, Hd + 0.3,
+          "#c98a54", "#e0a878", "#b87333", ec="#7a4a1f", lw=0.8)
+
+# the cooling plate along the near side of the row, with its coolant channel
+block(-tp, 0, -0.06, Dd + 0.06, -pad, Hd, "#b9d0e8", "#c9dcef", PLATE,
+      ec=BDRYCLR, lw=1.1)
+yy = np.linspace(0.25, Dd - 0.25, 7)
+zz = np.linspace(0.35, Hd - 0.35, 60)
+for i, yv in enumerate(yy):
+    ax.plot(*zip(*[P(-tp, yv, zv) for zv in zz]), color=BDRYCLR, lw=1.1,
+            alpha=0.8, zorder=3)
+    if i + 1 < len(yy):
+        zv = zz[-1] if i % 2 == 0 else zz[0]
+        ax.plot(*zip(*[P(-tp, yv2, zv) for yv2 in (yv, yy[i + 1])]),
+                color=BDRYCLR, lw=1.1, alpha=0.8, zorder=3)
+pin, pout = P(-tp, 0.3, 0.45), P(-tp, Dd - 0.3, Hd - 0.45)
+arrow(ax, (pin[0] - 1.0, pin[1]), pin, color=REACTCLR, lw=2.4, ms=14, z=8)
+arrow(ax, pout, (pout[0] - 1.0, pout[1]), color=REACTCLR, lw=2.4, ms=14, z=8)
+ax.text(pin[0] - 1.05, pin[1], "coolant in", ha="right", va="center",
+        fontsize=10.5, color=REACTCLR)
+ax.text(pout[0] - 1.05, pout[1], "coolant out", ha="right", va="center",
+        fontsize=10.5, color=REACTCLR)
+
+# the front cell's large face is the 2D domain
+face([(0, 0, 0), (Wd, 0, 0), (Wd, 0, Hd), (0, 0, Hd)], HOTCLR, ec=HOTCLR,
+     lw=1.6, z=4, alpha=0.28)
+fxy = lambda x, y: np.where((x < 1.0) & (y < 1.05), 0.0, 1.0)
+sources(ax, fxy, 0.12, Wd - 0.12, 0.15, Hd - 0.15, 1.0, n=70, ms=6, z=5)
+
+# heat from the busbar welds flowing down into the front cell's tabs
+for a, b in TABS:
+    xm = 0.5 * (a + b) / W * Wd
+    tx, ty = P(xm, 0.0, Hd + 0.3)
+    arrow(ax, (tx, ty + 0.75), (tx, ty + 0.02), color=HOTCLR, lw=2.2, ms=14,
+          z=8)
+
+# coordinates on the front face
+arrow(ax, (0.0, 0.0), (0.75, 0.0), color=INK, lw=1.4, ms=11, z=8)
+arrow(ax, (0.0, 0.0), (0.0, 0.75), color=INK, lw=1.4, ms=11, z=8)
+ax.text(0.8, 0.02, "$x_1$", ha="left", va="center", fontsize=12, zorder=8)
+ax.text(0.04, 0.8, "$x_2$", ha="left", va="bottom", fontsize=12, zorder=8)
+
+# labels
+ax.annotate("liquid-cooled plate:\nholds the cooled side\nat $u = g$ = 25 °C",
+            xy=P(-tp, Dd * 0.5, Hd * 0.42), xytext=(-4.55, 2.2),
+            ha="left", va="center", fontsize=10.5, color=BDRYCLR,
+            arrowprops=dict(arrowstyle="-", color=BDRYCLR, lw=0.9))
+ax.text(1.1 + 0.9, Hd + 1.45,
+        "busbar welds heat the tabs:\nheat flux $h$ into the cell\n(W/m²)",
+        ha="center", va="bottom", fontsize=10.5, color=HOTCLR)
+ax.annotate("the 2D domain $\\Omega$:\na slice parallel to\nthe large face",
+            xy=(Wd * 0.72, Hd * 0.18), xytext=(Wd + 0.75, 0.9),
+            ha="left", va="center", fontsize=10.5, color="#a0520d",
+            arrowprops=dict(arrowstyle="-", color="#a0520d", lw=0.9))
+ax.text(Wd + 0.75, Hd * 0.55,
+        "$f$: heat generated\ninside every cell\n(W/m³)",
+        ha="left", va="center", fontsize=10.5, color=LOADCLR)
+ax.text(Wd * 0.5, -pad - 0.12, "foam: insulated ($h$ = 0)", ha="center",
+        va="top", fontsize=10, color="#8a6d1f")
+ax.annotate("identical neighbors:\nno heat crosses the\nlarge faces",
+            xy=P(Wd * 0.59, 4 * (Td + gap) - gap / 2, Hd),
+            xytext=(Wd + 0.75, Hd + 0.75), ha="left", va="center",
+            fontsize=10, color=DIMCLR,
+            arrowprops=dict(arrowstyle="-", color=DIMCLR, lw=0.9))
+dim_x(ax, 0.0, Wd, -pad - 0.75, "$W$ = 100 mm", fs=10.5)
+ax.annotate("", xy=(Wd + pad + 0.3, 0), xytext=(Wd + pad + 0.3, Hd),
+            arrowprops=dict(arrowstyle="<|-|>", color=DIMCLR, lw=1.1,
+                            mutation_scale=10))
+ax.text(Wd + pad + 0.4, Hd * 0.82, "$H$ = 200 mm", ha="left", va="center",
+        fontsize=10.5, color=DIMCLR)
+
+tidy(ax)
+ax.set_xlim(-4.6, Wd + 3.1)
+ax.set_ylim(-1.35, Hd + 2.35)
+fig_module_path = save(fig, "H2_Fig1_Module.png")
+```
+
+![One end of a battery module: prismatic cells stacked face to face, a liquid-cooled plate
+along one side, copper busbars across the tabs, and foam everywhere else. The orange face
+of the front cell is the two-dimensional domain.](`{python} fig_module_path`){#fig-h2-module width=86%}
+
+A battery module in an electric vehicle packs prismatic lithium-ion cells side by side,
+large face to large face. Here each cell is 100 mm wide, 200 mm tall, and 27 mm thick. A
+liquid-cooled aluminum plate is bonded along one narrow side of the whole row, copper
+busbars are welded across the terminal tabs on top, and foam fills the rest of the
+enclosure. During a fast charge, the current flowing through the electrodes and
+electrolyte generates heat throughout every cell, and the resistance of the tab welds
+adds heat that flows down into the cells through their tabs.
+
+**Why two dimensions.** Every cell in the row is identical and heated identically, so by
+symmetry no heat crosses the large face between one cell and the next. Nothing then
+varies through the thickness, and the temperature depends only on the position
+$(x_1, x_2)$ in the plane of the large face. This is the argument that made the wall
+one-dimensional, applied to one direction instead of two. There, nothing varied along
+the wall or up it.
+Here, nothing varies along the row. So take a slice parallel to the large face and follow
+the temperature across it. Every quantity on this page is **per meter of depth** in the
+stacking direction, which is why the total heat made comes out in W/m. To get watts for
+one 27 mm cell, multiply by $T = 0.027$ m.
+
+| What happens physically | Where | Becomes |
+|---|---|---|
+| Current through the electrodes generates heat | throughout $\Omega$ | the forcing $f$ |
+| The cooling plate holds the cell's side at the coolant temperature | the edge $x_1 = 0$ | a Dirichlet condition $u = g$ |
+| Heat from the tab welds flows in through the tabs | two stretches of the top edge | a Neumann condition, $h > 0$ |
+| Foam insulates the far side, the bottom, and the top between the tabs | the rest of the boundary | a Neumann condition, $h = 0$ |
+
+Two things are new compared with the wall. Each "face" is now an **edge** with a length,
+and the data can change from point to point along it: $h$ is 5000 W/m² on the tabs and
+zero on the rest of the top edge. And the insulated edges, which the wall example did not
+have, still carry a boundary condition. "Insulated" means $h = 0$. It does not mean
+"no condition".
+
+## The two-dimensional domain
+
+```{python fig_domain}
+#| echo: false
+#| output: false
+
+fig, (ax, bx) = plt.subplots(1, 2, figsize=(10.6, 5.9),
+                             gridspec_kw=dict(width_ratios=[1.0, 1.35]))
+
+# ---- (a) the cell
+ax.fill([0, W, W, 0], [0, 0, H, H], color=DOMCLR, zorder=0)
+edges(ax, lw=3.4)
+ax.text(W / 2, H * 0.52, r"$\Omega$", ha="center", va="center", fontsize=20)
+L = 0.03
+for (p, d, lab, ha, va, off) in (
+        ((0, 0.105), (-1, 0), "$(-1,\\,0)$", "right", "center", (-0.004, 0)),
+        ((W, 0.105), (1, 0), "$(1,\\,0)$", "left", "center", (0.004, 0)),
+        ((0.05, 0), (0, -1), "$(0,\\,-1)$", "center", "top", (0, -0.004)),
+        ((0.05, H), (0, 1), "$(0,\\,1)$", "left", "center", (0.004, 0))):
+    tip = (p[0] + L * d[0], p[1] + L * d[1])
+    arrow(ax, p, tip, color=INK, lw=1.5, ms=12, z=9)
+    ax.text(tip[0] + off[0], tip[1] + off[1], lab, ha=ha, va=va,
+            fontsize=10.5)
+ax.text(-0.052, 0.155, "$\\Gamma_g$\n$u = g$", ha="center", va="center",
+        fontsize=12, color=BDRYCLR)
+ax.text(W + 0.047, 0.155, "$\\Gamma_h$\n$h = 0$", ha="center", va="center",
+        fontsize=12, color=FLUXCLR)
+ax.text(W * 0.5, -0.05, "$\\Gamma_h$: $h = 0$", ha="center", va="top",
+        fontsize=12, color=FLUXCLR)
+ax.text(W / 2, H + 0.052, "tabs: $h$ = 5000 W/m²", ha="center", va="bottom",
+        fontsize=10.5, color=HOTCLR)
+for xm in (0.025, 0.075):
+    ax.plot([xm, xm], [H + 0.006, H + 0.05], color=HOTCLR, lw=0.9)
+for yv in (0.0, H):
+    ax.plot([0], [yv], "o", color=INK, ms=6.5, zorder=12)
+ax.annotate("corners ($\\bullet$) where\n$\\Gamma_g$ meets $\\Gamma_h$",
+            xy=(0.001, 0.002), xytext=(-0.06, 0.035), ha="center",
+            va="center", fontsize=9.5,
+            arrowprops=dict(arrowstyle="-", color=INK, lw=0.8))
+arrow(ax, (-0.075, -0.075), (-0.045, -0.075), color=INK, lw=1.3, ms=10)
+arrow(ax, (-0.075, -0.075), (-0.075, -0.045), color=INK, lw=1.3, ms=10)
+ax.text(-0.043, -0.075, "$x_1$", ha="left", va="center", fontsize=11)
+ax.text(-0.075, -0.043, "$x_2$", ha="center", va="bottom", fontsize=11)
+ax.set_title("(a) the cell: $\\Omega = \\,]0, W[\\, \\times \\,]0, H[$",
+             fontsize=11.5, pad=24)
+tidy(ax)
+ax.set_xlim(-0.105, W + 0.085)
+ax.set_ylim(-0.095, H + 0.075)
+
+# ---- (b) a general domain with a hole
+t = np.linspace(0, 2 * math.pi, 721)
+r = 2.3 * (1 + 0.13 * np.sin(3 * t) + 0.07 * np.cos(5 * t))
+X, Y = r * np.cos(t), r * np.sin(t)
+dX, dY = np.gradient(X), np.gradient(Y)
+hc, hr = (0.55, -0.3), 0.6
+bx.fill(X, Y, color=DOMCLR, zorder=0)
+bx.add_patch(Circle(hc, hr, facecolor="white", edgecolor="none", zorder=1))
+gmask = (t > 0.62 * math.pi) & (t < 1.12 * math.pi)
+for mask, col, lw in ((~gmask, FLUXCLR, 3.0), (gmask, BDRYCLR, 4.2)):
+    Xm, Ym = np.where(mask, X, np.nan), np.where(mask, Y, np.nan)
+    bx.plot(Xm, Ym, color=col, lw=lw, zorder=3, solid_capstyle="butt")
+bx.add_patch(Circle(hc, hr, facecolor="none", edgecolor=BDRYCLR, lw=4.2,
+                    zorder=3))
+for tv in np.linspace(0, 2 * math.pi, 13)[:-1] + 0.2:
+    k = np.argmin(np.abs(t - tv))
+    nx, ny = dY[k], -dX[k]
+    nn = math.hypot(nx, ny)
+    nx, ny = nx / nn, ny / nn
+    arrow(bx, (X[k], Y[k]), (X[k] + 0.6 * nx, Y[k] + 0.6 * ny), color=INK,
+          lw=1.3, ms=10, z=6)
+for a in (0.3, 1.9, 3.5, 5.1):
+    p = (hc[0] + hr * math.cos(a), hc[1] + hr * math.sin(a))
+    arrow(bx, p, (p[0] - 0.36 * math.cos(a), p[1] - 0.36 * math.sin(a)),
+          color=INK, lw=1.3, ms=9, z=6)
+bx.text(-0.9, 0.55, r"$\Omega$", ha="center", va="center", fontsize=20)
+bx.text(-3.35, 1.3, "$\\Gamma_g$", fontsize=13, color=BDRYCLR, ha="center")
+bx.text(2.9, 1.9, "$\\Gamma_h$", fontsize=13, color=FLUXCLR, ha="center")
+bx.text(3.45, -1.25, "$\\Gamma_h$", fontsize=13, color=FLUXCLR, ha="center")
+bx.annotate("a coolant channel is\npart of $\\Gamma$ too ($\\Gamma_g$);\n"
+            "its $\\underline{n}$ points into\nthe channel, out of $\\Omega$",
+            xy=(hc[0] + 0.25, hc[1] - hr + 0.02), xytext=(1.25, -3.05), ha="left",
+            va="top", fontsize=10,
+            arrowprops=dict(arrowstyle="-", color=INK, lw=0.8))
+bx.text(-3.9, -3.55, "the outward unit normal $\\underline{n}$\n"
+        "changes direction along a\ncurved boundary", ha="left", va="center",
+        fontsize=10)
+bx.set_title("(b) any domain: $\\underline{n}$ varies along $\\Gamma$",
+             fontsize=11.5, pad=12)
+tidy(bx)
+bx.set_xlim(-3.9, 3.9)
+bx.set_ylim(-4.2, 3.4)
+fig.tight_layout(w_pad=1.0)
+fig_domain_path = save(fig, "H2_Fig2_Domain.png")
+```
+
+![Left: the cell's cross-section. $\Gamma_g$ (blue) is the cooled edge; $\Gamma_h$ (teal)
+is everything else, including the two tabs (orange). Each arrow is the outward unit
+normal on its edge. Right: on a general domain the normal turns as the boundary curves,
+and a hole adds a second piece of boundary.](`{python} fig_domain_path`){#fig-h2-domain width=96%}
+
+::: {.step .notes}
+- $\Omega = \,]0, W[\, \times \,]0, H[$ is the **open** rectangle: the cross-section
+  without its edges. A point in it is $\underline{x} = (x_1, x_2)$, or $x_i$ in index
+  notation. Many books write $x$ and $y$ instead of $x_1$ and $x_2$.
+- $\bar\Omega = [0, W] \times [0, H]$ is its **closure**, edges included. The solution
+  $u$ is defined on $\bar\Omega$ because we need its values *on* the edges.
+- $\Gamma$ is the **boundary**. In 1D it was two points. Now it is a closed curve — here
+  the four edges, $2(W + H) = 0.6$ m long in total. Integrals over $\Omega$ are area
+  integrals, $d\Omega = dx_1\,dx_2$ (m²). Integrals over $\Gamma$ are line integrals,
+  with $d\Gamma$ (m) measured along the curve.
+- The **outward unit normal** $\underline{n} = (n_1, n_2)$ has length one,
+  $n_i n_i = 1$, and points out of $\Omega$. In 1D it was a sign, $\pm 1$. Now it is a
+  vector: constant along each straight edge, but turning from point to point along a
+  curved boundary. At a corner it is not defined. Corners have zero length, so the
+  boundary integrals never notice them.
+- A boundary can come in several pieces. The wall of a channel through the body is part
+  of $\Gamma$, and its outward normal points *into the channel* — out of $\Omega$.
+- $\Gamma_g$ (blue) and $\Gamma_h$ (teal) split $\Gamma$ so that every point gets exactly
+  one boundary condition. See [the partition](#sec-h2-partition) below.
+:::
+
+## The quantities and their units
+
+| Symbol | Meaning | SI units | This example |
+|---|---|---|---|
+| $x_i = (x_1, x_2)$ | position in the cross-section | m | $0 \le x_1 \le W$, $0 \le x_2 \le H$ |
+| $W,\ H$ | cell width, cell height | m | 0.10 m, 0.20 m |
+| $T$ | cell thickness, out of the plane | m | 0.027 m |
+| $u(\underline{x})$ | temperature | °C (or K) | unknown |
+| $u_{,i} = \nabla u$ | temperature gradient | °C/m | unknown |
+| $q_i = \underline{q}$ | heat flux vector | W/m² | unknown |
+| $\kappa$ | thermal conductivity (in the plane) | W/(m·K) | 25 W/(m·K) |
+| $K_{ij} = \underline{\underline{K}}$ | conductivity tensor | W/(m·K) | $\kappa\,\delta_{ij}$ |
+| $f(\underline{x})$ | heat generated per unit volume | W/m³ | 25,000 W/m³ |
+| $g(\underline{x})$ | prescribed temperature on $\Gamma_g$ | °C | 25 °C |
+| $h(\underline{x})$ | prescribed heat flux **into** the body on $\Gamma_h$ | W/m² | 5000 W/m² on the tabs, 0 elsewhere |
+| $n_i = \underline{n}$ | outward unit normal | — | e.g. $(-1, 0)$ on $\Gamma_g$ |
+| $d\Omega$, $d\Gamma$ | area element, length element | m², m | |
+
+A cell is a stack of thin copper and aluminum foils, porous electrodes, and separator.
+Heat flows easily along those layers, which here lie in the plane of the slice, and
+poorly across them, at about 1 W/(m·K). We come back to this when we meet $K_{ij}$. As
+before, temperature *differences* are the same in °C and K.
+
+## Index notation in two dimensions
+
+The strong form will be written two ways from here on: in vector notation
+($\nabla u$, $\nabla\cdot\underline{q}$, $\underline{q}\cdot\underline{n}$) and in index
+notation ($u_{,i}$, $q_{i,i}$, $q_i n_i$), as introduced in [Class 3](3_Class.qmd). The
+rules you need:
+
+::: {.step .notes}
+- An index runs over the space dimensions: $i = 1, 2$ here ($i = 1, 2, 3$ in 3D, and only
+  $i = 1$ in 1D).
+- A **comma** means a partial derivative with respect to the coordinate named by the
+  index after it: $u_{,i} = \partial u / \partial x_i$, so
+  $u_{,1} = \partial u/\partial x_1$ and $u_{,12} = \partial^2 u / \partial x_1 \partial x_2$.
+  Indices *before* the comma label components: $q_{2,1} = \partial q_2 / \partial x_1$.
+- A **free** index appears once in a term, and the expression stands for one equation for
+  each of its values: $q_i = -\kappa u_{,i}$ is two equations, $q_1 = -\kappa u_{,1}$ and
+  $q_2 = -\kappa u_{,2}$.
+- A **repeated** (dummy) index is summed over all its values:
+  $q_{i,i} = q_{1,1} + q_{2,2}$. Its letter does not matter: $q_{i,i} = q_{k,k}$.
+- No index may appear more than twice in one term, and every term of an equation must
+  carry the same free indices. $q_i = f$ is meaningless (a vector cannot equal a scalar),
+  and so is $u_{,i} n_i n_i$.
+- Count the free indices to know what you are holding: none is a **scalar**
+  ($u$, $f$, $q_{i,i}$, $u_{,i}n_i$), one is a **vector** ($x_i$, $u_{,i}$, $q_i$, $n_i$),
+  two is a **matrix** ($K_{ij}$, $u_{,ij}$).
+- The **Kronecker delta** $\delta_{ij}$ is 1 when $i = j$ and 0 otherwise, the identity
+  matrix. Summing against it renames an index: $\delta_{ij}\,u_{,j} = u_{,i}$.
+:::
+
+Every object in the strong form, in every notation:
+
+| | 1D (the wall) | 2D, vector | 2D, index | 2D, written out |
+|---|---|---|---|---|
+| position | $x$ | $\underline{x}$ | $x_i$ | $(x_1,\ x_2)$ |
+| temperature gradient | $u_{,x}$ | $\nabla u$ | $u_{,i}$ | $\left(\dfrac{\partial u}{\partial x_1},\ \dfrac{\partial u}{\partial x_2}\right)$ |
+| heat flux (Fourier) | $q = -\kappa u_{,x}$ | $\underline{q} = -\kappa\nabla u$ | $q_i = -\kappa u_{,i}$ | $\left(-\kappa\dfrac{\partial u}{\partial x_1},\ -\kappa\dfrac{\partial u}{\partial x_2}\right)$ |
+| net outflow | $q_{,x}$ | $\nabla\cdot\underline{q}$ | $q_{i,i}$ | $\dfrac{\partial q_1}{\partial x_1} + \dfrac{\partial q_2}{\partial x_2}$ |
+| diffusion term | $\left(\kappa u_{,x}\right)_{,x}$ | $\nabla\cdot\left(\kappa\nabla u\right)$ | $\left(\kappa u_{,i}\right)_{,i}$ | $\dfrac{\partial}{\partial x_1}\!\left(\kappa\dfrac{\partial u}{\partial x_1}\right) + \dfrac{\partial}{\partial x_2}\!\left(\kappa\dfrac{\partial u}{\partial x_2}\right)$ |
+| Laplacian | $u_{,xx}$ | $\Delta u = \nabla\cdot\nabla u = \nabla^2 u$ | $u_{,ii}$ | $\dfrac{\partial^2 u}{\partial x_1^2} + \dfrac{\partial^2 u}{\partial x_2^2}$ |
+| outward normal | $n = \pm 1$ | $\underline{n}$ | $n_i$ | $(n_1,\ n_2)$ |
+| flux leaving through $\Gamma$ | $q\,n$ | $\underline{q}\cdot\underline{n}$ | $q_i n_i$ | $q_1 n_1 + q_2 n_2$ |
+| normal derivative | $u_{,x}\,n$ | $\nabla u\cdot\underline{n} = \dfrac{\partial u}{\partial n}$ | $u_{,i}n_i$ | $\dfrac{\partial u}{\partial x_1}n_1 + \dfrac{\partial u}{\partial x_2}n_2$ |
+| conductivity | $\kappa$ | $\underline{\underline{K}}$ | $K_{ij}$ | $\begin{bmatrix} K_{11} & K_{12} \\ K_{21} & K_{22}\end{bmatrix}$ |
+
+Read across a row to see what a 1D symbol becomes in 2D. Every line of the 2D strong form
+is assembled from these rows, and each gets its own section below.
+
+::: {.callout-note collapse="true"}
+## Practice: unpack these in 2D
+
+1. $K_{ij}\,u_{,j}\,n_i$ — two dummy indices, so a double sum with four terms:
+   $K_{11}u_{,1}n_1 + K_{12}u_{,2}n_1 + K_{21}u_{,1}n_2 + K_{22}u_{,2}n_2$. It is a
+   scalar: no free index is left.
+2. $\delta_{ii} = \delta_{11} + \delta_{22} = 2$, the number of space dimensions.
+3. $u_{,i}\,u_{,i} = \left(u_{,1}\right)^2 + \left(u_{,2}\right)^2 = |\nabla u|^2$.
+4. With $K_{ij} = \kappa\,\delta_{ij}$: $K_{ij}u_{,j} = \kappa\,\delta_{ij}u_{,j} =
+   \kappa\,u_{,i}$. The isotropic flux is the general one with the identity matrix.
+5. $\left(\kappa\,u_{,i}\right)_{,i} = \kappa_{,i}\,u_{,i} + \kappa\,u_{,ii}$ by the
+   product rule. The first term vanishes when $\kappa$ does not vary in space, leaving
+   $\kappa$ times the Laplacian.
+6. $u_{,12} = u_{,21}$ for a smooth $u$ (mixed partial derivatives commute), so the
+   matrix $u_{,ij}$ is symmetric.
+:::
+
+## The temperature gradient: $\nabla u = u_{,i}$
+
+```{python fig_gradient}
+#| echo: false
+#| output: false
+
+Pp = (0.06, 0.15)
+sP = at(*Pp)
+g1, g2 = sP["u1"], sP["u2"]
+gm = math.hypot(g1, g2)
+levels = np.arange(26.0, 37.0, 1.0)
+norm = Normalize(23.5, 37.5)
+
+fig = plt.figure(figsize=(12.4, 6.3))
+gsp = fig.add_gridspec(1, 3, width_ratios=[1.35, 0.95, 0.9])
+ax3 = fig.add_subplot(gsp[0], projection="3d")
+bx = fig.add_subplot(gsp[1])
+cx = fig.add_subplot(gsp[2])
+
+# ---- (a) the temperature as a landscape over the cell, isotherms on the floor
+ax3.computed_zorder = False
+z0 = 10.0
+ax3.contour(XX, YY, U, levels=levels, zdir="z", offset=z0, colors="0.55",
+            linewidths=0.5, zorder=0)
+gs3 = 0.00055
+ax3.quiver(Pp[0], Pp[1], z0, g1 * gs3, g2 * gs3, 0, color=LOADCLR, lw=2.8,
+           arrow_length_ratio=0.28, zorder=1)
+ax3.scatter([Pp[0]], [Pp[1]], [z0], color=INK, s=14, depthshade=False,
+            zorder=1)
+ax3.text(Pp[0] + g1 * gs3 + 0.003, Pp[1] + g2 * gs3, z0 - 1.5,
+         r"$\nabla u$", color=LOADCLR, fontsize=13, zorder=1)
+ax3.plot([Pp[0]] * 2, [Pp[1]] * 2, [z0, sP["u"]], color=INK, lw=0.9,
+         ls="--", zorder=1)
+ax3.plot_surface(XX[::2, ::2], YY[::2, ::2], U[::2, ::2], cmap=TCMAP,
+                 norm=norm, linewidth=0, antialiased=True, alpha=0.9,
+                 rcount=100, ccount=50, zorder=2)
+ax3.contour(XX, YY, U, levels=levels, colors=INK, linewidths=0.55, zorder=3)
+ax3.scatter([Pp[0]], [Pp[1]], [sP["u"]], color=INK, s=22, depthshade=False,
+            zorder=7)
+ax3.text(Pp[0] - 0.004, Pp[1] - 0.012, sP["u"] + 0.8, "$P$", fontsize=12,
+         zorder=7)
+ax3.set_zlim(z0, 38)
+ax3.set_xlim(0, W)
+ax3.set_ylim(0, H)
+ax3.set_box_aspect((1, 2, 1.5), zoom=1.05)
+ax3.view_init(elev=28, azim=-135)
+ax3.set_xticks([0, 0.05, 0.1])
+ax3.set_yticks([0, 0.1, 0.2])
+ax3.set_zticks([25, 30, 35])
+ax3.tick_params(labelsize=8.5, pad=1)
+ax3.set_xlabel("$x_1$ (m)", fontsize=10, labelpad=2)
+ax3.set_ylabel("$x_2$ (m)", fontsize=10, labelpad=4)
+ax3.zaxis.set_rotate_label(False)
+ax3.set_zlabel("$u$ (°C)", fontsize=10, labelpad=0, rotation=90)
+ax3.set_title("(a) $u(x_1, x_2)$ as a landscape; its contour\n"
+              "lines, projected below, are the isotherms", fontsize=11.5,
+              pad=0)
+
+# ---- (b) the isotherm map with the gradient field
+tmap(bx, U, levels, norm=norm, alpha=0.45, label_every=2)
+edges(bx, lw=2.6)
+gx, gy = np.meshgrid(np.arange(0.01, 0.1, 0.02), np.arange(0.02, 0.19, 0.025))
+far = np.hypot(gx - Pp[0], gy - Pp[1]) > 0.018
+gx, gy = gx[far], gy[far]
+Sg = H2.series(gx, gy, **EX)
+gsc = 0.026 / np.hypot(Sg["u1"], Sg["u2"]).max()     # m of arrow per (deg C/m)
+bx.quiver(gx, gy, Sg["u1"] * gsc, Sg["u2"] * gsc, angles="xy",
+          scale_units="xy", scale=1, color=LOADCLR, width=0.0065,
+          headwidth=4, headlength=4.5, zorder=5)
+arrow(bx, Pp, (Pp[0] + g1 * gsc, Pp[1] + g2 * gsc), color=LOADCLR, lw=2.2,
+      ms=12, z=9)
+bx.plot(*Pp, "o", color=INK, ms=6, zorder=10)
+bx.text(Pp[0] - 0.003, Pp[1] - 0.003, "$P$", ha="right", va="top",
+        fontsize=12, zorder=10)
+cell_axes(bx)
+bx.set_title("(b) $\\nabla u$ points uphill, across the\n"
+             "isotherms, longest where they crowd", fontsize=11.5)
+
+# ---- (c) the gradient at P, magnified
+cx.set_aspect("equal")
+tt = np.array([-1.0, 1.0]) * 42
+cx.plot(tt * (-g2 / gm), tt * (g1 / gm), color=INK, lw=2.2, zorder=2)
+cx.text(-0.62 * 42 * g2 / gm - 7, 0.62 * 42 * g1 / gm + 2,
+        "isotherm\nthrough $P$", ha="right", va="bottom", fontsize=10.5)
+cx.plot([0, g1], [0, 0], color=LOADCLR, lw=1.4, ls="--", zorder=3)
+cx.plot([g1, g1], [0, g2], color=LOADCLR, lw=1.4, ls="--", zorder=3)
+arrow(cx, (0, 0), (g1, g2), color=LOADCLR, lw=3.0, ms=18, z=5)
+cx.plot([0], [0], "o", color=INK, ms=6.5, zorder=6)
+cx.text(-6, -3, "$P$", ha="right", va="top", fontsize=12)
+cx.text(g1 / 2 + 4, -5, "$u_{,1}$ = %.1f °C/m" % g1, ha="center", va="top",
+        fontsize=10.5, color=LOADCLR)
+cx.text(g1 + 3, g2 / 2, "$u_{,2}$ =\n%.1f °C/m" % g2, ha="left",
+        va="center", fontsize=10.5, color=LOADCLR)
+ang = math.degrees(math.atan2(g2, g1))
+cx.text(g1 * 0.56 - 5, g2 * 0.56 + 5, "$|\\nabla u|$ = %.1f °C/m" % gm,
+        ha="center", va="bottom", fontsize=10.5, color=LOADCLR,
+        rotation=ang, rotation_mode="anchor")
+arrow(cx, (-38, -40), (-24, -40), color=INK, lw=1.2, ms=9)
+arrow(cx, (-38, -40), (-38, -26), color=INK, lw=1.2, ms=9)
+cx.text(-22, -40, "$x_1$", ha="left", va="center", fontsize=10)
+cx.text(-38, -24, "$x_2$", ha="center", va="bottom", fontsize=10)
+tidy(cx)
+cx.set_xlim(-44, 108)
+cx.set_ylim(-46, 74)
+cx.set_title("(c) the gradient at $P$, magnified", fontsize=11.5)
+fig.tight_layout(w_pad=0.6)
+fig_gradient_path = save(fig, "H2_Fig3_Gradient.png")
+```
+
+![The temperature in the cell during the fast charge (the worked example at the end of
+this page). (a) $u$ drawn as a height above the cross-section, with its
+contour lines — the isotherms — projected onto the floor. The red arrow on the floor, below
+$P$, is $\nabla u$: the direction in which the surface above climbs fastest. (b) The same field seen from above, with $\nabla u$ at a grid of points.
+(c) The gradient at $P$ and its components: the slopes you would measure walking
+parallel to each axis.](`{python} fig_gradient_path`){#fig-h2-gradient width=100%}
+
+In 1D the slope $u_{,x}$ was a single number. Its sign said which way was uphill (toward
+$+x$ or $-x$) and its size said how steep. In 2D, uphill can be any direction in the
+plane, so the slope becomes a **vector**:
+
+::: {.derivation}
+$$
+\nabla u \;=\; u_{,i} \;=\;
+\begin{bmatrix} u_{,1} \\ u_{,2} \end{bmatrix}
+\;=\;
+\begin{bmatrix} \partial u / \partial x_1 \\ \partial u / \partial x_2 \end{bmatrix}
+\qquad [{}^\circ\text{C/m}]
+$$
+:::
+
+Its components are the ordinary slopes along the two axes. To get the slope in any other
+direction, take the component of $\nabla u$ along it. Moving in the direction of a unit
+vector $\underline{e}$, the temperature changes at the rate
+
+::: {.derivation}
+$$
+\frac{du}{ds} \;=\; \nabla u\cdot\underline{e} \;=\; u_{,i}\,e_i
+\;=\; u_{,1}e_1 + u_{,2}e_2 \;=\; |\nabla u|\cos\theta
+$$
+:::
+
+where $\theta$ is the angle between $\underline{e}$ and $\nabla u$. Three facts follow,
+and all three are visible in @fig-h2-gradient:
+
+::: {.step .notes}
+- The rate is largest, $|\nabla u|$, when $\underline{e}$ points along $\nabla u$.
+  **The gradient points in the direction of steepest ascent, and its length is that
+  steepest slope.**
+- The rate is zero when $\underline{e}$ is perpendicular to $\nabla u$. Moving that way,
+  $u$ does not change — that is the direction of the **isotherm**, the curve of constant
+  temperature, through the point. **So $\nabla u$ is perpendicular to the isotherms.**
+- Where the isotherms crowd together, the temperature changes a lot over a short
+  distance: $|\nabla u|$ is large.
+:::
+
+```{python gradient_numbers}
+#| echo: false
+#| output: asis
+
+g1, g2 = sP["u1"], sP["u2"]
+print(r"""
+::: {.step}
+At the point $P = (0.06,\ 0.15)$ m, $\nabla u = (%.1f,\ %.1f)$ °C/m. Walking in the
+$+x_1$ direction, the temperature rises %.2f °C per centimeter; walking in $+x_2$, it
+rises %.2f °C per centimeter. The steepest rise, %.2f °C per centimeter, is in the
+direction %.0f° above the $x_1$-axis, and along the isotherm through $P$ it does not rise
+at all.
+:::
+""" % (g1, g2, g1 / 100, g2 / 100, math.hypot(g1, g2) / 100,
+       math.degrees(math.atan2(g2, g1))))
+```
+
+## Fourier's law: heat flows straight downhill
+
+The material relation is the same as in 1D, now applied to each component:
+
+::: {.derivation}
+$$
+\underline{q} = -\kappa\,\nabla u
+\quad\Longleftrightarrow\quad
+q_i = -\kappa\,u_{,i}
+\quad\Longleftrightarrow\quad
+\begin{cases}
+q_1 = -\kappa\,u_{,1} \\
+q_2 = -\kappa\,u_{,2}
+\end{cases}
+$$
+:::
+
+```{python fig_fourier}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(1, 3, figsize=(11.6, 6.2),
+                         gridspec_kw=dict(width_ratios=[1.0, 0.95, 0.95]))
+
+# ---- (a) heat-flux lines in the cell
+ax = axes[0]
+tmap(ax, U, np.arange(25.0, 37.0, 1.0), norm=Normalize(23.5, 37.5), lw=0.45)
+speed = np.hypot(Q1, Q2)
+ax.streamplot(xs, ys, Q1, Q2, density=(0.75, 1.5), color=INK,
+              linewidth=0.5 + 2.0 * speed / speed.max(), arrowsize=0.9,
+              zorder=4)
+edges(ax, lw=2.6)
+cell_axes(ax)
+ax.set_title("(a) heat-flux lines in the cell,\n"
+             "$\\underline{q} = -\\kappa\\nabla u$", fontsize=11.5)
+
+
+def fourier_panel(ax, K, title, layers=None):
+    """A uniform temperature gradient, and the flux a material returns."""
+    ang = math.radians(62)
+    gdir = np.array([math.cos(ang), math.sin(ang)])
+    tdir = np.array([-gdir[1], gdir[0]])
+    clip = Rectangle((-1.6, -1.6), 3.2, 3.2, transform=ax.transData)
+    ax.add_patch(Rectangle((-1.6, -1.6), 3.2, 3.2, facecolor="#f7f7f7",
+                           edgecolor="0.6", lw=0.8, zorder=0))
+    if layers is not None:
+        ldir = np.array([math.cos(layers), math.sin(layers)])
+        lnrm = np.array([-ldir[1], ldir[0]])
+        for off in np.arange(-2.6, 2.7, 0.22):
+            p = off * lnrm
+            ln, = ax.plot([p[0] - 3 * ldir[0], p[0] + 3 * ldir[0]],
+                          [p[1] - 3 * ldir[1], p[1] + 3 * ldir[1]],
+                          color="#c9a77c", lw=1.0, zorder=1)
+            ln.set_clip_path(clip)
+    for k, off in enumerate(np.arange(-1.5, 1.6, 0.5)):
+        p = off * gdir
+        ln, = ax.plot([p[0] - 3 * tdir[0], p[0] + 3 * tdir[0]],
+                      [p[1] - 3 * tdir[1], p[1] + 3 * tdir[1]],
+                      color=INK, lw=0.9, alpha=0.55, zorder=2)
+        ln.set_clip_path(clip)
+    q = -K @ gdir
+    qd = q / np.linalg.norm(q)
+    arrow(ax, (0, 0), tuple(1.25 * gdir), color=LOADCLR, lw=2.6, ms=16, z=6)
+    ax.text(*(1.25 * gdir + np.array([0.08, 0.02])), r"$\nabla u$",
+            color=LOADCLR, fontsize=13, ha="left", va="bottom")
+    if layers is not None:
+        ax.plot([0, -1.25 * gdir[0]], [0, -1.25 * gdir[1]], color=LOADCLR,
+                lw=1.4, ls="--", zorder=5)
+        ax.text(*(-1.25 * gdir + np.array([0.05, -0.08])), r"$-\nabla u$",
+                color=LOADCLR, fontsize=12, ha="left", va="top")
+    arrow(ax, (0, 0), tuple(1.25 * qd), color=FLUXCLR, lw=2.8, ms=16, z=7)
+    ax.text(*(1.25 * qd + np.array([-0.05, 0.1])), r"$\underline{q}$",
+            color=FLUXCLR, fontsize=14, ha="right", va="bottom")
+    ax.plot([0], [0], "o", color=INK, ms=5, zorder=8)
+    ax.text(1.55, 1.52, "hotter", ha="right", va="top", fontsize=10,
+            color=LOADCLR)
+    ax.text(-1.55, -1.52, "colder", ha="left", va="bottom", fontsize=10,
+            color=REACTCLR)
+    ax.set_title(title, fontsize=11.5)
+    tidy(ax)
+    ax.set_xlim(-1.7, 1.7)
+    ax.set_ylim(-2.35, 1.7)
+
+
+fourier_panel(axes[1], 25.0 * np.eye(2),
+              "(b) isotropic, $K_{ij} = \\kappa\\,\\delta_{ij}$:\n"
+              "$\\underline{q}$ is exactly opposite $\\nabla u$")
+axes[1].text(0, -2.0, "gray lines: isotherms", ha="center", va="center",
+             fontsize=10, color=DIMCLR)
+th = math.radians(15)
+ea, ec = np.array([math.cos(th), math.sin(th)]), np.array([-math.sin(th), math.cos(th)])
+Kan = 25.0 * np.outer(ea, ea) + 1.0 * np.outer(ec, ec)
+fourier_panel(axes[2], Kan,
+              "(c) layered, $K = 25$ along and $1$ across\n"
+              "the layers: $\\underline{q}$ is steered along them",
+              layers=th)
+axes[2].text(0, -2.0, "brown lines: electrode layers", ha="center",
+             va="center", fontsize=10, color="#9a7443")
+fig.tight_layout(w_pad=1.2)
+fig_fourier_path = save(fig, "H2_Fig4_Fourier.png")
+```
+
+![Fourier's law. (a) The heat-flux lines of the worked example, drawn thicker where
+$|\underline{q}|$ is larger: heat made everywhere in the cell, and heat entering through
+the tabs, all runs downhill to the cooling plate, crossing the isotherms at right angles.
+(b) In an isotropic material, $\underline{q}$ points straight down the temperature
+gradient. (c) In a layered material with the same gradient, the flux is steered along
+the layers.](`{python} fig_fourier_path`){#fig-h2-fourier width=100%}
+
+::: {.step .notes}
+- The minus sign does what it did in 1D, but now it reverses a **direction**:
+  $\underline{q}$ points exactly opposite $\nabla u$ — straight downhill, from hot to
+  cold, crossing the isotherms at right angles.
+- Its size is $|\underline{q}| = \kappa\,|\nabla u|$, in W/m². A poorer conductor needs a
+  steeper gradient to carry the same flux.
+- For a unit vector $\underline{m}$, the product $\underline{q}\cdot\underline{m} =
+  q_i m_i$ is the heat flux across a line whose unit normal is $\underline{m}$. It is
+  largest across the isotherm and zero across a heat-flux line. Taking
+  $\underline{m} = \underline{n}$ on the boundary gives the heat *leaving* $\Omega$,
+  which is exactly what the Neumann condition will fix.
+:::
+
+```{python fourier_numbers}
+#| echo: false
+#| output: asis
+
+qP1, qP2 = -kappa * sP["u1"], -kappa * sP["u2"]
+print(r"""
+::: {.step}
+At $P$: $\underline{q} = -25\,(%.1f,\ %.1f) = (%.0f,\ %.0f)$ W/m², with
+$|\underline{q}| = %.0f$ W/m². Heat at $P$ is moving down and to the left — toward the
+cooling plate.
+:::
+""" % (sP["u1"], sP["u2"], qP1, qP2, math.hypot(qP1, qP2)))
+```
+
+### When the material has a grain: $q_i = -K_{ij}\,u_{,j}$
+
+Isotropy is an assumption about the material, and a battery cell is not isotropic. It is
+a stack of layers, and it conducts about 25 times better along them than across them.
+Our slice happens to lie parallel to the layers, so *within the slice* the cell is
+isotropic. Had we sliced across the thickness, the layers would show, and Fourier's law
+would need a matrix:
+
+::: {.derivation}
+$$
+\underline{q} = -\underline{\underline{K}}\,\nabla u
+\quad\Longleftrightarrow\quad
+q_i = -K_{ij}\,u_{,j}
+\quad\Longleftrightarrow\quad
+\begin{bmatrix} q_1 \\ q_2 \end{bmatrix}
+= -\begin{bmatrix} K_{11} & K_{12} \\ K_{21} & K_{22} \end{bmatrix}
+\begin{bmatrix} u_{,1} \\ u_{,2} \end{bmatrix}
+$$
+:::
+
+::: {.step .notes}
+- Now $\underline{q}$ is generally **not** parallel to $-\nabla u$. Heat is steered
+  toward the direction that conducts best (@fig-h2-fourier c).
+- $K_{ij}$ is **symmetric**, $K_{12} = K_{21}$, and **positive definite**:
+  $K_{ij}v_iv_j > 0$ for every nonzero vector $v_i$. The second property guarantees
+  $\underline{q}\cdot\nabla u = -K_{ij}u_{,i}u_{,j} < 0$. Heat can be steered sideways,
+  but it never flows uphill.
+- The isotropic case is $K_{ij} = \kappa\,\delta_{ij}$, and then
+  $K_{ij}u_{,j} = \kappa\,u_{,i}$. The rest of this page uses it, while
+  [Class 4](4_Class.qmd) and Hughes keep the general $K_{ij}$. Every statement below
+  survives the change if $\kappa\nabla u$ is replaced by $\underline{\underline{K}}\nabla u$.
+:::
+
+## Where the differential equation comes from
+
+### Conservation of energy on a small rectangle
+
+```{python fig_balance}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(10.2, 5.6))
+# the cell, small, with one tiny rectangle picked out
+cw, chh = 1.25, 2.5
+ax.add_patch(Rectangle((0, 0.45), cw, chh, facecolor=DOMCLR, edgecolor="none",
+                       zorder=0))
+ax.plot([0, 0], [0.45, 0.45 + chh], color=BDRYCLR, lw=3.0, zorder=2)
+ax.plot([0, cw, cw, 0], [0.45 + chh, 0.45 + chh, 0.45, 0.45], color=FLUXCLR,
+        lw=2.0, zorder=2)
+sx0, sy0, sw = 0.62, 1.9, 0.16
+ax.add_patch(Rectangle((sx0, sy0), sw, sw, facecolor=HOTCLR, edgecolor=HOTCLR,
+                       alpha=0.7, zorder=3))
+ax.text(cw / 2, 0.3, "the cell", ha="center", va="top", fontsize=10.5,
+        color=DIMCLR)
+
+# the rectangle, enlarged
+Z0, Z1, Y0, Y1 = 4.3, 7.3, 0.6, 3.6
+for (px, py), (qx, qy) in (((sx0, sy0), (Z0, Y0)),
+                           ((sx0, sy0 + sw), (Z0, Y1))):
+    ax.plot([px, qx], [py, qy], color=HOTCLR, lw=0.9, ls="--", zorder=1)
+ax.add_patch(Rectangle((Z0, Y0), Z1 - Z0, Y1 - Y0, facecolor="#fde9d6",
+                       edgecolor=HOTCLR, lw=1.8, zorder=1))
+fz = lambda x, y: np.where((np.abs(x - (Z0 + Z1) / 2) < 0.9)
+                           & (np.abs(y - (Y0 + Y1) / 2) < 0.28), 0.0, 1.0)
+sources(ax, fz, Z0 + 0.25, Z1 - 0.25, Y0 + 0.25, Y1 - 0.25, 1.0, n=26, ms=7)
+ax.text((Z0 + Z1) / 2, (Y0 + Y1) / 2, r"made: $f\,\Delta x_1\,\Delta x_2$",
+        ha="center", va="center", fontsize=12.5, color=LOADCLR, zorder=5)
+ym, xm = Y0 + 1.0, Z0 + 1.0
+arrow(ax, (Z0 - 1.55, ym), (Z0 + 0.02, ym), color=FLUXCLR, lw=2.4, ms=16)
+ax.text(Z0 - 1.6, ym + 0.15, "in:\n$q_1(x_1, x_2)\\,\\Delta x_2$", ha="left",
+        va="bottom", fontsize=12, color=FLUXCLR)
+arrow(ax, (Z1 - 0.02, ym), (Z1 + 1.55, ym), color=FLUXCLR, lw=2.4, ms=16)
+ax.text(Z1 + 1.35, ym - 0.2, "out:\n$q_1(x_1 + \\Delta x_1, x_2)\\,\\Delta x_2$",
+        ha="center", va="top", fontsize=12, color=FLUXCLR)
+arrow(ax, (xm, Y0 - 1.1), (xm, Y0 + 0.02), color=FLUXCLR, lw=2.4, ms=16)
+ax.text(xm + 0.12, Y0 - 0.95, "in: $q_2(x_1, x_2)\\,\\Delta x_1$", ha="left",
+        va="center", fontsize=12, color=FLUXCLR)
+arrow(ax, (xm, Y1 - 0.02), (xm, Y1 + 1.1), color=FLUXCLR, lw=2.4, ms=16)
+ax.text(xm + 0.12, Y1 + 0.95, "out: $q_2(x_1, x_2 + \\Delta x_2)\\,\\Delta x_1$",
+        ha="left", va="center", fontsize=12, color=FLUXCLR)
+ax.text(Z0 + 2.2, Y0 - 0.1, r"$\Delta x_1$", ha="center", va="top",
+        fontsize=12, color=DIMCLR)
+ax.text(Z1 + 0.1, Y0 + 2.25, r"$\Delta x_2$", ha="left", va="center",
+        fontsize=12, color=DIMCLR)
+ax.plot([Z0], [Y0], "o", color=INK, ms=5, zorder=6)
+ax.text(Z0 - 0.08, Y0 - 0.08, "$(x_1, x_2)$", ha="right", va="top",
+        fontsize=11)
+tidy(ax)
+ax.set_xlim(-0.2, Z1 + 2.9)
+ax.set_ylim(-0.75, Y1 + 1.35)
+fig_balance_path = save(fig, "H2_Fig5_Balance.png")
+```
+
+![A small rectangle of the slice, $\Delta x_1$ wide and $\Delta x_2$ tall (and one meter
+deep). At steady state, heat in through its four sides plus heat made inside equals heat
+out. Each side passes only the flux component normal to it: $q_1$ through the left and
+right sides, $q_2$ through the bottom and top.](`{python} fig_balance_path`){#fig-h2-balance width=88%}
+
+Cut a small rectangle out of the slice (@fig-h2-balance). At steady state its temperature
+is not changing, so every watt that enters or is made inside must leave. The fluxes are
+counted positive in the $+x_1$ and $+x_2$ directions, exactly as $q$ was counted positive
+toward $+x$ in the wall:
+
+::: {.derivation}
+$$
+\begin{aligned}
+&\underbrace{q_1(x_1, x_2)\,\Delta x_2 - q_1(x_1 + \Delta x_1, x_2)\,\Delta x_2}
+_{\text{net in, left and right}} \\
+&\quad+\;
+\underbrace{q_2(x_1, x_2)\,\Delta x_1 - q_2(x_1, x_2 + \Delta x_2)\,\Delta x_1}
+_{\text{net in, bottom and top}} \\
+&\quad+\;
+\underbrace{f\,\Delta x_1\,\Delta x_2}_{\text{made}}
+\;=\; 0
+\end{aligned}
+$$
+:::
+
+Divide by $\Delta x_1\,\Delta x_2$ and let both shrink to zero. Each difference quotient
+becomes a partial derivative:
+
+::: {.derivation}
+$$
+-\frac{\partial q_1}{\partial x_1} - \frac{\partial q_2}{\partial x_2} + f = 0
+\quad\Longleftrightarrow\quad
+-\nabla\cdot\underline{q} + f = 0
+\quad\Longleftrightarrow\quad
+-q_{i,i} + f = 0
+$$
+:::
+
+The combination $q_{1,1} + q_{2,2}$ is the **divergence** of $\underline{q}$:
+
+::: {.derivation}
+$$
+\nabla\cdot\underline{q} \;=\; q_{i,i} \;=\;
+\frac{\partial q_1}{\partial x_1} + \frac{\partial q_2}{\partial x_2}
+\qquad [\text{W/m}^3]
+$$
+:::
+
+::: {.step}
+Each term of the balance is in watts per meter of depth: W/m² × m for the fluxes, and
+W/m³ × m² for the generation. Read the result as **"at every point, the net rate at which
+heat flows away equals the rate at which it is made"**: $\nabla\cdot\underline{q} = f$,
+Hughes' $q_{i,i} = f$. The 1D balance $q_{,x} = f$ is the same statement with one pair of
+faces instead of two.
+:::
+
+### The divergence theorem: the same balance for any region
+
+Add up this balance over all the small rectangles that make up a region $\omega$. On
+every internal side, what leaves one rectangle enters its neighbor, so those terms
+cancel in pairs. Only the flux through the outer boundary $\partial\omega$ survives:
+
+::: {.derivation}
+$$
+\int_\omega \nabla\cdot\underline{q}\;d\Omega
+= \int_{\partial\omega} \underline{q}\cdot\underline{n}\;d\Gamma
+\quad\Longleftrightarrow\quad
+\int_\omega q_{i,i}\;d\Omega = \int_{\partial\omega} q_i\,n_i\;d\Gamma
+$$
+:::
+
+This is the **divergence theorem**. Combined with $\nabla\cdot\underline{q} = f$, it says
+that *the heat leaving any region through its boundary equals the heat made inside it*.
+The differential equation is the pointwise version of that statement. In 1D the region is
+an interval $[a, b]$, its boundary is the two end points, and the theorem is the
+fundamental theorem of calculus, with $n(a) = -1$ and $n(b) = +1$ doing the
+bookkeeping:
+
+::: {.derivation}
+$$
+\int_a^b q_{,x}\;dx \;=\; q(b) - q(a) \;=\; q(b)\,n(b) + q(a)\,n(a)
+$$
+:::
+
+::: {.step}
+The divergence theorem is also what turns the strong form into the weak form: it is how
+integration by parts works in more than one dimension ([Class 4](4_Class.qmd)).
+:::
+
+## The Laplacian: divergence of the gradient
+
+Substituting Fourier's law into the balance gives the differential equation of the
+strong form, in every notation you will meet:
+
+::: {.derivation}
+$$
+\begin{aligned}
+-\nabla\cdot\left(\kappa\nabla u\right) = f
+\quad&\Longleftrightarrow\quad
+-\left(\kappa\,u_{,i}\right)_{,i} = f \\
+\xrightarrow{\;\kappa\text{ constant}\;}\quad
+-\kappa\,\Delta u = f
+\quad&\Longleftrightarrow\quad
+-\kappa\,u_{,ii} = f \\
+&\Longleftrightarrow\quad
+-\kappa\left(\frac{\partial^2 u}{\partial x_1^2} + \frac{\partial^2 u}{\partial x_2^2}\right) = f \\
+\xrightarrow{\;\kappa = 1\;}\quad
+u_{,ii} + f = 0 \quad&\phantom{\Longleftrightarrow}\quad \text{(Hughes)}
+\end{aligned}
+$$
+:::
+
+The operator $\Delta u = \nabla\cdot\nabla u = u_{,ii}$ is the **Laplacian**, also written
+$\nabla^2 u$. The notation $\nabla\cdot\nabla u$ says what it does: take the gradient
+(a vector), then its divergence (back to a scalar). In 1D it is simply $u_{,xx}$.
+
+### What the Laplacian says about the shape of $u$ {#sec-h2-shape}
+
+In 1D, $u_{,xx} = -f/\kappa$ fixed the curvature of the temperature profile at every
+point. In 2D the equation fixes only the **sum** of the two curvatures:
+
+::: {.derivation}
+$$
+u_{,11} + u_{,22} = -\frac{f}{\kappa}
+$$
+:::
+
+The temperature may bend down sharply in one direction and up in the other, as long as
+the sum comes out right. @fig-h2-laplacian shows the three basic shapes and, below each,
+the heat-flux field that goes with it.
+
+```{python fig_laplacian}
+#| echo: false
+#| output: false
+
+fig = plt.figure(figsize=(11.2, 7.2))
+gg = np.linspace(-1, 1, 41)
+GX, GY = np.meshgrid(gg, gg)
+tt = np.linspace(0, 2 * math.pi, 241)
+r0 = 0.6
+cases = [
+    (lambda x, y: -(x ** 2 + y ** 2) / 2, (1, 1), LOADCLR,
+     r"$u_{,11} < 0,\;\; u_{,22} < 0$",
+     "center above the ring's average:\n$\\Delta u < 0$, so $f > 0$ (a source)",
+     "$\\nabla\\cdot\\underline{q} = q_{1,1} + q_{2,2} = 1 + 1 = 2$"),
+    (lambda x, y: (x ** 2 + y ** 2) / 2, (-1, -1), REACTCLR,
+     r"$u_{,11} > 0,\;\; u_{,22} > 0$",
+     "center below the ring's average:\n$\\Delta u > 0$, so $f < 0$ (a sink)",
+     "$\\nabla\\cdot\\underline{q} = -1 - 1 = -2$"),
+    (lambda x, y: (y ** 2 - x ** 2) / 2, (1, -1), None,
+     r"$u_{,11} < 0,\;\; u_{,22} > 0$",
+     "center equals the ring's average:\n$\\Delta u = -1 + 1 = 0$, so $f = 0$",
+     "$\\nabla\\cdot\\underline{q} = 1 - 1 = 0$"),
+]
+for j, (fu, (a1, a2), fill, t1, t2, t3) in enumerate(cases):
+    ax = fig.add_subplot(2, 3, j + 1, projection="3d")
+    ax.computed_zorder = False
+    ax.plot_surface(GX, GY, fu(GX, GY), cmap=TCMAP,
+                    norm=Normalize(-0.75, 0.75), linewidth=0,
+                    antialiased=True, alpha=0.8, rcount=41, ccount=41,
+                    zorder=1)
+    ring = fu(r0 * np.cos(tt), r0 * np.sin(tt))
+    ax.plot(r0 * np.cos(tt), r0 * np.sin(tt), np.full_like(tt, ring.mean()),
+            color=INK, lw=1.1, ls="--", zorder=4)
+    ax.plot(r0 * np.cos(tt), r0 * np.sin(tt), ring, color=INK, lw=2.2,
+            zorder=5)
+    ax.scatter([0], [0], [fu(0, 0)], color=INK, s=34, depthshade=False,
+               zorder=6)
+    ax.set_zlim(-1.0, 1.0)
+    ax.view_init(elev=24, azim=-58)
+    ax.set_box_aspect((1, 1, 0.72), zoom=1.3)
+    ax.set_axis_off()
+    ax.set_title(t1 + "\n" + t2, fontsize=11, pad=0)
+
+    bx = fig.add_subplot(2, 3, j + 4)
+    qx, qy = np.meshgrid(np.linspace(-1, 1, 9), np.linspace(-1, 1, 9))
+    if fill:
+        bx.add_patch(Circle((0, 0), r0, facecolor=fill, alpha=0.13,
+                            edgecolor="none", zorder=0))
+    bx.add_patch(Circle((0, 0), r0, facecolor="none", edgecolor=INK, lw=1.3,
+                        ls="--", zorder=3))
+    bx.quiver(qx, qy, a1 * qx, a2 * qy, angles="xy", scale_units="xy",
+              scale=5.2, color=FLUXCLR, width=0.01, headwidth=3.6,
+              headlength=4, zorder=4)
+    bx.set_title(t3, fontsize=11)
+    tidy(bx)
+    bx.set_xlim(-1.42, 1.42)
+    bx.set_ylim(-1.42, 1.3)
+    arrow(bx, (-1.38, -1.38), (-1.05, -1.38), color=DIMCLR, lw=1.0, ms=8)
+    arrow(bx, (-1.38, -1.38), (-1.38, -1.05), color=DIMCLR, lw=1.0, ms=8)
+    bx.text(-1.02, -1.38, "$x_1$", fontsize=9.5, ha="left", va="center",
+            color=DIMCLR)
+    bx.text(-1.38, -1.02, "$x_2$", fontsize=9.5, ha="center", va="bottom",
+            color=DIMCLR)
+fig.text(0.01, 0.74, "temperature\n$u$", fontsize=11.5, ha="left",
+         va="center")
+fig.text(0.01, 0.27, "heat flux\n$\\underline{q} = -\\nabla u$", fontsize=11.5,
+         ha="left", va="center")
+fig.subplots_adjust(left=0.1, right=0.99, top=0.92, bottom=0.02, wspace=0.06,
+                    hspace=0.12)
+fig_laplacian_path = save(fig, "H2_Fig6_Laplacian.png")
+```
+
+![The three shapes a temperature can take near a point, with $\kappa = 1$. Top: $u$, with
+a ring of radius $r$ around the center and, dashed, the ring's average height. Bottom: the
+heat flux $\underline{q} = -\nabla u$ and the same ring. A hump sheds heat through the
+ring (a source), a bowl gathers it (a sink), and a saddle passes as much in as out: no
+source at all.](`{python} fig_laplacian_path`){#fig-h2-laplacian width=100%}
+
+::: {.step .notes}
+- **Hump** ($f > 0$). Both curvatures are negative. Heat flows away from the top in
+  every direction, so more leaves any small circle than enters it:
+  $\nabla\cdot\underline{q} > 0$, a **source**.
+- **Bowl** ($f < 0$). Both curvatures are positive. Heat flows in from every direction:
+  $\nabla\cdot\underline{q} < 0$, a **sink**.
+- **Saddle** ($f = 0$). The curvatures cancel. Heat spreads out along $x_1$ exactly as
+  fast as it converges along $x_2$, so as much enters any small circle as leaves it:
+  $\nabla\cdot\underline{q} = 0$. With no source, this is the only kind of point there
+  is. The temperature cannot have a hump or a bowl inside $\Omega$, so its hottest and
+  coldest points lie on the boundary (the **maximum principle**). With $f > 0$, as in the
+  cell, bowls are ruled out, so the coldest point is on the boundary — here, on the
+  cooling plate.
+:::
+
+The circles in @fig-h2-laplacian give a second reading of the Laplacian: it compares a
+point with its neighbors. Averaging $u$ around a small circle of radius $r$ centered at
+$\underline{x}$ gives
+
+::: {.derivation}
+$$
+\bar u_r \;=\; u(\underline{x}) + \frac{r^2}{4}\,\Delta u(\underline{x}) + \cdots
+\qquad\Longrightarrow\qquad
+u(\underline{x}) - \bar u_r \;\approx\; \frac{r^2}{4\kappa}\,f(\underline{x})
+$$
+:::
+
+::: {.step}
+so **wherever heat is made, a point is hotter than the average of the ring around it**,
+and where $f = 0$ it is exactly that average. The same idea on a square grid with
+spacing $s$ is the five-point stencil
+$\tfrac14\left(u_E + u_W + u_N + u_S\right) - u_C \approx \tfrac{s^2}{4}\,\Delta u$ —
+the 2D version of $\tfrac12\left(u(x - s) + u(x + s)\right) - u(x) \approx
+\tfrac{s^2}{2}\,u_{,xx}$.
+:::
+
+In the cell, $-f/\kappa = -25{,}000/25 = -1000$ °C/m² everywhere. The two curvatures
+change from point to point, sometimes wildly, but their sum never does:
+
+```{python laplacian_table}
+#| echo: false
+#| output: asis
+
+rows = []
+for (p1, p2), where in (((0.05, 0.10), "middle of the cell"),
+                        ((0.06, 0.15), "the point $P$"),
+                        ((0.075, 0.19), "just below the far tab"),
+                        ((0.09, 0.195), "beside the far tab, near the corner")):
+    s = at(p1, p2)
+    fmt = lambda v: ("%.0f" % v).replace("-", "−")
+    rows.append("| $(%.3g,\\ %.3g)$ | %s | %s | %s | %s |" %
+                (p1, p2, where, fmt(s["u11"]), fmt(s["u22"]),
+                 fmt(s["u11"] + s["u22"])))
+print("| $(x_1,\\ x_2)$ (m) | where | $u_{,11}$ (°C/m²) | $u_{,22}$ (°C/m²) "
+      "| $u_{,11} + u_{,22}$ |")
+print("|---|---|---:|---:|---:|")
+print("\n".join(rows))
+```
+
+::: {.step}
+Beside the far tab, $u_{,11}$ is even *positive*: along $x_1$ the profile bends upward,
+and a steeper downward bend along $x_2$ makes up the difference. In 1D there is only one
+curvature, so it had no choice.
+:::
+
+## The forcing function $f$
+
+$f(\underline{x})$ is the heat generated **per unit volume**, in W/m³. It is the only
+piece of data that acts in the *interior* of $\Omega$ — $g$ and $h$ act only on the
+boundary — and in 2D it can vary in both directions. Integrated over the slice, it gives
+the heat made per meter of depth:
+
+::: {.derivation}
+$$
+\begin{aligned}
+&\int_\Omega f\;d\Omega \quad \left[\tfrac{\text{W}}{\text{m}^3}\cdot\text{m}^2
+= \tfrac{\text{W}}{\text{m}}\right] \\[4pt]
+&\text{e.g.}\quad 25{,}000 \times (0.10 \times 0.20) = 500\ \text{W/m} \\
+&\text{and for one 27 mm cell,}\quad 500 \times 0.027 = 13.5\ \text{W}
+\end{aligned}
+$$
+:::
+
+```{python fig_forcing}
+#| echo: false
+#| output: false
+
+fcases = [
+    ("(a) uniform: a steady\nfast charge",
+     lambda x, y: f0 + 0 * x),
+    ("(b) current crowding\nnear the tabs",
+     lambda x, y: 17000 + 113000 * sum(
+         np.exp(-((x - xc) ** 2 + (y - H) ** 2) / (2 * 0.015 ** 2))
+         for xc in (0.025, 0.075))),
+    ("(c) gentle charging:\nthe reaction absorbs heat",
+     lambda x, y: -4000 + 0 * x),
+    ("(d) an internal short\ncircuit",
+     lambda x, y: 20000 + 2.0e7 * np.exp(-((x - 0.07) ** 2 + (y - 0.08) ** 2)
+                                         / (2 * 0.002 ** 2))),
+]
+fig, axes = plt.subplots(1, 4, figsize=(11.6, 6.7))
+xf = np.linspace(0, W, 401)
+yf = np.linspace(0, H, 801)
+XF, YF = np.meshgrid(xf, yf)
+FINTS = []
+for ax, (title, fxy) in zip(axes, fcases):
+    Fv = fxy(XF, YF)
+    total = np.trapezoid(np.trapezoid(Fv, xf, axis=1), yf)
+    FINTS.append(total)
+    fmax = np.abs(Fv).max()
+    lim = 1.3 * fmax / 1000
+    im = ax.imshow(Fv / 1000, origin="lower", extent=[0, W, 0, H],
+                   cmap="RdBu_r", norm=TwoSlopeNorm(0, -lim, lim),
+                   interpolation="bilinear", alpha=0.7, zorder=0)
+    sources(ax, fxy, 0.003, W - 0.003, 0.003, H - 0.003, fmax, n=110, ms=5,
+            z=3)
+    ax.plot([0, W, W, 0, 0], [0, 0, H, H, 0], color=INK, lw=1.2, zorder=2)
+    cell_axes(ax, xlabel=False, ylabel=(ax is axes[0]))
+    ax.set_title(title + "\n$\\int_\\Omega f\\,d\\Omega$ = %s W/m"
+                 % ("%.0f" % total).replace("-", "−"), fontsize=11)
+    cb = fig.colorbar(im, ax=ax, orientation="horizontal", fraction=0.046,
+                      pad=0.05)
+    cb.set_label("$f$ (kW/m³)", fontsize=9.5)
+    cb.ax.xaxis.set_major_locator(MaxNLocator(nbins=3, symmetric=True))
+    cb.ax.tick_params(labelsize=8.5)
+axes[3].add_patch(Circle((0.07, 0.08), 0.009, facecolor="none",
+                         edgecolor=INK, lw=1.2, zorder=4))
+axes[3].annotate("a spot a few\nmillimeters across", xy=(0.064, 0.087),
+                 xytext=(0.012, 0.135), fontsize=9.5, ha="left",
+                 arrowprops=dict(arrowstyle="-", color=INK, lw=0.8))
+fig.tight_layout(w_pad=1.0)
+fig_forcing_path = save(fig, "H2_Fig7_Forcing.png")
+```
+
+![Four forcing functions in the same cell, red where heat is made and blue where it is
+absorbed. The number above each panel is the heat made per meter of depth. Each panel has
+its own color scale; in (d) the peak is about a thousand times the background.](`{python} fig_forcing_path`){#fig-h2-forcing width=100%}
+
+::: {.step .notes}
+- **Uniform generation** — current through the electrodes and electrolyte during a steady
+  fast charge heats the whole cell nearly evenly. This is the $f$ of the worked example.
+- **Current crowding** — all the current funnels through the thin current-collector foils
+  toward the tabs, so resistive heating is concentrated near them.
+- **Gentle charging** — the electrochemical reaction itself can absorb heat (the
+  "reversible" or entropic heat). At a low charging current this can outweigh the
+  resistive heating, and $f < 0$: the cell is a heat sink.
+- **An internal short circuit** — a defect lets current flow straight through a spot a
+  few millimeters across. That spot alone makes as much heat as the whole cell normally
+  does, and the temperature there spikes. This is how thermal runaway starts.
+- $f = 0$ is a cell at rest.
+:::
+
+## Boundary conditions
+
+As in 1D, every point of the boundary gets exactly one condition: either its
+**temperature** is known, or the **heat flux through it** is known. Three things are new
+in 2D. The boundary is a curve, the data can vary along it, and the flux condition
+speaks to only one direction.
+
+### Dirichlet: $u = g$ on $\Gamma_g$ — the temperature is known
+
+```{python fig_dirichlet}
+#| echo: false
+#| output: false
+
+dg = 3.0
+SOLg = H2.series(XX, YY, **EX, dg=dg)
+normD = Normalize(23.5, 39.5)
+fig, axes = plt.subplots(1, 2, figsize=(9.4, 6.6))
+for ax, Uf, gfun, title in (
+        (axes[0], U, lambda y: g0 + 0 * y,
+         "(a) $g$ = 25 °C: the cooled edge\nis itself an isotherm"),
+        (axes[1], SOLg["u"], lambda y: g0 + dg * y / H,
+         "(b) $g = 25 + 3\\,x_2 / H$ °C: the\nisotherms end on the cooled edge")):
+    tmap(ax, Uf, np.arange(26.0, 40.0, 1.0), norm=normD, lw=0.6,
+         label_every=3)
+    uf1, uf2 = np.gradient(Uf, xs, axis=1), np.gradient(Uf, ys, axis=0)
+    ax.streamplot(xs, ys, -uf1, -uf2, density=(0.55, 1.1), color=INK,
+                  linewidth=0.9, arrowsize=0.8, zorder=4)
+    edges(ax, lw=2.6)
+    ax.imshow(gfun(ys)[:, None], origin="lower", extent=[-0.014, -0.006, 0, H],
+              cmap=TCMAP, norm=normD, aspect="auto", zorder=5)
+    ax.plot([-0.014, -0.006, -0.006, -0.014, -0.014], [0, 0, H, H, 0],
+            color=BDRYCLR, lw=1.0, zorder=6)
+    ax.text(-0.01, H + 0.004, "$g$", ha="center", va="bottom", fontsize=12,
+            color=BDRYCLR)
+    cell_axes(ax)
+    ax.set_xlim(-0.018, W + 0.004)
+    ax.set_title(title, fontsize=11.5, pad=16)
+fig.tight_layout(w_pad=2.0)
+fig_dir_path = save(fig, "H2_Fig8_Dirichlet.png")
+```
+
+![The Dirichlet condition pins the value of $u$ all along $\Gamma_g$; the strip beside
+the cooled edge shows $g$ in the same colors as the map. Black lines are heat-flux
+lines. (a) With $g$ constant, the edge is an isotherm, so heat meets the plate at right
+angles. (b) If the coolant enters at the bottom and warms by 3 °C on its way up, $g$
+varies along the edge, the isotherms end on it, and heat arrives at an
+angle.](`{python} fig_dir_path`){#fig-h2-dirichlet width=84%}
+
+::: {.step .notes}
+- $g$ is a temperature, in °C — but in 2D it is a **function on $\Gamma_g$**,
+  $g : \Gamma_g \to \RR$, with one value for each point of the cooled edge. In 1D it was
+  a single number at a single point.
+- The condition fixes the *value* of $u$ along the edge: the temperature landscape is
+  nailed to the curve $g$ there. It says nothing about the heat flowing through the edge.
+  How much heat the plate removes, and where, is an **output** of the problem — like a
+  reaction force in statics.
+- When $g$ is constant, the edge is an isotherm, so $\nabla u$ is perpendicular to it and
+  heat flows straight into the plate. When $g$ varies, the isotherms end on the edge.
+- It is an **essential** boundary condition, imposed directly on $u$. In the weak form it
+  is built into the trial space $\mathcal{S}$ rather than appearing in any integral.
+- Strictly, a thin layer of thermal interface material sits between cell and plate, and
+  the heat through it is proportional to the temperature drop across it — a Robin
+  condition. Letting that layer's resistance go to zero gives the Dirichlet condition.
+:::
+
+### Neumann: $(\kappa\nabla u)\cdot\underline{n} = h$ on $\Gamma_h$ — the heat flux is known {#sec-h2-neumann}
+
+As in 1D, the Neumann condition is Fourier's law evaluated on the boundary. The flux
+*leaving* through the boundary is $\underline{q}\cdot\underline{n}$, since $\underline{n}$
+points outward, so the flux *entering* is $-\underline{q}\cdot\underline{n}$. The Neumann
+condition fixes the flux entering:
+
+::: {.derivation}
+$$
+\begin{aligned}
+h \;&=\; -\underline{q}\cdot\underline{n}
+\;=\; -\left(-\kappa\nabla u\right)\cdot\underline{n}
+\;=\; \left(\kappa\nabla u\right)\cdot\underline{n} \\
+\Longleftrightarrow\qquad
+h \;&=\; -q_i\,n_i \;=\; \kappa\,u_{,i}\,n_i
+\end{aligned}
+$$
+:::
+
+With a conductivity tensor it reads $h = K_{ij}u_{,j}n_i$. The dot product
+$\nabla u\cdot\underline{n} = u_{,i}n_i$ is the slope of $u$ in the outward direction,
+the **normal derivative** $\partial u/\partial n$, so the condition says
+$\kappa\,\partial u/\partial n = h$: *the temperature's outward slope is $h/\kappa$*. On
+each edge of the rectangle the normal picks out one component of the gradient:
+
+::: {.derivation}
+$$
+\begin{aligned}
+&\text{left } (x_1 = 0)\colon && \underline{n} = (-1, 0) && \Longrightarrow\quad -\kappa\,u_{,1} = h \\
+&\text{right } (x_1 = W)\colon && \underline{n} = (1, 0) && \Longrightarrow\quad +\kappa\,u_{,1} = h \\
+&\text{bottom } (x_2 = 0)\colon && \underline{n} = (0, -1) && \Longrightarrow\quad -\kappa\,u_{,2} = h \\
+&\text{top } (x_2 = H)\colon && \underline{n} = (0, 1) && \Longrightarrow\quad +\kappa\,u_{,2} = h
+\end{aligned}
+$$
+:::
+
+The left and right lines are the wall's two conditions, $-\kappa u_{,x}(0) = h$ and
+$+\kappa u_{,x}(L) = h$, word for word.
+
+```{python fig_neumann}
+#| echo: false
+#| output: false
+
+fig = plt.figure(figsize=(11.0, 8.2))
+gsp = fig.add_gridspec(2, 3, height_ratios=[1.0, 1.0], hspace=0.22,
+                       wspace=0.12)
+ax = fig.add_subplot(gsp[0, :])
+
+# ---- (a) the top of the cell, with the gradient split at the boundary
+tmap(ax, U, np.arange(26.0, 37.0, 1.0), norm=Normalize(23.5, 37.5),
+     alpha=0.5, lw=0.6)
+ax.plot([0, 0], [0.155, H], color=BDRYCLR, lw=4.4, zorder=9)
+ax.plot([W, W], [0.155, H], color=FLUXCLR, lw=3.0, zorder=7)
+ax.plot([0, W], [H, H], color=FLUXCLR, lw=3.0, zorder=7)
+for a, b in TABS:
+    ax.plot([a, b], [H, H], color=HOTCLR, lw=5.7, zorder=8,
+            solid_capstyle="butt")
+bpts = (0.008, 0.025, 0.05, 0.075, 0.093)
+gsz = 0.00008                        # m of arrow per (deg C/m)
+BG = {}
+for xb in bpts:
+    s = at(xb, H, M=40000)
+    hb = float(H2.tab_flux(xb, h_tab, TABS))
+    b1, b2 = s["u1"], hb / kappa     # u_,2 = h / kappa exactly on the edge
+    BG[xb] = (b1, b2)
+    base = (xb, H)
+    if abs(b2) > 0:
+        ax.plot([xb + b1 * gsz] * 2, [H, H + b2 * gsz], color="0.45", lw=1.0,
+                ls="--", zorder=10)
+        ax.plot([xb, xb + b1 * gsz], [H + b2 * gsz] * 2, color="0.45", lw=1.0,
+                ls="--", zorder=10)
+        arrow(ax, base, (xb, H + b2 * gsz), color=FLUXCLR, lw=2.2, ms=12,
+              z=11)
+    if abs(b1) > 1:
+        arrow(ax, base, (xb + b1 * gsz, H), color="0.45", lw=2.0, ms=11,
+              z=11)
+    arrow(ax, base, (xb + b1 * gsz, H + b2 * gsz), color=LOADCLR, lw=2.6,
+          ms=14, z=12)
+    ax.plot(*base, "o", color=INK, ms=4.5, zorder=13)
+ax.text(0.075 + BG[0.075][0] * gsz + 0.002, H + BG[0.075][1] * gsz,
+        r"$\nabla u$", color=LOADCLR, fontsize=12.5, ha="left", va="center")
+ax.annotate("tangential part, free:\n$u_{,1}$, set by the rest\nof the problem",
+            xy=(0.025 + BG[0.025][0] * gsz * 0.7, H + 0.0006),
+            xytext=(-0.062, H + 0.03), fontsize=10.5, color="0.35",
+            ha="left", va="center",
+            arrowprops=dict(arrowstyle="-", color="0.45", lw=0.8))
+ax.annotate("normal part, fixed:\n$u_{,2} = h/\\kappa$ = 200 °C/m",
+            xy=(0.075, H + 0.009), xytext=(0.108, H + 0.03), fontsize=10.5,
+            color=FLUXCLR, ha="left", va="center",
+            arrowprops=dict(arrowstyle="-", color=FLUXCLR, lw=0.8))
+ax.annotate("between the tabs $h = 0$: $\\nabla u$ lies along the edge,\n"
+            "and the isotherms meet it at right angles",
+            xy=(0.05 + BG[0.05][0] * gsz * 0.5, H + 0.0006),
+            xytext=(0.05, H + 0.047), fontsize=10.5, ha="center",
+            va="center",
+            arrowprops=dict(arrowstyle="-", color=INK, lw=0.8))
+ax.text(W + 0.003, H - 0.002, "top edge,\n$x_2 = H$", ha="left", va="top",
+        fontsize=9.5, color=DIMCLR)
+ax.text(-0.003, 0.158, "cooled\nedge", ha="right", va="bottom", fontsize=9.5,
+        color=BDRYCLR)
+ax.set_aspect("equal")
+ax.set_xlim(-0.064, W + 0.066)
+ax.set_ylim(0.155, H + 0.058)
+ax.axis("off")
+ax.set_title("(a) the top 4.5 cm of the cell: $\\kappa\\,u_{,2} = h$ fixes the "
+             "normal part of $\\nabla u$ and nothing else", fontsize=11.5)
+
+# ---- (b)-(d) an edge with heat in, insulated, and heat out
+tslope = 0.8
+for j, (hs, title, sub) in enumerate((
+        (1.0, "(b) $h > 0$: heat flows in",
+         "$\\kappa\\,\\partial u/\\partial n = h > 0$:\n$u$ rises toward the edge"),
+        (0.0, "(c) $h = 0$: insulated",
+         "$\\kappa\\,\\partial u/\\partial n = 0$: isotherms\nmeet the edge at right angles"),
+        (-1.0, "(d) $h < 0$: heat flows out",
+         "$\\kappa\\,\\partial u/\\partial n = h < 0$:\n$u$ falls toward the edge"))):
+    bx = fig.add_subplot(gsp[1, j])
+    clip = Rectangle((-1.2, -1.25), 2.4, 1.25, transform=bx.transData)
+    bx.add_patch(Rectangle((-1.2, -1.25), 2.4, 1.25, facecolor=DOMCLR,
+                           edgecolor="none", zorder=0))
+    ss = np.linspace(-1.2, 1.2, 2)
+    for c in np.arange(-3.0, 3.01, 0.4):
+        if hs == 0:
+            ln, = bx.plot([c / tslope] * 2, [-1.25, 0], color=INK, lw=0.9,
+                          alpha=0.55, zorder=1)
+        else:
+            ln, = bx.plot(ss, (c - tslope * ss) / hs, color=INK, lw=0.9,
+                          alpha=0.55, zorder=1)
+        ln.set_clip_path(clip)
+    bx.plot([-1.2, 1.2], [0, 0], color=FLUXCLR, lw=3.4, zorder=3)
+    qd = -np.array([tslope, hs])
+    qd = qd / np.linalg.norm(qd) * 0.62
+    for sc_ in (-0.7, 0.0, 0.7):
+        if hs == 0:
+            p0 = np.array([sc_ + 0.31, -0.2])
+        else:
+            p0 = np.array([sc_, 0.0]) - 0.5 * qd
+        arrow(bx, tuple(p0), tuple(p0 + qd), color=FLUXCLR, lw=2.2, ms=13, z=5)
+    bx.text(1.15, 0.5, "outside", ha="right", va="center", fontsize=9.5,
+            color=DIMCLR)
+    bx.text(1.15, -1.2, "cell", ha="right", va="bottom", fontsize=9.5,
+            color=BDRYCLR)
+    arrow(bx, (-1.05, 0.08), (-1.05, 0.42), color=INK, lw=1.2, ms=9)
+    bx.text(-0.98, 0.3, "$\\underline{n}$", fontsize=11, ha="left",
+            va="center")
+    bx.set_title(title, fontsize=11.5)
+    bx.text(0, -1.38, sub, ha="center", va="top", fontsize=10.5)
+    tidy(bx)
+    bx.set_xlim(-1.25, 1.25)
+    bx.set_ylim(-2.05, 0.62)
+fig_neu_path = save(fig, "H2_Fig9_Neumann.png")
+```
+
+![(a) The top 4.5 cm of the cell. At each marked boundary point, the red arrow is
+$\nabla u$, split into its normal part (teal) and its tangential part (gray). The
+Neumann condition fixes only the normal part: 200 °C/m under each tab, zero between them.
+The tangential part is whatever the rest of the problem makes it. (b)–(d) An edge with
+the same tangential slope and three values of $h$. The teal arrows are heat flux, and the
+gray lines are isotherms.](`{python} fig_neu_path`){#fig-h2-neumann width=100%}
+
+::: {.step .notes}
+- $h$ is a heat flux in W/m², positive when heat flows **in**, on any edge, whichever way
+  the edge faces — just as for the wall.
+- **Only the normal part of $\nabla u$ is fixed.** The tangential part, the slope *along*
+  the boundary, is left for the rest of the problem to decide. In 1D there is no "along
+  the boundary", so the Neumann condition fixed the whole derivative. In 2D it fixes one
+  component of two.
+- **$h = 0$ is an insulated (adiabatic) boundary.** $\nabla u$ lies along the edge, so the
+  isotherms meet it at right angles and heat slides along it without crossing. A plane of
+  **symmetry** carries the same condition, and that is exactly why the large faces
+  between identical cells could be dropped from the problem.
+- The size of the normal slope is $|h|/\kappa$. Under the tabs,
+  $u_{,2} = 5000/25 = 200$ °C/m, which is 0.2 °C per millimeter, rising toward the tab.
+- It is a **natural** boundary condition. In the weak form it appears on its own, as
+  the boundary integral $\int_{\Gamma_h} w\,h\;d\Gamma$.
+- A surface cooled by air obeys $h = h_c\,(u_\infty - u)$, which mixes the value and the
+  slope. That is a Robin condition, and it is not part of Hughes' model problem.
+:::
+
+```{python neumann_numbers}
+#| echo: false
+#| output: asis
+
+b1n, b2n = BG[0.025]
+b1f, b2f = BG[0.075]
+b1m, _ = BG[0.05]
+print(r"""
+::: {.step}
+In numbers: at the middle of the near tab, $\nabla u = (%.0f,\ %.0f)$ °C/m; at the middle
+of the far tab, $(%.0f,\ %.0f)$ °C/m; halfway between them, $(%.0f,\ 0)$ °C/m. The
+second component is set by $h$ in every case. The first is not: it is large near the
+cooling plate and small far from it, and no boundary condition on the top edge could
+have predicted it.
+:::
+""" % (b1n, b2n, b1f, b2f, b1m))
+```
+
+### $\Gamma_g$ and $\Gamma_h$ partition the boundary {#sec-h2-partition}
+
+The two parts of the boundary must satisfy
+
+::: {.derivation}
+$$
+\Gamma = \overline{\Gamma_g \cup \Gamma_h}
+\qquad\qquad
+\Gamma_g \cap \Gamma_h = \emptyset
+$$
+:::
+
+Together $\Gamma_g$ and $\Gamma_h$ cover the whole boundary, and they do not overlap, so
+each point of $\Gamma$ belongs to exactly one of them: they **partition** $\Gamma$. The
+bar (the closure) only restores the handful of points where the two parts meet, such as
+the two corners of the cooled edge, and those have no length. The two requirements guard
+against two different failures, shown in @fig-h2-partition.
+
+```{python fig_partition}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(1, 4, figsize=(11.4, 5.0))
+wd, hd = 1.0, 2.0
+panels = [
+    ("(a) a partition", "✓", "#1a7f37",
+     "$\\Gamma_g \\cup \\Gamma_h = \\Gamma$\n$\\Gamma_g \\cap \\Gamma_h = \\emptyset$\n"
+     "one solution"),
+    ("(b) a gap", "✗", LOADCLR,
+     "the bottom has no condition:\n$\\Gamma_g \\cup \\Gamma_h \\neq \\Gamma$\n"
+     "infinitely many solutions"),
+    ("(c) an overlap", "✗", LOADCLR,
+     "the cooled edge gets both\n$u = g$ and a flux:\n"
+     "$\\Gamma_g \\cap \\Gamma_h \\neq \\emptyset$, no solution"),
+    ("(d) no $\\Gamma_g$", "✗", LOADCLR,
+     "flux data only: no steady state\nunless $\\int_\\Omega f + \\int_\\Gamma h = 0$,\n"
+     "and then $u + C$ for any $C$"),
+]
+for k, (ax, (title, mark, mcol, note)) in enumerate(zip(axes, panels)):
+    ax.add_patch(Rectangle((0, 0), wd, hd, facecolor=DOMCLR, edgecolor="none"))
+    sides = {"left": ([0, 0], [0, hd]), "right": ([wd, wd], [0, hd]),
+             "bottom": ([0, wd], [0, 0]), "top": ([0, wd], [hd, hd])}
+    kinds = {"left": "g", "right": "h", "bottom": "h", "top": "h"}
+    if k == 1:
+        kinds["bottom"] = None
+    if k == 3:
+        kinds["left"] = "h"
+    for e, (sx, sy) in sides.items():
+        kd = kinds[e]
+        if kd == "h":
+            ax.plot(sx, sy, color=FLUXCLR, lw=3.4, solid_capstyle="butt",
+                    zorder=3)
+        elif kd == "g":
+            ax.plot(sx, sy, color=BDRYCLR, lw=5.0, zorder=4)
+        else:
+            ax.plot(sx, sy, color="0.55", lw=2.0, ls=":", zorder=3)
+            ax.text(wd / 2, -0.08, "?", ha="center", va="top", fontsize=20,
+                    color=LOADCLR)
+    if k != 3 and kinds["top"] == "h":
+        for a, b in TABS:
+            ax.plot([a / W * wd, b / W * wd], [hd, hd], color=HOTCLR, lw=6,
+                    zorder=5, solid_capstyle="butt")
+    if k == 3:
+        for a, b in TABS:
+            ax.plot([a / W * wd, b / W * wd], [hd, hd], color=HOTCLR, lw=6,
+                    zorder=5, solid_capstyle="butt")
+    if k == 2:
+        yy = np.linspace(0, hd, 17)
+        for i in range(16):
+            ax.plot([0, 0], [yy[i], yy[i + 1]],
+                    color=FLUXCLR if i % 2 else BDRYCLR, lw=5.0, zorder=6,
+                    solid_capstyle="butt")
+        ax.text(-0.1, hd / 2, "$u = g$\nand\n$\\kappa\\,\\partial u/\\partial n = \\tilde h$",
+                ha="right", va="center", fontsize=10)
+    ax.text(wd / 2, hd + 0.5, mark, ha="center", va="center", fontsize=28,
+            color=mcol, fontweight="bold")
+    ax.text(wd / 2, -0.42, note, ha="center", va="top", fontsize=10.5)
+    ax.set_title(title, fontsize=12, pad=4)
+    tidy(ax)
+    ax.set_xlim(-1.25, wd + 1.25)
+    ax.set_ylim(-1.75, hd + 0.8)
+fig.tight_layout(w_pad=0.2)
+fig_partition_path = save(fig, "H2_Fig10_Partition.png")
+```
+
+![Four ways to assign conditions to the cell's boundary: blue is $\Gamma_g$, teal is
+$\Gamma_h$ (orange on the tabs). Only (a) is a partition of $\Gamma$ into a Dirichlet part
+and a Neumann part.](`{python} fig_partition_path`){#fig-h2-partition width=100%}
+
+::: {.step .notes}
+- **Covering, $\overline{\Gamma_g \cup \Gamma_h} = \Gamma$: no gaps.** On a stretch of
+  boundary with no condition, the problem does not say what happens there: it could be
+  insulated, or pressed against a hot plate. Infinitely many temperature fields then
+  satisfy everything else. Remember that "insulated" is a condition, $h = 0$, and not a
+  missing one.
+- **Disjoint, $\Gamma_g \cap \Gamma_h = \emptyset$: no overlaps.** Prescribing both the
+  temperature *and* the flux on the same stretch asks too much. For arbitrary data no
+  solution exists, and for the rare data that allow one, the solution is wildly
+  sensitive to them.
+- **$\Gamma_g$ must not be empty.** With only flux data, (i) $u$ is determined at best up
+  to an added constant, because flux data only ever see $\nabla u$. And (ii) a steady
+  solution exists only if the heat going in balances, which follows from the divergence
+  theorem applied to all of $\Omega$:
+:::
+
+::: {.derivation}
+$$
+\int_\Omega f\;d\Omega + \int_\Gamma h\;d\Gamma = 0
+$$
+:::
+
+::: {.step .notes}
+- For the cell, $500 + 200 \ne 0$. Without the cooling plate there is no steady state:
+  the cell heats up forever. This is the 2D version of the wall's two-Neumann-faces case.
+- **In 2D, $\Gamma_g$ also needs length.** Holding a single point at a fixed temperature
+  is not enough, because a point has no length for heat to leave through. A point that
+  absorbed a finite heat flow $Q$ (W per meter of depth) would sit at the bottom of a
+  logarithmic well, $u \approx \frac{Q}{2\pi\kappa}\ln r$, which is infinitely deep.
+- The partition is **point by point**, not edge by edge. $\Gamma_g$ could be the middle
+  half of one edge, with $\Gamma_h$ everywhere else. And different stretches of
+  $\Gamma_h$ may carry different $h$: the tabs and the insulated edges are all part of
+  $\Gamma_h$.
+:::
+
+### Which edges get which condition
+
+The model problem does not care which part of the boundary is $\Gamma_g$, but the
+solution does. Here is the same cell, with the same $f$ and the same tabs, under four
+partitions:
+
+```{python fig_configs}
+#| echo: false
+#| output: false
+
+fcell = lambda x, y: f0 + 0 * x
+gcell = lambda x, y: g0 + 0 * x
+hcell = lambda e, s: H2.tab_flux(s, h_tab, TABS) if e == "top" else 0 * s
+RB = H2.grid(W, H, 100, 200, kappa, fcell, gcell, ("bottom",), hcell)
+RC = H2.grid(W, H, 100, 200, kappa, fcell, gcell, ("left", "right"), hcell)
+U0 = H2.series(XX, YY, **{**EX, "h_tab": 0.0})["u"]
+cfg = [
+    ("(a) side-cooled\n(the example)", XX, YY, U, ("left",), TABS),
+    ("(b) bottom-cooled", RB["X"], RB["Y"], RB["U"], ("bottom",), TABS),
+    ("(c) cooled on\nboth sides", RC["X"], RC["Y"], RC["U"], ("left", "right"),
+     TABS),
+    ("(d) side-cooled,\ntabs off", XX, YY, U0, ("left",), ()),
+]
+normC = Normalize(24.0, 63.0)
+fig, axes = plt.subplots(1, 4, figsize=(11.6, 6.4))
+CMAX = []
+for ax, (title, X_, Y_, U_, dset, tb) in zip(axes, cfg):
+    cf = tmap(ax, U_, np.arange(26.0, 63.0, 2.0), X=X_, Y=Y_, norm=normC,
+              lw=0.6)
+    edges(ax, dirichlet=dset, tabs=tb, lw=2.8)
+    k = np.argmax(U_)
+    xm_, ym_ = X_.flat[k], Y_.flat[k]
+    CMAX.append(U_.max())
+    if tb:
+        ax.plot([xm_], [ym_], "o", ms=7, mfc="white", mec=INK, mew=1.5,
+                zorder=12)
+    ax.text(W / 2, -0.03, "hottest: %.1f °C" % U_.max(), ha="center",
+            va="top", fontsize=11)
+    cell_axes(ax, xlabel=False, ylabel=(ax is axes[0]))
+    ax.set_title(title, fontsize=11.5)
+cb = fig.colorbar(cf, ax=axes, fraction=0.025, pad=0.02,
+                  ticks=np.arange(25, 65, 5))
+cb.set_label("$u$ (°C)", fontsize=10.5)
+fig_configs_path = save(fig, "H2_Fig11_Configurations.png")
+```
+
+![One cell, one $f$, the same tabs, four partitions of $\Gamma$. Blue edges are
+$\Gamma_g$ (held at 25 °C); everything else is $\Gamma_h$. The isotherms are 2 °C apart,
+all four panels share one color scale, and a white dot marks the hottest point.
+In (d) the whole insulated side is equally hot.](`{python} fig_configs_path`){#fig-h2-configs width=100%}
+
+```{python configs_notes}
+#| echo: false
+#| output: asis
+
+print(r"""
+::: {.step .notes}
+- **(a) Side-cooled**, the worked example: %.1f °C at the hottest point, on the top edge
+  under the far tab.
+- **(b) Bottom-cooled.** Same cell, same heat, but now it has to travel the 200 mm height
+  instead of the 100 mm width, and the tabs are as far from the plate as they can be. The
+  hottest point reaches %.1f °C. The bulk temperature rise grows with the square of the
+  conduction length, so doubling the length quadruples it. Where the cooling plate goes
+  matters as much as how cold it is.
+- **(c) Cooled on both sides.** Each plate takes %.0f W/m and the hottest point drops to
+  %.1f °C.
+- **(d) Side-cooled with the tabs off.** Nothing in the data depends on $x_2$ any more,
+  so neither does the solution. The isotherms are vertical, and the problem is the wall
+  (next section). Hottest point: %.1f °C, along the whole insulated side.
+:::
+""" % (CMAX[0], CMAX[1], RC["heat_out"]["left"], CMAX[2], CMAX[3]))
+```
+
+## How the 1D wall sits inside the 2D cell
+
+Switch the tabs off, so that $h = 0$ on all of $\Gamma_h$. Now nothing in the problem —
+$f$, $g$, $h$, or the shape of $\Omega$ — changes with $x_2$, so neither can $u$:
+$u = u(x_1)$ and $u_{,2} = 0$ everywhere. Each line of the 2D strong form then collapses
+to a line of the 1D one:
+
+| 2D, cell | with $u_{,2} = 0$ | 1D, wall |
+|---|---|---|
+| $-\kappa\left(u_{,11} + u_{,22}\right) = f$ in $\Omega$ | $-\kappa\,u_{,11} = f$ | the differential equation |
+| $u(0, x_2) = g$ | $u(0) = g$ | Dirichlet face at $x = 0$ |
+| $+\kappa\,u_{,1}(W, x_2) = 0$ | $+\kappa\,u_{,1}(W) = 0$ | Neumann face at $x = L$, $n = +1$, $h = 0$ |
+| $\mp\kappa\,u_{,2} = 0$ on the bottom and top | $0 = 0$ | nothing: satisfied automatically |
+
+This is arrangement (b) of the wall — temperature given at $x = 0$, flux at $x = L$ —
+with $L = W$ and $h = 0$, and its solution is the wall's:
+
+::: {.derivation}
+$$
+\begin{aligned}
+u(x_1) &= g + \frac{f}{\kappa}\left(W x_1 - \frac{x_1^2}{2}\right) \\
+u_{\max} = u(W) &= g + \frac{f\,W^2}{2\kappa} = 25 + \frac{25{,}000 \times 0.01}{2 \times 25}
+= 30\ {}^\circ\text{C}
+\end{aligned}
+$$
+:::
+
+```{python fig_oned}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(8.6, 4.8))
+xx1 = np.linspace(0, W, 301)
+u1d = g0 + f0 / kappa * (W * xx1 - xx1 ** 2 / 2)
+heights = (0.02, 0.10, 0.16, 0.19, 0.20)
+cols = ["#9ecae1", "#6baed6", "#3182bd", "#e6550d", "#a63603"]
+for yv, col in zip(heights, cols):
+    uu = H2.series(xx1, np.full_like(xx1, yv), **EX)["u"]
+    ax.plot(xx1, uu, color=col, lw=2.0, label="$x_2$ = %.2f m" % yv)
+ax.plot(xx1, u1d, color=INK, lw=2.4, ls="--",
+        label="the 1D wall: $g + \\frac{f}{\\kappa}(W x_1 - x_1^2/2)$")
+ax.legend(frameon=False, fontsize=10, loc="upper left")
+ax.set_xlim(0, W)
+ax.set_ylim(24.5, 37.5)
+graph(ax, "$x_1$ (m)", "$u$ (°C)")
+ins = ax.inset_axes([0.8, 0.03, 0.17, 0.33])
+ins.fill([0, W, W, 0], [0, 0, H, H], color=DOMCLR)
+edges(ins, lw=1.8)
+for yv, col in zip(heights, cols):
+    ins.plot([0, W], [yv, yv], color=col, lw=1.8, zorder=9)
+ins.set_aspect("equal")
+ins.set_xlim(-0.01, W + 0.01)
+ins.set_ylim(-0.01, H + 0.01)
+ins.axis("off")
+fig_oned_path = save(fig, "H2_Fig12_OneD.png")
+```
+
+![Temperature across the cell at five heights (inset), with the tabs on, compared with
+the 1D wall solution (dashed). Near the bottom the 2D profile is the wall's parabola,
+lifted by the little tab heat that reaches that far. Near the top the tabs take over and
+the problem is genuinely two-dimensional. The kinks in the top curve sit at the ends of
+the tabs, where $h$ jumps.](`{python} fig_oned_path`){#fig-h2-oned width=82%}
+
+```{python oned_numbers}
+#| echo: false
+#| output: asis
+
+lift = float(H2.series(W, 0.02, **EX)["u"]) - (g0 + f0 * W ** 2 / (2 * kappa))
+print(r"""
+::: {.step}
+With the tabs on, the 1D solution is still the right answer far from them. At
+$x_2 = 0.02$ m the 2D profile is the 1D parabola lifted by %.1f °C, the share of the
+tab heat that reaches that far down. Near the top, the tabs dominate. This is the
+general pattern: **a 1D model is accurate where the data do not vary in the other
+direction, and fails near the features that make them vary.** The wall on the first
+page was exactly such a model: one strip, far from the wall's edges.
+:::
+""" % lift)
+```
+
+## The strong form, complete
+
+Collecting the pieces, in both notations:
+
+::: {.derivation}
+$$
+(\mathrm{S}) \quad
+\begin{aligned}
+&\text{Given } f : \Omega \to \RR \;[\text{W/m}^3],\;\; \kappa > 0 \;[\text{W/(m·K)}], \\
+&g : \Gamma_g \to \RR \;[{}^\circ\text{C}], \text{ and }
+  h : \Gamma_h \to \RR \;[\text{W/m}^2], \\
+&\text{where } \Gamma = \overline{\Gamma_g \cup \Gamma_h} \text{ and }
+  \Gamma_g \cap \Gamma_h = \emptyset, \\
+&\text{find } u : \bar\Omega \to \RR \;[{}^\circ\text{C}] \text{ such that} \\[4pt]
+&\quad -\nabla\cdot\left(\kappa\nabla u\right) = f
+  \;\;\Longleftrightarrow\;\; -\left(\kappa\,u_{,i}\right)_{,i} = f
+  && \text{in } \Omega \\
+&\quad u = g && \text{on } \Gamma_g \\
+&\quad \left(\kappa\nabla u\right)\cdot\underline{n} = h
+  \;\;\Longleftrightarrow\;\; \kappa\,u_{,i}\,n_i = h
+  && \text{on } \Gamma_h
+\end{aligned}
+$$
+:::
+
+The three lines are the energy balance with Fourier's law substituted in, the known
+temperatures, and the known inflows.
+
+For the cell, with $\Omega = \,]0, W[\, \times \,]0, H[$, written out piece by piece:
+
+| Where | Condition | |
+|---|---|---|
+| in $\Omega$ | $-\kappa\left(u_{,11} + u_{,22}\right) = f$ | the differential equation |
+| $x_1 = 0$ | $u(0, x_2) = g$ | the cooling plate ($\Gamma_g$) |
+| $x_1 = W$ | $+\kappa\,u_{,1}(W, x_2) = 0$ | the insulated side |
+| $x_2 = 0$ | $-\kappa\,u_{,2}(x_1, 0) = 0$ | the insulated bottom |
+| $x_2 = H$ | $+\kappa\,u_{,2}(x_1, H) = h(x_1)$ | 5000 W/m² on the tabs, 0 between and beside them |
+
+::: {.step .notes}
+- It is called the **strong** form because the differential equation must hold **at every
+  point** of $\Omega$, which demands that $u$ have two derivatives everywhere. Our data
+  already strain this. At the four ends of the tabs, $h$ jumps from 0 to 5000 W/m², and
+  there $\nabla u$ is unbounded: it grows like $\ln r$ as you approach the end of a tab.
+  The growth is mild, but it has no limit. (Look for the kinks in the top curve of
+  @fig-h2-oned.) The weak form, which only integrates, does not mind.
+- Every figure on this page is a picture of one line of the strong form.
+:::
+
+::: {.callout-note collapse="true"}
+## The exact solution, for the curious
+
+Split the solution into a piece that carries $f$ and a piece that carries the tab flux:
+
+$$
+\begin{aligned}
+u(x_1, x_2) &= g + \frac{f}{\kappa}\left(W x_1 - \frac{x_1^2}{2}\right) \\
+&\quad + \sum_{m=1}^{\infty} \frac{h_m}{\kappa}\,
+  \frac{\sin(\mu_m x_1)\,\cosh(\mu_m x_2)}{\mu_m \sinh(\mu_m H)}
+\end{aligned}
+$$
+
+$$
+\mu_m = \frac{(m - \frac12)\pi}{W},
+\qquad h_m = \frac{2}{W}\int_0^W h(x_1)\sin(\mu_m x_1)\,dx_1
+$$
+
+The first two terms are the wall's solution: they satisfy the differential equation, the
+Dirichlet condition, and $h = 0$ on the other three edges. Each term of the sum satisfies
+$\Delta u = 0$ (the $\sin$ curves one way and the $\cosh$ the other, by equal amounts),
+vanishes on $x_1 = 0$, has zero slope on $x_1 = W$ and $x_2 = 0$, and together they add up
+to $\kappa u_{,2} = h(x_1)$ on the top edge. This is separation of variables. Most of
+the figures and numbers on this page come from this formula, summed to hundreds of terms.
+The bottom-cooled and two-sided cells of @fig-h2-configs, and the explorer below, are
+computed numerically instead, because most problems have no such formula. That is the
+reason for the finite element method.
+:::
+
+## Worked example
+
+The cell of @fig-h2-module during a fast charge: $W$ = 0.10 m, $H$ = 0.20 m,
+$\kappa$ = 25 W/(m·K), $f$ = 25,000 W/m³, and $g$ = 25 °C on the cooled side. On the two
+tabs, $x_1 \in [0.015, 0.035]$ m and $[0.065, 0.085]$ m, $h$ = 5000 W/m², and $h = 0$ on
+the rest of $\Gamma_h$.
+
+```{python fig_example}
+#| echo: false
+#| output: false
+
+yq = np.linspace(0, H, 801)
+qout = kappa * H2.series(np.zeros_like(yq), yq, **EX)["u1"]   # heat leaving, W/m^2
+kmax = np.argmax(U)
+xhot, yhot, uhot = XX.flat[kmax], YY.flat[kmax], U.flat[kmax]
+
+fig, (ax, bx) = plt.subplots(1, 2, figsize=(10.4, 6.9), sharey=True,
+                             gridspec_kw=dict(width_ratios=[1.0, 0.95]))
+cf = tmap(ax, U, np.arange(26.0, 37.0, 1.0), norm=Normalize(23.5, 37.5),
+          lw=0.6, label_every=2)
+speed = np.hypot(Q1, Q2)
+ax.streamplot(xs, ys, Q1, Q2, density=(0.6, 1.2), color=INK,
+              linewidth=0.5 + 1.6 * speed / speed.max(), arrowsize=0.8,
+              zorder=4)
+edges(ax, lw=2.8)
+ax.plot([xhot], [yhot], "o", ms=8, mfc="white", mec=INK, mew=1.6, zorder=12)
+ax.annotate("hottest: %.1f °C" % uhot, xy=(xhot, yhot - 0.002),
+            xytext=(0.06, 0.162), ha="center", va="top", fontsize=11,
+            bbox=dict(fc="white", ec="none", alpha=0.85, pad=1.5),
+            arrowprops=dict(arrowstyle="-", color=INK, lw=0.9), zorder=13)
+cell_axes(ax)
+ax.set_title("(a) temperature, isotherms 1 °C apart,\nand heat-flux lines",
+             fontsize=11.5)
+
+bulk = f0 * W
+bx.fill_betweenx(yq, 0, bulk, color=LOADCLR, alpha=0.18, lw=0)
+bx.fill_betweenx(yq, bulk, qout, color=HOTCLR, alpha=0.3, lw=0)
+bx.plot(qout, yq, color=BDRYCLR, lw=2.4)
+bx.axvline(bulk, color=LOADCLR, lw=0.9, ls="--")
+bx.text(bulk / 2, 0.075, "made inside:\n$f\\,W$ = 2500 W/m²\n→ 500 W/m",
+        ha="center", va="center", fontsize=10.5, color=LOADCLR)
+bx.text(bulk + 900, 0.1, "from the tabs:\n200 W/m", ha="left",
+        va="center", fontsize=10.5, color="#a0520d")
+bx.annotate("%.0f W/m²" % qout[-1], xy=(qout[-1], H), xytext=(qout[-1] - 1500,
+            H - 0.006), ha="right", va="center", fontsize=10,
+            arrowprops=dict(arrowstyle="-", color=INK, lw=0.8))
+bx.annotate("%.0f W/m²" % qout[0], xy=(qout[0], 0.0), xytext=(qout[0] + 700,
+            0.018), ha="left", va="center", fontsize=10,
+            arrowprops=dict(arrowstyle="-", color=INK, lw=0.8))
+bx.set_xlim(0, 7000)
+graph(bx, "heat flux into the plate, $\\kappa\\,u_{,1}(0, x_2)$ (W/m²)", None)
+bx.tick_params(labelleft=True)
+bx.set_title("(b) where the heat leaves: 700 W/m\nthrough the cooled edge",
+             fontsize=11.5)
+fig.tight_layout(w_pad=2.0)
+fig_example_path = save(fig, "H2_Fig13_Example.png")
+```
+
+![The solution of the worked example. (a) The temperature, with heat-flux lines drawn
+thicker where more heat flows. All of them end on the cooling plate. (b) The heat
+crossing the cooled edge, per square meter of plate, at each height. The heat made
+inside the cell would leave uniformly (red). The tab heat leaves mostly near the top
+(orange), close to where it came in.](`{python} fig_example_path`){#fig-h2-example width=92%}
+
+```{python example_checks}
+#| echo: false
+#| output: asis
+
+u_left = H2.series(np.zeros_like(yq), yq, **EX)["u"]
+u1_right = H2.series(np.full_like(yq, W), yq, **EX)["u1"]
+xq = np.linspace(0, W, 801)
+u2_bot = H2.series(xq, np.zeros_like(xq), **EX)["u2"]
+tab_far = kappa * at(0.075, H, M=400000)["u2"]
+mid_top = kappa * at(0.05, H, M=400000)["u2"]
+tiny = max(np.abs(u1_right).max(), np.abs(u2_bot).max(), 1e-300)
+q_total = np.trapezoid(qout, yq)
+print(r"""
+Every line of the strong form can be checked on the solution:
+
+::: {.step .notes}
+- **The differential equation.** At every point, $u_{,11} + u_{,22} = -f/\kappa =
+  -1000$ °C/m² (the table in [the Laplacian section](#sec-h2-shape)),
+  even where the two curvatures individually swing between −6600 and +5600 °C/m².
+  Equivalently, $\nabla\cdot\underline{q} = f$: each small piece of the slice exports
+  exactly the 25,000 W/m³ it makes.
+- **The Dirichlet condition.** $u(0, x_2)$ lies between %.2f and %.2f °C all along the
+  cooled edge — that is, $u = g$. Since $f > 0$, the coldest points of the cell must lie
+  on the boundary, and here they are exactly this edge.
+- **The Neumann conditions.** At the middle of the far tab,
+  $\kappa\,u_{,2}(0.075, H) = %.0f$ W/m² $= h$. Halfway between the tabs,
+  $\kappa\,u_{,2}(0.05, H) = %.0f$ W/m². On the insulated side and bottom,
+  $|u_{,1}(W, x_2)|$ and $|u_{,2}(x_1, 0)|$ never exceed $10^{%d}$ °C/m, so the isotherms
+  meet those edges at right angles.
+- **The energy balance** (per meter of depth). The cell makes 500 W/m and takes in
+  200 W/m through the tabs, and %.1f W/m leaves through the cooling plate. For one 27 mm
+  cell that is %.1f W delivered to the coolant. The plate's share is not uniform: %.0f W/m²
+  at the bottom of the cooled edge, rising to %.0f W/m² at the top, where the tab heat
+  arrives.
+- **The hot spot.** %.1f °C, on the top edge under the far tab, at
+  $x_1 \approx %.3f$ m. That is %.1f °C hotter than the same cell with the tabs off:
+  the tabs, which bring in 29%% of the heat, cause more than half of the worst-case
+  temperature rise.
+:::
+""" % (u_left.min(), u_left.max(), tab_far, abs(round(mid_top)),
+       int(math.floor(math.log10(tiny))) + 1,
+       q_total, q_total * T, qout[0], qout[-1], uhot, xhot,
+       uhot - (g0 + f0 * W ** 2 / (2 * kappa))))
+```
+
+## Explore the strong form
+
+Choose which edges touch a cooling plate. Those edges are $\Gamma_g$, and every other edge
+is $\Gamma_h$. Then set the data. The map shows the temperature, computed in your browser
+on a 2.5 mm grid, with isotherms and heat-flux arrows. Blue edges are $\Gamma_g$, teal
+edges are $\Gamma_h$, and the orange stretches are the tabs; the white dot is the hottest
+point. The checkboxes cannot create a gap or an overlap, because every edge is either
+checked or not — but they can leave $\Gamma_g$ empty.
+
+```{ojs}
+//| echo: false
+import {solveGrid, tabFlux, niceLevels} from "./heat2d.js"
+```
+
+```{ojs}
+//| echo: false
+viewof xCool = Inputs.checkbox(new Map([
+  ["left, x₁ = 0", "left"], ["right, x₁ = W", "right"],
+  ["bottom, x₂ = 0", "bottom"], ["top, x₂ = H (covers the tabs)", "top"]
+]), {value: ["left"], label: "Cooled edges (Γg)"})
+viewof xF   = Inputs.range([-10000, 100000], {value: 25000, step: 1000, label: "f (W/m³)"})
+viewof xHt  = Inputs.range([-10000, 20000],  {value: 5000,  step: 500,  label: "h on the tabs (W/m²)"})
+viewof xHo  = Inputs.range([-2000, 2000],    {value: 0,     step: 100,  label: "h on the rest of Γh (W/m²)"})
+viewof xK   = Inputs.range([1, 50],          {value: 25,    step: 1,    label: "κ (W/(m·K))"})
+viewof xG   = Inputs.range([0, 40],          {value: 25,    step: 1,    label: "g at x₂ = 0 (°C)"})
+viewof xDg  = Inputs.range([-5, 5],          {value: 0,     step: 0.5,  label: "rise in g up to x₂ = H (°C)"})
+viewof xShow = Inputs.checkbox(["isotherms", "heat-flux arrows"],
+  {value: ["isotherms", "heat-flux arrows"], label: "Show"})
+```
+
+```{ojs}
+//| echo: false
+cell2d = {
+  const W = 0.10, H = 0.20, tabs = [[0.015, 0.035], [0.065, 0.085]];
+  const res = solveGrid({W, H, nx: 40, ny: 80, kappa: xK, f: xF,
+    g: (x, y) => xG + xDg * y / H, dirichlet: xCool,
+    h: (edge, s) => (edge === "top" && tabFlux(s, 1, tabs)) ? xHt : xHo});
+  return Object.assign(res, {tabs});
+}
+```
+
+```{ojs}
+//| echo: false
+{
+  const r = cell2d, W = r.W, H = r.H;
+  const BLUE = "#4a7ba7", TEAL = "#0d9488", ORANGE = "#e67e22", INK = "#1a1a1a";
+  const fmt = (v, d = 0) => (v < 0 ? "−" : "") + Math.abs(v).toFixed(d);
+  const names = {left: "left", right: "right", bottom: "bottom", top: "top"};
+  const lenOf = e => (e === "left" || e === "right") ? H : W;
+  const gEdges = ["left", "right", "bottom", "top"].filter(e => xCool.includes(e));
+  const hEdges = ["left", "right", "bottom", "top"].filter(e => !xCool.includes(e));
+  const lenG = d3.sum(gEdges, lenOf), lenH = d3.sum(hEdges, lenOf);
+  const asSet = es => es.length ? `{${es.join(", ")}}` : "∅";
+  const partition = html`<b>Partition.</b> Γ<sub>g</sub> = ${asSet(gEdges)}
+    (${lenG.toFixed(2)} m), Γ<sub>h</sub> = ${asSet(hEdges)} (${lenH.toFixed(2)} m):
+    together ${(lenG + lenH).toFixed(2)} m, all of Γ.`;
+
+  if (!r.hasDirichlet) {
+    const net = r.made + r.heatIn;
+    return html`<div style="border-left: 4px solid ${ORANGE}; padding: 0.7rem 1rem;
+      background: #fff7ed; max-width: 46rem; line-height: 1.6;">
+      ${partition}<br>
+      <b>Γ<sub>g</sub> = ∅: every edge carries a flux condition.</b>
+      Heat made inside, ∫f dΩ = ${fmt(r.made)} W/m, plus heat in through the boundary,
+      ∫h dΓ = ${fmt(r.heatIn)} W/m, gives ${fmt(net)} W/m.<br>
+      ${Math.abs(net) < 0.5
+        ? "The data balance, so a steady state exists — but only up to an added constant: if u solves the problem, so does u + C for every C. The temperature level is never pinned down."
+        : net > 0
+          ? "More heat comes in than can leave, so there is no steady state: the cell's temperature rises forever. Check an edge to give the heat a way out."
+          : "More heat leaves than is supplied, so there is no steady state: the cell cools forever. Check an edge to hold its temperature."}
+    </div>`;
+  }
+
+  const {levels} = niceLevels(r.umin, r.umax, 12);
+  const marks = [
+    Plot.raster({x1: 0, y1: 0, x2: W, y2: H, fill: (x, y) => r.at(x, y),
+                 pixelSize: 2})
+  ];
+  if (xShow.includes("isotherms") && levels.length > 0) {
+    marks.push(Plot.contour({x1: 0, y1: 0, x2: W, y2: H,
+      value: (x, y) => r.at(x, y), thresholds: levels, stroke: INK,
+      strokeOpacity: 0.6, strokeWidth: 0.8, pixelSize: 2}));
+  }
+  if (xShow.includes("heat-flux arrows")) {
+    const pts = [];
+    for (let i = 0; i < 6; i++) for (let j = 0; j < 12; j++) {
+      const x = W * (i + 0.5) / 6, y = H * (j + 0.5) / 12;
+      const [g1, g2] = r.grad(x, y);
+      pts.push({x, y, q1: -xK * g1, q2: -xK * g2});
+    }
+    const qmax = d3.max(pts, p => Math.hypot(p.q1, p.q2)) || 1;
+    const Lmax = 0.85 * W / 6;
+    const arr = pts.map(p => {
+      const m = Math.hypot(p.q1, p.q2) / qmax * Lmax, a = Math.atan2(p.q2, p.q1);
+      return {x1: p.x - 0.5 * m * Math.cos(a), y1: p.y - 0.5 * m * Math.sin(a),
+              x2: p.x + 0.5 * m * Math.cos(a), y2: p.y + 0.5 * m * Math.sin(a), m};
+    }).filter(a => a.m > 0.15 * Lmax);
+    marks.push(Plot.arrow(arr, {x1: "x1", y1: "y1", x2: "x2", y2: "y2",
+      stroke: INK, strokeWidth: 1.5, headLength: 6}));
+  }
+  const seg = {left: [0, 0, 0, H], right: [W, 0, W, H], bottom: [0, 0, W, 0], top: [0, H, W, H]};
+  const asLink = e => { const [x1, y1, x2, y2] = seg[e]; return {x1, y1, x2, y2}; };
+  const lk = {x1: "x1", y1: "y1", x2: "x2", y2: "y2"};
+  marks.push(Plot.link(["left", "right", "bottom", "top"].map(asLink),
+                       {...lk, stroke: "white", strokeWidth: 10}));
+  marks.push(Plot.link(hEdges.map(asLink), {...lk, stroke: TEAL, strokeWidth: 4}));
+  if (!xCool.includes("top")) {
+    marks.push(Plot.link(r.tabs.map(([a, b]) => ({x1: a, y1: H, x2: b, y2: H})),
+                         {...lk, stroke: ORANGE, strokeWidth: 7}));
+  }
+  marks.push(Plot.link(gEdges.map(asLink), {...lk, stroke: BLUE, strokeWidth: 6}));
+  marks.push(Plot.dot([{x: r.xmax, y: r.ymax}], {x: "x", y: "y", r: 5, fill: "white",
+                                                  stroke: INK, strokeWidth: 1.5}));
+  const plot = Plot.plot({
+    width: Math.min(width, 330), aspectRatio: 1,
+    marginLeft: 50, marginRight: 14, marginTop: 16, marginBottom: 40,
+    x: {domain: [0, W], label: "x₁ (m) →", ticks: [0, 0.05, 0.1]},
+    y: {domain: [0, H], label: "↑ x₂ (m)", ticks: [0, 0.05, 0.1, 0.15, 0.2]},
+    color: {type: "linear", scheme: "RdYlBu", reverse: true, legend: true,
+            label: "u (°C)"},
+    marks
+  });
+
+  const outs = Object.entries(r.heatOut);
+  const totalOut = d3.sum(outs, d => d[1]);
+  const readout = html`<div style="font-size: 0.95rem; line-height: 1.65;">
+    ${partition}<br>
+    <b>Energy balance</b> (per meter of depth):<br>
+    &nbsp;&nbsp;made inside, ∫f dΩ = ${fmt(r.made)} W/m<br>
+    &nbsp;&nbsp;in through Γ<sub>h</sub>, ∫h dΓ = ${fmt(r.heatIn)} W/m<br>
+    &nbsp;&nbsp;out through Γ<sub>g</sub> = ${fmt(totalOut)} W/m
+      (${outs.map(([e, v]) => `${names[e]}: ${fmt(v)}`).join(", ")})<br>
+    <b>Hottest point:</b> ${fmt(r.umax, 1)} °C at
+      (${r.xmax.toFixed(3)}, ${r.ymax.toFixed(3)}) m<br>
+    <b>Coldest point:</b> ${fmt(r.umin, 1)} °C<br>
+    <b>One 27 mm cell</b> ${totalOut >= 0
+      ? `sends ${fmt(totalOut * 0.027, 1)} W into the coolant.`
+      : `draws ${fmt(-totalOut * 0.027, 1)} W from the coolant.`}
+  </div>`;
+  return html`<div style="display: flex; flex-wrap: wrap; gap: 1.5rem;
+    align-items: flex-start;">${plot}<div style="flex: 1; min-width: 14rem;">${readout}</div></div>`;
+}
+```
+
+::: {.step .notes}
+- Uncheck every edge: $\Gamma_g = \emptyset$, and the heat has nowhere to go.
+- Set the tab flux to 0 with only the left edge cooled: the isotherms become vertical
+  lines, and the cell is the wall.
+- Cool the bottom instead of the side, and watch the hottest point.
+- Cool the top edge: the tabs disappear, because a point cannot be in $\Gamma_g$ and
+  $\Gamma_h$ at once.
+- Give the coolant a rise in $g$, and watch the isotherms detach from the cooled edge.
+- Make $f$ negative with the tabs off: the cell now absorbs heat, so the "cooling"
+  plate *supplies* it. The flux arrows reverse, and the coldest point is on the far side.
+- Halve $\kappa$: every temperature rise above $g$ doubles. The same heat needs twice
+  the gradient.
+:::

@@ -1,0 +1,2421 @@
+---
+title: "2D Poisson II: The Battery Cell, by Galerkin's Method"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import os
+import sys
+import math
+
+sys.path.append('.')
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon as MplPolygon, Rectangle, Circle
+from matplotlib.colors import Normalize, TwoSlopeNorm
+
+from notes_style import (use_chapter, save, tidy, INK, LOADCLR, REACTCLR,
+                         DIMCLR, DOMCLR, BDRYCLR, FLUXCLR, MESHCLR, REFCLR,
+                         BASISCLRS)
+import fem2d as F2
+import heat2d as H2
+
+IMGDIR = use_chapter("Poisson2D_Heat_FEM")
+
+# the battery cell of the strong-form page (SI units, per meter of depth)
+W, H, T = 0.10, 0.20, 0.027
+kappa, f0, g0, h_tab = 25.0, 25000.0, 25.0, 5000.0
+TABS = ((0.015, 0.035), (0.065, 0.085))
+EX = dict(W=W, H=H, kappa=kappa, f=f0, g0=g0, h_tab=h_tab, tabs=TABS)
+HOTCLR = "#e67e22"
+TCMAP = "RdYlBu_r"
+
+pb = F2.Problem(kappa, lambda x, y: f0 + 0.0 * x,
+                {"top": F2.tab_flux(h_tab, TABS)})
+cool = {"left": lambda x, y: g0 + 0.0 * x}
+
+
+def exact(x1, x2, M=1500):
+    s = H2.series(x1, x2, **EX, M=M)
+    return s["u"], s["u1"], s["u2"]
+
+
+# the worked example: 2 x 4 bilinear elements, 5 cm squares
+mesh8 = F2.Mesh(W, H, 2, 4, p=1)
+gd8 = F2.dirichlet(mesh8, cool)
+sol8 = F2.solve(mesh8, pb, gd8)
+
+
+def arrow(ax, p_from, p_to, color=INK, lw=1.8, ms=13, z=6, style="-|>"):
+    ax.annotate("", xy=p_to, xytext=p_from,
+                arrowprops=dict(arrowstyle=style, color=color, lw=lw,
+                                mutation_scale=ms, shrinkA=0, shrinkB=0),
+                zorder=z)
+
+
+def graph(ax, xlabel=None, ylabel=None):
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+    for s in ("left", "bottom"):
+        ax.spines[s].set_linewidth(0.9)
+    if xlabel:
+        ax.set_xlabel(xlabel, fontsize=11)
+    if ylabel:
+        ax.set_ylabel(ylabel, fontsize=11)
+    ax.tick_params(labelsize=9.5)
+
+
+def cell_axes(ax, pad=0.006, ticks=True):
+    ax.set_aspect("equal")
+    ax.set_xlim(-pad, W + pad)
+    ax.set_ylim(-pad, H + pad)
+    for s in ax.spines.values():
+        s.set_visible(False)
+    if ticks:
+        ax.set_xticks([0, 0.05, 0.10])
+        ax.set_yticks([0, 0.05, 0.10, 0.15, 0.20])
+        ax.tick_params(labelsize=8.5, length=2.5)
+    else:
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+
+def outline(mesh, e, m=16):
+    """The element's boundary, traced counter-clockwise."""
+    t = np.linspace(-1, 1, m, endpoint=False)
+    xi = np.concatenate([t, np.ones(m), -t, -np.ones(m)])
+    eta = np.concatenate([-np.ones(m), t, np.ones(m), -t])
+    return mesh.map(e, xi, eta)[0]
+
+
+def draw_mesh(ax, mesh, color=MESHCLR, lw=0.9, z=3, fill=None, alpha=1.0):
+    for e in range(1, mesh.nel + 1):
+        P = outline(mesh, e, 2 if mesh.p == 1 else 16)
+        if fill is not None:
+            ax.add_patch(MplPolygon(P, closed=True, facecolor=fill(e),
+                                    edgecolor="none", alpha=alpha, zorder=z - 1))
+        ax.add_patch(MplPolygon(P, closed=True, facecolor="none",
+                                edgecolor=color, lw=lw, zorder=z))
+
+
+def draw_nodes(ax, mesh, gd, labels=True, fs=8.5, ms=5.5, z=6, lab_off=(0.0025, 0.0025)):
+    for A in range(1, mesh.nnp + 1):
+        x, y = mesh.X[A - 1]
+        dirn = A in gd
+        ax.plot([x], [y], "o", ms=ms, mfc=BDRYCLR if dirn else "white",
+                mec=INK, mew=0.9, zorder=z)
+        if labels:
+            ax.text(x + lab_off[0], y + lab_off[1], str(A), fontsize=fs,
+                    ha="left", va="bottom", zorder=z + 1,
+                    color=BDRYCLR if dirn else INK)
+
+
+def draw_field(ax, sol, values=None, norm=None, cmap=TCMAP, k=9, z=0):
+    """Colour each element by u^h (or by values(e, xi, eta))."""
+    ev = F2.evaluate(sol, k)
+    for e in range(sol["mesh"].nel):
+        ax.pcolormesh(ev["x1"][e], ev["x2"][e], ev["uh"][e], shading="gouraud",
+                      cmap=cmap, norm=norm, zorder=z, rasterized=True)
+    return ev
+```
+
+The [strong-form page](Poisson2D_Heat.qmd) set up heat flow in a battery cell as the
+two-dimensional model problem. This page solves it approximately, step by step, the same
+way [1D Poisson II](Poisson1D_Heat_FEM.qmd) solved the wall:
+
+::: {.derivation}
+$$
+\begin{aligned}
+&(\mathrm{S})
+\;\Longleftrightarrow\;
+(\mathrm{W})
+\;\xrightarrow{\;\text{finite-dimensional}\;}\;
+(\mathrm{G})
+\;\xrightarrow{\;\text{basis functions}\;}\;
+\mathbf{K}\mathbf{d} = \mathbf{F} \\
+&\qquad\qquad
+\mathbf{K}\mathbf{d} = \mathbf{F}
+\;\xleftarrow{\;\text{assembly}\;}\;
+\mathbf{k}^e,\; \mathbf{f}^e,
+\qquad
+\mathbf{K}\mathbf{d} = \mathbf{F}
+\;\xrightarrow{\;\text{solve}\;}\;
+u^h
+\end{aligned}
+$$
+:::
+
+The steps are the same as in 1D, and so are most of the formulas, with $\int_0^L$ replaced
+by $\int_\Omega$. Two things are genuinely new, and they get the most space here: the
+**basis functions** now live on two-dimensional elements, and each element is placed in
+the plane by an **isoparametric map** whose Jacobian is a matrix. The bookkeeping (ID,
+IEN, LM) is unchanged, but its effect on the global matrix looks very different, so this
+page draws it out in full, including which rows and columns the Dirichlet nodes cut out.
+
+The running example is the side-cooled cell:
+
+| Where | Condition | |
+|---|---|---|
+| in $\Omega = \,]0, W[\, \times \,]0, H[$ | $-\kappa\left(u_{,11} + u_{,22}\right) = f$ | $f$ = 25,000 W/m³, $\kappa$ = 25 W/(m·K) |
+| $x_1 = 0$ ($\Gamma_g$) | $u = g$ | $g$ = 25 °C, the cooling plate |
+| top, on the tabs | $\kappa\,u_{,2} = h$ | $h$ = 5000 W/m² on $x_1 \in [0.015, 0.035]$ and $[0.065, 0.085]$ m |
+| rest of $\Gamma_h$ | $\kappa\,\nabla u\cdot\underline{n} = 0$ | insulated |
+
+$W$ = 0.10 m and $H$ = 0.20 m. At the bottom of the page, an explorer lets you choose the
+elements, the mesh, and the Dirichlet nodes, and see every array update.
+
+## The weak form
+
+### Two collections of functions
+
+As in 1D, the weak form looks for $u$ among **trial functions** and tests it against
+**weighting functions**, which differ only on $\Gamma_g$:
+
+::: {.derivation}
+$$
+\mathcal{S} = \left\{\, u \in H^1(\Omega) \;\middle|\; u = g \text{ on } \Gamma_g \,\right\}
+\qquad\qquad
+\mathcal{V} = \left\{\, w \in H^1(\Omega) \;\middle|\; w = 0 \text{ on } \Gamma_g \,\right\}
+$$
+:::
+
+```{python fig_spaces}
+#| echo: false
+#| output: false
+
+xs_, ys_ = np.linspace(0, W, 41), np.linspace(0, H, 81)
+XS, YS = np.meshgrid(xs_, ys_)
+U0 = exact(XS, YS, M=400)[0]
+trial = U0 + 5 * np.sin(np.pi * XS / W) ** 2 * np.cos(2 * np.pi * YS / H) \
+    + 3 * (XS / W) * (YS / H) ** 2
+weight = (XS / W) * (1.2 - 0.9 * np.cos(np.pi * YS / H)) \
+    + 0.6 * np.sin(np.pi * XS / W) * np.sin(3 * np.pi * YS / H)
+
+fig = plt.figure(figsize=(11.0, 5.0))
+for k, (Z, title, zl, glev) in enumerate((
+        (trial, "a trial function $u \\in \\mathcal{S}$:\n$u = g$ = 25 °C "
+                "all along $\\Gamma_g$", "$u$ (°C)", g0),
+        (weight, "a weighting function $w \\in \\mathcal{V}$:\n$w = 0$ "
+                 "all along $\\Gamma_g$", "$w$", 0.0))):
+    ax = fig.add_subplot(1, 2, k + 1, projection="3d")
+    ax.computed_zorder = False
+    ax.plot_surface(XS, YS, Z, cmap=TCMAP if k == 0 else "PuOr_r",
+                    norm=None if k == 0 else TwoSlopeNorm(0, -1.5, 1.5),
+                    linewidth=0, antialiased=True, alpha=0.85, rcount=60,
+                    ccount=40, zorder=1)
+    ax.plot([0, 0], [0, H], [glev, glev], color=BDRYCLR, lw=4, zorder=5)
+    ax.text(-0.012, 0.62 * H, glev, "$\\Gamma_g$", color=BDRYCLR, fontsize=13,
+            zorder=6)
+    ax.view_init(elev=26, azim=-128)
+    ax.set_box_aspect((1, 2, 1.0), zoom=1.05)
+    ax.set_xticks([0, 0.05, 0.1])
+    ax.set_yticks([0, 0.1, 0.2])
+    ax.tick_params(labelsize=8, pad=0)
+    ax.set_xlabel("$x_1$ (m)", fontsize=9.5, labelpad=0)
+    ax.set_ylabel("$x_2$ (m)", fontsize=9.5, labelpad=2)
+    ax.zaxis.set_rotate_label(False)
+    ax.set_zlabel(zl, fontsize=9.5, labelpad=0, rotation=90)
+    ax.set_title(title, fontsize=11.5, pad=0)
+fig.tight_layout(w_pad=1.0)
+fig_spaces_path = save(fig, "H2F_Fig1_Spaces.png")
+```
+
+![Left: a member of $\mathcal{S}$. Any reasonable temperature field over the cell will
+do, as long as it equals 25 °C along the cooled edge (blue). The solution is one of them.
+Right: a member of $\mathcal{V}$, the same kind of function, but zero along the cooled
+edge.](`{python} fig_spaces_path`){#fig-h2f-spaces width=96%}
+
+::: {.step .notes}
+- $H^1(\Omega)$ asks that $u$ and its gradient be square-integrable:
+  $\int_\Omega \left(u^2 + u_{,i}u_{,i}\right) d\Omega < \infty$. For the piecewise
+  polynomials used below, that comes down to one requirement: **they must be continuous
+  across element edges.** A crease along an edge is allowed, but a tear is not.
+- As in 1D, the Dirichlet condition is **built into** $\mathcal{S}$, and $\mathcal{V}$
+  vanishes where $\mathcal{S}$ is pinned.
+:::
+
+### Multiply, integrate, and integrate by parts
+
+Multiply the differential equation by any $w \in \mathcal{V}$ and integrate over the
+cross-section:
+
+::: {.derivation}
+$$
+\begin{aligned}
+0 &= \int_\Omega w\left[\nabla\cdot\left(\kappa\nabla u\right) + f\right] d\Omega \\
+\Longleftrightarrow\quad
+0 &= \int_\Omega w\left[\left(\kappa\,u_{,i}\right)_{,i} + f\right] d\Omega
+\qquad \text{for every } w \in \mathcal{V}
+\end{aligned}
+$$
+:::
+
+In 1D, integration by parts moved a derivative from $u$ to $w$. In 2D the same move takes
+two steps: the product rule, then the divergence theorem from the
+[strong-form page](Poisson2D_Heat.qmd#the-divergence-theorem-the-same-balance-for-any-region).
+
+::: {.derivation}
+$$
+\begin{aligned}
+&\text{product rule:} &
+\nabla\cdot\left(w\,\kappa\nabla u\right) &= \nabla w\cdot\kappa\nabla u
+  + w\,\nabla\cdot\left(\kappa\nabla u\right) \\
+& & \Longleftrightarrow\quad
+\left(w\,\kappa\,u_{,i}\right)_{,i} &= w_{,i}\,\kappa\,u_{,i} + w\left(\kappa\,u_{,i}\right)_{,i} \\[6pt]
+&\text{divergence theorem:} &
+\int_\Omega \nabla\cdot\left(w\,\kappa\nabla u\right) d\Omega
+  &= \int_\Gamma w\,\kappa\nabla u\cdot\underline{n}\;d\Gamma \\
+& & \Longleftrightarrow\quad
+\int_\Omega \left(w\,\kappa\,u_{,i}\right)_{,i} d\Omega &= \int_\Gamma w\,\kappa\,u_{,i}\,n_i\;d\Gamma
+\end{aligned}
+$$
+:::
+
+Together they give
+
+::: {.derivation}
+$$
+\int_\Omega \nabla w\cdot\kappa\nabla u\;d\Omega
+= \int_\Omega w\,f\;d\Omega
++ \int_{\Gamma_g} w\,\underbrace{\kappa\nabla u\cdot\underline{n}}_{\text{unknown}}\;d\Gamma
++ \int_{\Gamma_h} w\,\underbrace{\kappa\nabla u\cdot\underline{n}}_{=\;h}\;d\Gamma
+$$
+:::
+
+```{python fig_boundary}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(9.8, 5.4))
+S = 20.0                                   # drawing units per meter
+w_, h_ = W * S, H * S
+ax.add_patch(Rectangle((0, 0), w_, h_, facecolor=DOMCLR, edgecolor="none"))
+ax.plot([0, 0], [0, h_], color=BDRYCLR, lw=5, zorder=3)
+ax.plot([0, w_, w_, 0], [h_, h_, 0, 0], color=FLUXCLR, lw=3, zorder=3)
+for a, b in TABS:
+    ax.plot([a * S, b * S], [h_, h_], color=HOTCLR, lw=7, zorder=4,
+            solid_capstyle="butt")
+ax.text(w_ / 2, h_ / 2, "$\\Omega$", fontsize=20, ha="center", va="center")
+# Gamma_g: flux unknown, but w = 0
+for yv in (0.8, 2.0, 3.2):
+    arrow(ax, (0.0, yv), (-1.1, yv), color=DIMCLR, lw=2.2, ms=13)
+ax.text(-0.6, 3.75, "?", fontsize=16, color=DIMCLR, ha="center")
+ax.text(-1.35, 2.0, "$\\Gamma_g$: the heat into the plate,\n"
+        "$-\\kappa\\nabla u\\cdot\\underline{n}$, is part of\n"
+        "the answer, not data...\n\n"
+        "...but $w = 0$ there, so\n"
+        "$\\int_{\\Gamma_g} w\\,\\kappa\\nabla u\\cdot\\underline{n}\\,d\\Gamma = 0$",
+        ha="right", va="center", fontsize=11)
+# the tabs: h is known
+for a, b in TABS:
+    xm = 0.5 * (a + b) * S
+    arrow(ax, (xm, h_ + 1.0), (xm, h_ + 0.05), color=HOTCLR, lw=2.4, ms=14)
+ax.text(w_ / 2, h_ + 1.25, "tabs: $\\kappa\\nabla u\\cdot\\underline{n} = h$ is data,\n"
+        "so the term becomes $\\int_{\\mathrm{tabs}} w\\,h\\,d\\Gamma$",
+        ha="center", va="bottom", fontsize=11, color="#a0520d")
+# insulated edges: h = 0 contributes nothing
+ax.text(w_ + 0.35, 1.6, "insulated: $h = 0$,\nso these edges add\nnothing at all",
+        ha="left", va="center", fontsize=11, color=FLUXCLR)
+ax.text(w_ / 2, -0.25, "insulated: $h = 0$", ha="center", va="top",
+        fontsize=11, color=FLUXCLR)
+tidy(ax)
+ax.set_xlim(-6.2, w_ + 3.4)
+ax.set_ylim(-1.0, h_ + 2.9)
+fig_boundary_path = save(fig, "H2F_Fig2_BoundaryTerm.png")
+```
+
+![The boundary term, one piece of $\Gamma$ at a time. On $\Gamma_h$ the flux is data: $h$
+on the tabs and zero on the insulated edges, which therefore drop out entirely. On
+$\Gamma_g$ the flux is the heat delivered to the cooling plate, which is part of the
+answer; choosing $w = 0$ on $\Gamma_g$ is what removes it.](`{python} fig_boundary_path`){#fig-h2f-boundary width=86%}
+
+What remains is the weak form:
+
+::: {.derivation}
+$$
+(\mathrm{W}) \qquad
+\begin{aligned}
+&\text{Given } f,\ g,\ h,\ \kappa, \text{ find } u \in \mathcal{S}
+  \text{ such that for all } w \in \mathcal{V}: \\[3pt]
+&\qquad \underbrace{\int_\Omega \nabla w\cdot\kappa\nabla u\;d\Omega}_{a(w,\,u)}
+= \underbrace{\int_\Omega w\,f\;d\Omega}_{(w,\,f)}
++ \underbrace{\int_{\Gamma_h} w\,h\;d\Gamma}_{(w,\,h)_\Gamma}
+\end{aligned}
+$$
+:::
+
+or, in index notation and in Hughes' compact form,
+
+::: {.derivation}
+$$
+\begin{aligned}
+\int_\Omega w_{,i}\,\kappa\,u_{,i}\;d\Omega
+&= \int_\Omega w\,f\;d\Omega + \int_{\Gamma_h} w\,h\;d\Gamma \\
+a(w, u) &= (w, f) + (w, h)_\Gamma \qquad \forall\, w \in \mathcal{V}
+\end{aligned}
+$$
+:::
+
+::: {.step .notes}
+- **The 1D weak form is the special case.** With one coordinate, $\int_\Omega$ becomes
+  $\int_0^L$, $w_{,i}u_{,i}$ becomes $w_{,x}u_{,x}$, and $\int_{\Gamma_h} w\,h\,d\Gamma$
+  becomes the single term $w(0)\,h$, because the boundary is a point.
+- **Units.** Each term is W per meter of depth, times the units of $w$: a weighted heat
+  balance for the slice.
+- **The insulated edges are free.** They carry a boundary condition, $h = 0$, but it costs
+  nothing: the natural condition is satisfied, in the weak sense, simply by not adding a
+  term. For the cell, $(w, h)_\Gamma$ is an integral over the two tabs only.
+- **Only first derivatives.** The strong form needed $u_{,11} + u_{,22}$ at every point,
+  which failed at the tab ends. The weak form needs only $\nabla u$ to be
+  square-integrable, and the log-singular gradient there is.
+:::
+
+## The Galerkin form
+
+$(\mathrm{W})$ asks for a whole function. **Galerkin's method** replaces $\mathcal{S}$ and
+$\mathcal{V}$ by finite-dimensional collections, $\mathcal{S}^h$ and $\mathcal{V}^h$,
+each spanned by a finite number of basis functions, so that finding $u^h$ means finding a
+list of numbers.
+
+### Nodes, elements, and a mesh of the cell
+
+Cut the cell into $n_{el}$ quadrilateral **elements**, $n_1$ across and $n_2$ up. On each
+element, place a grid of $(p + 1) \times (p + 1)$ **nodes**: its four corners when
+$p = 1$, and also its mid-sides and centre when $p = 2$. Neighbouring elements share the
+nodes on their common edge, so the mesh has
+
+::: {.derivation}
+$$
+n_{np} = \left(p\,n_1 + 1\right)\left(p\,n_2 + 1\right) \quad \text{nodes},
+\qquad
+n_{en} = (p + 1)^2 \quad \text{nodes per element}
+$$
+:::
+
+```{python fig_mesh}
+#| echo: false
+#| output: false
+
+meshQ9 = F2.Mesh(W, H, 2, 4, p=2)
+gdQ9 = F2.dirichlet(meshQ9, cool)
+meshD = F2.Mesh(W, H, 3, 6, p=2, distort=0.3)
+gdD = F2.dirichlet(meshD, cool)
+fig, axes = plt.subplots(1, 3, figsize=(11.2, 7.0))
+for ax, mesh, gd, title, fs in (
+        (axes[0], mesh8, gd8, "(a) $2 \\times 4$ bilinear (Q4) elements:\n"
+         "$n_{el}$ = 8, $n_{np}$ = 15", 10),
+        (axes[1], meshQ9, gdQ9, "(b) $2 \\times 4$ biquadratic (Q9) elements:\n"
+         "$n_{el}$ = 8, $n_{np}$ = 45", 7.5),
+        (axes[2], meshD, gdD, "(c) $3 \\times 6$ Q9 elements, distorted:\n"
+         "curved edges, the same topology", None)):
+    ax.add_patch(Rectangle((0, 0), W, H, facecolor=DOMCLR, edgecolor="none",
+                           zorder=0))
+    draw_mesh(ax, mesh, lw=1.3)
+    ax.plot([0, 0], [0, H], color=BDRYCLR, lw=4, zorder=2)
+    draw_nodes(ax, mesh, gd, labels=fs is not None, fs=fs or 8,
+               ms=6 if mesh.p == 1 else 4.5,
+               lab_off=(0.0018, 0.0018))
+    if fs is not None:
+        for e in range(1, mesh.nel + 1):
+            xc = mesh.map(e, np.array([0.28]), np.array([-0.45]))[0][0] if mesh.p == 2 \
+                else mesh.map(e, np.array([0.0]), np.array([0.0]))[0][0]
+            ax.text(xc[0], xc[1], "$e = %d$" % e, fontsize=9.5, color=MESHCLR,
+                    ha="center", va="center", zorder=7,
+                    bbox=dict(fc="white", ec="none", alpha=0.75, pad=0.8))
+    cell_axes(ax, ticks=False)
+    ax.set_title(title, fontsize=11.5)
+fig.tight_layout(w_pad=1.2)
+fig_mesh_path = save(fig, "H2F_Fig3_Mesh.png")
+```
+
+![Meshes of the cell. Node numbers $A$ run along $x_1$ first, row by row, and element
+numbers $e$ the same way. Filled nodes lie on $\Gamma_g$, the cooled edge, where the
+temperature is known; the open nodes carry the unknowns. (c) Moving the interior nodes
+changes the shape of every element, and with nine nodes per element even the edges
+curve, but the connectivity, and so every array on this page, stays the
+same.](`{python} fig_mesh_path`){#fig-h2f-mesh width=100%}
+
+### The Galerkin form, $(\mathrm{G})$
+
+Each node $A$ gets a global basis function $N_A$, built in the next section. Let
+$\eta_g$ be the set of nodes on $\Gamma_g$ and $\eta - \eta_g$ the rest. Build the
+approximations from the basis:
+
+::: {.derivation}
+$$
+\begin{aligned}
+w^h &= \sum_{A \in \eta - \eta_g} c_A\,N_A \;\in \mathcal{V}^h \\
+u^h &= v^h + g^h,\qquad
+v^h = \sum_{B \in \eta - \eta_g} d_B\,N_B \;\in \mathcal{V}^h,\qquad
+g^h = \sum_{B \in \eta_g} g_B\,N_B
+\end{aligned}
+$$
+:::
+
+::: {.step}
+$g^h$ carries the Dirichlet data: $g_B = g(\underline{x}_B)$ at each node on $\Gamma_g$.
+Every $N_A$ with $A \notin \eta_g$ vanishes on $\Gamma_g$, so $w^h$ and $v^h$ do too.
+Substituting into $(\mathrm{W})$ and moving the known $g^h$ to the right gives
+:::
+
+::: {.derivation}
+$$
+(\mathrm{G}) \qquad
+a(w^h, v^h) = (w^h, f) + (w^h, h)_\Gamma - a(w^h, g^h)
+\qquad \forall\, w^h \in \mathcal{V}^h
+$$
+:::
+
+### What the Galerkin step gives up, and what it keeps
+
+$(\mathrm{S}) \Leftrightarrow (\mathrm{W})$ is exact: no information is lost. The
+approximation happens here, and only here, when $\mathcal{S}$ and $\mathcal{V}$ are
+replaced by $\mathcal{S}^h$ and $\mathcal{V}^h$. (Two smaller approximations come
+later: $g^h$ matches $g$ only at the nodes when $g$ varies along the edge, and the
+element integrals are done by quadrature.)
+
+What the Galerkin step keeps is a precise sense in which $u^h$ is the *best* choice.
+$(\mathrm{W})$ holds for every $w \in \mathcal{V}$, so in particular for every
+$w^h \in \mathcal{V}^h$. Subtracting $(\mathrm{G})$ from it leaves
+
+::: {.derivation}
+$$
+a\left(w^h,\; u - u^h\right) = \int_\Omega \nabla w^h\cdot\kappa\nabla\left(u - u^h\right) d\Omega = 0
+\qquad \forall\, w^h \in \mathcal{V}^h
+$$
+:::
+
+::: {.step}
+The error is **orthogonal** to every function the mesh can represent, measured with
+$a(\cdot,\cdot)$ as the inner product. It follows (@fig-h2f-projection) that, among all
+the trial functions the mesh can build, $u^h$ is the one closest to $u$ in the **energy
+norm**:
+:::
+
+::: {.derivation}
+$$
+\begin{aligned}
+&\left\| u - u^h \right\|_E \;\le\; \left\| u - v \right\|_E
+\quad \text{for every } v \in \mathcal{S}^h, \\
+&\text{where}\quad
+\left\|v\right\|_E^2 = a(v, v) = \int_\Omega \kappa\,\nabla v\cdot\nabla v\;d\Omega
+\end{aligned}
+$$
+:::
+
+```{python fig_projection}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(8.4, 4.4))
+plane = np.array([[0.0, 0.0], [6.6, 0.0], [8.2, 1.9], [1.6, 1.9]])
+ax.add_patch(MplPolygon(plane, closed=True, facecolor="#e8eef6",
+                        edgecolor=BDRYCLR, lw=1.4))
+ax.text(0.5, 0.25, "$\\mathcal{S}^h$: everything the mesh can represent",
+        fontsize=11, color=BDRYCLR)
+uh, u_ = np.array([4.3, 1.05]), np.array([4.3, 4.0])
+ax.plot(*zip(uh, u_), color=LOADCLR, lw=1.8, ls="--")
+arrow(ax, (1.0, 1.1), tuple(uh), color=INK, lw=2.2, ms=14)
+arrow(ax, (1.0, 1.1), tuple(u_), color=INK, lw=2.2, ms=14)
+ax.plot(*uh, "o", color=INK, ms=6, zorder=7)
+ax.plot(*u_, "o", color=INK, ms=6, zorder=7)
+ax.text(u_[0] + 0.15, u_[1], "$u$, the exact solution", fontsize=12,
+        va="center")
+ax.text(uh[0] + 0.1, uh[1] - 0.12, "$u^h$", fontsize=13, va="top")
+ax.plot([uh[0], uh[0] + 0.28, uh[0] + 0.28], [uh[1] + 0.3, uh[1] + 0.3,
+        uh[1] + 0.0], color=LOADCLR, lw=1.1)
+ax.text(uh[0] + 0.15, 2.05, "$u - u^h \\perp \\mathcal{S}^h$\nin the energy\ninner product",
+        fontsize=10.5, color=LOADCLR, ha="left", va="center")
+v_ = np.array([7.3, 1.55])
+ax.plot(*v_, "o", color=DIMCLR, ms=5, zorder=7)
+ax.plot(*zip(v_, u_), color=DIMCLR, lw=1.0, ls=":")
+ax.text(v_[0], v_[1] - 0.12, "any other $v \\in \\mathcal{S}^h$\nis farther from $u$",
+        fontsize=10, color=DIMCLR, va="top", ha="center")
+tidy(ax)
+ax.set_xlim(-0.2, 8.6)
+ax.set_ylim(-0.2, 4.5)
+fig_proj_path = save(fig, "H2F_Fig4_Projection.png")
+```
+
+![The Galerkin approximation as a projection. The exact $u$ generally does not lie in
+$\mathcal{S}^h$; $u^h$ is its foot in $\mathcal{S}^h$, with the error perpendicular to
+$\mathcal{S}^h$ when angles are measured by $a(\cdot,\cdot)$. A finer mesh or higher-degree
+elements enlarge $\mathcal{S}^h$ and bring its closest point nearer to
+$u$.](`{python} fig_proj_path`){#fig-h2f-projection width=70%}
+
+::: {.step .notes}
+- $\|v\|_E^2 = \int_\Omega \kappa\,|\nabla v|^2\,d\Omega$ weighs the *gradient*, and for
+  heat conduction it is the rate at which a temperature field $v$ dissipates heat. So
+  Galerkin's $u^h$ is the member of $\mathcal{S}^h$ whose heat flow is closest to the
+  true one, in that energy-weighted sense.
+- The quality of $u^h$ is therefore settled entirely by how well $\mathcal{S}^h$ *can*
+  approximate $u$. The rest of the method only has to find that best member. Choosing
+  $\mathcal{S}^h$ means choosing the basis functions, which is the next section.
+:::
+
+## Basis functions in two dimensions
+
+### What the basis has to do
+
+Galerkin's method works with any basis, but four properties make the finite element
+basis the standard choice:
+
+::: {.step .notes}
+- **Conforming.** $\mathcal{S}^h$ must lie inside $H^1(\Omega)$, so every $N_A$ must be
+  **continuous across element edges**.
+- **Local.** $N_A$ is non-zero only on the few elements that touch node $A$. Then
+  $a(N_A, N_B) = 0$ unless nodes $A$ and $B$ share an element, and $\mathbf{K}$ is
+  **sparse**.
+- **Nodal.** $N_A(\underline{x}_B) = \delta_{AB}$, so the coefficient $d_A$ *is* the
+  temperature at node $A$, and a Dirichlet value is imposed simply by fixing a nodal
+  value.
+- **Complete.** The basis reproduces every constant and every linear field exactly:
+  $\sum_A N_A = 1$ and $\sum_A \underline{x}_A N_A = \underline{x}$. That is what lets
+  $u^h$ approach any smooth $u$ as the elements shrink.
+:::
+
+All four come from one construction: build a few standard functions on a single
+**parent element**, then copy them onto every element of the mesh.
+
+### The parent square and the tensor product
+
+The parent element is the square $\hat\Omega = [-1, 1]^2$, with coordinates
+$(\xi, \eta)$, also written $\xi_1 = \xi$ and $\xi_2 = \eta$. Its shape functions are
+**products of the 1D Lagrange functions** from [1D Poisson II](Poisson1D_Heat_FEM.qmd),
+one factor for each direction:
+
+::: {.derivation}
+$$
+N_a(\xi, \eta) = N_{i(a)}(\xi)\;N_{j(a)}(\eta),
+\qquad\qquad
+N_a(\xi_b, \eta_b) = \delta_{ab}
+$$
+:::
+
+For $p = 1$, the 1D functions are $\tfrac12(1 - \xi)$ and $\tfrac12(1 + \xi)$, and the
+four products are the **bilinear** functions. Local nodes are numbered counter-clockwise
+from the lower-left corner, as in [Class 10](10_Class.qmd):
+
+| $a$ | 1 | 2 | 3 | 4 |
+|---|---|---|---|---|
+| $(\xi_a, \eta_a)$ | $(-1, -1)$ | $(1, -1)$ | $(1, 1)$ | $(-1, 1)$ |
+| $N_a(\xi, \eta)$ | $\tfrac14(1 - \xi)(1 - \eta)$ | $\tfrac14(1 + \xi)(1 - \eta)$ | $\tfrac14(1 + \xi)(1 + \eta)$ | $\tfrac14(1 - \xi)(1 + \eta)$ |
+
+or, all at once, $N_a = \tfrac14\left(1 + \xi_a\xi\right)\left(1 + \eta_a\eta\right)$.
+
+```{python fig_q4}
+#| echo: false
+#| output: false
+
+s = np.linspace(-1, 1, 31)
+XI, ETA = np.meshgrid(s, s, indexing="ij")
+N4 = F2.shape(1, XI.ravel(), ETA.ravel())[0]
+nd4 = F2.parent_nodes(1)
+N1d = F2.lagrange1d(1, s)[0]
+fig = plt.figure(figsize=(11.6, 3.9))
+for a in range(4):
+    ax = fig.add_subplot(1, 4, a + 1, projection="3d")
+    ax.computed_zorder = False
+    i, j = F2.LOCAL_IJ[1][a]
+    Z = N4[a].reshape(XI.shape)
+    ax.plot_surface(XI, ETA, Z, cmap="Blues", vmin=-0.6, vmax=1.15,
+                    linewidth=0.2, edgecolor="#6e8fb5", alpha=0.85,
+                    rcount=11, ccount=11, zorder=1)
+    # the two 1D factors, drawn on the back walls
+    ax.plot(s, np.full_like(s, 1.25), N1d[i], color=REFCLR, lw=2.0, zorder=3)
+    ax.plot(np.full_like(s, -1.25), s, N1d[j], color=REFCLR, lw=2.0, zorder=3,
+            ls="--")
+    for b, (xb, yb) in enumerate(nd4):
+        ax.scatter([xb], [yb], [1.0 if b == a else 0.0], color=INK if b == a else "white",
+                   edgecolor=INK, s=26, depthshade=False, zorder=5)
+        ax.text(xb * 1.18, yb * 1.18, -0.08, str(b + 1), fontsize=9,
+                ha="center", va="center", color=DIMCLR, zorder=6)
+    ax.set_zlim(0, 1.05)
+    ax.set_xlim(-1.25, 1.25)
+    ax.set_ylim(-1.25, 1.25)
+    ax.set_box_aspect(None, zoom=0.86)
+    ax.view_init(elev=24, azim=-58)
+    ax.set_xticks([-1, 0, 1])
+    ax.set_yticks([-1, 0, 1])
+    ax.set_zticks([0, 0.5, 1])
+    ax.tick_params(labelsize=7.5, pad=0)
+    ax.set_xlabel(r"$\xi$", fontsize=10, labelpad=-4)
+    ax.set_ylabel(r"$\eta$", fontsize=10, labelpad=-4)
+    xi_f = ["\\frac{1}{2}(1-\\xi)", "\\frac{1}{2}(1+\\xi)"][i]
+    et_f = ["\\frac{1}{2}(1-\\eta)", "\\frac{1}{2}(1+\\eta)"][j]
+    ax.set_title("$N_%d = %s\\cdot %s$" % (a + 1, xi_f, et_f), fontsize=10.5,
+                 pad=-2)
+fig.subplots_adjust(left=0.0, right=1.0, bottom=0.02, top=0.9, wspace=0.02)
+fig_q4_path = save(fig, "H2F_Fig5_Q4.png")
+```
+
+![The four bilinear shape functions on the parent square. Each is one at its own node
+(black) and zero at the other three. The purple curves on the back walls are its two 1D
+factors: $N_{i}(\xi)$ (solid) and $N_{j}(\eta)$ (dashed). Along any line $\xi$ = const
+or $\eta$ = const the function is a straight line, but the surface itself is twisted, not
+flat.](`{python} fig_q4_path`){#fig-h2f-q4 width=100%}
+
+::: {.step .notes}
+- **Bilinear is not linear.** $N_3 = \tfrac14(1 + \xi + \eta + \xi\eta)$ contains the
+  product $\xi\eta$. Along any grid line it is linear, but along a diagonal it is
+  quadratic, and the surface is a gently twisted saddle rather than a plane.
+- **Partition of unity.** At every point, $N_1 + N_2 + N_3 + N_4 = 1$. A uniform
+  temperature is represented exactly, which is why every row of $\mathbf{k}^e$ will sum
+  to zero.
+- **Edges see only their own nodes.** On the edge $\eta = -1$, $N_3 = N_4 = 0$, and $N_1$
+  and $N_2$ reduce to the 1D functions $\tfrac12(1 \mp \xi)$. That single fact makes
+  $u^h$ continuous between elements, as shown below.
+- The gradient in the parent coordinates is
+  $\nabla_\xi N_a = \left(N_{a,\xi},\; N_{a,\eta}\right) =
+  \tfrac14\left(\xi_a(1 + \eta_a\eta),\; \eta_a(1 + \xi_a\xi)\right)$.
+:::
+
+### Biquadratic elements
+
+For $p = 2$ the 1D factors are the three quadratics $\tfrac12\xi(\xi - 1)$, $1 - \xi^2$, and
+$\tfrac12\xi(\xi + 1)$, and their nine products need nine nodes: the corners, the
+mid-sides, and the centre. Hughes numbers the corners first, as for Q4, then the
+mid-sides counter-clockwise from the bottom, then the centre:
+
+```{python fig_q9}
+#| echo: false
+#| output: false
+
+N9 = F2.shape(2, XI.ravel(), ETA.ravel())[0]
+nd9 = F2.parent_nodes(2)
+fig = plt.figure(figsize=(11.6, 3.9))
+ax = fig.add_subplot(1, 4, 1)
+ax.add_patch(Rectangle((-1, -1), 2, 2, facecolor="#f1ecfb", edgecolor=REFCLR,
+                       lw=1.6))
+for v in (-1, 0, 1):
+    ax.plot([v, v], [-1, 1], color=REFCLR, lw=0.6, ls=":")
+    ax.plot([-1, 1], [v, v], color=REFCLR, lw=0.6, ls=":")
+for b, (xb, yb) in enumerate(nd9):
+    ax.plot([xb], [yb], "o", ms=8, color=REFCLR if b < 4 else (HOTCLR if b < 8 else LOADCLR))
+    i, j = F2.LOCAL_IJ[2][b]
+    ax.text(xb + 0.1, yb + 0.1, "%d" % (b + 1), fontsize=12, ha="left",
+            va="bottom", color=INK)
+    ax.text(xb + 0.1, yb - 0.1, "$(%d,%d)$" % (i + 1, j + 1), fontsize=8.5,
+            ha="left", va="top", color=DIMCLR)
+ax.text(0, -1.45, "$a$ and $(i, j)$: $N_a = N_i(\\xi)\\,N_j(\\eta)$",
+        ha="center", va="top", fontsize=10)
+ax.set_title("Q9 local numbering", fontsize=11)
+tidy(ax)
+ax.set_xlim(-1.35, 1.75)
+ax.set_ylim(-1.75, 1.4)
+for k, (a, title) in enumerate(((0, "corner, $N_1 = \\frac{1}{4}\\,\\xi(\\xi-1)\\,\\eta(\\eta-1)$"),
+                                (4, "mid-side, $N_5 = \\frac{1}{2}\\,(1-\\xi^2)\\,\\eta(\\eta-1)$"),
+                                (8, "centre, $N_9 = (1-\\xi^2)(1-\\eta^2)$"))):
+    ax = fig.add_subplot(1, 4, k + 2, projection="3d")
+    ax.computed_zorder = False
+    Z = N9[a].reshape(XI.shape)
+    ax.plot_surface(XI, ETA, Z, cmap="RdBu", norm=TwoSlopeNorm(0, -0.6, 1.2),
+                    linewidth=0.15, edgecolor="#8aa4c4", alpha=0.9, rcount=16,
+                    ccount=16, zorder=1)
+    for b, (xb, yb) in enumerate(nd9):
+        ax.scatter([xb], [yb], [1.0 if b == a else 0.0],
+                   color=INK if b == a else "white", edgecolor=INK, s=20,
+                   depthshade=False, zorder=5)
+    ax.set_zlim(-0.2, 1.05)
+    ax.view_init(elev=24, azim=-58)
+    ax.set_xticks([-1, 0, 1])
+    ax.set_yticks([-1, 0, 1])
+    ax.set_zticks([0, 0.5, 1])
+    ax.tick_params(labelsize=7.5, pad=0)
+    ax.set_xlabel(r"$\xi$", fontsize=10, labelpad=-4)
+    ax.set_ylabel(r"$\eta$", fontsize=10, labelpad=-4)
+    ax.set_title(title, fontsize=10, pad=-2)
+fig.subplots_adjust(left=0.0, right=1.0, bottom=0.02, top=0.9, wspace=0.05)
+fig_q9_path = save(fig, "H2F_Fig6_Q9.png")
+```
+
+![The biquadratic element. Left: the nine local nodes, with the 1D indices $(i, j)$ of
+each product. Right: one function of each kind. A corner function dips below zero
+between the nodes (red); a mid-side function is a 1D quadratic bump times a 1D edge
+function; the centre function is the product of two bumps and vanishes on the whole
+boundary of the element.](`{python} fig_q9_path`){#fig-h2f-q9 width=100%}
+
+::: {.step .notes}
+- The same four properties hold: $N_a(\xi_b, \eta_b) = \delta_{ab}$, $\sum_a N_a = 1$,
+  and on each edge only the three nodes of that edge are non-zero, varying as the 1D
+  quadratics.
+- Q9 reproduces every polynomial of degree 2 in $\xi$ and $\eta$ (and a few of degree 3
+  and 4), so on a mesh of rectangles it represents the tab-free solution of the cell,
+  a quadratic in $x_1$, exactly.
+- Dropping the centre node gives the 8-node *serendipity* element, which is not a tensor
+  product. The tensor-product family used here extends to any degree $p$ with
+  $(p + 1)^2$ nodes.
+:::
+
+### From parent functions to global basis functions
+
+Each element is a copy of the parent square (the next section says exactly how). Global
+node $A$ is local node $a$ of every element with $\mathrm{IEN}(a, e) = A$, and on each of
+those elements the global function **is** the parent function carried over:
+
+::: {.derivation}
+$$
+N_A(\underline{x}) =
+\begin{cases}
+N_a\big(\xi(\underline{x})\big) & \text{on each element } e \text{ with } \mathrm{IEN}(a, e) = A \\[2pt]
+0 & \text{on every other element}
+\end{cases}
+$$
+:::
+
+```{python fig_global}
+#| echo: false
+#| output: false
+
+
+def global_patch(mesh, A, k=9):
+    """(x1, x2, N_A) on each element that contains node A."""
+    s_ = np.linspace(-1, 1, k)
+    XI_, ETA_ = np.meshgrid(s_, s_, indexing="ij")
+    out = []
+    Nk = F2.shape(mesh.p, XI_.ravel(), ETA_.ravel())[0]
+    for e in range(1, mesh.nel + 1):
+        ien = list(mesh.IEN[:, e - 1])
+        x = mesh.map(e, XI_.ravel(), ETA_.ravel())[0]
+        z = Nk[ien.index(A)] if A in ien else np.zeros(XI_.size)
+        out.append((x[:, 0].reshape(k, k), x[:, 1].reshape(k, k), z.reshape(k, k),
+                    A in ien))
+    return out
+
+
+panels = [(mesh8, 8, "Q4: interior node $A$ = 8\n(4 elements)"),
+          (meshQ9, 23, "Q9: corner-type node $A$ = 23\n(4 elements)"),
+          (meshQ9, 22, "Q9: mid-side node $A$ = 22\n(2 elements)"),
+          (meshQ9, 17, "Q9: centre node $A$ = 17\n(1 element)")]
+fig = plt.figure(figsize=(11.6, 4.6))
+for k, (mesh, A, title) in enumerate(panels):
+    ax = fig.add_subplot(1, 4, k + 1, projection="3d")
+    ax.computed_zorder = False
+    for (x1, x2, z, on) in global_patch(mesh, A):
+        if on:
+            ax.plot_surface(x1, x2, z, cmap="RdBu", norm=TwoSlopeNorm(0, -0.6, 1.2),
+                            linewidth=0.1, edgecolor="#9fb4cf", alpha=0.95,
+                            rcount=9, ccount=9, zorder=2)
+    for e in range(1, mesh.nel + 1):
+        P = outline(mesh, e, 2)
+        P = np.vstack([P, P[:1]])
+        ax.plot(P[:, 0], P[:, 1], 0 * P[:, 0], color=MESHCLR, lw=0.7, zorder=1)
+    ax.plot([0, 0], [0, H], [0, 0], color=BDRYCLR, lw=3, zorder=1)
+    xA = mesh.X[A - 1]
+    ax.scatter([xA[0]], [xA[1]], [1.0], color=INK, s=24, depthshade=False,
+               zorder=6)
+    ax.set_zlim(-0.15, 1.05)
+    ax.set_xlim(0, W)
+    ax.set_ylim(0, H)
+    ax.set_box_aspect((1, 2, 1.1), zoom=1.08)
+    ax.view_init(elev=28, azim=-60)
+    ax.set_xticks([0, 0.05, 0.1])
+    ax.set_yticks([0, 0.1, 0.2])
+    ax.set_zticks([0, 0.5, 1])
+    ax.tick_params(labelsize=7, pad=0)
+    ax.set_title(title, fontsize=10.5, pad=-4)
+fig.subplots_adjust(left=0.0, right=1.0, bottom=0.02, top=0.92, wspace=0.0)
+fig_global_path = save(fig, "H2F_Fig7_Global.png")
+```
+
+![Global basis functions on the $2 \times 4$ meshes of @fig-h2f-mesh. Each is one at its
+own node (black dot), zero at every other node, and zero outside the elements that
+contain its node. The bilinear one is a four-sided "tent". The biquadratic ones come in
+three kinds, according to where the node sits in its elements.](`{python} fig_global_path`){#fig-h2f-global width=100%}
+
+::: {.step .notes}
+- **Why $u^h$ is continuous.** Two neighbouring elements share an edge and the nodes on
+  it. Along that edge, only the functions of those nodes are non-zero, and from either
+  side each one is the same 1D Lagrange function of position along the edge. So $u^h$
+  takes the same values from both sides: it is continuous, with a crease (a jump in
+  slope) allowed across the edge. That is exactly what $H^1$ needs.
+- **Why $\mathbf{K}$ is sparse.** The tent of node 8 overlaps only the tents of its eight
+  neighbours. So row 8 of $\mathbf{K}$ has at most nine non-zeros, however large the
+  mesh. A Q9 corner-type node overlaps 25 functions; a centre node overlaps only the nine
+  of its element.
+:::
+
+Adding up the scaled tents gives the approximation:
+
+::: {.derivation}
+$$
+u^h(\underline{x}) = \sum_{A \in \eta - \eta_g} d_A\,N_A(\underline{x})
++ \sum_{A \in \eta_g} g_A\,N_A(\underline{x})
+$$
+:::
+
+```{python fig_build}
+#| echo: false
+#| output: false
+
+solQ9 = F2.solve(meshQ9, pb, gdQ9)
+normB = Normalize(23.5, 37.5)
+fig = plt.figure(figsize=(11.6, 5.0))
+ev_ex = None
+for k, (sol, title) in enumerate(((sol8, "$u^h$: Q4, $2 \\times 4$ elements,\n10 unknowns"),
+                                  (solQ9, "$u^h$: Q9, $2 \\times 4$ elements,\n36 unknowns"),
+                                  (None, "the exact $u$"))):
+    ax = fig.add_subplot(1, 3, k + 1, projection="3d")
+    ax.computed_zorder = False
+    if sol is None:
+        xg, yg = np.meshgrid(np.linspace(0, W, 41), np.linspace(0, H, 81))
+        ax.plot_surface(xg, yg, exact(xg, yg, M=600)[0], cmap=TCMAP, norm=normB,
+                        linewidth=0, alpha=0.95, rcount=60, ccount=40, zorder=1)
+    else:
+        ev = F2.evaluate(sol, 9)
+        for e in range(sol["mesh"].nel):
+            ax.plot_surface(ev["x1"][e], ev["x2"][e], ev["uh"][e], cmap=TCMAP,
+                            norm=normB, linewidth=0, alpha=0.95, rcount=9,
+                            ccount=9, zorder=1)
+            for side in (0, -1):
+                ax.plot(ev["x1"][e][side, :], ev["x2"][e][side, :], ev["uh"][e][side, :],
+                        color=INK, lw=0.5, zorder=3)
+                ax.plot(ev["x1"][e][:, side], ev["x2"][e][:, side], ev["uh"][e][:, side],
+                        color=INK, lw=0.5, zorder=3)
+        m = sol["mesh"]
+        ax.scatter(m.X[:, 0], m.X[:, 1], sol["U"], color=INK, s=8,
+                   depthshade=False, zorder=5)
+    ax.set_zlim(24, 38)
+    ax.set_xlim(0, W)
+    ax.set_ylim(0, H)
+    ax.set_box_aspect((1, 2, 1.2), zoom=1.05)
+    ax.view_init(elev=26, azim=-128)
+    ax.set_xticks([0, 0.05, 0.1])
+    ax.set_yticks([0, 0.1, 0.2])
+    ax.set_zticks([25, 30, 35])
+    ax.tick_params(labelsize=7.5, pad=0)
+    ax.set_xlabel("$x_1$ (m)", fontsize=9, labelpad=0)
+    ax.set_ylabel("$x_2$ (m)", fontsize=9, labelpad=1)
+    ax.set_title(title, fontsize=11, pad=-2)
+fig.subplots_adjust(left=0.0, right=1.0, bottom=0.02, top=0.9, wspace=0.02)
+fig_build_path = save(fig, "H2F_Fig8_Build.png")
+```
+
+![The Galerkin solution built from the tents, on the two meshes of @fig-h2f-mesh, next
+to the exact temperature. The dots are the nodal values: unknowns $d_A$, and $g$ = 25 °C
+along the cooled edge. The bilinear surface is made of twisted flat-ish panels that
+meet along creases. The biquadratic one bends inside each element and is already hard to
+tell from the exact solution, except near the tabs.](`{python} fig_build_path`){#fig-h2f-build width=100%}
+
+## The isoparametric map
+
+### Placing an element in the plane
+
+To carry the parent functions onto a physical element, the element itself is described
+**with the same functions**: its nodes' coordinates are interpolated exactly the way
+temperatures are.
+
+::: {.derivation}
+$$
+\underline{x}(\xi, \eta) = \sum_{a=1}^{n_{en}} N_a(\xi, \eta)\;\underline{x}^e_a
+\quad\Longleftrightarrow\quad
+x_i(\xi, \eta) = \sum_{a=1}^{n_{en}} N_a(\xi, \eta)\;x^e_{ia}
+$$
+:::
+
+That is what **iso**-parametric means: geometry and solution use the same parameters.
+For a rectangle aligned with the axes, this is just a stretch; for any other element,
+it is a genuine change of coordinates.
+
+```{python fig_map}
+#| echo: false
+#| output: false
+
+
+def iso_map(p, xe, xi, eta):
+    N, Nxi, Neta = F2.shape(p, xi, eta)
+    x = N.T @ xe
+    DF = np.stack([Nxi.T @ xe, Neta.T @ xe], axis=2)       # (m, 2, 2)
+    return x, DF
+
+
+xe4 = np.array([[0.0, 0.0], [5.0, 0.8], [5.8, 4.6], [0.6, 3.8]])
+xe9 = np.vstack([xe4, [[2.6, -0.45], [5.9, 2.5], [3.3, 4.75], [-0.35, 2.1],
+                       [2.8, 2.0]]])
+Phat = (0.35, -0.25)
+fig, axes = plt.subplots(1, 3, figsize=(11.8, 4.6),
+                         gridspec_kw=dict(width_ratios=[0.9, 1.0, 1.0]))
+gl = np.linspace(-1, 1, 5)
+tt = np.linspace(-1, 1, 60)
+gx9, _ = F2.gauss(3)
+GQ = np.array([(a, b) for a in gx9 for b in gx9])
+
+ax = axes[0]
+ax.add_patch(Rectangle((-1, -1), 2, 2, facecolor="#f1ecfb", edgecolor=REFCLR, lw=1.6))
+for v in gl:
+    ax.plot([v, v], [-1, 1], color=REFCLR, lw=0.7, alpha=0.7)
+    ax.plot([-1, 1], [v, v], color=REFCLR, lw=0.7, alpha=0.7)
+ax.plot(GQ[:, 0], GQ[:, 1], "x", color=LOADCLR, ms=7, mew=1.8)
+for b, (xb, yb) in enumerate(F2.parent_nodes(2)):
+    ax.plot([xb], [yb], "o", ms=5, color=REFCLR)
+d = 0.22
+ax.add_patch(Rectangle(Phat, d, d, facecolor=HOTCLR, alpha=0.5, edgecolor=HOTCLR))
+arrow(ax, Phat, (Phat[0] + 0.55, Phat[1]), color=INK, lw=1.8, ms=12)
+arrow(ax, Phat, (Phat[0], Phat[1] + 0.55), color=INK, lw=1.8, ms=12)
+ax.text(Phat[0] + 0.58, Phat[1] - 0.05, r"$\hat{e}_\xi$", fontsize=12, va="top")
+ax.text(Phat[0] - 0.04, Phat[1] + 0.6, r"$\hat{e}_\eta$", fontsize=12, ha="right")
+ax.text(Phat[0] + 0.08, Phat[1] + 0.06, r"$d\xi\,d\eta$", fontsize=9, color="#a0520d")
+ax.set_title("parent square $\\hat\\Omega$", fontsize=11.5, color=REFCLR)
+ax.text(0, -1.2, "grid lines, nodes, and\n$3 \\times 3$ Gauss points ($\\times$)",
+        ha="center", va="top", fontsize=10)
+tidy(ax)
+ax.set_xlim(-1.3, 1.3)
+ax.set_ylim(-1.75, 1.3)
+
+for ax, p, xe, title in ((axes[1], 1, xe4, "a Q4 element: straight edges"),
+                         (axes[2], 2, xe9, "a Q9 element: curved edges")):
+    for v in gl:
+        for pts in (iso_map(p, xe, np.full_like(tt, v), tt)[0],
+                    iso_map(p, xe, tt, np.full_like(tt, v))[0]):
+            ax.plot(pts[:, 0], pts[:, 1], color=INK, lw=1.3 if abs(v) == 1 else 0.6,
+                    alpha=1.0 if abs(v) == 1 else 0.6)
+    ax.fill(*iso_map(p, xe, *np.array([np.concatenate([tt, np.ones(60), -tt, -np.ones(60)]),
+                                        np.concatenate([-np.ones(60), tt, np.ones(60), -tt])]))[0].T,
+            color=DOMCLR, zorder=0)
+    xg = iso_map(p, xe, GQ[:, 0], GQ[:, 1])[0]
+    ax.plot(xg[:, 0], xg[:, 1], "x", color=LOADCLR, ms=7, mew=1.8, zorder=4)
+    ax.plot(xe[:, 0], xe[:, 1], "o", ms=5, color=INK, zorder=5)
+    for a, (xa, ya) in enumerate(xe):
+        ax.text(xa + 0.12, ya + 0.12, str(a + 1), fontsize=9, color=DIMCLR, zorder=6)
+    # the image of the small square, and the columns of DF
+    sq = np.array([[0, 0], [d, 0], [d, d], [0, d]]) + np.array(Phat)
+    img = []
+    for (a_, b_) in sq:
+        edge = np.linspace(0, 1, 12)
+        img.append(iso_map(p, xe, np.array([a_]), np.array([b_]))[0][0])
+    ssq = np.linspace(0, 1, 15)
+    border = np.vstack([iso_map(p, xe, Phat[0] + d * ssq, np.full(15, Phat[1]))[0],
+                        iso_map(p, xe, np.full(15, Phat[0] + d), Phat[1] + d * ssq)[0],
+                        iso_map(p, xe, Phat[0] + d * ssq[::-1], np.full(15, Phat[1] + d))[0],
+                        iso_map(p, xe, np.full(15, Phat[0]), Phat[1] + d * ssq[::-1])[0]])
+    ax.fill(border[:, 0], border[:, 1], color=HOTCLR, alpha=0.5, zorder=3)
+    xP, DFP = iso_map(p, xe, np.array([Phat[0]]), np.array([Phat[1]]))
+    xP, DFP = xP[0], DFP[0]
+    sc = 0.55
+    arrow(ax, tuple(xP), tuple(xP + sc * DFP[:, 0]), color=INK, lw=2.0, ms=13, z=7)
+    arrow(ax, tuple(xP), tuple(xP + sc * DFP[:, 1]), color=INK, lw=2.0, ms=13, z=7)
+    ax.text(*(xP + sc * DFP[:, 0] + np.array([0.1, -0.15])),
+            r"$\partial\underline{x}/\partial\xi$", fontsize=11, va="top")
+    ax.text(*(xP + sc * DFP[:, 1] + np.array([-0.1, 0.05])),
+            r"$\partial\underline{x}/\partial\eta$", fontsize=11, ha="right")
+    Jp = np.linalg.det(DFP)
+    ax.set_title(title, fontsize=11.5)
+    ax.text(3.0, -1.05, "at the orange patch: $J$ = %.2f,\narea = $J\\,d\\xi\\,d\\eta$" % Jp,
+            ha="center", va="top", fontsize=10, color="#a0520d")
+    ax.set_aspect("equal")
+    ax.axis("off")
+    ax.set_xlim(-0.9, 6.7)
+    ax.set_ylim(-1.9, 5.3)
+fig.tight_layout(w_pad=1.0)
+fig_map_path = save(fig, "H2F_Fig9_Map.png")
+```
+
+![The isoparametric map $\underline{x}(\xi, \eta) = \sum_a N_a(\xi, \eta)\,\underline{x}^e_a$
+takes the parent square's grid, nodes, and Gauss points onto the physical element. With
+bilinear functions the grid lines stay straight; with biquadratic ones, the mid-side
+nodes bend them. At one point, the black arrows are the images of the parent's unit
+directions, the two columns of $DF$, and the small orange square becomes the orange
+patch.](`{python} fig_map_path`){#fig-h2f-map width=100%}
+
+### The Jacobian matrix and its determinant
+
+How lengths and areas change under the map is recorded by its derivative, the
+**Jacobian matrix** (the *deformation gradient* of [Class 9](9_Class.qmd)):
+
+::: {.derivation}
+$$
+\begin{aligned}
+DF = \frac{\partial \underline{x}}{\partial \underline{\xi}}
+&= \begin{bmatrix}
+\dfrac{\partial x_1}{\partial \xi} & \dfrac{\partial x_1}{\partial \eta} \\[8pt]
+\dfrac{\partial x_2}{\partial \xi} & \dfrac{\partial x_2}{\partial \eta}
+\end{bmatrix}
+= \sum_{a=1}^{n_{en}} \underline{x}^e_a \left(\nabla_\xi N_a\right)^T \\[4pt]
+\Longleftrightarrow\quad
+\frac{\partial x_i}{\partial \xi_j} &= \sum_{a=1}^{n_{en}} x^e_{ia}\,\frac{\partial N_a}{\partial \xi_j},
+\qquad\qquad
+J = \det DF
+\end{aligned}
+$$
+:::
+
+::: {.step .notes}
+- **The columns of $DF$ are tangent vectors.** Column 1, $\partial\underline{x}/\partial\xi$,
+  points along the image of a $\xi$ grid line, and column 2 along the image of an $\eta$
+  grid line (@fig-h2f-map).
+- **$J$ is the area stretch.** The tiny square $d\xi\,d\eta$ becomes a parallelogram
+  spanned by the two columns, with area $J\,d\xi\,d\eta$. So
+  $d\Omega = J\,d\xi\,d\eta$, and every element integral can be done on the parent square:
+  $\int_{\Omega^e} (\cdot)\,d\Omega = \int_{-1}^{1}\!\int_{-1}^{1} (\cdot)\,J\,d\xi\,d\eta$.
+- **For an axis-aligned $h_1 \times h_2$ rectangle** the map is a pure stretch:
+  $DF = \mathrm{diag}\!\left(h_1/2,\; h_2/2\right)$ and $J = h_1 h_2 / 4$, one quarter of
+  the element's area, because the parent square has area 4. That is the 2D version of
+  $x_{,\xi} = h^e/2$.
+- **$J$ must stay positive.** $J > 0$ everywhere means the map is one-to-one and keeps
+  the node ordering counter-clockwise. A badly shaped element folds over itself, and $J$
+  changes sign (@fig-h2f-folded).
+:::
+
+```{python fig_folded}
+#| echo: false
+#| output: false
+
+shapes = [("a good element", np.array([[0.0, 0.0], [4.0, 0.3], [4.4, 3.6], [0.4, 3.2]])),
+          ("a skewed element:\n$J$ small near node 4",
+           np.array([[0.0, 0.0], [4.0, 0.0], [4.4, 3.4], [2.4, 2.0]])),
+          ("a folded element:\n$J < 0$ in the red region",
+           np.array([[0.0, 0.0], [4.0, 0.0], [4.0, 3.6], [3.0, 1.0]]))]
+fig, axes = plt.subplots(1, 3, figsize=(10.6, 3.8))
+sj = np.linspace(-1, 1, 81)
+XIj, ETAj = np.meshgrid(sj, sj, indexing="ij")
+for ax, (title, xe) in zip(axes, shapes):
+    x, DF = iso_map(1, xe, XIj.ravel(), ETAj.ravel())
+    Jv = np.linalg.det(DF).reshape(XIj.shape)
+    X1, X2 = x[:, 0].reshape(XIj.shape), x[:, 1].reshape(XIj.shape)
+    for part, z in ((np.ma.masked_where(Jv < 0, Jv), 0),
+                    (np.ma.masked_where(Jv >= 0, Jv), 1)):
+        if part.count():
+            ax.contourf(X1, X2, part, levels=np.linspace(-4.5, 4.5, 37),
+                        cmap="RdBu", norm=TwoSlopeNorm(0, -4.5, 4.5),
+                        alpha=0.8, zorder=z, extend="both")
+    for v in np.linspace(-1, 1, 5):
+        for pts in (iso_map(1, xe, np.full_like(tt, v), tt)[0],
+                    iso_map(1, xe, tt, np.full_like(tt, v))[0]):
+            ax.plot(pts[:, 0], pts[:, 1], color=INK, lw=1.3 if abs(v) == 1 else 0.5,
+                    alpha=1.0 if abs(v) == 1 else 0.6)
+    ax.plot(xe[:, 0], xe[:, 1], "o", ms=5, color=INK)
+    for a, (xa, ya) in enumerate(xe):
+        ax.text(xa + 0.12, ya + 0.1, str(a + 1), fontsize=9.5, color=DIMCLR)
+    ax.set_title(title + "\n(min $J$ = %.2f)" % Jv.min(), fontsize=10.5)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    ax.set_xlim(-0.5, 4.9)
+    ax.set_ylim(-0.5, 4.0)
+fig.tight_layout(w_pad=1.0)
+fig_folded_path = save(fig, "H2F_Fig10_Folded.png")
+```
+
+![Three bilinear elements coloured by $J(\xi, \eta)$, blue where positive and red where
+negative, with the images of the parent grid lines. The folded element's map is not
+one-to-one: part of the parent square lands on top of another part, and an element
+integral over it would count some area negatively. Meshing codes check for $J > 0$ at the
+quadrature points before anything is assembled.](`{python} fig_folded_path`){#fig-h2f-folded width=94%}
+
+### Derivatives: the chain rule
+
+The weak form needs $\nabla_{\!x} N_a$, derivatives with respect to the physical
+coordinates, but $N_a$ is a known function of $(\xi, \eta)$. The chain rule connects
+the two:
+
+::: {.derivation}
+$$
+\frac{\partial N_a}{\partial x_i}
+= \frac{\partial N_a}{\partial \xi_j}\,\frac{\partial \xi_j}{\partial x_i}
+\quad\Longleftrightarrow\quad
+\nabla_{\!x} N_a = DF^{-T}\,\nabla_{\!\xi} N_a
+$$
+$$
+DF^{-1} = \frac{1}{J}\begin{bmatrix}
+\dfrac{\partial x_2}{\partial \eta} & -\dfrac{\partial x_1}{\partial \eta} \\[8pt]
+-\dfrac{\partial x_2}{\partial \xi} & \dfrac{\partial x_1}{\partial \xi}
+\end{bmatrix}
+$$
+:::
+
+::: {.step}
+$\partial\xi_j/\partial x_i$ is the matrix $DF^{-1}$, by the inverse function theorem, so
+the inverse map $\underline{\xi}(\underline{x})$ is **never needed**. Everything is
+evaluated forward from $(\xi, \eta)$, at the quadrature points. For an axis-aligned
+rectangle the rule reduces to
+$\nabla_{\!x} N_a = \left(\tfrac{2}{h_1}N_{a,\xi},\; \tfrac{2}{h_2}N_{a,\eta}\right)$,
+the 2D version of $N_{a,x} = \tfrac{2}{h^e}N_{a,\xi}$.
+:::
+
+```{python fig_chain}
+#| echo: false
+#| output: false
+
+a_show = 2                                     # N_3
+sc_ = np.linspace(-1, 1, 61)
+XIc, ETAc = np.meshgrid(sc_, sc_, indexing="ij")
+Nc = F2.shape(1, XIc.ravel(), ETAc.ravel())[0][a_show].reshape(XIc.shape)
+xc, DFc = iso_map(1, xe4, XIc.ravel(), ETAc.ravel())
+X1c, X2c = xc[:, 0].reshape(XIc.shape), xc[:, 1].reshape(XIc.shape)
+lev = np.linspace(0.1, 0.9, 9)
+gq2, _ = F2.gauss(2)
+pts = np.array([(a, b) for a in (-0.6, 0.0, 0.6) for b in (-0.6, 0.0, 0.6)])
+N_, Nxi_, Neta_ = F2.shape(1, pts[:, 0], pts[:, 1])
+gxi = np.vstack([Nxi_[a_show], Neta_[a_show]]).T            # grad_xi N_3
+xq, DFq = iso_map(1, xe4, pts[:, 0], pts[:, 1])
+gx = np.array([np.linalg.inv(DFq[q]).T @ gxi[q] for q in range(len(pts))])
+
+fig, axes = plt.subplots(1, 2, figsize=(10.6, 4.9),
+                         gridspec_kw=dict(width_ratios=[0.82, 1.0]))
+ax = axes[0]
+ax.contourf(XIc, ETAc, Nc, levels=np.linspace(0, 1, 21), cmap="Blues", alpha=0.75)
+ax.contour(XIc, ETAc, Nc, levels=lev, colors=INK, linewidths=0.6, alpha=0.6)
+for q in range(len(pts)):
+    arrow(ax, tuple(pts[q]), tuple(pts[q] + 0.9 * gxi[q]), color=LOADCLR, lw=1.8, ms=11)
+ax.plot([1], [1], "o", ms=7, color=INK)
+ax.text(1.04, 1.04, "node 3", fontsize=10, ha="left", va="bottom")
+ax.set_title("$N_3$ on the parent square, with $\\nabla_{\\!\\xi} N_3$", fontsize=11.5)
+ax.set_aspect("equal")
+ax.set_xlim(-1.1, 1.45)
+ax.set_ylim(-1.1, 1.3)
+ax.set_xlabel(r"$\xi$")
+ax.set_ylabel(r"$\eta$")
+for s_ in ax.spines.values():
+    s_.set_visible(False)
+ax.tick_params(labelsize=8.5)
+
+ax = axes[1]
+ax.contourf(X1c, X2c, Nc, levels=np.linspace(0, 1, 21), cmap="Blues", alpha=0.75)
+ax.contour(X1c, X2c, Nc, levels=lev, colors=INK, linewidths=0.6, alpha=0.6)
+for q in range(len(pts)):
+    arrow(ax, tuple(xq[q]), tuple(xq[q] + 1.9 * gx[q]), color=LOADCLR, lw=1.8, ms=11)
+P4 = np.vstack([xe4, xe4[:1]])
+ax.plot(P4[:, 0], P4[:, 1], color=INK, lw=1.4)
+ax.plot([xe4[2, 0]], [xe4[2, 1]], "o", ms=7, color=INK)
+ax.text(xe4[2, 0] + 0.1, xe4[2, 1] + 0.1, "node 3", fontsize=10)
+ax.set_title("the same $N_3$ on the element, with $\\nabla_{\\!x} N_3 = "
+             "DF^{-T}\\,\\nabla_{\\!\\xi} N_3$", fontsize=11.5)
+ax.set_aspect("equal")
+ax.set_xlim(-0.4, 6.6)
+ax.set_ylim(-0.4, 5.2)
+ax.set_xlabel("$x_1$")
+ax.set_ylabel("$x_2$")
+for s_ in ax.spines.values():
+    s_.set_visible(False)
+ax.tick_params(labelsize=8.5)
+fig.tight_layout(w_pad=2.0)
+fig_chain_path = save(fig, "H2F_Fig11_Chain.png")
+```
+
+![The chain rule, seen. Left: $N_3$ on the parent square, with its contour lines and its
+gradient at nine points. Right: the same function carried onto the Q4 element of
+@fig-h2f-map, with $\nabla_{\!x} N_3$ at the images of the same nine points. The arrows
+are not just the left-hand arrows rescaled: $DF^{-T}$ turns them so that they stay
+perpendicular to the new contour lines, which is what a gradient must
+do.](`{python} fig_chain_path`){#fig-h2f-chain width=96%}
+
+```{python map_numbers}
+#| echo: false
+#| output: asis
+
+xP, DFP = iso_map(1, xe4, np.array([Phat[0]]), np.array([Phat[1]]))
+DFP = DFP[0]
+JP = np.linalg.det(DFP)
+_, Nxi_P, Neta_P = F2.shape(1, np.array([Phat[0]]), np.array([Phat[1]]))
+gxiP = np.array([Nxi_P[2, 0], Neta_P[2, 0]])
+gxP = np.linalg.inv(DFP).T @ gxiP
+m = lambda M: F2.tex_matrix(np.round(M, 4), sig=4, gray_zero=False)
+print(r"""
+::: {.callout-note collapse="true"}
+## One point, worked by hand
+
+Take the Q4 element of @fig-h2f-map, with corners $\underline{x}^e_1, \dots,
+\underline{x}^e_4$ = $(0, 0)$, $(5, 0.8)$, $(5.8, 4.6)$, $(0.6, 3.8)$, and the point
+$(\xi, \eta) = (%.2f,\ %.2f)$.
+
+$$
+DF = \sum_a \underline{x}^e_a\left(\nabla_\xi N_a\right)^T = %s,
+\qquad J = \det DF = %.3f
+$$
+
+For $N_3 = \tfrac14(1 + \xi)(1 + \eta)$:
+
+$$
+\nabla_\xi N_3 = \tfrac14\begin{bmatrix} 1 + \eta \\ 1 + \xi \end{bmatrix} = %s
+\qquad\Longrightarrow\qquad
+\nabla_x N_3 = DF^{-T}\,\nabla_\xi N_3 = %s
+$$
+
+Check: $\nabla_x N_3 \cdot \partial\underline{x}/\partial\xi = %.4f = N_{3,\xi}$ and
+$\nabla_x N_3 \cdot \partial\underline{x}/\partial\eta = %.4f = N_{3,\eta}$. Moving along
+a mapped grid line, $N_3$ changes at exactly the rate it changes along the parent grid
+line.
+:::
+""" % (Phat[0], Phat[1], m(DFP), JP, m(gxiP[:, None]), m(gxP[:, None]),
+       gxP @ DFP[:, 0], gxP @ DFP[:, 1]))
+```
+
+## From $(\mathrm{G})$ to $\mathbf{K}\mathbf{d} = \mathbf{F}$
+
+The algebra is exactly the 1D algebra. Put the expansions into $(\mathrm{G})$ and pull the
+sums and coefficients out of the (bi)linear forms:
+
+::: {.derivation}
+$$
+\begin{aligned}
+\sum_{A \in \eta - \eta_g} c_A \Bigg[\; &\sum_{B \in \eta - \eta_g} a(N_A, N_B)\,d_B \\
+&- (N_A, f) - (N_A, h)_\Gamma + \sum_{B \in \eta_g} a(N_A, N_B)\,g_B \Bigg] = 0
+\end{aligned}
+$$
+:::
+
+::: {.step}
+The $c_A$ are arbitrary, so each bracket vanishes: one equation for each node not on
+$\Gamma_g$. Number those equations with the ID array, $P = \mathrm{ID}(A)$ and
+$Q = \mathrm{ID}(B)$:
+:::
+
+::: {.derivation}
+$$
+\boxed{\;\mathbf{K}\,\mathbf{d} = \mathbf{F}\;}
+\qquad
+K_{PQ} = \int_\Omega \nabla N_A\cdot\kappa\nabla N_B\;d\Omega = \int_\Omega N_{A,i}\,\kappa\,N_{B,i}\;d\Omega
+$$
+$$
+F_P = \int_\Omega N_A\,f\;d\Omega + \int_{\Gamma_h} N_A\,h\;d\Gamma
+- \sum_{B \in \eta_g} \left(\int_\Omega N_{A,i}\,\kappa\,N_{B,i}\;d\Omega\right) g_B
+$$
+:::
+
+::: {.step .notes}
+- **Units**, per meter of depth: $\mathbf{K}$ in W/(m·K), $\mathbf{d}$ in °C, and
+  $\mathbf{F}$ in W/m. Each equation is a heat balance for the patch of elements around
+  one node.
+- **Symmetric**, because $a(N_A, N_B) = a(N_B, N_A)$.
+- **Sparse.** $K_{PQ} = 0$ unless nodes $A$ and $B$ share an element (@fig-h2f-global).
+  A row has at most 9 non-zeros for Q4, and at most 25 for Q9.
+- **Positive definite**, as long as $\Gamma_g$ has some length: then the only
+  $\mathbf{d}$ with $\mathbf{d}^T\mathbf{K}\mathbf{d} = a(v^h, v^h) = 0$ is zero. With
+  every edge Neumann, a uniform temperature would give zero, and $\mathbf{K}$ would be
+  singular, which is the strong form's "up to a constant" again.
+- **Banded, but the band is up to you.** In 1D, $\mathbf{K}$ came out tridiagonal (for
+  $p = 1$) automatically. In 2D, how far the non-zeros sit from the diagonal depends on
+  how the nodes are numbered (@fig-h2f-band).
+:::
+
+## The element point of view
+
+### Element arrays
+
+Every integral over $\Omega$ is a sum over elements, and on element $e$ only its own
+$n_{en}$ functions are non-zero. So the work reduces to the small element arrays, in
+local numbering $a, b = 1, \dots, n_{en}$:
+
+::: {.derivation}
+$$
+k^e_{ab} = \int_{\Omega^e} \nabla N_a\cdot\kappa\nabla N_b\;d\Omega
+$$
+$$
+f^e_a = \underbrace{\int_{\Omega^e} N_a\,f\;d\Omega}_{\text{body}}
++ \underbrace{\int_{\Gamma^e_h} N_a\,h\;d\Gamma}_{\text{element sides on } \Gamma_h}
+- \underbrace{\sum_{b=1}^{n_{en}} k^e_{ab}\,g^e_b}_{\text{Dirichlet nodes}}
+$$
+:::
+
+where $g^e_b$ is the prescribed temperature if local node $b$ is on $\Gamma_g$, and zero
+otherwise.
+
+### On the parent square, by quadrature
+
+With $d\Omega = J\,d\xi\,d\eta$ and the chain rule, both area integrals move to the parent
+square, where a **tensor-product Gauss rule** evaluates them. The rule's points are all
+pairs $(\tilde\xi_i, \tilde\eta_j)$ of 1D Gauss points, and its weights are the products
+$W_l = w_i w_j$:
+
+::: {.derivation}
+$$
+\begin{aligned}
+k^e_{ab} &= \int_{-1}^{1}\!\!\int_{-1}^{1}
+\left(DF^{-T}\nabla_{\!\xi}N_a\right)\cdot\kappa\left(DF^{-T}\nabla_{\!\xi}N_b\right) J\;d\xi\,d\eta \\
+&\approx \sum_{l=1}^{n_{int}}
+\left[\left(DF^{-T}\nabla_{\!\xi}N_a\right)\cdot\kappa\left(DF^{-T}\nabla_{\!\xi}N_b\right) J\right]_{\tilde{\underline{\xi}}_l} W_l
+\end{aligned}
+$$
+$$
+f^e_{a,\text{body}} \;\approx\; \sum_{l=1}^{n_{int}} N_a(\tilde{\underline{\xi}}_l)\,
+f\big(\underline{x}(\tilde{\underline{\xi}}_l)\big)\,J(\tilde{\underline{\xi}}_l)\,W_l
+$$
+:::
+
+::: {.step .notes}
+- $n_{int} = 2 \times 2$ points for Q4 and $3 \times 3$ for Q9, the crosses in
+  @fig-h2f-map. On rectangles with constant $\kappa$, these rules are exact.
+- On distorted elements, $DF^{-1}$ turns the stiffness integrand into a rational
+  function, and quadrature becomes one of the small approximations mentioned earlier.
+  It is a good one: the error it adds shrinks as fast as the discretization error.
+:::
+
+The whole computation of $\mathbf{k}^e$ is one loop, and it is the loop every finite
+element code runs:
+
+```{.python}
+ke = zeros((nen, nen))
+for (xi, eta, w) in gauss_points_2d(p + 1):            # n_int = (p+1)^2 points
+    N, dN_dxi = shape(p, xi, eta)                        # N_a and grad_xi N_a (nen x 2)
+    DF = x_e.T @ dN_dxi                                  # Jacobian matrix, 2 x 2
+    J = det(DF)                                          # area stretch; must be > 0
+    dN_dx = dN_dxi @ inv(DF)                             # rows: (grad_x N_a)^T = (DF^{-T} grad_xi N_a)^T
+    ke += kappa * (dN_dx @ dN_dx.T) * J * w              # every k_ab at once
+    fe += N * f(N @ x_e) * J * w                         # body term
+```
+
+### The Neumann term: an integral along element sides
+
+$\int_{\Gamma^e_h} N_a\,h\,d\Gamma$ is needed only for element sides that lie on
+$\Gamma_h$, and only where $h \ne 0$: for the cell, the top sides of the top row of
+elements. Along such a side, the parent coordinate that runs along it plays the role of
+$\xi$ in 1D, and the length stretch is the size of the corresponding column of $DF$. On
+the top side, $\eta = 1$:
+
+::: {.derivation}
+$$
+\int_{\Gamma^e_h} N_a\,h\;d\Gamma
+= \int_{-1}^{1} N_a(\xi, 1)\;h\big(\underline{x}(\xi, 1)\big)\;
+\left\|\frac{\partial\underline{x}}{\partial\xi}(\xi, 1)\right\| d\xi
+$$
+:::
+
+::: {.step}
+Only the $p + 1$ nodes on that side get anything, because every other $N_a$ vanishes on
+it. For a straight side with evenly spaced nodes, $\|\partial\underline{x}/\partial\xi\|$
+is half the side's length: the 1D Jacobian $h^e/2$ again. Because $h$ jumps at the tab
+ends, the integral is split there, so that no Gauss rule straddles a jump.
+:::
+
+```{python fig_edge}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(3, 1, figsize=(8.6, 6.4), sharex=True,
+                         gridspec_kw=dict(height_ratios=[0.8, 1.0, 1.0]))
+xx = np.linspace(0, W, 801)
+ax = axes[0]
+hv = F2.tab_flux(h_tab, TABS)[0](xx)
+ax.fill_between(xx, 0, hv, color=HOTCLR, alpha=0.35, step="mid")
+ax.plot(xx, hv, color=HOTCLR, lw=2)
+ax.set_ylim(0, 6500)
+ax.set_yticks([0, 5000])
+ax.text(0.05, 5600, "$h(x_1)$ on the top edge: 5000 W/m² on the tabs",
+        ha="center", fontsize=10.5, color="#a0520d")
+graph(ax, None, "$h$ (W/m²)")
+ax = axes[1]
+top_nodes = [13, 14, 15]
+for k, A in enumerate(top_nodes):
+    xa = mesh8.X[A - 1, 0]
+    Nx = np.clip(1 - np.abs(xx - xa) / 0.05, 0, None)
+    ax.plot(xx, Nx, color=BASISCLRS[k], lw=2.2)
+    ax.text(xa, 1.05, "$N_{%d}$" % A, color=BASISCLRS[k], ha="center",
+            va="bottom", fontsize=11)
+for xv in (0, 0.05, 0.1):
+    ax.axvline(xv, color=MESHCLR, lw=0.8, ls=":")
+ax.text(0.025, 1.13, "top side of element 7", ha="center", fontsize=9.5,
+        color=MESHCLR)
+ax.text(0.075, 1.13, "top side of element 8", ha="center", fontsize=9.5,
+        color=MESHCLR)
+ax.set_ylim(0, 1.35)
+graph(ax, None, "$N_A$ along $x_2 = H$")
+ax = axes[2]
+contrib = {13: sol8["els"][6]["h"][3], 14: sol8["els"][6]["h"][2] + sol8["els"][7]["h"][3],
+           15: sol8["els"][7]["h"][2]}
+for k, A in enumerate(top_nodes):
+    xa = mesh8.X[A - 1, 0]
+    c = BASISCLRS[k] if A not in gd8 else "0.6"
+    ax.plot([xa, xa], [0, contrib[A]], color=c, lw=5, solid_capstyle="butt")
+    ax.text(xa, contrib[A] + 4, "%.0f W/m" % contrib[A], ha="center",
+            va="bottom", fontsize=10.5, color=c)
+ax.text(0.003, 72, "node 13 is on $\\Gamma_g$:\nits 50 W/m is not an equation's\n"
+        "load; it goes straight\ninto the plate", ha="left", va="bottom",
+        fontsize=9.5, color="0.45")
+ax.set_ylim(0, 150)
+ax.set_xlim(-0.004, W + 0.004)
+graph(ax, "$x_1$ (m), along the top edge", "$\\int N_A\\,h\\,d\\Gamma$ (W/m)")
+fig.tight_layout(h_pad=0.8)
+fig_edge_path = save(fig, "H2F_Fig12_Edge.png")
+```
+
+![The Neumann term for the worked example's top edge. Each tab lies inside one element
+side, exactly in its middle, so its 5000 W/m² × 0.02 m = 100 W/m is split evenly between
+the two nodes of that side. Node 14 collects 50 W/m from each tab. The total, 200 W/m,
+is exactly the heat the tabs bring in.](`{python} fig_edge_path`){#fig-h2f-edge width=80%}
+
+### Closed forms for a rectangle
+
+For an $h_1 \times h_2$ rectangle with constant $\kappa$ and $f$, the Q4 arrays come out in
+closed form:
+
+::: {.derivation}
+$$
+\mathbf{k}^e = \frac{\kappa}{6}\left(\frac{h_2}{h_1}\begin{bmatrix}
+2 & -2 & -1 & 1 \\ -2 & 2 & 1 & -1 \\ -1 & 1 & 2 & -2 \\ 1 & -1 & -2 & 2
+\end{bmatrix}
++ \frac{h_1}{h_2}\begin{bmatrix}
+2 & 1 & -1 & -2 \\ 1 & 2 & -2 & -1 \\ -1 & -2 & 2 & 1 \\ -2 & -1 & 1 & 2
+\end{bmatrix}\right)
+$$
+$$
+\text{a square, } h_1 = h_2: \qquad
+\mathbf{k}^e = \frac{\kappa}{6}\begin{bmatrix}
+4 & -1 & -2 & -1 \\ -1 & 4 & -1 & -2 \\ -2 & -1 & 4 & -1 \\ -1 & -2 & -1 & 4
+\end{bmatrix}
+$$
+$$
+\text{Q4:}\quad \mathbf{f}^e_{\text{body}} = \frac{f\,A^e}{4}\begin{Bmatrix} 1 & 1 & 1 & 1 \end{Bmatrix}^T
+$$
+$$
+\text{Q9:}\quad \mathbf{f}^e_{\text{body}} = \frac{f\,A^e}{36}
+\begin{Bmatrix} 1 & 1 & 1 & 1 & 4 & 4 & 4 & 4 & 16 \end{Bmatrix}^T
+$$
+:::
+
+::: {.step .notes}
+- **No element size appears** in the square element's $\mathbf{k}^e$, only $\kappa$. In
+  1D, $k^e \propto \kappa/h^e$: the gradient scales like $1/h$, so the product of two
+  gradients scales like $1/h^2$, and the element's length gives back one power of $h$. In
+  2D its area gives back $h^2$, so only the *shape*, $h_2/h_1$, matters.
+- **Rows sum to zero**, because a uniform temperature carries no heat.
+- **Node 1 is coupled most strongly to the opposite corner**, node 3 ($-2$), not to its
+  edge neighbours ($-1$). Heat between two nodes flows through the element's interior,
+  and the diagonal pair shares it all.
+- **The body load is not split evenly for Q9.** Corners get 1/36 of the element's heat,
+  mid-sides 4/36, and the centre 16/36: the products of Simpson's weights 1, 4, 1. (For
+  the 8-node serendipity element the corner shares are even negative, $-1/12$. A
+  consistent load does not have to look intuitive.)
+:::
+
+## Assembly: the ID, IEN, and LM arrays
+
+Hughes' three integer arrays work exactly as in 1D:
+
+| Array | Maps | Meaning |
+|---|---|---|
+| $\mathrm{ID}(A)$ | global node $\to$ equation | $P$ if node $A$ carries unknown number $P$; $0$ if $A$ is on $\Gamma_g$ |
+| $\mathrm{IEN}(a, e)$ | local node, element $\to$ global node | local node $a$ of element $e$ is global node $A$ |
+| $\mathrm{LM}(a, e)$ | local node, element $\to$ equation | $\mathrm{LM}(a, e) = \mathrm{ID}\big(\mathrm{IEN}(a, e)\big)$ |
+
+and assembly adds $k^e_{ab}$ into $K_{PQ}$, with $P = \mathrm{LM}(a, e)$ and
+$Q = \mathrm{LM}(b, e)$, and $f^e_a$ into $F_P$, skipping every 0:
+
+::: {.derivation}
+$$
+\mathbf{K} = \mathop{\Large\mathsf{A}}_{e=1}^{n_{el}}\left(\mathbf{k}^e\right),
+\qquad
+\mathbf{F} = \mathop{\Large\mathsf{A}}_{e=1}^{n_{el}}\left(\mathbf{f}^e\right)
+$$
+:::
+
+For the eight-element mesh of @fig-h2f-mesh(a), with the cooled edge on $\Gamma_g$:
+
+```{python arrays_tables}
+#| echo: false
+#| output: asis
+
+ID8, IEN8, LM8 = sol8["ID"], sol8["IEN"], sol8["LM"]
+print("| $A$ | " + " | ".join(str(A) for A in range(1, 16)) + " |")
+print("|---|" + "---|" * 15)
+print("| $\\mathrm{ID}(A)$ | " + " | ".join(("**0**" if v == 0 else str(v)) for v in ID8) + " |")
+print()
+print("| $a \\backslash e$ | " + " | ".join(str(e) for e in range(1, 9)) + " |")
+print("|---|" + "---|" * 8)
+for a in range(4):
+    print("| $\\mathrm{IEN}(%d, e)$ | " % (a + 1) + " | ".join(str(v) for v in IEN8[a]) + " |")
+print()
+print("| $a \\backslash e$ | " + " | ".join(str(e) for e in range(1, 9)) + " |")
+print("|---|" + "---|" * 8)
+for a in range(4):
+    print("| $\\mathrm{LM}(%d, e)$ | " % (a + 1)
+          + " | ".join(("**0**" if v == 0 else str(v)) for v in LM8[a]) + " |")
+```
+
+```{python fig_assembly}
+#| echo: false
+#| output: false
+
+ECOL = ["#1f6feb", "#c0392b", "#0d9488", "#e67e22", "#8a5a20", "#7c3aed",
+        "#d63384", "#2f9e44"]
+fig, (ax, bx) = plt.subplots(1, 2, figsize=(11.2, 6.2),
+                             gridspec_kw=dict(width_ratios=[0.5, 1.0]))
+draw_mesh(ax, mesh8, lw=1.2, fill=lambda e: ECOL[e - 1], alpha=0.28)
+ax.plot([0, 0], [0, H], color=BDRYCLR, lw=4, zorder=2)
+draw_nodes(ax, mesh8, gd8, labels=True, fs=10, lab_off=(0.002, 0.002))
+for e in range(1, 9):
+    xc = mesh8.map(e, np.array([0.0]), np.array([0.0]))[0][0]
+    ax.text(xc[0], xc[1], "$e = %d$" % e, ha="center", va="center",
+            fontsize=10.5, color=ECOL[e - 1], fontweight="bold")
+cell_axes(ax, ticks=False)
+ax.set_title("elements and global node numbers", fontsize=11.5)
+
+n = mesh8.nnp
+for e in range(1, 9):
+    ien = mesh8.IEN[:, e - 1]
+    for A in ien:
+        for B in ien:
+            bx.add_patch(Rectangle((B - 1, A - 1), 1, 1, facecolor=ECOL[e - 1],
+                                   alpha=0.3, edgecolor="none", zorder=2))
+e4 = mesh8.IEN[:, 3]
+for A in e4:
+    for B in e4:
+        bx.add_patch(Rectangle((B - 1 + 0.06, A - 1 + 0.06), 0.88, 0.88,
+                               facecolor="none", edgecolor=ECOL[3], lw=2.0,
+                               zorder=4))
+for A in sorted(gd8):
+    bx.add_patch(Rectangle((0, A - 1), n, 1, facecolor="none", edgecolor="0.45",
+                           hatch="////", lw=0, zorder=3))
+    bx.add_patch(Rectangle((A - 1, 0), 1, n, facecolor="none", edgecolor="0.45",
+                           hatch="////", lw=0, zorder=3))
+for k in range(n + 1):
+    bx.plot([0, n], [k, k], color="0.85", lw=0.5, zorder=1)
+    bx.plot([k, k], [0, n], color="0.85", lw=0.5, zorder=1)
+bx.add_patch(Rectangle((0, 0), n, n, facecolor="none", edgecolor=INK, lw=1.2, zorder=5))
+for A in range(1, n + 1):
+    col = BDRYCLR if A in gd8 else INK
+    bx.text(A - 0.5, -0.3, str(A), ha="center", va="bottom", fontsize=9, color=col)
+    bx.text(-0.3, A - 0.5, str(A), ha="right", va="center", fontsize=9, color=col)
+bx.text(n / 2, -1.3, "column: global node $B$", ha="center", fontsize=10)
+bx.text(-1.5, n / 2, "row: global node $A$", ha="center", va="center",
+        rotation=90, fontsize=10)
+bx.set_xlim(-2.0, n + 0.3)
+bx.set_ylim(n + 0.3, -1.8)
+bx.set_aspect("equal")
+bx.axis("off")
+bx.set_title("where each $\\mathbf{k}^e$ lands, before any row is removed",
+             fontsize=11.5)
+fig.tight_layout(w_pad=1.5)
+fig_assembly_path = save(fig, "H2F_Fig13_Assembly.png")
+```
+
+![Assembly for the eight-element mesh, drawn over all 15 nodes. Each element adds its
+$4 \times 4$ array at the rows and columns of its four nodes, in its own colour, and
+overlapping colours are entries that several elements add into. Element 4 (outlined)
+has nodes 5, 6, 9, 8, so its entries are scattered over rows and columns 5, 6, 8, 9: in
+2D an element's contributions are not a block on the diagonal. The hatched rows and
+columns belong to the five nodes on $\Gamma_g$.](`{python} fig_assembly_path`){#fig-h2f-assembly width=100%}
+
+### Cutting out the Dirichlet rows and columns
+
+Hughes' LM array removes the Dirichlet nodes *while* assembling. It is worth seeing what
+it removes. Assemble **every** node instead, Dirichlet ones included, into a full
+$n_{np} \times n_{np}$ system, and list the free nodes first:
+
+::: {.derivation}
+$$
+\begin{bmatrix}
+\mathbf{K}_{ff} & \mathbf{K}_{fg} \\
+\mathbf{K}_{gf} & \mathbf{K}_{gg}
+\end{bmatrix}
+\begin{Bmatrix} \mathbf{d} \\ \mathbf{g} \end{Bmatrix}
+=
+\begin{Bmatrix} \mathbf{F}_f \\ \mathbf{F}_g \end{Bmatrix}
++
+\begin{Bmatrix} \mathbf{0} \\ \mathbf{R} \end{Bmatrix}
+$$
+:::
+
+::: {.step}
+Here $\mathbf{F}$ holds only the body and $h$ terms, and $\mathbf{R}$ is the heat that
+enters through each Dirichlet node, unknown in advance. It is the discrete version of the
+boundary term $\int_{\Gamma_g} w\,\kappa\nabla u\cdot\underline{n}\,d\Gamma$ that
+$w = 0$ removed from the weak form. The two block rows say different things:
+:::
+
+::: {.derivation}
+$$
+\underbrace{\mathbf{K}_{ff}\,\mathbf{d} = \mathbf{F}_f - \mathbf{K}_{fg}\,\mathbf{g}}_{\text{the system to solve: } \mathbf{K}\mathbf{d} = \mathbf{F}}
+\qquad\qquad
+\underbrace{\mathbf{R} = \mathbf{K}_{gf}\,\mathbf{d} + \mathbf{K}_{gg}\,\mathbf{g} - \mathbf{F}_g}_{\text{afterwards: the heat through } \Gamma_g}
+$$
+:::
+
+```{python fig_cut}
+#| echo: false
+#| output: false
+
+free = [A for A in range(1, 16) if A not in gd8]
+dirn = sorted(gd8)
+order = free + dirn
+Kp = sol8["Kfull"][np.ix_(np.array(order) - 1, np.array(order) - 1)]
+nf, ng = len(free), len(dirn)
+fig, ax = plt.subplots(figsize=(10.4, 6.0))
+blocks = [(0, 0, nf, nf, "#cfe3f5", BDRYCLR, "$\\mathbf{K}_{ff}$: kept, this is $\\mathbf{K}$"),
+          (nf, 0, ng, nf, "#fde3c8", HOTCLR, "$\\mathbf{K}_{fg}$: times $\\mathbf{g}$,\nmoved to the right"),
+          (0, nf, nf, ng, "#e6e6e6", "0.45", "$\\mathbf{K}_{gf}$"),
+          (nf, nf, ng, ng, "#e6e6e6", "0.45", "$\\mathbf{K}_{gg}$")]
+for (c0, r0, wc, hr, fc, ec, lab) in blocks:
+    ax.add_patch(Rectangle((c0, r0), wc, hr, facecolor=fc, edgecolor=ec, lw=2.0,
+                           zorder=1))
+for i in range(15):
+    for j in range(15):
+        if abs(Kp[i, j]) > 1e-12:
+            ax.plot(j + 0.5, i + 0.5, "s", ms=6.5, color=INK if (i < nf and j < nf)
+                    else ("#a0520d" if i < nf else "0.45"), zorder=3)
+for k, A in enumerate(order):
+    col = BDRYCLR if A in gd8 else INK
+    ax.text(k + 0.5, -0.25, str(A), ha="center", va="bottom", fontsize=8.5, color=col)
+    ax.text(-0.25, k + 0.5, str(A), ha="right", va="center", fontsize=8.5, color=col)
+ax.text(nf / 2, -1.05, "free nodes (unknowns $\\mathbf{d}$)", ha="center", fontsize=10)
+ax.text(nf + ng / 2, -1.05, "on $\\Gamma_g$ ($\\mathbf{g}$)", ha="center",
+        fontsize=10, color=BDRYCLR)
+ax.text(2.0, 8.4, "$\\mathbf{K}_{ff}$", fontsize=22, ha="center", va="center",
+        color=BDRYCLR, alpha=0.6, zorder=2)
+ax.text(nf + 2.5, 5.5, "$\\mathbf{K}_{fg}$", fontsize=16, ha="center",
+        va="center", color=HOTCLR, alpha=0.9, zorder=2)
+ax.text(7.5, nf + 0.9, "$\\mathbf{K}_{gf}$", fontsize=16, ha="center",
+        va="center", color="0.4", alpha=0.9, zorder=2)
+ax.text(nf + 3.9, nf + 0.55, "$\\mathbf{K}_{gg}$", fontsize=12, ha="center",
+        va="center", color="0.4", alpha=0.9, zorder=2)
+tx = 16.4
+ax.text(tx, 2.0, "rows of the free nodes:", fontsize=11, va="center")
+ax.text(tx, 3.4, "$\\mathbf{K}_{ff}\\,\\mathbf{d} = \\mathbf{F}_f - \\mathbf{K}_{fg}\\,\\mathbf{g}$",
+        fontsize=14, va="center", color=BDRYCLR)
+ax.text(tx, 4.8, "the 10 equations that are solved;\nthe orange block, times $g$ = 25 °C,\n"
+        "is what $-\\mathbf{k}^e\\mathbf{g}^e$ moved to $\\mathbf{f}^e$",
+        fontsize=10, va="top", color="#a0520d")
+ax.text(tx, 10.9, "rows of the Dirichlet nodes:", fontsize=11, va="center")
+ax.text(tx, 12.3, "$\\mathbf{R} = \\mathbf{K}_{gf}\\,\\mathbf{d} + \\mathbf{K}_{gg}\\,\\mathbf{g} - \\mathbf{F}_g$",
+        fontsize=14, va="center", color="0.3")
+ax.text(tx, 13.5, "not equations for unknowns: once $\\mathbf{d}$ is\nknown, "
+        "they give the heat into the plate", fontsize=10, va="top", color="0.35")
+ax.set_xlim(-1.4, 27.5)
+ax.set_ylim(15.4, -1.6)
+ax.set_aspect("equal")
+ax.axis("off")
+fig_cut_path = save(fig, "H2F_Fig14_Cut.png")
+```
+
+![The full 15 × 15 matrix of the eight-element mesh, with the rows and columns listed
+free nodes first and the five Dirichlet nodes last. Black squares are the entries that
+survive into $\mathbf{K}$. The orange ones multiply known temperatures and move to the
+right-hand side. The grey rows are cut out of the solve and used afterwards to recover
+the heat flowing into the plate.](`{python} fig_cut_path`){#fig-h2f-cut width=100%}
+
+::: {.step .notes}
+- **Rows cut out: the Dirichlet nodes' equations.** A Dirichlet node has no unknown, so
+  its row is not needed to find $\mathbf{d}$. But it is not useless: it is the heat
+  balance of that node, and it returns the boundary flux $\mathbf{R}$ that the weak form
+  never asked for.
+- **Columns cut out: the known temperatures.** Each Dirichlet column multiplies a known
+  $g_B$, so it moves to the right-hand side. That is precisely the
+  $-\sum_b k^e_{ab}\,g^e_b$ term in $\mathbf{f}^e$. An LM entry of 0 means "skip this row,
+  and move this column".
+- Many codes do the same thing a different way: they keep the full $n_{np} \times n_{np}$
+  matrix and overwrite each Dirichlet row with a 1 on the diagonal and $g_B$ on the
+  right. The resulting $\mathbf{d}$ is the same. The explorer below shows both the full
+  matrix and the cut-down one.
+:::
+
+### Numbering the nodes: the band
+
+```{python fig_band}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(1, 4, figsize=(11.6, 4.4),
+                         gridspec_kw=dict(width_ratios=[0.34, 1.0, 0.34, 1.0]))
+BW = {}
+for k, order_ in enumerate(("x1", "x2")):
+    mB = F2.Mesh(W, H, 8, 16, p=1, order=order_)
+    sB = F2.solve(mB, pb, F2.dirichlet(mB, cool), keep_elements=False)
+    Kb = sB["K"]
+    P, Q = np.nonzero(np.abs(Kb) > 1e-12)
+    bw = int(np.max(np.abs(P - Q)))
+    BW[order_] = (bw, Kb.shape[0])
+    ax = axes[2 * k]
+    path = mB.X[np.argsort(np.arange(mB.nnp))]
+    ax.plot(mB.X[:, 0], mB.X[:, 1], color=LOADCLR, lw=0.6, alpha=0.8)
+    ax.plot(mB.X[:, 0], mB.X[:, 1], "o", ms=1.6, color=INK)
+    ax.plot(mB.X[0, 0], mB.X[0, 1], "o", ms=5, color=LOADCLR)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    ax.set_title("numbering\nalong $x_%s$ first" % order_[1], fontsize=10.5)
+    bx = axes[2 * k + 1]
+    bx.plot(Q, P, "s", ms=0.9, color=INK)
+    bx.set_xlim(-1, Kb.shape[0])
+    bx.set_ylim(Kb.shape[0], -1)
+    bx.set_aspect("equal")
+    bx.set_xticks([])
+    bx.set_yticks([])
+    for s_ in bx.spines.values():
+        s_.set_color("0.6")
+    bx.set_title("$\\mathbf{K}$: %d equations, half-bandwidth %d" % (Kb.shape[0], bw),
+                 fontsize=10.5)
+fig.tight_layout(w_pad=0.8)
+fig_band_path = save(fig, "H2F_Fig15_Band.png")
+```
+
+![The same $8 \times 16$ bilinear mesh, numbered two ways (the red line visits the nodes in
+order), and the non-zero pattern of the resulting $\mathbf{K}$. Every non-zero lies within
+one row of neighbours of the diagonal, so numbering across the short direction keeps the
+band narrow.](`{python} fig_band_path`){#fig-h2f-band width=100%}
+
+```{python band_text}
+#| echo: false
+#| output: asis
+
+print(r"""
+::: {.step}
+Neighbouring nodes in the *other* direction are a whole row of nodes apart in the
+numbering. Numbered along $x_1$, rows are 9 nodes long and the half-bandwidth is %d.
+Numbered along $x_2$, rows are 17 long and it grows to %d. A banded solver's work
+grows with the square of the bandwidth, so the first numbering is about %.0f times
+cheaper, for exactly the same $\mathbf{d}$. Meshing programs renumber nodes for this
+reason; sparse solvers go further and reorder the unknowns themselves.
+:::
+""" % (BW["x1"][0], BW["x2"][0], (BW["x2"][0] / BW["x1"][0]) ** 2))
+```
+
+## Worked example: eight bilinear elements
+
+Take the mesh of @fig-h2f-mesh(a): $2 \times 4$ square Q4 elements, 5 cm on a side. The
+arrays are the ones tabulated above: 15 nodes, the five on the cooled edge fixed at
+$g$ = 25 °C, and 10 unknowns.
+
+**Element arrays.** Every element is the same square, so every element has the same
+$\mathbf{k}^e$, and the same body load $f A^e / 4 = 25{,}000 \times 0.0025 / 4 = 15.625$
+W/m per node:
+
+```{python example_elements}
+#| echo: false
+#| output: asis
+
+els = sol8["els"]
+vec = lambda v: F2.tex_vector(np.asarray(v), sig=5)
+mat = lambda M: F2.tex_matrix(np.asarray(M), sig=4)
+g_e = lambda e: np.array([gd8.get(int(A), 0.0) for A in mesh8.IEN[:, e - 1]])
+print(r"""
+::: {.derivation}
+$$
+\begin{aligned}
+\mathbf{k}^e &= \frac{25}{6}\begin{bmatrix} 4 & -1 & -2 & -1 \\ -1 & 4 & -1 & -2 \\ -2 & -1 & 4 & -1 \\ -1 & -2 & -1 & 4 \end{bmatrix} \\
+&= %s\ \tfrac{\text{W}}{\text{m·K}}
+\qquad e = 1, \dots, 8
+\end{aligned}
+$$
+:::
+""" % mat(els[0]["ke"]))
+print(r"""
+Three kinds of right-hand side occur. Elements 2, 4, and 6 touch neither the plate nor
+the tabs, so $\mathbf{f}^e = \mathbf{f}^e_{\text{body}}$. Elements 1, 3, and 5 have local
+nodes 1 and 4 on $\Gamma_g$, and element 7 also carries a tab on its top side:
+
+::: {.derivation}
+$$
+\mathbf{f}^1 = %s - \mathbf{k}^1 \underbrace{%s}_{\mathbf{g}^1} = %s\ \text{W/m}
+$$
+$$
+\mathbf{f}^7 = %s + \underbrace{%s}_{\text{tab}} - \mathbf{k}^7 %s = %s\ \text{W/m}
+$$
+$$
+\mathbf{f}^8 = %s + \underbrace{%s}_{\text{tab}} = %s\ \text{W/m}
+$$
+:::
+""" % (vec(els[0]["body"]), vec(g_e(1)), vec(els[0]["total"]),
+       vec(els[6]["body"]), vec(els[6]["h"]), vec(g_e(7)), vec(els[6]["total"]),
+       vec(els[7]["body"]), vec(els[7]["h"]), vec(els[7]["total"])))
+```
+
+**Assembly.** Entries of $\mathbf{f}^1$ and $\mathbf{f}^7$ with $\mathrm{LM} = 0$ (local
+nodes 1 and 4) are dropped. The two survivors of $\mathbf{f}^1$,
+$15.625 + 312.5 = 328.125$ W/m, are the body load plus $-\mathbf{k}^1\mathbf{g}^1$: the
+cold plate's pull on nodes 2 and 5, moved to the right-hand side. Adding everything in
+through LM gives
+
+```{python example_global}
+#| echo: false
+#| output: asis
+
+print(r"""
+::: {.derivation}
+$$
+\mathbf{K} = \frac{25}{6}\,%s\ \tfrac{\text{W}}{\text{m·K}}
+$$
+$$
+\mathbf{F} = %s\ \text{W/m}
+$$
+$$
+\mathbf{d} = %s\ {}^\circ\text{C}
+\qquad\text{at nodes}\qquad
+\begin{Bmatrix} 2 & 3 & 5 & 6 & 8 & 9 & 11 & 12 & 14 & 15 \end{Bmatrix}
+$$
+:::
+""" % (F2.tex_matrix(np.round(sol8["K"] * 6 / kappa).astype(int), sig=4),
+       F2.tex_vector(sol8["F"], sig=5),
+       F2.tex_vector(np.round(sol8["d"], 3), sig=5)))
+```
+
+::: {.step .notes}
+- **Read the diagonal.** In units of $\kappa/6$, each element that touches a node adds 4
+  to that node's diagonal entry. So the diagonal is 16 for a node shared by four elements,
+  8 for a node on an outer edge, and 4 for the corner nodes 3 and 15.
+- **Read the rows.** A row of the *full* matrix sums to zero, because a uniform
+  temperature carries no heat. Rows 1, 3, 5, 7, and 9 here do not: they belong to nodes
+  next to the cooled edge, and the columns cut out of them moved to $\mathbf{F}$ as the
+  pull of the 25 °C plate.
+:::
+
+```{python fig_example}
+#| echo: false
+#| output: false
+
+normE = Normalize(23.5, 37.5)
+fig = plt.figure(figsize=(11.6, 6.9))
+gsE = fig.add_gridspec(1, 3, width_ratios=[1.0, 1.0, 1.25], wspace=0.32)
+
+
+def node_label(ax, x, y, text):
+    top = y > H - 0.01
+    ax.text(x + (0.002 if x < W - 0.01 else -0.002), y + (-0.004 if top else 0.003),
+            text, fontsize=8.5, ha="left" if x < W - 0.01 else "right",
+            va="top" if top else "bottom", zorder=7,
+            bbox=dict(fc="white", ec="none", alpha=0.75, pad=0.4))
+
+
+ax = fig.add_subplot(gsE[0])
+axA = ax
+draw_field(ax, sol8, norm=normE)
+draw_mesh(ax, mesh8, color=INK, lw=0.9)
+for A in range(1, 16):
+    x, y = mesh8.X[A - 1]
+    ax.plot([x], [y], "o", ms=4, color=BDRYCLR if A in gd8 else INK, zorder=6)
+    node_label(ax, x, y, "%.1f" % sol8["U"][A - 1])
+cell_axes(ax)
+ax.set_title("(a) $u^h$ and its nodal values (°C)", fontsize=11)
+ax = fig.add_subplot(gsE[1])
+xg, yg = np.meshgrid(np.linspace(0, W, 101), np.linspace(0, H, 201))
+cs = ax.pcolormesh(xg, yg, exact(xg, yg, M=800)[0], cmap=TCMAP, norm=normE,
+                   shading="gouraud", rasterized=True)
+draw_mesh(ax, mesh8, color=INK, lw=0.6)
+for A in range(1, 16):
+    x, y = mesh8.X[A - 1]
+    ue = exact(np.array([x]), np.array([y]), M=4000)[0][0]
+    node_label(ax, x, y, "%.1f" % ue)
+cell_axes(ax)
+ax.set_title("(b) the exact $u$ (°C)", fontsize=11)
+cb = fig.colorbar(cs, ax=[axA, ax], orientation="horizontal", fraction=0.035,
+                  pad=0.07)
+cb.set_label("temperature (°C)", fontsize=9.5)
+cb.ax.tick_params(labelsize=8.5)
+
+# (c) heat into the plate: the reactions vs the exact consistent nodal flows
+ax = fig.add_subplot(gsE[2])
+ys = np.array([mesh8.X[A - 1, 1] for A in sorted(gd8)])
+out = np.array([-sol8["R"][A - 1] for A in sorted(gd8)])
+yq = np.linspace(0, H, 4001)
+qn = kappa * H2.series(np.zeros_like(yq), yq, **EX, M=4000)["u1"]
+cons = np.array([np.trapezoid(np.clip(1 - np.abs(yq - yA) / 0.05, 0, None) * qn, yq)
+                 for yA in ys])
+ax.barh(ys, out, height=0.02, color=BDRYCLR, alpha=0.8, label="$-R_A$ from $u^h$")
+ax.plot(cons, ys, "o", color=LOADCLR, ms=7, label="exact: $\\int N_A\\,\\kappa u_{,1}\\,d\\Gamma$")
+for yA, v, c_ in zip(ys, out, cons):
+    ax.text(max(v, c_) + 7, yA, "%.1f" % v, va="center", fontsize=9, color=BDRYCLR)
+ax.set_ylim(-0.015, H + 0.015)
+ax.set_xlim(0, 260)
+ax.legend(frameon=False, fontsize=9.5, loc="lower right")
+graph(ax, "heat into the plate at each node (W/m)", "$x_2$ of the node (m)")
+ax.set_title("(c) the heat into the plate:\n%.1f W/m in total" % out.sum(), fontsize=11)
+fig_example_path = save(fig, "H2F_Fig16_Example.png")
+EX_OUT, EX_CONS = out, cons
+```
+
+![The worked example. (a) The eight-element solution, coloured by temperature, with its
+nodal values. (b) The exact temperature and its values at the same points. (c) The heat
+leaving through each node of the cooled edge, from the cut-out Dirichlet rows, against
+the exact heat weighted by the same basis functions.](`{python} fig_example_path`){#fig-h2f-example width=100%}
+
+```{python example_text}
+#| echo: false
+#| output: asis
+
+ex_nodes = exact(mesh8.X[:, 0], mesh8.X[:, 1], M=4000)[0]
+free8 = [A for A in range(1, 16) if A not in gd8]
+errs = [sol8["U"][A - 1] - ex_nodes[A - 1] for A in free8]
+k_worst = int(np.argmax(np.abs(errs)))
+print(r"""
+Every line of the Galerkin form can be checked on the result:
+
+::: {.step .notes}
+- **The nodal values are not exact.** They miss by up to %.2f °C (at node %d). In 1D,
+  linear elements with constant $\kappa$ were exact at the nodes. That was a special
+  property of one dimension, and it does not survive into 2D.
+- **The Dirichlet condition holds exactly.** Every node on the cooled edge is at 25 °C,
+  because it was built into $\mathcal{S}^h$.
+- **The Neumann condition holds only on average.** The top edge's flux is built into
+  $\mathbf{F}$, but along the top side of element 8, $\kappa\,u^h_{,2}$ runs only from
+  %.0f to %.0f W/m², nothing like 5000 on the tab and 0 beside it. One bilinear element
+  cannot represent a flux that switches on and off inside it.
+- **Energy is conserved exactly.** The cut-out rows give the heat through each node of
+  the plate, in panel (c), and it adds up to %.3f W/m: the 500 W/m made plus the 200 W/m
+  from the tabs. This holds on *any* mesh, however coarse, because the basis functions
+  add up to 1. Take $w^h = \sum_A N_A = 1$ in the weak form, including the Dirichlet
+  nodes, and it reads "heat in = heat out".
+- **The distribution is approximate.** The node-by-node heat in (c) matches the exact
+  weighted flux to within %.0f%%, with the largest share at the top, where the tab heat
+  arrives.
+:::
+""" % (abs(errs[k_worst]), free8[k_worst],
+       kappa * (sol8["U"][13] - sol8["U"][10]) / 0.05,
+       kappa * (sol8["U"][14] - sol8["U"][11]) / 0.05,
+       EX_OUT.sum(), 100 * np.max(np.abs(EX_OUT - EX_CONS) / EX_CONS)))
+```
+
+## How the error shrinks
+
+```{python fig_convergence}
+#| echo: false
+#| output: false
+
+lam = np.pi / H
+
+
+def exact_smooth(x, y):
+    """Tabs off, and a coolant that warms smoothly up the plate:
+    g(x2) = 25 + 1.5 (1 - cos(pi x2 / H)).  The solution is smooth."""
+    C = np.cosh(lam * (W - x)) / np.cosh(lam * W)
+    S = np.sinh(lam * (W - x)) / np.cosh(lam * W)
+    u = 26.5 - 1.5 * np.cos(lam * y) * C + f0 / kappa * (W * x - x ** 2 / 2)
+    u1 = 1.5 * lam * np.cos(lam * y) * S + f0 / kappa * (W - x)
+    u2 = 1.5 * lam * np.sin(lam * y) * C
+    return u, u1, u2
+
+
+pb_s = F2.Problem(kappa, lambda x, y: f0 + 0.0 * x)
+cool_s = {"left": lambda x, y: 26.5 - 1.5 * np.cos(lam * y)}
+RATES = {}
+fig, axes = plt.subplots(1, 2, figsize=(10.4, 4.4))
+for (name, pbx, coolx, exf, ls, ns) in (
+        ("smooth", pb_s, cool_s, exact_smooth, "-", {1: (1, 2, 4, 8, 16, 32), 2: (1, 2, 4, 8, 16)}),
+        ("tabs", pb, cool, lambda x, y: exact(x, y, M=1500), "--", {1: (1, 2, 4, 8, 16), 2: (1, 2, 4, 8)})):
+    for p in (1, 2):
+        hs, e0, e1 = [], [], []
+        for n in ns[p]:
+            mc = F2.Mesh(W, H, n, 2 * n, p=p)
+            sc = F2.solve(mc, pbx, F2.dirichlet(mc, coolx), keep_elements=False)
+            a_, b_ = F2.errors(sc, exf)
+            hs.append(W / n)
+            e0.append(a_)
+            e1.append(b_)
+        RATES[(name, p)] = (math.log(e0[-2] / e0[-1], 2), math.log(e1[-2] / e1[-1], 2))
+        c = BASISCLRS[p - 1]
+        lab = "%s, %s" % ("Q4" if p == 1 else "Q9", "smooth" if name == "smooth" else "with tabs")
+        axes[0].loglog(hs, e0, ls, marker="o", color=c, lw=1.8, ms=4.5, label=lab)
+        axes[1].loglog(hs, e1, ls, marker="o", color=c, lw=1.8, ms=4.5, label=lab)
+for ax, (title, sl) in zip(axes, (("$\\|u - u^h\\|_{L^2}$ (°C·m)", ((2, 3.5e-5), (3, 1.4e-7))),
+                                  ("$|u - u^h|_{H^1}$ (°C)", ((1, 0.045), (2, 1.6e-4))))):
+    for (k, y0) in sl:
+        hh = np.array([W / 32, W / 8])
+        ax.loglog(hh, y0 * (hh / hh[0]) ** k, color="0.6", lw=1.0)
+        ax.text(hh[1] * 1.08, y0 * (hh[1] / hh[0]) ** k, "slope %d" % k, fontsize=9,
+                color="0.4", va="center")
+    ax.set_title(title, fontsize=11.5)
+    ax.grid(True, which="major", color="0.9", lw=0.6)
+    graph(ax, "element width $h = W / n_1$ (m)", None)
+axes[0].legend(frameon=False, fontsize=9.5, loc="lower right")
+fig.tight_layout(w_pad=2.5)
+fig_conv_path = save(fig, "H2F_Fig17_Convergence.png")
+```
+
+![Error against element size on uniform meshes of square elements, on log-log axes.
+Solid lines: a smooth version of the cell, with the tabs off and a coolant that warms
+smoothly up the plate. Dashed lines: the cell with its tabs. Grey lines show the textbook
+slopes.](`{python} fig_conv_path`){#fig-h2f-convergence width=96%}
+
+```{python conv_text}
+#| echo: false
+#| output: asis
+
+print(r"""
+::: {.derivation}
+$$
+\begin{aligned}
+\|u - u^h\|_{L^2} &= \left(\int_\Omega \left(u - u^h\right)^2 d\Omega\right)^{1/2} \le C\,h^{p+1} \\
+|u - u^h|_{H^1} &= \left(\int_\Omega \left|\nabla u - \nabla u^h\right|^2 d\Omega\right)^{1/2} \le C\,h^{p}
+\end{aligned}
+$$
+:::
+
+::: {.step .notes}
+- **For a smooth solution, the 1D rates carry over.** The last halving of the mesh gives
+  slopes %.2f and %.2f for Q4, and %.2f and %.2f for Q9: $h^{p+1}$ for the temperature,
+  $h^p$ for its gradient and so for the heat flux.
+- **With the tabs, both element types slow down.** The flux jumps from 0 to 5000 W/m² at
+  the ends of each tab, and there $\nabla u$ is unbounded (the $\ln r$ of the strong-form
+  page). No polynomial captures that well, so a higher degree buys little. The measured
+  slopes wander, depending on where the tab ends fall inside the elements, and stay near
+  first order in $H^1$ for both. What helps is small elements *at the tab ends*, not
+  higher degree everywhere. That is the argument for adaptive meshes.
+- The error estimates are stated in terms of $h$, but they are really about how well
+  $\mathcal{S}^h$ can approximate $u$. That is the best-approximation property of
+  @fig-h2f-projection at work.
+:::
+""" % (RATES[("smooth", 1)][0], RATES[("smooth", 1)][1],
+       RATES[("smooth", 2)][0], RATES[("smooth", 2)][1]))
+```
+
+::: {.callout-note collapse="true"}
+## Hughes' notation and the class notation
+
+| Hughes (this appendix) | Class notes | |
+|---|---|---|
+| nodes $A = 1, \dots, n_{np}$; local $a = 1, \dots, n_{en}$ | $A = 0, \dots$; $a = 0, 1, 2, 3$ | 1-based vs 0-based (code) counting; the same counter-clockwise order |
+| $\partial\underline{x}/\partial\underline{\xi}$ and $j = \det(\partial\underline{x}/\partial\underline{\xi})$ | $DF$ and $J$ | the Jacobian matrix and its determinant (used on this page) |
+| $\tilde{\underline{\xi}}_l$, $W_l$, $n_{int}$ | $\xi_g$, $w_g$, $n_{quad}$ | quadrature points and weights |
+| $\mathbf{k}^e = [k^e_{ab}]$, $\mathbf{f}^e = \{f^e_a\}$ | $K^e_{ab}$, $F^e_a$ | element arrays |
+| $\mathrm{IEN}(a, e)$, $\mathrm{LM}(a, e)$ | IEN | the class uses IEN and skips $\Gamma_g$ nodes directly |
+:::
+
+## Explore the Galerkin method
+
+Build a mesh of the cell, choose the data, and decide which nodes are Dirichlet. Then look
+through the tabs. **Solution** shows $u^h$ and its heat balance. **Basis functions**
+shows any global $N_A$ and the parent functions of the highlighted element. **Mapping**
+takes one element through the isoparametric map, Gauss point by Gauss point.
+**Matrices** shows the ID, IEN, and LM arrays, the element arrays, the full assembled
+matrix with the rows and columns that the Dirichlet nodes cut out, and the system that is
+actually solved. **Error** compares $u^h$ with the exact solution, when there is one.
+
+```{ojs}
+//| echo: false
+import {makeMesh, dirichlet, solve, mapPoint, shape, errors, exactCell,
+        makeCanvas, drawField, drawMesh, drawBoundary, drawNodes, drawElementNumbers,
+        drawSpy, csrEntries, csrDense, parseOverrides, parseExpr,
+        drawParentFunction, drawParentSquare, drawElementDetail, diverging, EDGES}
+  from "./fem2d.js"
+import {texMatrix, texVector, num} from "./fem1d.js"
+```
+
+**The mesh**
+
+```{ojs}
+//| echo: false
+viewof pdeg = Inputs.radio(new Map([["Q4: bilinear, p = 1", 1], ["Q9: biquadratic, p = 2", 2]]),
+  {value: 1, label: "Elements"})
+viewof n1 = Inputs.range([1, 16], {value: 2, step: 1, label: "n₁ (across)"})
+viewof n2 = Inputs.range([1, 32], {value: 4, step: 1, label: "n₂ (up)"})
+viewof distort = Inputs.range([0, 0.45], {value: 0, step: 0.05, label: "Distort the interior"})
+viewof order = Inputs.radio(new Map([["along x₁ first", "x1"], ["along x₂ first", "x2"]]),
+  {value: "x1", label: "Number nodes"})
+```
+
+**The data**
+
+```{ojs}
+//| echo: false
+viewof xf = Inputs.range([-10000, 100000], {value: 25000, step: 1000, label: "f (W/m³)"})
+viewof xk = Inputs.range([1, 50], {value: 25, step: 1, label: "κ (W/(m·K))"})
+viewof xht = Inputs.range([-10000, 20000], {value: 5000, step: 500, label: "h on the tabs (W/m²)"})
+viewof xho = Inputs.range([-2000, 2000], {value: 0, step: 100, label: "h on the rest of Γh (W/m²)"})
+```
+
+**The Dirichlet nodes, $\Gamma_g$.** Tick the edges held at a known temperature and give
+each one its $g(x, y)$ in °C, with $x = x_1$ and $y = x_2$ in meters. Plain numbers work,
+and so do expressions such as `25 + 3*y/0.2` or `25 + 5*sin(PI*y/0.2)`. Then fix or free
+individual nodes by number, for example `8 = 45, 13 = free`. Every fixed node gets
+$\mathrm{ID}(A) = 0$, and its row and column are cut out of the solve. A node freed from a
+Dirichlet edge sits on an insulated stretch of boundary.
+
+```{ojs}
+//| echo: false
+viewof dEdges = Inputs.checkbox(new Map([["left, x₁ = 0", "left"], ["right, x₁ = W", "right"],
+  ["bottom, x₂ = 0", "bottom"], ["top, x₂ = H", "top"]]), {value: ["left"], label: "Dirichlet edges"})
+viewof gExpr = Inputs.form({
+  left: Inputs.text({label: "g on the left edge", value: "25"}),
+  right: Inputs.text({label: "g on the right edge", value: "25"}),
+  bottom: Inputs.text({label: "g on the bottom edge", value: "25"}),
+  top: Inputs.text({label: "g on the top edge", value: "25"})
+})
+viewof nodeText = Inputs.text({label: "Fix or free nodes", value: "",
+  placeholder: "e.g.  8 = 45,  13 = free"})
+```
+
+```{ojs}
+//| echo: false
+W2 = 0.10
+H2 = 0.20
+TABS2 = [[0.015, 0.035], [0.065, 0.085]]
+mesh = makeMesh({W: W2, H: H2, n1, n2, p: pdeg, distort, order})
+gParsed = {
+  const g = {}, bad = [];
+  for (const e of dEdges) {
+    const fn = parseExpr(gExpr[e]);
+    if (fn) g[e] = fn; else { bad.push(e); g[e] = () => 0; }
+  }
+  return {g, bad};
+}
+ov = parseOverrides(nodeText)
+gd = dirichlet(mesh, gParsed.g, ov.map)
+pbm = {
+  const h = {};
+  for (const e of EDGES) {
+    if (dEdges.includes(e)) continue;
+    h[e] = e === "top"
+      ? {h: s => TABS2.some(([a, b]) => s >= a && s <= b) ? xht : xho, breaks: TABS2.flat()}
+      : {h: () => xho, breaks: []};
+  }
+  return {kappa: xk, f: () => xf, h};
+}
+sol = solve(mesh, pbm, gd)
+exactOK = dEdges.length === 1 && dEdges[0] === "left" && ov.map.size === 0 && xho === 0 && gParsed.bad.length === 0
+exactFn = exactOK ? exactCell({W: W2, H: H2, kappa: xk, f: xf, gLeft: y => gParsed.g.left(0, y),
+                               hTab: xht, tabs: TABS2, M: 300, Ng: 30}) : null
+fmt = (v, d = 2) => (v < 0 ? "−" : "") + Math.abs(v).toFixed(d)
+uhAt = (e, xi, eta) => { const N = shape(pdeg, xi, eta).N; return mesh.IEN[e - 1].reduce((s, A, a) => s + N[a] * sol.U[A - 1], 0); }
+kSub = Math.max(2, Math.min(24, Math.ceil(Math.sqrt(20000 / mesh.nel))))
+```
+
+**Highlight**
+
+```{ojs}
+//| echo: false
+viewof eSel = Inputs.range([1, mesh.nel], {value: Math.min(4, mesh.nel), step: 1, label: "Element e"})
+viewof aSel = Inputs.range([1, mesh.nnp], {value: Math.min(8, mesh.nnp), step: 1, label: "Node A"})
+```
+
+```{ojs}
+//| echo: false
+{
+  const nnz = sol.K.rowPtr[sol.K.n];
+  const warn = [];
+  if (gParsed.bad.length) warn.push(`Could not read g on the ${gParsed.bad.join(", ")} edge(s); using 0.`);
+  if (ov.errs.length) warn.push(`Could not read: ${ov.errs.join("; ")}.`);
+  if (sol.minJ <= 0) warn.push("Some element is folded (J ≤ 0 at a quadrature point): reduce the distortion.");
+  else if (!gd.size) warn.push("No Dirichlet nodes: K is singular, and there is no unique solution.");
+  return html`<div style="font-size:0.95rem; margin:0.3rem 0 0.6rem 0; padding:0.5rem 0.8rem; background:#fff; border-left:4px solid #4a7ba7;">
+    <b>${mesh.nel}</b> ${pdeg === 1 ? "Q4" : "Q9"} elements &rarr; <b>${mesh.nnp}</b> nodes, of which <b>${gd.size}</b> are on Γ<sub>g</sub>
+    &rarr; <b>${sol.neq}</b> unknowns, and <b>${nnz}</b> non-zeros in <b>K</b>
+    (${(100 * nnz / Math.max(sol.neq, 1) ** 2).toFixed(1)}% of its entries).
+    J ranges from ${sol.minJ.toExponential(3)} to ${sol.maxJ.toExponential(3)} m².
+    ${warn.length ? html`<br><span style="color:#c0392b">${warn.join(" ")}</span>` : ""}
+  </div>`;
+}
+```
+
+::: {.panel-tabset}
+
+### Solution
+
+```{ojs}
+//| echo: false
+viewof labs = Inputs.checkbox(["node numbers A", "ID(A)", "element numbers e"],
+  {value: mesh.nnp <= 60 ? ["node numbers A", "element numbers e"] : [], label: "Label"})
+```
+
+```{ojs}
+//| echo: false
+{
+  if (!sol.ok) return html`<div style="color:#c0392b">No solution to show: ${sol.minJ <= 0 ? "an element is folded." : "with no Dirichlet node, K is singular."}</div>`;
+  const lo = d3.min(sol.U), hi = d3.max(sol.U);
+  const col = d3.scaleSequential([hi, hi - lo < 1e-9 ? hi - 1 : lo], d3.interpolateRdYlBu);
+  const cv = makeCanvas(Math.min(width, 360), 0, W2, 0, H2);
+  drawField(cv, mesh, uhAt, col, kSub);
+  drawMesh(cv, mesh, {highlight: eSel, color: "rgba(26,26,26,0.55)"});
+  drawBoundary(cv, mesh, dEdges, TABS2);
+  drawNodes(cv, mesh, gd, {labels: labs.includes("node numbers A"),
+    idLabels: labs.includes("ID(A)") ? (A => `ID ${sol.ID[A - 1]}`) : null,
+    r: mesh.nnp > 400 ? 1.6 : 3.5});
+  if (labs.includes("element numbers e")) drawElementNumbers(cv, mesh);
+  const made = d3.sum(sol.els, ea => d3.sum(ea.body)), hin = d3.sum(sol.els, ea => d3.sum(ea.h));
+  const out = -d3.sum(sol.R);
+  let kmax = 0;
+  sol.U.forEach((v, i) => { if (v > sol.U[kmax]) kmax = i; });
+  const legend = Plot.legend({color: {type: "linear", domain: [lo, hi], scheme: "RdYlBu", reverse: true, label: "uʰ (°C)"},
+                              width: 300, marginLeft: 14, marginRight: 14});
+  return html`<div style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start">
+    <div>${legend}${cv.canvas}</div>
+    <div style="flex:1; min-width:15rem; font-size:0.93rem; line-height:1.6">
+      <b>Heat balance</b>, per meter of depth:<br>
+      &nbsp; made inside, Σ f<sup>e</sup><sub>body</sub> = ${fmt(made, 2)} W/m<br>
+      &nbsp; in through Γ<sub>h</sub>, Σ f<sup>e</sup><sub>h</sub> = ${fmt(hin, 2)} W/m<br>
+      &nbsp; out through Γ<sub>g</sub>, −Σ R<sub>A</sub> = ${fmt(out, 2)} W/m<br>
+      <span style="color:#555">These agree on every mesh, because the basis functions add up to 1.</span><br><br>
+      <b>Hottest node:</b> A = ${kmax + 1}, ${fmt(sol.U[kmax], 2)} °C at (${mesh.X[kmax].map(v => v.toFixed(3)).join(", ")}) m<br>
+      <b>Coldest node:</b> ${fmt(lo, 2)} °C<br><br>
+      <span style="color:#555">Blue edges: Γ<sub>g</sub>. Teal: Γ<sub>h</sub>, orange on the tabs. Filled nodes are fixed (ID = 0); open nodes carry unknowns. The orange outline is element ${eSel}.</span>
+    </div></div>`;
+}
+```
+
+### Basis functions
+
+```{ojs}
+//| echo: false
+{
+  const A = aSel, els = [];
+  mesh.IEN.forEach((row, e) => { if (row.includes(A)) els.push(e + 1); });
+  const cv = makeCanvas(Math.min(width, 330), 0, W2, 0, H2);
+  drawField(cv, mesh, (e, xi, eta) => { const a = mesh.IEN[e - 1].indexOf(A); return a < 0 ? 0 : shape(pdeg, xi, eta).N[a]; },
+            diverging, Math.max(kSub, 6));
+  drawMesh(cv, mesh, {highlight: eSel, color: "rgba(26,26,26,0.5)"});
+  drawBoundary(cv, mesh, dEdges, TABS2);
+  drawNodes(cv, mesh, gd, {hiNode: A, r: mesh.nnp > 400 ? 1.6 : 3});
+  const ien = mesh.IEN[eSel - 1];
+  const minis = ien.map((B, a) => drawParentFunction(pdeg, a, pdeg === 1 ? 110 : 92, `N${a + 1} → N${B}`));
+  const where = gd.has(A) ? `on Γ<sub>g</sub>: its function carries the known g = ${fmt(gd.get(A), 2)} °C`
+                          : `unknown number ID(${A}) = ${sol.ID[A - 1]}`;
+  return html`<div style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start">
+    <div>${cv.canvas}<div style="font-size:0.88rem; color:#555; max-width:330px">
+      N<sub>${A}</sub>, blue where positive and red where negative. Node ${A} is ${html([where])}.
+      Its support is element${els.length > 1 ? "s" : ""} ${els.join(", ")}.</div></div>
+    <div style="flex:1; min-width:16rem">
+      <div style="font-size:0.93rem; margin-bottom:0.4rem"><b>Element ${eSel}</b>: its ${mesh.nen} parent functions N<sub>a</sub>(ξ, η), and the global functions they become through IEN(a, ${eSel}):</div>
+      <div style="display:grid; grid-template-columns: repeat(${pdeg === 1 ? 2 : 3}, max-content); gap:6px">${minis}</div>
+      <div style="font-size:0.88rem; color:#555; margin-top:0.4rem">The black dot is the function's own node, where it equals 1; it is 0 at the others.</div>
+    </div></div>`;
+}
+```
+
+### Mapping
+
+```{ojs}
+//| echo: false
+viewof qSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Gauss point l"})
+```
+
+```{ojs}
+//| echo: false
+{
+  const e = eSel, ea = sol.els[e - 1], g = ea.gp[qSel - 1];
+  const DF = g.DF, J = g.J;
+  const invT = [[DF[1][1] / J, -DF[1][0] / J], [-DF[0][1] / J, DF[0][0] / J]];
+  const gxi = [g.Nxi, g.Neta], gx = [g.grads.map(v => v[0]), g.grads.map(v => v[1])];
+  const Js = ea.gp.map(q => q.J);
+  const left = drawParentSquare(pdeg, qSel, 230), right = drawElementDetail(mesh, e, qSel, 300);
+  const t4 = v => num(v, 4);
+  const sc = x => html`<div style="overflow-x:auto; max-width:100%; font-size:${pdeg === 2 ? 0.76 : 1}em">${x}</div>`;
+  return html`<div>
+    <div style="display:flex; flex-wrap:wrap; gap:1rem; align-items:center">${left}<div style="font-size:1.6rem">→</div>${right}</div>
+    <div style="font-size:0.9rem; color:#555">Left: the parent square, with its local nodes and ${(pdeg + 1) ** 2} Gauss points; point ${qSel} is the bold one. Right: element ${e}, with local and global node numbers, the images of the grid lines and Gauss points, and the two columns of DF at the selected point.</div>
+    ${sc(tex.block`\tilde{\underline{\xi}}_{${qSel}} = (${t4(g.xi)},\ ${t4(g.eta)}),\quad W_{${qSel}} = ${t4(g.w)}
+      \quad\longrightarrow\quad \underline{x}(\tilde{\underline{\xi}}_{${qSel}}) = (${t4(g.x[0])},\ ${t4(g.x[1])})\ \text{m}`)}
+    ${sc(tex.block`DF = \sum_a \underline{x}^e_a \left(\nabla_\xi N_a\right)^T = ${texMatrix(DF, {sig: 4})}\ \text{m}`)}
+    ${sc(tex.block`J = \det DF = ${t4(J)}\ \text{m}^2,
+      \qquad DF^{-T} = ${texMatrix(invT, {sig: 4})}\ \text{m}^{-1}`)}
+    ${sc(tex.block`\nabla_\xi N_a = ${texMatrix(gxi, {sig: 3, maxn: 12})}`)}
+    ${sc(tex.block`\nabla_x N_a = DF^{-T}\,\nabla_\xi N_a = ${texMatrix(gx, {sig: 3, maxn: 12})}\ \text{m}^{-1}`)}
+    <div style="font-size:0.9rem; line-height:1.6">Columns: a = 1, …, ${mesh.nen}. Rows: the ξ and η derivatives (left), and the x₁ and x₂ derivatives (right).<br>
+    J at the ${Js.length} Gauss points of element ${e}: ${Js.map(v => v.toExponential(3)).join(", ")} m².
+    Element area = Σ J W = ${d3.sum(ea.gp, q => q.J * q.w).toExponential(4)} m².
+    ${mesh.distort === 0 ? "Undistorted: DF = diag(h₁/2, h₂/2), and J = h₁h₂/4 at every point." : "Distorted: DF and J change from point to point."}</div>
+  </div>`;
+}
+```
+
+### Matrices
+
+```{ojs}
+//| echo: false
+{
+  const e = eSel, ea = sol.els[e - 1], ien = mesh.IEN[e - 1], lm = sol.LM[e - 1], hi = "#c0392b", dc = "#7fa6c9";
+  const nShow = 12, e0 = Math.max(1, Math.min(e - 5, mesh.nel - nShow + 1));
+  const cols = d3.range(e0, Math.min(mesh.nel, e0 + nShow - 1) + 1);
+  const cell = (v, on) => `<td style="padding:1px 7px; text-align:center; ${on ? "color:#c0392b; font-weight:700" : ""}">${v}</td>`;
+  const arr = (name, M) => d3.range(mesh.nen).map(a => `<tr><th style="text-align:left; padding-right:8px; font-weight:normal">${name}(${a + 1}, e)</th>${cols.map(c => cell(M[c - 1][a] === 0 && name === "LM" ? "<b>0</b>" : M[c - 1][a], c === e)).join("")}</tr>`).join("");
+  const table = `<table style="font-size:0.85rem; white-space:nowrap; margin:0.3rem 0 0.8rem 0">
+      <tr><th style="text-align:left">e</th>${cols.map(c => cell(c, c === e)).join("")}${cols[cols.length - 1] < mesh.nel ? "<td>…</td>" : ""}</tr>
+      ${arr("IEN", mesh.IEN)}<tr><td colspan="${cols.length + 1}" style="height:6px"></td></tr>${arr("LM", sol.LM)}</table>`;
+  const idShow = Math.min(mesh.nnp, 45);
+  const idRow = `<div style="font-size:0.86rem; overflow-x:auto; white-space:nowrap">ID = [${sol.ID.slice(0, idShow).map((v, i) => ien.includes(i + 1) ? `<b style="color:#c0392b">${v}</b>` : v).join(", ")}${mesh.nnp > idShow ? ", …" : ""}]</div>
+    <div style="font-size:0.86rem; color:#555">Entry A is ID(A), the equation number of node A; 0 marks a node on Γ<sub>g</sub>. Element ${e}'s nodes are in red.</div>`;
+  const scroll = (x, n = 0) => html`<div style="overflow-x:auto; max-width:100%; font-size:${n > 12 ? 0.62 : n > 8 ? 0.74 : n > 6 ? 0.85 : 1}em">${x}</div>`;
+  const vec = v => texVector(v, {sig: 4});
+  const inE = new Set(ien.map(A => A - 1)), inLM = new Set(lm.filter(P => P > 0).map(P => P - 1));
+  const dirIdx = [...gd.keys()].map(A => A - 1);
+  let global;
+  if (mesh.nnp <= 20) {
+    const Kf = csrDense(sol.Kfull), K = csrDense(sol.K);
+    const colFull = (i, j) => inE.has(i) && inE.has(j) ? hi
+      : ((gd.has(i + 1) || gd.has(j + 1)) && Math.abs(Kf[i][j]) > 1e-12) ? dc : null;
+    const sgF = mesh.nnp > 12 ? 3 : 4, sgK = sol.neq > 12 ? 3 : 4;
+    global = html`
+      <h4>1. Every node: the full ${mesh.nnp} × ${mesh.nnp} matrix, before anything is cut</h4>
+      ${scroll(tex.block`\tilde{\mathbf{K}} = ${texMatrix(Kf, {sig: sgF, maxn: 25, color: colFull})},
+        \qquad \tilde{\mathbf{F}} = ${texVector(sol.Ffull, {sig: 4, maxn: 25, color: i => gd.has(i + 1) ? dc : null})}`, mesh.nnp)}
+      <div style="font-size:0.88rem; color:#555">Red: element ${e}'s entries, at rows and columns IEN(·, ${e}) = {${ien.join(", ")}}.
+      Blue: rows and columns of the ${gd.size} Dirichlet nodes {${[...gd.keys()].sort((a, b) => a - b).join(", ")}}, which are cut out.
+      The all-node load vector on the right holds only the body and h terms.</div>
+      <h4>2. Cut out: the ${sol.neq} × ${sol.neq} system that is solved</h4>
+      ${scroll(tex.block`\mathbf{K} = ${texMatrix(K, {sig: sgK, maxn: 25, color: (i, j) => inLM.has(i) && inLM.has(j) ? hi : null})},
+        \qquad \mathbf{F} = \tilde{\mathbf{F}}_f - \tilde{\mathbf{K}}_{fg}\,\mathbf{g} = ${texVector(sol.F, {sig: 5, maxn: 25, color: i => inLM.has(i) ? hi : null})}`, sol.neq)}
+      <div style="font-size:0.88rem; color:#555">Row and column P of K belong to the node A with ID(A) = P. Element ${e}'s k<sup>e</sup> lands at rows and columns LM(·, ${e}) = {${lm.join(", ")}}; a 0 means "skip".</div>`;
+  } else {
+    const entFull = csrEntries(sol.Kfull), entK = csrEntries(sol.K), hiFull = [], hiK = [];
+    for (const i of inE) for (const j of inE) hiFull.push([i, j]);
+    for (const i of inLM) for (const j of inLM) hiK.push([i, j]);
+    const sz = Math.min(360, Math.max(260, width / 2 - 20));
+    global = html`<h4>The full matrix and the cut-down one</h4>
+      <div style="display:flex; flex-wrap:wrap; gap:1rem">
+        ${drawSpy(sz, sol.nnp, entFull, {shadeRows: dirIdx, highlight: hiFull, title: `full matrix: all ${sol.nnp} nodes`})}
+        ${drawSpy(sz, sol.neq, entK, {highlight: hiK, title: `K: ${sol.neq} unknowns (Dirichlet rows and columns cut)`})}
+      </div>
+      <div style="font-size:0.88rem; color:#555">Each dark square is a non-zero entry; element ${e}'s are red. The shaded bands in the full matrix are the rows and columns of the ${gd.size} Dirichlet nodes. There are too many nodes to print the numbers; with 20 nodes or fewer, every entry is printed.</div>`;
+  }
+  const dir = [...gd.keys()].sort((a, b) => a - b);
+  const reac = dir.slice(0, 30).map(A => `<tr><td style="padding:0 8px">${A}</td><td style="padding:0 8px">${fmt(gd.get(A), 2)}</td><td style="padding:0 8px">${fmt(-sol.R[A - 1], 3)}</td></tr>`).join("");
+  const dBlock = sol.neq <= 20 && sol.ok
+    ? scroll(tex.block`\mathbf{d} = \mathbf{K}^{-1}\mathbf{F} = ${texVector(sol.d, {sig: 5, maxn: 25})}\ {}^\circ\text{C}`)
+    : html`<div style="font-size:0.9rem">d has ${sol.neq} entries${sol.iterations ? `, found by preconditioned conjugate gradients in ${sol.iterations} iterations` : ""}.</div>`;
+  return html`<div>
+    <h4 style="margin-top:0.4rem">Bookkeeping</h4>${html([idRow])}${scroll(html([table]))}
+    <h4>Element ${e}: nodes {${ien.join(", ")}}, LM = {${lm.join(", ")}}</h4>
+    ${scroll(tex.block`\mathbf{k}^{${e}} = ${texMatrix(ea.ke, {sig: mesh.nen > 4 ? 3 : 4, maxn: 12})}\ \tfrac{\text{W}}{\text{m}\,\text{K}}`, mesh.nen)}
+    ${scroll(tex.block`\mathbf{f}^{${e}} = \underbrace{${vec(ea.body)}}_{\int N_a f\,d\Omega}
+      + \underbrace{${vec(ea.h)}}_{\int N_a h\,d\Gamma} - \underbrace{${vec(ea.g)}}_{\mathbf{k}^{e}\mathbf{g}^{e}}
+      = ${vec(ea.total)}\ \tfrac{\text{W}}{\text{m}}`)}
+    ${global}
+    <h4>Solve, then recover the heat through Γ<sub>g</sub></h4>
+    ${dBlock}
+    <table style="font-size:0.86rem; margin-top:0.4rem"><tr><th style="padding:0 8px">node A on Γ<sub>g</sub></th><th style="padding:0 8px">g (°C)</th><th style="padding:0 8px">heat into the plate, −R<sub>A</sub> (W/m)</th></tr>${html([reac])}</table>
+    <div style="font-size:0.88rem">${dir.length > 30 ? `(first 30 of ${dir.length}) ` : ""}Total: ${fmt(-d3.sum(sol.R), 3)} W/m.</div>
+  </div>`;
+}
+```
+
+### Error
+
+```{ojs}
+//| echo: false
+{
+  if (!exactFn) return html`<div style="font-size:0.95rem">The exact solution on the strong-form page covers one arrangement: Γ<sub>g</sub> is exactly the left edge (with any g(y) there), the tabs carry h, and the rest of Γ<sub>h</sub> is insulated. Choose that arrangement, with no extra fixed or freed nodes and h = 0 on the rest of Γ<sub>h</sub>, to see the error.</div>`;
+  if (!sol.ok) return html`<div style="color:#c0392b">No solution to compare.</div>`;
+  const er = errors(sol, exactFn);
+  const errAt = (e, xi, eta) => { const m = mapPoint(mesh, e, xi, eta); return exactFn(m.x[0], m.x[1])[0] - uhAt(e, xi, eta); };
+  const nodal = sol.U.map((v, i) => exactFn(...mesh.X[i])[0] - v);
+  const cvals = [];
+  for (let e = 1; e <= mesh.nel; e++) for (const [xi, eta] of [[0, 0], [0.7, 0.7], [-0.7, 0.7], [0.7, -0.7], [-0.7, -0.7]]) cvals.push(Math.abs(errAt(e, xi, eta)));
+  const emax = Math.max(...cvals, ...nodal.map(Math.abs), 1e-12);
+  const cv = makeCanvas(Math.min(width, 330), 0, W2, 0, H2);
+  drawField(cv, mesh, errAt, v => diverging(v / emax), Math.min(kSub, 12));
+  drawMesh(cv, mesh, {color: "rgba(26,26,26,0.5)"});
+  drawBoundary(cv, mesh, dEdges, TABS2);
+  return html`<div style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start">
+    <div>${cv.canvas}<div style="font-size:0.88rem; color:#555; max-width:330px">u − uʰ: blue where uʰ is too cold, red where it is too hot. The scale runs to ±${emax.toExponential(2)} °C.</div></div>
+    <div style="flex:1; min-width:15rem; font-size:0.93rem; line-height:1.7">
+      ‖u − uʰ‖<sub>L²</sub> = ${er.l2.toExponential(3)} °C·m<br>
+      |u − uʰ|<sub>H¹</sub> = ${er.h1.toExponential(3)} °C<br>
+      largest nodal error: ${d3.max(nodal, Math.abs).toExponential(3)} °C<br><br>
+      <span style="color:#555">Halve the elements (double n₁ and n₂) and watch the norms. Away from the tab ends, the L² error falls by about 2<sup>p+1</sup> and the H¹ error by about 2<sup>p</sup>. While the tab ends dominate, both fall more slowly: that is where the error concentrates, because ∇u is unbounded there.</span>
+    </div></div>`;
+}
+```
+
+:::
+
+::: {.step .notes}
+- Start with the defaults, the worked example. On **Matrices**, step the highlighted
+  element through all eight: its red entries land in scattered rows and columns of
+  $\tilde{\mathbf{K}}$, and the blue rows and columns are the ones that disappear from
+  $\mathbf{K}$.
+- Type `8 = 45` into "Fix or free nodes". Node 8 gets $\mathrm{ID} = 0$, every later
+  equation number drops by one, and its row and column move from $\mathbf{K}$ to the
+  blue set. The temperature field now has a hot spot pinned at node 8, and the heat
+  table shows node 8 putting heat *into* the cell.
+- Tick a second Dirichlet edge, or untick them all: with no Dirichlet node, $\mathbf{K}$
+  is singular.
+- Switch to Q9 with $1 \times 2$ elements. There are still few enough nodes to print
+  every matrix, and each $\mathbf{k}^e$ is now $9 \times 9$.
+- Turn up **Distort the interior** and open **Mapping**. $DF$ is no longer diagonal, and
+  $J$ changes from Gauss point to Gauss point. Push the distortion far enough and some
+  element folds.
+- Refine to $16 \times 32$ and switch the numbering between $x_1$ first and $x_2$ first.
+  The band in the sparsity picture on **Matrices** doubles in width.
+:::

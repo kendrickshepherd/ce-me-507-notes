@@ -10,6 +10,7 @@ book:
       - chapters/2_Class.qmd
       - chapters/3_Class.qmd
       - chapters/3_Support_FunctionSpaces.qmd
+      - chapters/WeakForm.qmd
       - chapters/4_Class.qmd
       - chapters/5_Class.qmd
       - chapters/6_Class.qmd
@@ -24,6 +25,10 @@ book:
           - chapters/Poisson1D_Heat_FEM.qmd
           - chapters/Poisson1D_Rod.qmd
           - chapters/Poisson1D_Rod_FEM.qmd
+      - section: "The 2D Poisson Problem"
+        contents:
+          - chapters/Poisson2D_Heat.qmd
+          - chapters/Poisson2D_Heat_FEM.qmd
 
   bread-crumbs: true
   back-to-top-navigation: true
@@ -42,10 +47,13 @@ book:
 
   appendices:
     - chapters/3_Support_FunctionSpaces.qmd
+    - chapters/WeakForm.qmd
     - chapters/Poisson1D_Heat.qmd
     - chapters/Poisson1D_Heat_FEM.qmd
     - chapters/Poisson1D_Rod.qmd
     - chapters/Poisson1D_Rod_FEM.qmd
+    - chapters/Poisson2D_Heat.qmd
+    - chapters/Poisson2D_Heat_FEM.qmd
 
 format:
   html:

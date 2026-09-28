@@ -1,0 +1,1507 @@
+---
+title: "Why the Weak Form Works"
+subtitle: "Conservation, test functions as probes, energy, and Galerkin's finite menu"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import sys
+
+sys.path.append('.')
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle, Circle, Polygon as MplPolygon
+from matplotlib.colors import to_rgba
+
+from notes_style import (use_chapter, save, tidy, INK, LOADCLR, REACTCLR,
+                         DIMCLR, DOMCLR, BDRYCLR, FLUXCLR, MESHCLR, BASISCLRS)
+
+IMGDIR = use_chapter("WeakForm")
+HOTCLR = "#e67e22"
+
+# the running example (nondimensional): a composite wall on ]0, 1[,
+# with the default values of the interactive setup below
+K1, K2 = 1.0, 0.5      # conductivity of the left and the right half
+FTOT = 2.0             # total heat generated, spread uniformly
+H_IN = 0.5             # heat flux into the wall at x = 0
+G_R = 0.0              # temperature held at x = 1
+
+
+def q_exact(x):
+    """Heat flux of the running example: q = h + (integral of f from 0 to x)."""
+    return H_IN + FTOT * np.asarray(x, float)
+
+
+def arrow(ax, p_from, p_to, color=INK, lw=1.8, ms=13, z=6):
+    ax.annotate("", xy=p_to, xytext=p_from,
+                arrowprops=dict(arrowstyle="-|>", color=color, lw=lw,
+                                mutation_scale=ms, shrinkA=0, shrinkB=0),
+                zorder=z)
+
+
+def graph(ax, xlabel=None, ylabel=None):
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.spines[["left", "bottom"]].set_linewidth(0.9)
+    ax.grid(alpha=0.18)
+    if xlabel:
+        ax.set_xlabel(xlabel)
+    if ylabel:
+        ax.set_ylabel(ylabel)
+```
+
+The derivation of the weak form takes a few lines. Its *meaning* takes longer to see.
+This appendix answers three questions that the derivation leaves open:
+
+1. **Where does the Poisson equation come from, and in what sense is $a(w, u)$ an
+   energy?** (@sec-wf-conservation, @sec-wf-energy)
+2. **Why multiply by a test function and integrate?** (@sec-wf-test)
+3. **What exactly are trial and test functions, and what does Galerkin's method do with
+   them?** (@sec-wf-spaces, @sec-wf-galerkin)
+
+The answers fit together into one picture:
+
+::: {.derivation}
+$$
+\begin{gathered}
+\boxed{\text{conservation}}+\boxed{\text{constitutive law}}
+\;\Longrightarrow\; (\mathrm{S}) \\[6pt]
+(\mathrm{S})
+\;\Longleftrightarrow\; (\mathrm{W})
+\;\Longleftrightarrow\; \boxed{\text{minimum of an energy } \Pi} \\[6pt]
+(\mathrm{W}) \;\xrightarrow{\;\text{restrict to } \mathcal S^h,\,\mathcal V^h\;}\;
+(\mathrm{G})
+\;\Longrightarrow\; \mathbf K\mathbf d=\mathbf F
+\end{gathered}
+$$
+:::
+
+The arrows before $(\mathrm{G})$ are equivalences: when the solution is smooth enough,
+the strong form, the weak form, and the energy minimum all describe the same
+boundary-value problem. The arrow to $(\mathrm{G})$ is different. **That is where
+approximation enters.**
+
+Every interactive plot on this page runs on the same small problem. Change its setup in
+@sec-wf-setup and all of them update.
+
+## The running example {#sec-wf-model}
+
+A wall occupies $\Omega = \,]0, 1[$, in nondimensional units. Its left half has
+conductivity $\kappa_1$ and its right half $\kappa_2$. Heat is generated inside it at the
+rate $f(x)$ per unit volume, a heat flux $h$ is pushed into its left face, and a
+thermostat holds its right face at the temperature $g$. This is the arrangement of the
+[1D wall](Poisson1D_Heat.qmd), with one change: two materials.
+
+```{python fig_model}
+#| echo: false
+#| output: false
+
+SX = 3.0                                   # drawing units per unit of x
+fig, ax = plt.subplots(figsize=(10.0, 3.9))
+ax.add_patch(Rectangle((0, 0), 0.5 * SX, 1, facecolor="#b9d3ec", edgecolor=INK,
+                       lw=1.2, zorder=1))
+ax.add_patch(Rectangle((0.5 * SX, 0), 0.5 * SX, 1, facecolor="#e3eef8",
+                       edgecolor=INK, lw=1.2, zorder=1))
+ax.text(0.25 * SX, 1.06, r"conductivity $\kappa_1$", ha="center", va="bottom",
+        fontsize=11.5)
+ax.text(0.75 * SX, 1.06, r"conductivity $\kappa_2$", ha="center", va="bottom",
+        fontsize=11.5)
+rng = np.random.default_rng(3)
+px, py = rng.uniform(0.02, 0.98, 90) * SX, rng.uniform(0.07, 0.93, 90)
+clear = ~((py > 0.36) & (py < 0.72))                  # keep the arrow row clear
+ax.plot(px[clear], py[clear], "+", color=LOADCLR, ms=6, mew=1.2, zorder=2)
+
+a_, b_ = 0.20 * SX, 0.35 * SX
+ax.add_patch(Rectangle((a_, 0.04), b_ - a_, 0.92,
+                       facecolor=to_rgba(HOTCLR, 0.14), edgecolor=HOTCLR, lw=1.8,
+                       ls="--", zorder=3))
+arrow(ax, (a_ - 0.3, 0.5), (a_ - 0.01, 0.5), color=FLUXCLR, lw=2.2, ms=12)
+arrow(ax, (b_ + 0.01, 0.5), (b_ + 0.3, 0.5), color=FLUXCLR, lw=2.2, ms=12)
+ax.text(a_ - 0.15, 0.56, "$q(a)$", ha="center", va="bottom", color=FLUXCLR,
+        fontsize=11)
+ax.text(b_ + 0.15, 0.56, "$q(b)$", ha="center", va="bottom", color=FLUXCLR,
+        fontsize=11)
+ax.text(0.5 * (a_ + b_), -0.06, "a control volume $[a, b]$", ha="center",
+        va="top", color="#a0520d", fontsize=10.5)
+ax.text(0.75 * SX, -0.06, "+  heat generated, $f(x)$", ha="center", va="top",
+        color=LOADCLR, fontsize=10.5)
+
+arrow(ax, (-0.9, 0.5), (-0.02, 0.5), color=FLUXCLR, lw=3.0, ms=16)
+ax.text(-0.46, 0.58, "$h$: heat in", ha="center", va="bottom", color=FLUXCLR,
+        fontsize=11.5)
+ax.text(-0.46, 0.42, r"$\Gamma_h$: $x = 0$", ha="center", va="top",
+        fontsize=10.5)
+ax.add_patch(Rectangle((SX, 0.0), 0.2, 1.0, facecolor="#dbe7f3",
+                       edgecolor=BDRYCLR, lw=1.5, hatch="////", zorder=2))
+ax.text(SX + 0.3, 0.64, "thermostat:\n$u = g$", ha="left", va="center",
+        color=BDRYCLR, fontsize=11.5)
+ax.text(SX + 0.3, 0.28, r"$\Gamma_g$: $x = 1$", ha="left", va="center",
+        fontsize=10.5)
+
+ax.plot([0, SX], [-0.42, -0.42], color=DIMCLR, lw=0.9)
+for xv, lab in ((0, "0"), (0.5, "0.5"), (1, "1")):
+    ax.plot([xv * SX] * 2, [-0.45, -0.39], color=DIMCLR, lw=0.9)
+    ax.text(xv * SX, -0.49, lab, ha="center", va="top", fontsize=10,
+            color=DIMCLR)
+ax.text(SX + 0.1, -0.42, "$x$", ha="left", va="center", fontsize=11,
+        color=DIMCLR)
+tidy(ax)
+ax.set_xlim(-1.0, SX + 1.25)
+ax.set_ylim(-0.66, 1.26)
+fig_model_path = save(fig, "WF_Fig1_Model.png")
+```
+
+![The running example. Heat enters on the left ($\Gamma_h$), is generated inside
+($f$), and leaves through the thermostat on the right ($\Gamma_g$), which holds the face
+at $u = g$. The dashed box is a control volume.](`{python} fig_model_path`){#fig-wf-model width=86%}
+
+::: {.panel-tabset}
+
+### The 1D problem, used below
+
+$$
+(\mathrm{S})\qquad
+\begin{aligned}
+&-\left(\kappa\,u_{,x}\right)_{,x} = f && \text{on } ]0, 1[ \\
+&u(1) = g && \Gamma_g = \{1\} \\
+&-\kappa\,u_{,x}(0) = h && \Gamma_h = \{0\}
+\end{aligned}
+$$
+
+$$
+(\mathrm{W})\qquad
+\begin{aligned}
+&\text{find } u \in \mathcal S \text{ such that, for all } w \in \mathcal V, \\
+&\qquad \underbrace{\int_0^1 w_{,x}\,\kappa\,u_{,x}\,dx}_{a(w,\,u)}
+= \underbrace{\int_0^1 w\,f\,dx + w(0)\,h}_{\ell(w)}
+\end{aligned}
+$$
+
+with $\mathcal S = \{u \in H^1 : u(1) = g\}$ and
+$\mathcal V = \{w \in H^1 : w(1) = 0\}$.
+
+### The general problem
+
+$$
+(\mathrm{S})\qquad
+-\nabla\cdot\left(\underline{\underline{K}}\nabla u\right) = f \;\text{ in } \Omega,
+\qquad u = g \;\text{ on } \Gamma_g,
+\qquad \left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n} = h \;\text{ on } \Gamma_h
+$$
+
+$$
+(\mathrm{W})\qquad
+\int_\Omega \nabla w\cdot\underline{\underline{K}}\nabla u\;d\Omega
+= \int_\Omega w\,f\;d\Omega + \int_{\Gamma_h} w\,h\;d\Gamma
+\quad\Longleftrightarrow\quad
+\int_\Omega w_{,i}K_{ij}u_{,j}\;d\Omega
+= \int_\Omega w\,f\;d\Omega + \int_{\Gamma_h} w\,h\;d\Gamma
+$$
+
+Nothing below depends on the dimension. The 1D version keeps the pictures simple.
+
+:::
+
+::: {.callout-note title="Sign convention used in these notes"}
+The physical heat flux is $\underline q=-\underline{\underline K}\nabla u$ (in 1D,
+$q = -\kappa u_{,x}$). Hughes' Neumann datum is $h=-\underline q\cdot\underline n
+=\left(\underline{\underline K}\nabla u\right)\cdot\underline n$, so positive $h$ means
+heat entering the domain. At $x = 0$ the outward normal is $n = -1$, so the condition
+reads $-\kappa u_{,x}(0) = h$, that is, $q(0) = h$: **$h$ is the heat entering the wall.**
+:::
+
+### Problem setup {#sec-wf-setup}
+
+Every interactive plot below uses this setup.
+
+```{ojs}
+//| echo: false
+viewof setup = Inputs.form({
+  k1: Inputs.range([0.2, 3], {value: 1, step: 0.05, label: "κ₁ (left half)"}),
+  k2: Inputs.range([0.2, 3], {value: 0.5, step: 0.05, label: "κ₂ (right half)"}),
+  src: Inputs.radio(["uniform", "hot spot near x = 0.3", "none"], {value: "uniform", label: "source f(x)"}),
+  f0: Inputs.range([0, 5], {value: 2, step: 0.1, label: "total source ∫f dx"}),
+  h: Inputs.range([-2, 2], {value: 0.5, step: 0.1, label: "h (heat in at x = 0)"}),
+  g: Inputs.range([-1, 1], {value: 0, step: 0.1, label: "g (temperature at x = 1)"})
+})
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+// ---------- shared numerics: everything lives on a fine grid of N cells ----------
+N = 2520
+dx = 1 / N
+xs = Array.from({length: N + 1}, (_, i) => i / N)
+xm = Array.from({length: N}, (_, i) => (i + 0.5) / N)
+
+P = {
+  const {k1, k2, src, f0, h, g} = setup;
+  const kap = x => (x < 0.5 ? k1 : k2);
+  const s = 0.07;
+  const f = src === "uniform" ? (x => f0)
+          : src === "none" ? (x => 0)
+          : (x => f0 * Math.exp(-(((x - 0.3) / s) ** 2)) / (s * Math.sqrt(Math.PI)));
+  const kmid = xm.map(kap), fmid = xm.map(f);
+  // the exact solution from the energy balance: q(x) = h + ∫_0^x f,  u' = -q/κ,  u(1) = g
+  const q = new Array(N + 1); q[0] = h;
+  for (let i = 0; i < N; i++) q[i + 1] = q[i] + fmid[i] * dx;
+  const u = new Array(N + 1); u[N] = g;
+  for (let i = N - 1; i >= 0; i--) u[i] = u[i + 1] + dx * 0.5 * (q[i] + q[i + 1]) / kmid[i];
+  return {k1, k2, f0, h, g, src, kap, f, kmid, fmid, q, u};
+}
+
+// a(w,v) = ∫ w' κ v' dx
+function aF(w, v, P) {
+  let s = 0;
+  for (let i = 0; i < N; i++) s += P.kmid[i] * (w[i + 1] - w[i]) * (v[i + 1] - v[i]);
+  return s / dx;
+}
+// (w,f) = ∫ w f dx
+function fF(w, P) {
+  let s = 0;
+  for (let i = 0; i < N; i++) s += P.fmid[i] * (w[i] + w[i + 1]);
+  return 0.5 * s * dx;
+}
+// ℓ(w) = (w,f) + w(0) h
+function lF(w, P) { return fF(w, P) + w[0] * P.h; }
+// weak residual R(w; v) = ℓ(w) − a(w,v): the unbalanced heat that w detects
+function Rw(w, v, P) { return lF(w, P) - aF(w, v, P); }
+// energy Π(v) = ½ a(v,v) − ℓ(v)
+function Pi(v, P) { return 0.5 * aF(v, v, P) - lF(v, P); }
+
+function hat(XA, he) { return xs.map(x => Math.max(0, 1 - Math.abs(x - XA) / he)); }
+
+function pts(arr, s, step = 10) {
+  const out = [];
+  for (let i = 0; i <= N; i += step) out.push({x: xs[i], y: arr[i], s});
+  return out;
+}
+
+function solveDense(A0, b0) {
+  const n = b0.length, A = A0.map(r => r.slice()), b = b0.slice();
+  for (let k = 0; k < n; k++) {
+    let p = k;
+    for (let i = k + 1; i < n; i++) if (Math.abs(A[i][k]) > Math.abs(A[p][k])) p = i;
+    [A[k], A[p]] = [A[p], A[k]]; [b[k], b[p]] = [b[p], b[k]];
+    for (let i = k + 1; i < n; i++) {
+      const m = A[i][k] / A[k][k];
+      for (let j = k; j < n; j++) A[i][j] -= m * A[k][j];
+      b[i] -= m * b[k];
+    }
+  }
+  const x = new Array(n).fill(0);
+  for (let i = n - 1; i >= 0; i--) {
+    let s = b[i];
+    for (let j = i + 1; j < n; j++) s -= A[i][j] * x[j];
+    x[i] = s / A[i][i];
+  }
+  return x;
+}
+
+// Galerkin with n linear elements: test with each hat N_A (A = 0, ..., n-1); d_n = g
+function galerkin(n, P) {
+  const he = 1 / n;
+  const X = Array.from({length: n + 1}, (_, A) => A * he);
+  const H = X.map(XA => hat(XA, he));
+  const K = Array.from({length: n + 1}, () => new Array(n + 1).fill(0));
+  for (let A = 0; A <= n; A++)
+    for (let B = Math.max(0, A - 1); B <= Math.min(n, A + 1); B++) K[A][B] = aF(H[A], H[B], P);
+  const F = H.map(w => lF(w, P));
+  const Kff = K.slice(0, n).map(r => r.slice(0, n));
+  const rhs = F.slice(0, n).map((FA, A) => FA - K[A][n] * P.g);
+  const d = [...solveDense(Kff, rhs), P.g];
+  const uh = xs.map((_, i) => d.reduce((s, dA, A) => s + dA * H[A][i], 0));
+  return {n, X, H, K, F, d, uh};
+}
+
+fmt = (v, k = 3) => (Math.abs(v) < 5e-4 ? 0 : v).toFixed(k)
+colors = ({exact: "#9a9a9a", u: "#1a1a1a", q: "#0d9488", cand: "#1f6feb", gal: "#c0392b",
+           test: "#0d9488", cv: "#e67e22", bdry: "#4a7ba7"})
+```
+
+## Poisson's equation is a conservation law {#sec-wf-conservation}
+
+Take any control volume $B$ inside the body. At steady state its temperature does not
+change, so the heat leaving it must equal the heat generated inside it:
+
+::: {.derivation}
+$$
+\underbrace{\int_{\partial B}\underline q\cdot\underline n\,d\Gamma}_{\text{net heat leaving }B}
+=
+\underbrace{\int_B f\,d\Omega}_{\text{heat generated inside }B}
+\qquad\text{for every } B.
+$$
+:::
+
+This is conservation of energy. Applying the divergence theorem and then shrinking $B$
+around an arbitrary point gives the local balance $\nabla\cdot\underline q=f$. Fourier's
+law supplies the material response, $\underline q=-\underline{\underline K}\nabla u$:
+heat flows down the temperature gradient. Put the two physical statements together:
+
+::: {.derivation}
+$$
+\boxed{-\nabla\cdot\left(\underline{\underline K}\nabla u\right)=f}
+\qquad\text{in }\Omega.
+$$
+:::
+
+That is Poisson's equation. It is not fundamentally a statement about curvature: it is
+**local energy bookkeeping plus a flux law**.
+
+In the wall, a control volume is an interval $[a, b]$ and its boundary is the two end
+points, so the balance reads
+
+::: {.derivation}
+$$
+\underbrace{q(b)}_{\text{out at } b} \;-\; \underbrace{q(a)}_{\text{in at } a}
+\;=\; \underbrace{\int_a^b f\,dx}_{\text{generated inside}}
+\qquad\text{for every } a<b.
+$$ {#eq-wf-cv}
+:::
+
+Divide by $b - a$ and let $b \to a$: $q_{,x} = f$, and with Fourier's law,
+$-\left(\kappa u_{,x}\right)_{,x} = f$.
+
+::: {.step}
+**The Poisson equation is conservation of energy on infinitely small control volumes,
+applied at every point.** Hold on to that sentence. The weak form turns out to be the
+same conservation law applied to finite, soft-edged control volumes.
+:::
+
+Drag the control volume below. Whatever the setup, *heat out − heat in = heat
+generated*. Notice also that with $\kappa_1\neq\kappa_2$ the temperature has a **kink** at
+$x=0.5$ while the flux $q$ stays continuous: energy cannot pile up at the interface. At
+the kink $u_{,xx}$ does not exist, so the strong form cannot even be evaluated there.
+That matters in @sec-wf-test.
+
+```{ojs}
+//| echo: false
+viewof cv = Inputs.form({
+  a: Inputs.range([0, 1], {value: 0.2, step: 0.01, label: "left edge a"}),
+  b: Inputs.range([0, 1], {value: 0.35, step: 0.01, label: "right edge b"})
+})
+```
+
+```{ojs}
+//| echo: false
+cvData = {
+  const a = Math.min(cv.a, cv.b), b = Math.max(cv.a, cv.b);
+  const ia = Math.round(a * N), ib = Math.round(b * N);
+  let gen = 0; for (let i = ia; i < ib; i++) gen += P.fmid[i] * dx;
+  return {a, b, qa: P.q[ia], qb: P.q[ib], gen};
+}
+```
+
+```{ojs}
+//| echo: false
+{
+  const uPts = pts(P.u, "u"), qPts = pts(P.q, "q");
+  const band = (arr) => {
+    const lo = Math.min(...arr.map(d => d.y), 0), hi = Math.max(...arr.map(d => d.y), 0);
+    const pad = 0.05 * (hi - lo + 1e-9);
+    return Plot.rect([{x1: cvData.a, x2: cvData.b, y1: lo - pad, y2: hi + pad}],
+      {x1: "x1", x2: "x2", y1: "y1", y2: "y2", fill: colors.cv, fillOpacity: 0.15});
+  };
+  const W = Math.min(width, 780);
+  const top = Plot.plot({
+    height: 210, width: W, marginLeft: 50, grid: true,
+    x: {label: "x", domain: [0, 1]}, y: {label: "temperature u(x)"},
+    marks: [band(uPts), Plot.ruleX([0.5], {stroke: "#aaa", strokeDasharray: "4 3"}),
+            Plot.line(uPts, {x: "x", y: "y", stroke: colors.u, strokeWidth: 2.5})]
+  });
+  const bot = Plot.plot({
+    height: 190, width: W, marginLeft: 50, grid: true,
+    x: {label: "x", domain: [0, 1]}, y: {label: "heat flux q = −κ u,x"},
+    marks: [band(qPts), Plot.ruleY([0]),
+            Plot.line(qPts, {x: "x", y: "y", stroke: colors.q, strokeWidth: 2.5}),
+            Plot.dot([{x: cvData.a, y: cvData.qa}, {x: cvData.b, y: cvData.qb}], {x: "x", y: "y", r: 5, fill: colors.cv})]
+  });
+  return html`<div>${top}${bot}</div>`;
+}
+```
+
+```{ojs}
+//| echo: false
+html`<table style="width:auto">
+<tr><td>heat leaving at b, &nbsp;q(b)</td><td style="text-align:right"><b>${fmt(cvData.qb)}</b></td></tr>
+<tr><td>heat entering at a, &nbsp;q(a)</td><td style="text-align:right"><b>${fmt(cvData.qa)}</b></td></tr>
+<tr><td>net out, &nbsp;q(b) − q(a)</td><td style="text-align:right"><b>${fmt(cvData.qb - cvData.qa)}</b></td></tr>
+<tr><td>generated inside, &nbsp;∫<sub>a</sub><sup>b</sup> f dx</td><td style="text-align:right"><b>${fmt(cvData.gen)}</b></td></tr>
+</table>`
+```
+
+::: {.callout-tip}
+## Classroom prompts
+- Set $h=0$ and the source to "none". Why is $u$ constant? (Nothing is heating the wall.)
+- Make $\kappa_2$ small, like an insulating layer. Why does the temperature *slope* get
+  steeper on the right while $q$ does not change at all?
+- Pull $a$ all the way to $0$. The heat entering is now $h$: the boundary condition is
+  just the energy balance of a control volume that touches the wall's face.
+:::
+
+## Why multiply by a test function and integrate? {#sec-wf-test}
+
+### Checking that something is zero by taking measurements
+
+For a candidate temperature $v$, the **strong residual** is its local imbalance:
+
+::: {.derivation}
+$$
+r(v) = f + \left(\kappa\,v_{,x}\right)_{,x}
+\qquad\left(\text{in general, } r(v) = f + \nabla\cdot\left(\underline{\underline K}\nabla v\right)\right).
+$$
+:::
+
+The strong form demands $r(u) = 0$ at every point. How else could you check that
+something is zero? For a vector $\mathbf r\in\mathbb R^3$, you can dot it against every
+basis vector, $\mathbf r\cdot\mathbf e_1=\mathbf r\cdot\mathbf e_2=\mathbf r\cdot\mathbf
+e_3=0$, or equivalently require $\mathbf r\cdot\mathbf w=0$ for **every** vector
+$\mathbf w$. A function $r(x)$ is a vector with one "component" for each point $x$, and
+the dot product $\sum_i w_i r_i$ becomes $\int w\,r\,dx$. So
+
+::: {.derivation}
+$$
+r(x) = 0 \ \text{ everywhere}
+\quad\Longleftrightarrow\quad
+\int_\Omega w\,r\,dx = 0 \ \text{ for every } w .
+$$
+:::
+
+::: {.step}
+The $\Leftarrow$ direction is one line: choose $w=r$, and $\int r^2\,dx=0$ forces
+$r\equiv 0$. (Our test functions must vanish on $\Gamma_g$, so the proof in
+[Class 5](5_Class.qmd) uses $w = r\,\phi$ with $\phi > 0$ inside $\Omega$ and $\phi = 0$
+on its boundary. The idea is the same.)
+:::
+
+Think of $w$ as a **sensor**. A real thermocouple never measures at a mathematical
+point: it reports a weighted average over its footprint, and $w(x)$ is that footprint's
+sensitivity. A broad $w$ checks a global average, a narrow bump checks a neighbourhood,
+and a sign-changing $w$ compares one region with another. One sensor is not enough,
+because positive and negative residuals can cancel under it. But if **every** admissible
+sensor reads zero, no hidden imbalance can remain.
+
+::: {.step}
+**Strong** means the equation holds pointwise. **Weak** means every possible sensor
+reads zero.
+:::
+
+### Move one derivative, and the boundary appears
+
+Weighting the residual of the true solution still involves second derivatives of $u$.
+Integration by parts moves one derivative from $u$ to $w$:
+
+::: {.derivation}
+$$
+\begin{aligned}
+0 &= \int_0^1 w\left[f + \left(\kappa u_{,x}\right)_{,x}\right] dx \\
+&= \int_0^1 w\,f\,dx - \int_0^1 w_{,x}\,\kappa\,u_{,x}\,dx
++ \underbrace{w(1)}_{=\,0}\,\kappa u_{,x}(1) + w(0)\,\underbrace{\left(-\kappa u_{,x}(0)\right)}_{=\,h}.
+\end{aligned}
+$$
+:::
+
+The test function vanishes at the thermostat, and the flux condition supplies the other
+end, which leaves the weak form of @sec-wf-model. In several dimensions, integration by
+parts is the divergence theorem, and the same steps read
+
+::: {.derivation}
+$$
+\begin{aligned}
+0&=\int_\Omega w\left[f+\nabla\cdot(\underline{\underline K}\nabla u)\right]d\Omega \\
+&=\int_\Omega wf\,d\Omega
+-\int_\Omega \nabla w\cdot\underline{\underline K}\nabla u\,d\Omega
++\int_\Gamma w\left(\underline{\underline K}\nabla u\right)\cdot\underline n\,d\Gamma,
+\end{aligned}
+$$
+:::
+
+and because $w=0$ on $\Gamma_g$ and
+$(\underline{\underline K}\nabla u)\cdot\underline n=h$ on $\Gamma_h$,
+
+::: {.derivation}
+$$
+\boxed{
+a(w,u):=\int_\Omega \nabla w\cdot\underline{\underline K}\nabla u\,d\Omega
+=
+\underbrace{\int_\Omega wf\,d\Omega+\int_{\Gamma_h}wh\,d\Gamma}_{\ell(w)}
+\quad\forall w\in\mathcal V.}
+$$
+:::
+
+### A test function is a soft control volume
+
+Now the physics. Take $w$ to be a trapezoid: $w = 1$ on $[a, b]$, dropping to $0$ over a
+thin ramp of width $\delta$ on each side. Its slope $w_{,x}$ is $+1/\delta$ on the left
+ramp, $-1/\delta$ on the right ramp, and zero elsewhere. With $q = -\kappa u_{,x}$,
+
+::: {.derivation}
+$$
+\begin{aligned}
+a(w,u) &= \int_0^1 w_{,x}\,\kappa u_{,x}\,dx = -\int_0^1 w_{,x}\, q\,dx \\
+&= \underbrace{\overline{q}\big|_{\text{right ramp}}}_{\text{heat out at } b}
+\;-\; \underbrace{\overline{q}\big|_{\text{left ramp}}}_{\text{heat in at } a}
+\;\xrightarrow{\ \delta\to 0\ }\; q(b)-q(a),
+\end{aligned}
+$$
+$$
+(w,f) = \int_0^1 w f\,dx \;\xrightarrow{\ \delta\to 0\ }\; \int_a^b f\,dx ,
+$$
+:::
+
+where $\overline q$ is the average of $q$ over a ramp.
+
+```{python fig_softcv}
+#| echo: false
+#| output: false
+
+a_, b_, dl = 0.30, 0.60, 0.06
+x = np.linspace(0, 1, 4001)
+w = np.clip(np.minimum((x - (a_ - dl)) / dl, ((b_ + dl) - x) / dl), 0, 1)
+left = (x >= a_ - dl) & (x <= a_)
+right = (x >= b_) & (x <= b_ + dl)
+q = q_exact(x)
+qL, qR = q[left].mean(), q[right].mean()
+area = np.trapezoid(w, x)
+
+fig, axes = plt.subplots(3, 1, figsize=(8.6, 6.9), sharex=True,
+                         gridspec_kw=dict(height_ratios=[1.0, 0.9, 1.3]))
+for axx in axes:
+    for lo, hi in ((a_ - dl, a_), (b_, b_ + dl)):
+        axx.axvspan(lo, hi, color="0.88", lw=0, zorder=0)
+
+ax = axes[0]
+ax.fill_between(x, 0, w, color=HOTCLR, alpha=0.18, lw=0, zorder=1)
+ax.plot(x, w, color=HOTCLR, lw=2.4, zorder=2)
+ax.text((a_ + b_) / 2, 1.1, "$w = 1$ on $[a, b]$: the control volume",
+        ha="center", va="bottom", fontsize=10.5, color="#a0520d")
+for xv, lab in ((a_, "$a$"), (b_, "$b$")):
+    ax.plot([xv, xv], [0, 1], color=DIMCLR, lw=0.8, ls=":")
+    ax.text(xv, -0.1, lab, ha="center", va="top", fontsize=11)
+ax.set_ylim(-0.3, 1.45)
+ax.set_yticks([0, 1])
+graph(ax, None, "$w$")
+
+ax = axes[1]
+wx = np.where(left, 1 / dl, 0.0) + np.where(right, -1 / dl, 0.0)
+ax.fill_between(x, 0, wx, color=INK, alpha=0.12, lw=0)
+ax.plot(x, wx, color=INK, lw=1.8)
+ax.axhline(0, color=DIMCLR, lw=0.8)
+ax.text(a_ - dl - 0.01, 0.75 / dl, r"$+1/\delta$ on the left ramp", ha="right",
+        va="center", fontsize=10.5)
+ax.text(b_ + dl + 0.01, -0.75 / dl, r"$-1/\delta$ on the right ramp",
+        ha="left", va="center", fontsize=10.5)
+ax.set_ylim(-1.4 / dl, 1.4 / dl)
+ax.set_yticks([])
+graph(ax, None, r"$w_{,x}$")
+
+ax = axes[2]
+ax.plot(x, q, color=FLUXCLR, lw=2.4)
+ax.plot([a_ - dl / 2], [qL], "o", color=FLUXCLR, ms=7, zorder=5)
+ax.plot([b_ + dl / 2], [qR], "o", color=FLUXCLR, ms=7, zorder=5)
+ax.annotate(r"$\overline{q}$ on the left ramp = %.2f: heat in" % qL,
+            xy=(a_ - dl / 2, qL), xytext=(0.02, qL + 0.62), fontsize=10.5,
+            arrowprops=dict(arrowstyle="-", color=INK, lw=0.8))
+ax.annotate(r"$\overline{q}$ on the right ramp = %.2f: heat out" % qR,
+            xy=(b_ + dl / 2, qR), xytext=(0.63, qR - 0.95), fontsize=10.5,
+            arrowprops=dict(arrowstyle="-", color=INK, lw=0.8))
+ax.set_ylim(0, 2.9)
+graph(ax, "$x$", r"heat flux $q = -\kappa u_{,x}$")
+fig.tight_layout(h_pad=0.6)
+fig_softcv_path = save(fig, "WF_Fig2_SoftControlVolume.png")
+SOFTCV = dict(qL=qL, qR=qR, area=area, a=a_, b=b_, dl=dl)
+```
+
+![A test function as a soft control volume, drawn for the default setup. Top: the
+trapezoid $w$. Middle: its slope, non-zero only on the two ramps (shaded), which act as
+the control volume's walls. Bottom: the heat flux of the exact solution. $a(w, u)$
+subtracts the average flux over the left ramp from the average over the right ramp: heat
+out minus heat in.](`{python} fig_softcv_path`){#fig-wf-softcv width=80%}
+
+```{python softcv_numbers}
+#| echo: false
+#| output: asis
+
+print(r"""
+::: {.step}
+For the default setup in @fig-wf-softcv, $a(w, u) = %.2f - %.2f = %.2f$, and the heat
+generated inside the soft control volume is $(w, f) = f \int w\,dx = 2 \times %.2f =
+%.2f$. The two agree, as the weak form says they must.
+:::
+""" % (SOFTCV["qR"], SOFTCV["qL"], SOFTCV["qR"] - SOFTCV["qL"], SOFTCV["area"],
+       FTOT * SOFTCV["area"]))
+```
+
+So $a(w,u) = (w,f)$ **is exactly the control-volume balance @eq-wf-cv**. The slope of
+the test function marks the walls of the control volume, and $a(w,u)$ adds up the heat
+crossing those walls. If the control volume reaches the left face ($w(0)=1$), the heat
+$h$ entering there is counted too, which is the $w(0)\,h$ term. A general $w$ is just a
+*softer* control volume, a weighted region:
+
+::: {.step}
+**Energy is balanced on every soft control volume you can draw.** The strong form says it
+is balanced on every infinitesimal one. Same physics, different bookkeeping.
+:::
+
+### Why this bookkeeping is better
+
+1. **A pointwise balance becomes a family of weighted balances**, one for each soft
+   control volume. Finitely many of them give finitely many equations, which is
+   Galerkin's method (@sec-wf-galerkin).
+2. **Only one derivative lands on $u$.** The composite wall has a physical kink at
+   $x=0.5$, where $u_{,xx}$ does not exist. The weak form does not care, and neither do
+   the kinked hat functions of finite elements.
+3. **The flux condition enters on its own**, as the heat crossing the wall of a control
+   volume that touches $\Gamma_h$. Trial functions never have to satisfy it, which is why
+   it is called *natural*.
+4. **Test functions vanish on $\Gamma_g$ for a physical reason.** The thermostat supplies
+   whatever heat flux is needed to hold $u = g$, and that flux is unknown in advance: it
+   is a reaction. We cannot write a balance for a control volume that includes that
+   face, so we do not. The reaction can still be recovered afterwards.
+   (@sec-wf-energy gives the energy reason.)
+
+### Interactive: probe a candidate with test functions {#sec-wf-probe}
+
+Choose a candidate temperature $v$ and a test function $w$. The readout gives the
+**weak residual** $R(w; v) = (w,f)+w(0)h-a(w,v)$: the *unbalanced heat* inside the soft
+control volume $w$. The bottom plot sweeps a whole **family** of tests. Things to notice:
+
+- **Exact solution:** every probe reads zero.
+- **Straight-line guess** or **exact + wiggle:** most probes read non-zero.
+- **Galerkin $u^h$:** the finite-element hats $N_A$ read *exactly* zero, but bumps and
+  cosines generally do **not**. Galerkin only guarantees the tests it was asked to pass.
+  (A curiosity of 1D linear elements: when a node sits on the material interface, which
+  happens when $n$ is even, $u^h$ is exact *at the nodes*, yet it still fails other
+  probes.)
+
+```{ojs}
+//| echo: false
+viewof cand2 = Inputs.radio(["exact solution u", "Galerkin solution uʰ", "straight-line guess", "exact + wiggle"],
+  {value: "straight-line guess", label: "candidate v"})
+viewof n2 = Inputs.range([1, 12], {value: 4, step: 1, label: "elements n (for uʰ and hats)"})
+viewof test2 = Inputs.radio(["soft control volume", "bump", "FE hat N_A", "cosine mode"],
+  {value: "soft control volume", label: "test function w"})
+viewof c2 = Inputs.range([0, 1], {value: 0.3, step: 0.01, label: "center (CV / bump / hat)"})
+viewof s2 = Inputs.range([0.02, 0.5], {value: 0.1, step: 0.01, label: "half-width (CV / bump)"})
+viewof m2 = Inputs.range([1, 8], {value: 2, step: 1, label: "mode m (cosine)"})
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+G2 = galerkin(n2, P)
+cands = {
+  const u = P.u, g = P.g, u0 = u[0];
+  const amp = 0.15 * (Math.max(...u) - Math.min(...u) + 0.5);
+  return {
+    "exact solution u": u,
+    "Galerkin solution uʰ": G2.uh,
+    "straight-line guess": xs.map(x => u0 + (g - u0) * x),
+    "exact + wiggle": u.map((ui, i) => ui + amp * Math.sin(3 * Math.PI * xs[i]))
+  };
+}
+v2 = cands[cand2]
+
+function testFn(type, c, s, m, n) {
+  const del = 0.02;
+  if (type === "soft control volume") {
+    const b = Math.min(c + s, 1 - del), a = Math.min(c - s, b);
+    return xs.map(x => x < a ? Math.max(0, 1 - (a - x) / del) : x <= b ? 1 : Math.max(0, 1 - (x - b) / del));
+  }
+  if (type === "bump") {
+    const cc = Math.min(c, 1 - s);
+    return xs.map(x => Math.max(0, 1 - Math.abs(x - cc) / s));
+  }
+  if (type === "FE hat N_A") {
+    const A = Math.min(n - 1, Math.round(c * n));
+    return hat(A / n, 1 / n);
+  }
+  return xs.map(x => Math.cos((m - 0.5) * Math.PI * x));
+}
+
+w2 = testFn(test2, c2, s2, m2, n2)
+probe = {
+  const gen = fF(w2, P), wall = w2[0] * P.h, out = aF(w2, v2, P);
+  return {gen, wall, out, R: gen + wall - out};
+}
+family2 = {
+  if (test2 === "FE hat N_A")
+    return d3.range(n2).map(A => ({p: A / n2, R: Rw(hat(A / n2, 1 / n2), v2, P)}));
+  if (test2 === "cosine mode")
+    return d3.range(1, 9).map(m => ({p: m, R: Rw(testFn(test2, 0, 0, m, n2), v2, P)}));
+  return d3.range(0, 1.0001, 0.02).map(c => ({p: c, R: Rw(testFn(test2, c, s2, m2, n2), v2, P)}));
+}
+pCur = test2 === "FE hat N_A" ? Math.min(n2 - 1, Math.round(c2 * n2)) / n2
+     : test2 === "cosine mode" ? m2 : c2
+```
+
+```{ojs}
+//| echo: false
+{
+  const W = Math.min(width, 780);
+  const marks = [
+    Plot.line(pts(P.u, "exact u"), {x: "x", y: "y", stroke: colors.exact, strokeWidth: 6, strokeOpacity: 0.45}),
+    Plot.line(pts(v2, "candidate v"), {x: "x", y: "y", stroke: cand2.startsWith("Galerkin") ? colors.gal : colors.cand, strokeWidth: 2})
+  ];
+  if (cand2.startsWith("Galerkin")) marks.push(Plot.dot(G2.X.map((x, A) => ({x, y: G2.d[A]})), {x: "x", y: "y", fill: colors.gal, r: 4}));
+  const top = Plot.plot({height: 200, width: W, marginLeft: 50, grid: true, x: {domain: [0, 1], label: "x"},
+    y: {label: "v(x)  (grey = exact u)"}, marks});
+  const mid = Plot.plot({height: 130, width: W, marginLeft: 50, grid: true, x: {domain: [0, 1], label: "x"},
+    y: {label: "test w(x)"},
+    marks: [Plot.areaY(pts(w2, "w", 5), {x: "x", y: "y", fill: colors.test, fillOpacity: 0.25}),
+            Plot.line(pts(w2, "w", 5), {x: "x", y: "y", stroke: colors.test, strokeWidth: 2}), Plot.ruleY([0])]});
+  const xlab = test2 === "cosine mode" ? "mode m" : test2 === "FE hat N_A" ? "node location x_A" : "test-function center";
+  const bot = Plot.plot({height: 170, width: W, marginLeft: 50, grid: true,
+    x: {label: xlab}, y: {label: "R(w; v) for the family"},
+    marks: [Plot.ruleY([0]),
+            Plot.line(family2, {x: "p", y: "R", stroke: colors.test, strokeOpacity: 0.6}),
+            Plot.dot(family2, {x: "p", y: "R", fill: colors.test, r: 3}),
+            Plot.dot([{p: pCur, R: probe.R}], {x: "p", y: "R", r: 7, stroke: "black", strokeWidth: 2})]});
+  return html`<div>${top}${mid}${bot}</div>`;
+}
+```
+
+```{ojs}
+//| echo: false
+html`<table style="width:auto">
+<tr><td>heat generated inside the soft CV, &nbsp;(w, f)</td><td style="text-align:right">${fmt(probe.gen)}</td></tr>
+<tr><td>heat entering through the left face, &nbsp;w(0) h</td><td style="text-align:right">${fmt(probe.wall)}</td></tr>
+<tr><td>net heat conducted out, &nbsp;a(w, v)</td><td style="text-align:right">${fmt(probe.out)}</td></tr>
+<tr><td><b>unbalanced heat, &nbsp;R(w; v) = (w,f) + w(0)h − a(w,v)</b></td><td style="text-align:right"><b>${fmt(probe.R)}</b></td></tr>
+</table>`
+```
+
+## Trial functions and test functions {#sec-wf-spaces}
+
+The two spaces answer two different questions:
+
+::: {.derivation}
+$$
+\begin{aligned}
+\mathcal S
+&=\{v\in H^1(\Omega):v=g\text{ on }\Gamma_g\}
+&&\text{Which fields may be the answer?}\\
+\mathcal V
+&=\{w\in H^1(\Omega):w=0\text{ on }\Gamma_g\}
+&&\text{Which probes may we use?}
+\end{aligned}
+$$
+:::
+
+::: {.step .notes}
+- A **trial function** $v\in\mathcal S$ is a candidate answer. It already obeys every
+  essential (Dirichlet) boundary condition, but it need not obey the differential
+  equation.
+- A **test function** $w\in\mathcal V$ is a probe and an allowable perturbation. It is
+  zero where the value of the answer is fixed.
+- If $v_1,v_2\in\mathcal S$, then $v_1-v_2\in\mathcal V$. So $\mathcal S$ is a shifted,
+  or affine, copy of $\mathcal V$: $\mathcal S = g + \mathcal V$, with the same shapes
+  lifted to the Dirichlet value. That is why the Galerkin form writes $u^h = v^h + g^h$
+  with $v^h \in \mathcal V^h$.
+- If $u\in\mathcal S$ and $w\in\mathcal V$, then $u+\epsilon w\in\mathcal S$ for every
+  $\epsilon$. A test function is literally a direction in which an admissible trial field
+  can be varied.
+:::
+
+```{python fig_spaces}
+#| echo: false
+#| output: false
+
+fig, axes = plt.subplots(1, 3, figsize=(11.8, 3.55))
+x = np.linspace(0, 1, 300)
+g = 0.30
+
+ax = axes[0]
+for k, v in enumerate([g + 0.8 * (1 - x), g + 0.55 * (1 - x) ** 2,
+                       g + 0.35 * np.sin(np.pi * x) * (1 - x),
+                       g + 0.7 * (1 - x) - 0.35 * x * (1 - x)]):
+    ax.plot(x, v, color=BASISCLRS[k], lw=1.8)
+ax.plot([1], [g], "o", color=BDRYCLR, ms=7)
+ax.text(0.97, g + 0.055, "$v(1)=g$", ha="right", va="bottom", color=BDRYCLR)
+graph(ax, "$x$", "$v(x)$")
+ax.set_title(r"trials $v\in\mathcal{S}$", fontsize=11.5)
+
+ax = axes[1]
+for k, w in enumerate([(1 - x), x * (1 - x), np.sin(np.pi * x),
+                       0.65 * np.sin(2 * np.pi * x)]):
+    ax.plot(x, w, color=BASISCLRS[k], lw=1.8)
+ax.axhline(0, color=DIMCLR, lw=0.7)
+ax.plot([1], [0], "o", color=BDRYCLR, ms=7)
+ax.text(0.97, 0.09, "$w(1)=0$", ha="right", va="bottom", color=BDRYCLR)
+graph(ax, "$x$", "$w(x)$")
+ax.set_title(r"tests $w\in\mathcal{V}$", fontsize=11.5)
+
+ax = axes[2]
+u0 = g + 0.62 * (1 - x) + 0.10 * x * (1 - x)
+w = 0.40 * np.sin(np.pi * x)
+for eps, c in [(-0.65, BASISCLRS[0]), (0, INK), (0.65, BASISCLRS[1])]:
+    ax.plot(x, u0 + eps * w, color=c, lw=2.2 if eps == 0 else 1.6,
+            ls="-" if eps == 0 else "--")
+ax.plot([1], [g], "o", color=BDRYCLR, ms=7)
+ax.annotate(r"$+\,\epsilon w$", xy=(0.47, u0[140] + 0.65 * w[140]),
+            xytext=(0.08, 0.66), color=FLUXCLR,
+            arrowprops=dict(arrowstyle="->", color=FLUXCLR))
+graph(ax, "$x$", None)
+ax.set_title(r"$u+\epsilon w$ stays admissible", fontsize=11.5)
+fig.tight_layout(w_pad=2.0)
+fig_spaces_path = save(fig, "WF_Fig3_TrialTest.png")
+```
+
+![Trial functions are possible answers; test functions are probes and allowable
+directions. Their different boundary values are not arbitrary bookkeeping: they ensure
+that varying a trial field never violates its prescribed temperature.](`{python} fig_spaces_path`){#fig-wf-trial-test width=100%}
+
+| | **Trial function** | **Test function** |
+|---|---|---|
+| Symbol and space | $u, v\in\mathcal S$ (discrete: $u^h\in\mathcal S^h$) | $w\in\mathcal V$ (discrete: $w^h\in\mathcal V^h$) |
+| Job | a **candidate answer**: a temperature field we try out | a **probe** that tests the candidate: a sensor, a soft control volume, a nudge direction |
+| On $\Gamma_g$ (essential condition) | must equal $g$: the thermostat is non-negotiable | must be $0$: we cannot nudge there, and its flux is an unknown reaction |
+| On $\Gamma_h$ (natural condition) | nothing imposed | nothing imposed; the flux $h$ is enforced *by the tests*, through $w(0)\,h$ |
+| Energy picture (@sec-wf-energy) | a point on the energy landscape | a direction in which you may step |
+| In finite element code | $u^h = \sum_A d_A N_A + g^h$, with unknowns $d_A$ | $w^h = N_A$: **one equation per test function** |
+
+## The weak solution minimizes an energy {#sec-wf-energy}
+
+### One spring first
+
+For a single spring of stiffness $k$ under a load $F$, the total potential energy is
+$\Pi(d)=\tfrac12 k d^2 - F d$. At the minimum the slope is zero: $\Pi'(d) = kd-F=0$.
+Now "nudge" the displacement by $\epsilon w$:
+
+::: {.derivation}
+$$
+\Pi(d+\epsilon w) = \Pi(d) + \epsilon\,w\,(k d - F) + \tfrac12\epsilon^2 k w^2 .
+$$
+:::
+
+::: {.step}
+$d$ is the minimizer exactly when the term linear in $\epsilon$ vanishes for every nudge
+$w$: $\;w\,k\,d = w\,F$ for all $w$. That is the weak form of $kd = F$.
+:::
+
+### The same thing for the wall
+
+Replace numbers by functions: $w\,k\,d$ becomes $a(w,u)$ and $wF$ becomes $\ell(w)$.
+Assume $\underline{\underline K}$ is symmetric and positive definite (here, $\kappa > 0$)
+and that $\Gamma_g$ is not empty, so the solution is unique. For every trial function
+$v\in\mathcal S$, define the energy
+
+::: {.derivation}
+$$
+\boxed{
+\begin{aligned}
+\Pi(v) &= \underbrace{\frac12\,a(v,v)}_{\text{cost of gradients}}
+- \underbrace{\ell(v)}_{\text{payoff from heat supplied}} \\
+&= \frac12\int_\Omega \nabla v\cdot\underline{\underline K}\nabla v\,d\Omega
+-\int_\Omega v\,f\,d\Omega-\int_{\Gamma_h}v\,h\,d\Gamma
+\end{aligned}}
+$$
+:::
+
+The first term penalizes gradients; the source and boundary terms tilt that bowl. Nudge
+the solution in a direction $w\in\mathcal V$:
+
+::: {.derivation}
+$$
+\Pi(u+\epsilon w) \;=\; \Pi(u) \;+\; \epsilon\,\underbrace{\big[a(w,u) - \ell(w)\big]}_{-R(w;\,u)} \;+\; \tfrac12\epsilon^2\,\underbrace{a(w,w)}_{\ge\, 0} .
+$$
+:::
+
+As a function of $\epsilon$ this is a **parabola** that opens upward, because
+$a(w,w) = \int \kappa\,(w_{,x})^2\,dx \ge 0$: this is where the symmetry and positivity
+of $a(\cdot,\cdot)$ pay off. $u$ is the lowest point exactly when the parabola is flat at
+$\epsilon=0$ for **every** allowed direction $w$:
+
+::: {.derivation}
+$$
+\begin{aligned}
+&\frac{d}{d\epsilon}\Pi(u+\epsilon w)\Big|_{\epsilon=0}=0\quad\forall w\in\mathcal V \\
+\Longleftrightarrow\quad
+&\boxed{\;a(w,u)=\ell(w)\quad\forall w\in\mathcal V\;}
+\qquad\text{which is } (\mathrm{W}).
+\end{aligned}
+$$
+:::
+
+And it is a minimum, not merely a flat spot. For any $v\in\mathcal S$, let
+$e=v-u\in\mathcal V$. Expanding $\Pi(u + e)$ and using the weak form with $w=e$,
+
+::: {.derivation}
+$$
+\Pi(v)-\Pi(u)=\frac12\,a(e,e)\ \ge\ 0 ,
+$$
+:::
+
+with equality only when $e = 0$.
+
+::: {.step}
+So a **test function is a direction in which you may nudge the temperature field**, and
+the weak form says that *no allowed nudge lowers the energy*. **Allowed** means that the
+nudged field must still be a trial function: $u+\epsilon w = g$ at $x=1$, so $w(1)=0$.
+That is the energy reason why $\mathcal V$ has homogeneous essential conditions.
+:::
+
+### Interactive: nudge a candidate and watch the energy
+
+```{ojs}
+//| echo: false
+viewof cand3 = Inputs.radio(["exact solution u", "straight-line guess", "Galerkin uʰ (2 elements)"],
+  {value: "exact solution u", label: "start from v ="})
+viewof dir3 = Inputs.radio(["1 − x", "cos(πx/2)", "cos(3πx/2)", "bump at x = 0.3", "constant 1  ⚠ moves x = 1"],
+  {value: "cos(πx/2)", label: "nudge direction w"})
+viewof eps3 = Inputs.range([-1, 1], {value: 0, step: 0.01, label: "nudge size ε"})
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+nudge = {
+  const u = P.u, u0 = u[0];
+  const v = cand3 === "exact solution u" ? u
+          : cand3 === "straight-line guess" ? xs.map(x => u0 + (P.g - u0) * x)
+          : galerkin(2, P).uh;
+  const A = 0.5 * (Math.max(...u) - Math.min(...u) + 0.4);
+  const shapes = {
+    "1 − x": x => 1 - x,
+    "cos(πx/2)": x => Math.cos(Math.PI * x / 2),
+    "cos(3πx/2)": x => Math.cos(3 * Math.PI * x / 2),
+    "bump at x = 0.3": x => Math.max(0, 1 - Math.abs(x - 0.3) / 0.15),
+    "constant 1  ⚠ moves x = 1": x => 1
+  };
+  const w = xs.map(x => A * shapes[dir3](x));
+  const p0 = Pi(v, P), p1 = aF(w, v, P) - lF(w, P), p2 = aF(w, w, P);
+  const curve = d3.range(-1, 1.0001, 0.02).map(e => ({e, Pi: p0 + p1 * e + 0.5 * p2 * e * e}));
+  const tangent = [-1, 1].map(e => ({e, Pi: p0 + p1 * e}));
+  return {v, w, p0, p1, p2, curve, tangent, PiU: Pi(u, P), cur: p0 + p1 * eps3 + 0.5 * p2 * eps3 * eps3};
+}
+```
+
+```{ojs}
+//| echo: false
+{
+  const vn = nudge.v.map((vi, i) => vi + eps3 * nudge.w[i]);
+  const half = Math.max(300, Math.min(width, 900) / 2 - 10);
+  const left = Plot.plot({height: 260, width: half, marginLeft: 45, grid: true,
+    x: {domain: [0, 1], label: "x"}, y: {label: "temperature"},
+    marks: [Plot.line(pts(P.u, "u"), {x: "x", y: "y", stroke: colors.exact, strokeWidth: 6, strokeOpacity: 0.45}),
+            Plot.line(pts(nudge.v, "v"), {x: "x", y: "y", stroke: colors.cand, strokeDasharray: "5 4"}),
+            Plot.line(pts(vn, "v+εw"), {x: "x", y: "y", stroke: colors.cand, strokeWidth: 2.5}),
+            Plot.dot([{x: 1, y: P.g}], {x: "x", y: "y", r: 6, fill: colors.bdry, stroke: "black"})]});
+  const right = Plot.plot({height: 260, width: half, marginLeft: 55, grid: true,
+    x: {label: "ε", domain: [-1, 1]}, y: {label: "Π(v + εw)"},
+    marks: [Plot.line(nudge.curve, {x: "e", y: "Pi", stroke: colors.cand, strokeWidth: 2.5}),
+            Plot.line(nudge.tangent, {x: "e", y: "Pi", stroke: colors.gal, strokeDasharray: "5 4"}),
+            Plot.ruleY([nudge.PiU], {stroke: colors.exact, strokeDasharray: "2 3"}),
+            Plot.dot([{e: eps3, Pi: nudge.cur}], {x: "e", y: "Pi", r: 7, fill: colors.cand, stroke: "black"})]});
+  return html`<div style="display:flex;flex-wrap:wrap;gap:12px">${left}${right}</div>
+  <p style="font-size:0.9em">Left: dashed = starting candidate v, solid = v + εw, grey = exact u, blue dot = the thermostat value g.
+  Right: the energy parabola. The red dashed line is its tangent at ε = 0, with slope −R(w; v). The grey dotted line is the true minimum Π(u).</p>`;
+}
+```
+
+```{ojs}
+//| echo: false
+html`<table style="width:auto">
+<tr><td>slope at ε = 0: &nbsp;a(w,v) − (w,f) − w(0)h = −R(w; v)</td><td style="text-align:right"><b>${fmt(nudge.p1)}</b></td></tr>
+<tr><td>curvature: &nbsp;a(w,w)</td><td style="text-align:right">${fmt(nudge.p2)}</td></tr>
+<tr><td>Π(v + εw) at the current ε</td><td style="text-align:right">${fmt(nudge.cur)}</td></tr>
+<tr><td>Π(u), the true minimum</td><td style="text-align:right">${fmt(nudge.PiU)}</td></tr>
+</table>`
+```
+
+::: {.callout-tip}
+## Classroom prompts
+- Start from the **exact solution**. Every allowed direction gives a parabola with its
+  bottom at $\epsilon=0$ (slope 0).
+- Start from the **straight-line guess**. The parabola's bottom moves off $\epsilon=0$:
+  some nudge *lowers* the energy, so the guess is not the solution. The slope is minus
+  the residual from @sec-wf-probe.
+- Choose **"constant 1"** while starting from the exact solution. The slope is **not**
+  zero, because this nudge moves the temperature at $x=1$ off $g$. The thermostat forbids
+  that direction, so it is excluded from $\mathcal V$.
+:::
+
+### Is it really an energy?
+
+Chop the wall into slices of thickness $h_e$. Each slice conducts heat like a resistor:
+the heat flowing from node $A$ to node $A+1$ is a **conductance** $\kappa/h_e$ times a
+**temperature drop**, $q = \frac{\kappa}{h_e}(u_A-u_{A+1})$. That is Ohm's law, $I=V/R$,
+with temperature in place of voltage. Then
+
+::: {.derivation}
+$$
+\begin{aligned}
+a(u,u) &= \int_0^1 \kappa\,(u_{,x})^2\,dx
+\;\approx\; \sum_{\text{slices}} \frac{\kappa}{h_e}\,(u_{A+1}-u_A)^2 \\
+&= \sum_{\text{slices}} \underbrace{q}_{\text{flow}}\times\underbrace{(u_A-u_{A+1})}_{\text{drop}} ,
+\end{aligned}
+$$
+:::
+
+and the $\approx$ is exact for a piecewise-linear $u$. In an electric circuit, "flow ×
+drop" is exactly the **power dissipated**, $I\cdot V = V^2/R$. The same Poisson equation
+turns up in many settings, and in most of them $\tfrac12 a(u,u)$ is a genuine energy or
+power:
+
+| Physical setting | $u$ | $\kappa$ | $\tfrac12\,a(u,u)$ is |
+|---|---|---|---|
+| Axially loaded rod ([1D Poisson IV](Poisson1D_Rod_FEM.qmd)) | displacement | $EA$ | the strain energy stored in the rod |
+| Electrical conduction | voltage | electrical conductivity | half the Joule heating power |
+| Taut membrane or soap film | deflection | tension | the stretching energy |
+| **Heat conduction** | temperature | thermal conductivity | *not* a stored energy: a measure of how hard the wall works to push heat through its resistance |
+
+::: {.callout-important title="What is, and is not, an energy"}
+- $\tfrac12 a(u,u)$ is the quadratic, or **Dirichlet energy**, term.
+- $a(w,u)$ with $w\ne u$ is *not* itself an energy. It multiplies the flows of state
+  $u$ by the temperature drops of state $w$: it is the rate at which the energy changes
+  when $u$ is nudged in the direction $w$. For a hat function, $a(N_A, u)$ is simply the
+  **net heat conducted away from node $A$**.
+- For steady heat conduction, $\Pi$ is a **mathematical energy functional**, not the
+  body's stored thermodynamic heat. Conservation of physical energy produced the
+  differential equation; minimizing $\Pi$ is an equivalent mathematical characterization
+  of its solution.
+- In linear elasticity the same pattern becomes literal total potential energy, and
+  $a(w,u)=\ell(w)$ becomes the principle of virtual work. The algebra is shared even
+  though the physical interpretation depends on the problem.
+:::
+
+## Galerkin's method: a finite menu and a finite exam {#sec-wf-galerkin}
+
+The weak problem asks you to search an **infinite menu** of candidates ($\mathcal S$) and
+pass an **infinite exam** of tests ($\mathcal V$). Galerkin's method shrinks both, and it
+uses the same functions for each.
+
+1. **Shrink the menu.** Cut the wall into $n$ elements with nodes $x_0 = 0, \dots, x_n
+   = 1$, and consider only the piecewise-linear candidates
+   $u^h = \sum_{B=0}^{n-1} d_B N_B + g\,N_n$. They are set by finitely many nodal values
+   $d_B$, and the last term carries the thermostat value. This is
+   $\mathcal S^h\subset\mathcal S$.
+2. **Shrink the exam, with the same functions.** Test only with
+   $w^h = \sum_{A=0}^{n-1} c_A N_A$: every hat except the one on $\Gamma_g$. This is
+   $\mathcal V^h\subset\mathcal V$.
+3. **Read off the equations.** Because the weak form is linear in $w$,
+
+::: {.derivation}
+$$
+\sum_{A=0}^{n-1}c_A\left[a(N_A,u^h)-\ell(N_A)\right]=0
+\qquad\text{for every choice of } (c_0,\ldots,c_{n-1}),
+$$
+:::
+
+::: {.step}
+so every bracket must vanish on its own. That gives one equation per test function:
+:::
+
+::: {.derivation}
+$$
+\begin{aligned}
+&\sum_{B=0}^{n-1} \underbrace{a(N_A,N_B)}_{K_{AB}}\,d_B
+= \underbrace{\ell(N_A) - a(N_A,N_n)\,g}_{F_A} \\
+&\text{for } A = 0, \dots, n-1:\quad \text{that is,}\quad \mathbf K\mathbf d = \mathbf F .
+\end{aligned}
+$$
+:::
+
+::: {.step}
+Each equation is **the heat balance of the soft control volume $N_A$** around node $A$.
+In energy language, each equation says that **the energy landscape is flat in the $d_A$
+direction**, because $\partial\Pi(u^h)/\partial d_A = a(N_A, u^h) - \ell(N_A) =
+-R(N_A;\,u^h)$. For linear elements the whole system is literally a chain of thermal
+resistors (@fig-wf-resistors), and $\mathbf K$ is its conductance matrix.
+:::
+
+```{python fig_resistors}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(9.6, 2.9))
+xn = np.arange(5) * 1.6
+labels = ["$d_0$", "$d_1$", "$d_2$", "$d_3$", "$g$"]
+
+
+def zigzag(x0, x1, y, amp=0.12, nz=6):
+    L = x1 - x0
+    t = np.linspace(x0 + 0.2 * L, x1 - 0.2 * L, 2 * nz + 1)
+    xz = [x0] + list(t) + [x1]
+    yz = [y, y] + [y + amp * (1 if k % 2 == 0 else -1) for k in range(len(t) - 2)] \
+        + [y, y]
+    ax.plot(xz, yz, color=INK, lw=1.6, zorder=1)
+
+
+for i in range(4):
+    zigzag(xn[i] + 0.22, xn[i + 1] - 0.22, 0.0)
+    ax.text((xn[i] + xn[i + 1]) / 2, 0.24, r"$\kappa/h_e$", ha="center",
+            va="bottom", fontsize=11)
+for i, (xv, lab) in enumerate(zip(xn, labels)):
+    ax.add_patch(Circle((xv, 0), 0.22, facecolor="#fde3c8" if i < 4 else "#dbe7f3",
+                        edgecolor=INK if i < 4 else BDRYCLR, lw=1.4, zorder=3))
+    ax.text(xv, 0, lab, ha="center", va="center", fontsize=12, zorder=4)
+arrow(ax, (-1.15, 0), (-0.24, 0), color=FLUXCLR, lw=2.6, ms=15)
+ax.text(-0.7, 0.13, "$h$ in", ha="center", va="bottom", color=FLUXCLR, fontsize=11)
+ax.text(xn[-1], -0.34, "thermostat", ha="center", va="top", color=BDRYCLR,
+        fontsize=10.5)
+ax.text(xn[2], -0.72, r"row $A$ of $\mathbf{K}\mathbf{d} = \mathbf{F}$:  "
+        "heat conducted away from node $A$ = heat supplied to node $A$",
+        ha="center", va="top", fontsize=11)
+tidy(ax)
+ax.set_xlim(-1.35, xn[-1] + 0.6)
+ax.set_ylim(-1.05, 0.6)
+fig_resistors_path = save(fig, "WF_Fig4_Resistors.png")
+```
+
+![Linear finite elements for the wall are, literally, a chain of thermal resistors, one
+per element, with conductance $\kappa/h_e$. Each row of $\mathbf K\mathbf d=\mathbf F$ is
+the heat balance of one node, and the thermostat node carries the known $g$ instead of an
+unknown.](`{python} fig_resistors_path`){#fig-wf-resistors width=86%}
+
+### Interactive: the energy bowl with two unknowns {#sec-wf-bowl}
+
+Use two elements, with nodes at $x=0,\,0.5,\,1$. The trial functions are
+$v^h = d_0N_0 + d_1N_1 + gN_2$: a menu with two parameters, so $\Pi$ is a bowl over the
+$(d_0,d_1)$ plane. Move the sliders to search the menu yourself. The arrow points
+**downhill**, and its components are exactly the residuals $R(N_0)$ and $R(N_1)$: the
+tests you are currently failing.
+
+```{ojs}
+//| echo: false
+//| output: false
+G = galerkin(2, P)
+rng5 = {
+  const d = G.d, lo = Math.min(d[0], d[1], P.g) - 1, hi = Math.max(d[0], d[1], P.g) + 1;
+  return [Math.floor(lo * 10) / 10, Math.ceil(hi * 10) / 10];
+}
+PiD = (a, b) => {
+  const D = [a, b, P.g];
+  let s = 0;
+  for (let i = 0; i < 3; i++) { s -= G.F[i] * D[i]; for (let j = 0; j < 3; j++) s += 0.5 * D[i] * G.K[i][j] * D[j]; }
+  return s;
+}
+```
+
+```{ojs}
+//| echo: false
+viewof d0 = Inputs.range(rng5, {value: P.g, step: 0.01, label: "d₀ = vʰ(0)"})
+viewof d1 = Inputs.range(rng5, {value: P.g, step: 0.01, label: "d₁ = vʰ(0.5)"})
+viewof snap = Inputs.button("Snap to the Galerkin solution", {reduce: () => {
+  for (const [el, val] of [[viewof d0, G.d[0]], [viewof d1, G.d[1]]]) {
+    el.value = val; el.dispatchEvent(new Event("input", {bubbles: true}));
+  }
+}})
+```
+
+```{ojs}
+//| echo: false
+{
+  const [lo, hi] = rng5, M = 45, st = (hi - lo) / M;
+  const cells = [];
+  for (let i = 0; i < M; i++) for (let j = 0; j < M; j++) {
+    const a = lo + (i + 0.5) * st, b = lo + (j + 0.5) * st;
+    cells.push({x1: a - st / 2, x2: a + st / 2, y1: b - st / 2, y2: b + st / 2, Pi: PiD(a, b)});
+  }
+  const D = [d0, d1, P.g];
+  const R0 = G.F[0] - G.K[0].reduce((s, k, j) => s + k * D[j], 0);
+  const R1 = G.F[1] - G.K[1].reduce((s, k, j) => s + k * D[j], 0);
+  const len = Math.hypot(R0, R1), sc = len > 1e-9 ? 0.18 * (hi - lo) / len : 0;
+  const side = Math.max(300, Math.min(width, 900) / 2 - 10);
+  const bowl = Plot.plot({width: side, height: side, marginLeft: 45,
+    x: {domain: [lo, hi], label: "d₀"}, y: {domain: [lo, hi], label: "d₁"},
+    color: {scheme: "viridis", legend: true, label: "Π(vʰ)"},
+    marks: [Plot.rect(cells, {x1: "x1", x2: "x2", y1: "y1", y2: "y2", fill: "Pi"}),
+            Plot.dot([{x: G.d[0], y: G.d[1]}], {x: "x", y: "y", symbol: "star", r: 9, fill: "white", stroke: "black"}),
+            Plot.arrow([{x1: d0, y1: d1, x2: d0 + sc * R0, y2: d1 + sc * R1}], {x1: "x1", y1: "y1", x2: "x2", y2: "y2", stroke: "white", strokeWidth: 2.5}),
+            Plot.dot([{x: d0, y: d1}], {x: "x", y: "y", r: 7, fill: colors.cand, stroke: "white", strokeWidth: 2})]});
+  const vh = [{x: 0, y: d0}, {x: 0.5, y: d1}, {x: 1, y: P.g}];
+  const curve = Plot.plot({width: side, height: side * 0.8, marginLeft: 45, grid: true,
+    x: {domain: [0, 1], label: "x"}, y: {label: "temperature"},
+    marks: [Plot.line(pts(P.u, "u"), {x: "x", y: "y", stroke: colors.exact, strokeWidth: 6, strokeOpacity: 0.45}),
+            Plot.line(G.X.map((x, A) => ({x, y: G.d[A]})), {x: "x", y: "y", stroke: colors.gal, strokeDasharray: "5 4"}),
+            Plot.line(vh, {x: "x", y: "y", stroke: colors.cand, strokeWidth: 2.5}),
+            Plot.dot(vh, {x: "x", y: "y", fill: colors.cand, r: 5})]});
+  return html`<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start">${bowl}<div>${curve}
+    <table style="width:auto;font-size:0.9em">
+      <tr><td>Π(vʰ)</td><td style="text-align:right">${fmt(PiD(d0, d1))}</td></tr>
+      <tr><td>Π(uʰ), the bottom of the bowl ★</td><td style="text-align:right">${fmt(PiD(G.d[0], G.d[1]))}</td></tr>
+      <tr><td>Π(u), exact (not on this menu)</td><td style="text-align:right">${fmt(Pi(P.u, P))}</td></tr>
+      <tr><td>R(N₀) = −∂Π/∂d₀</td><td style="text-align:right"><b>${fmt(R0)}</b></td></tr>
+      <tr><td>R(N₁) = −∂Π/∂d₁</td><td style="text-align:right"><b>${fmt(R1)}</b></td></tr>
+    </table></div></div>
+    <p style="font-size:0.9em">Blue = your candidate vʰ. Red dashed = Galerkin uʰ (the ★). Grey = exact u. Try the hot-spot source in the setup: the exact u then lies well outside this two-element menu, and uʰ is the best the menu can do.</p>`;
+}
+```
+
+### Interactive: enlarge the menu
+
+More elements means a bigger menu $\mathcal S^h$ and a bigger exam $\mathcal V^h$. On
+nested meshes ($n = 2, 4, 8, 16$) each menu contains the previous one, so the Galerkin
+energy can only go down toward $\Pi(u)$. The gap is exactly the error, measured in
+energy:
+
+::: {.derivation}
+$$
+a\left(u-u^h,\,u-u^h\right) \;=\; 2\,\big[\Pi(u^h)-\Pi(u)\big] \;\ge 0 .
+$$
+:::
+
+```{ojs}
+//| echo: false
+viewof n6 = Inputs.range([1, 16], {value: 3, step: 1, label: "number of elements n"})
+```
+
+```{ojs}
+//| echo: false
+//| output: false
+G6 = galerkin(n6, P)
+PiU = Pi(P.u, P)
+energies = d3.range(1, 17).map(n => ({n, Pi: Pi(galerkin(n, P).uh, P)}))
+```
+
+```{ojs}
+//| echo: false
+{
+  const side = Math.min(width, 900);
+  const sol = Plot.plot({width: side, height: 230, marginLeft: 50, grid: true,
+    x: {domain: [0, 1], label: "x"}, y: {label: "temperature"},
+    marks: [Plot.line(pts(P.u, "u"), {x: "x", y: "y", stroke: colors.exact, strokeWidth: 6, strokeOpacity: 0.45}),
+            Plot.line(G6.X.map((x, A) => ({x, y: G6.d[A]})), {x: "x", y: "y", stroke: colors.gal, strokeWidth: 2}),
+            Plot.dot(G6.X.map((x, A) => ({x, y: G6.d[A]})), {x: "x", y: "y", fill: colors.gal, r: 4})]});
+  const hatPts = G6.H.slice(0, n6).map((H, A) => pts(H, A, 5).map(d => ({...d, A}))).flat();
+  const hats = Plot.plot({width: side, height: 110, marginLeft: 50,
+    x: {domain: [0, 1], label: "x"}, y: {label: "tests N_A", domain: [0, 1.05]},
+    marks: [Plot.line(hatPts, {x: "x", y: "y", z: "A", stroke: colors.test, strokeWidth: 1.5}),
+            Plot.dot([{x: 1, y: 0}], {x: "x", y: "y", fill: "black", r: 4})]});
+  const en = Plot.plot({width: side, height: 200, marginLeft: 60, grid: true,
+    x: {label: "number of elements n"}, y: {label: "Π(uʰ)"},
+    marks: [Plot.ruleY([PiU], {stroke: colors.exact, strokeDasharray: "4 3"}),
+            Plot.line(energies, {x: "n", y: "Pi", stroke: colors.gal, strokeOpacity: 0.5}),
+            Plot.dot(energies, {x: "n", y: "Pi", fill: d => [1, 2, 4, 8, 16].includes(d.n) ? colors.gal : "#bbb", r: 4}),
+            Plot.dot([{n: n6, Pi: Pi(G6.uh, P)}], {x: "n", y: "Pi", r: 8, stroke: "black", strokeWidth: 2})]});
+  const e = P.u.map((ui, i) => ui - G6.uh[i]);
+  return html`${sol}${hats}${en}
+    <p style="font-size:0.9em">Top: exact u (grey) and Galerkin uʰ (red). Middle: the n test functions N_A; there is no test at x = 1, where N_n would violate w(1) = 0.
+    Bottom: Π(uʰ) against n, with red dots for nested meshes and the dashed line for Π(u).
+    Energy-norm error √a(e,e) = <b>${fmt(Math.sqrt(Math.max(0, aF(e, e, P))), 4)}</b>,
+    and √(2[Π(uʰ) − Π(u)]) = <b>${fmt(Math.sqrt(Math.max(0, 2 * (Pi(G6.uh, P) - PiU))), 4)}</b>.</p>`;
+}
+```
+
+```{ojs}
+//| echo: false
+{
+  if (n6 > 6) return html`<p><i>(Set n ≤ 6 to see K and F.)</i></p>`;
+  const rows = G6.K.map((row, A) => html`<tr style="${A === n6 ? 'color:#999' : ''}">
+      <td>N<sub>${A}</sub></td>${row.map(k => html`<td style="text-align:right;padding:0 6px">${fmt(k, 2)}</td>`)}
+      <td style="text-align:right;padding-left:14px">${fmt(G6.F[A], 3)}</td></tr>`);
+  return html`<p>Each <b>test function</b> N<sub>A</sub> produces one row: a(N<sub>A</sub>, N<sub>B</sub>) across, and ℓ(N<sub>A</sub>) at the end.
+  The grey last row belongs to the thermostat node. It is not a test (N<sub>n</sub> ∉ 𝒱ʰ), and its column moves g to the right-hand side.</p>
+  <table style="width:auto;font-family:monospace;font-size:0.85em">
+  <tr><th>test</th>${G6.X.map((_, B) => html`<th style="padding:0 6px">B=${B}</th>`)}<th style="padding-left:14px">ℓ(N_A)</th></tr>
+  ${rows}</table>`;
+}
+```
+
+### Galerkin orthogonality: the best candidate on the menu
+
+The weak form holds for every $w\in\mathcal V$, so in particular for every
+$w^h\in\mathcal V^h$. Subtracting the Galerkin equations from it leaves
+
+::: {.derivation}
+$$
+a\left(w^h,\; u-u^h\right) = 0 \qquad \forall\, w^h\in\mathcal V^h .
+$$
+:::
+
+This is **Galerkin orthogonality**. The error is not generally zero, but no test in the
+finite exam can detect it: it is invisible to every retained test when measured with
+$a(\cdot,\cdot)$. Adding elements or raising the polynomial degree enlarges
+$\mathcal V^h$, asks more questions, and leaves the error fewer places to hide.
+
+Because $\Pi(v) - \Pi(u) = \tfrac12\,a(v - u,\, v - u)$ for every trial function $v$,
+the lowest-energy candidate on the menu is also the one closest to $u$ in the energy
+norm:
+
+::: {.derivation}
+$$
+\begin{aligned}
+&u^h=\underset{v^h\in\mathcal S^h}{\operatorname{argmin}}\;\Pi(v^h) \\
+\Longleftrightarrow\quad
+&a\left(u-u^h,\,u-u^h\right) \;\le\; a\left(u-v^h,\,u-v^h\right)
+\quad\forall\, v^h\in\mathcal S^h
+\end{aligned}
+$$
+:::
+
+```{python fig_geometry}
+#| echo: false
+#| output: false
+
+fig, ax = plt.subplots(figsize=(9.2, 5.0))
+V = np.array([[0.6, 0.3], [4.8, 0.3], [5.9, 1.55], [1.7, 1.55]])
+lift = np.array([0.0, 2.25])
+ax.add_patch(MplPolygon(V, closed=True, facecolor=to_rgba(FLUXCLR, 0.12),
+                        edgecolor=FLUXCLR, lw=1.4))
+ax.add_patch(MplPolygon(V + lift, closed=True, facecolor=to_rgba(REACTCLR, 0.10),
+                        edgecolor=REACTCLR, lw=1.4))
+O = np.array([2.3, 0.75])
+ax.plot(*O, "o", color=INK, ms=5, zorder=5)
+ax.text(O[0] - 0.1, O[1] - 0.06, "0", ha="right", va="top", fontsize=11)
+arrow(ax, tuple(O), tuple(O + lift - np.array([0, 0.06])), color=DIMCLR, lw=1.8,
+      ms=12)
+ax.text(O[0] - 0.12, O[1] + 0.5 * lift[1], "lift $g$", ha="right",
+        va="center", color=DIMCLR, fontsize=11)
+dvec = np.array([1.0, 0.18])
+dvec = dvec / np.linalg.norm(dvec)
+P1, P2 = O - 1.4 * dvec, O + 2.6 * dvec
+ax.plot(*zip(P1, P2), color=FLUXCLR, lw=3, zorder=4)
+ax.plot(*zip(P1 + lift, P2 + lift), color=REACTCLR, lw=3, zorder=4)
+ax.text(*(P2 + np.array([0.1, -0.12])), r"$\mathcal{V}^h \subset \mathcal{V}$",
+        color=FLUXCLR, va="top", fontsize=11.5)
+ax.text(*(P2 + lift + np.array([0.1, -0.12])),
+        r"$\mathcal{S}^h \subset \mathcal{S}$", color=REACTCLR, va="top",
+        fontsize=11.5)
+ax.text(6.0, 0.9, "$\\mathcal{V}$: $w = 0$ on $\\Gamma_g$", color=FLUXCLR,
+        fontsize=11.5, va="center")
+ax.text(6.0, 3.15, "$\\mathcal{S} = g + \\mathcal{V}$:\n$u = g$ on $\\Gamma_g$",
+        color=REACTCLR, fontsize=11.5, va="center")
+base = O + lift
+uu = base + np.array([1.0, 0.6])
+t = (uu - base) @ dvec
+uh = base + t * dvec
+nrm = (uu - uh) / np.linalg.norm(uu - uh)
+ax.plot(*zip(uh, uu), color=LOADCLR, lw=1.8, ls="--", zorder=5)
+sq = 0.12
+ax.plot([uh[0] + sq * dvec[0], uh[0] + sq * dvec[0] + sq * nrm[0],
+         uh[0] + sq * nrm[0]],
+        [uh[1] + sq * dvec[1], uh[1] + sq * dvec[1] + sq * nrm[1],
+         uh[1] + sq * nrm[1]], color=LOADCLR, lw=1.2, zorder=5)
+ax.plot(*uu, "o", color=INK, ms=7, zorder=6)
+ax.text(uu[0] + 0.14, uu[1], "$u$ (exact)", fontsize=11.5, va="center")
+ax.plot(*uh, "o", color=LOADCLR, ms=7, zorder=6)
+ax.text(uh[0] - 0.12, uh[1] - 0.1, "$u^h$", color=LOADCLR, ha="right",
+        va="top", fontsize=12.5)
+mid = 0.5 * (uh + uu)
+ax.text(mid[0] - 0.14, mid[1] + 0.08, "$e = u - u^h$", color=LOADCLR,
+        fontsize=11, ha="right", va="center")
+ax.text(3.6, -0.15, "Galerkin: $u^h$ is the member of $\\mathcal{S}^h$ closest to "
+        "$u$ in energy, because $a(w^h, e) = 0$ for every $w^h \\in \\mathcal{V}^h$",
+        ha="center", va="top", fontsize=11)
+tidy(ax)
+ax.set_xlim(0.2, 8.6)
+ax.set_ylim(-0.75, 4.1)
+fig_geometry_path = save(fig, "WF_Fig5_Geometry.png")
+```
+
+![Function spaces as geometry. $\mathcal V$ passes through $0$; $\mathcal S$ is the same
+set of shapes lifted by the Dirichlet value, so it misses $0$ and is not itself a vector
+space. Galerkin chooses a finite slice of each ($\mathcal S^h$ and $\mathcal V^h$). The
+exact $u$ usually lies off the slice, and $u^h$ is its foot, with the error
+perpendicular to the slice when angles are measured with
+$a(\cdot,\cdot)$.](`{python} fig_geometry_path`){#fig-wf-geometry width=86%}
+
+::: {.callout-note title="Galerkin versus Petrov–Galerkin"}
+"Weighted residual" only requires some finite collection of tests. **Galerkin** (also
+called Bubnov–Galerkin) specifically uses the same basis functions for the trial
+correction and for the tests, which is what makes $\mathbf K$ symmetric and gives the
+energy and best-approximation properties above. Methods that use a different test space
+are called Petrov–Galerkin methods.
+:::
+
+## Summary {#sec-wf-summary}
+
+### The weak form, said three ways
+
+| | Strong form (S) | Weak form (W) | Galerkin (G) |
+|---|---|---|---|
+| **Conservation** | balance on every infinitesimal control volume | balance on every soft control volume $w$ | balance on the $n$ nodal control volumes $N_A$ |
+| **Measurement** | the residual is zero at every point | every sensor $w$ reads zero | the sensors $N_A$ read zero; others might not |
+| **Energy** | (hidden) | $u$ minimizes $\Pi$ over $\mathcal S$: no allowed nudge lowers it | $u^h$ minimizes $\Pi$ over the menu $\mathcal S^h$ |
+| **Derivatives on $u$** | two | one | one (piecewise-linear is fine) |
+| **Flux condition $h$** | imposed on $u$ | enters through the tests, as $w(0)\,h$ | row $A=0$ of $\mathbf F$ |
+| **Temperature condition $g$** | imposed on $u$ | built into $\mathcal S$; $w=0$ there | $d_n=g$; no test $N_n$ |
+
+### The vocabulary on one page
+
+| Object | Plain-language meaning | Mathematical job |
+|---|---|---|
+| $u$ | the unknown physical field | the exact solution, in $\mathcal S$ |
+| $v\in\mathcal S$ | a candidate answer | obeys the essential boundary data |
+| $w\in\mathcal V$ | a probe, a soft control volume, an allowed direction | vanishes on $\Gamma_g$ |
+| $r(v)$ | local imbalance | zero at every point in the strong form |
+| $\int w\,r(v)$ | one sensor reading | zero for every $w$ in the weak form |
+| $a(w,u)$ | heat crossing the walls of $w$; the rate of change of energy in direction $w$ | left side of the weak form |
+| $\Pi(v)$ | an energy landscape | minimized by the weak solution |
+| $\mathcal S^h,\mathcal V^h$ | finite menus of fields and probes | where approximation enters |
+| $N_A$ | one nodal trial pattern and test | turns the weak form into row $A$ of $\mathbf K\mathbf d = \mathbf F$ |
+
+::: {.callout-tip title="A five-minute explanation to remember"}
+1. **Conservation** says that the flux leaving any small region equals what is generated
+   inside it.
+2. The **strong form** insists on that balance point by point.
+3. A **test function** is an adjustable probe, a soft control volume. Zero response to
+   every probe is another way to say that there is no imbalance anywhere.
+4. **Integration by parts** makes the probing practical: it lowers the derivative order
+   and exposes the boundary fluxes.
+5. **Trial functions** are allowed answers; test functions are allowed questions and
+   directions.
+6. The weak solution is the bottom of an **energy** bowl.
+7. **Galerkin** searches a finite slice of that bowl and asks only a finite basis of
+   questions. That restriction, not weakness, is the approximation.
+:::
+
+### Common misconceptions
+
+- **"Weak" means approximate.** No. $(\mathrm S)$ and $(\mathrm W)$ are equivalent at the
+  continuous level. The Galerkin restriction is what creates $u^h$.
+- **One weighted average is enough.** No. One weight can miss cancellation; the weak form
+  requires every $w\in\mathcal V$.
+- **A test function is another possible temperature.** Not generally. It is a probe and
+  an admissible direction, and it obeys homogeneous essential conditions.
+- **$a(w,u)$ is the energy.** Only the quadratic term $\tfrac12 a(u,u)$ is the energy
+  term. The two-argument form is its directional cross-term.
+- **The Neumann condition was discarded.** It appears in $\ell(w)$ after integration by
+  parts. The Dirichlet condition is built into the spaces instead.
+- **The heat through the thermostat is lost.** It is not needed to find $u^h$, but it can
+  be recovered afterwards from the equation that the thermostat node would have had.
+- **Galerkin makes the pointwise residual zero.** Usually not. It makes the residual
+  orthogonal to the chosen test space.
+
+::: {.callout-note collapse="true"}
+## For instructors: a 12-minute in-class sequence
+1. **(@sec-wf-conservation, 3 min)** Drag the control volume and point out
+   heat out − heat in = heat generated. Set $\kappa_2$ small to show the kink: "The strong
+   form can't even be evaluated here."
+2. **(@sec-wf-probe, 4 min)** Choose the straight-line guess with the soft control volume
+   and sweep the center: "The control volume *is* a test function." Switch to the exact
+   solution (every probe reads 0), then to Galerkin with FE hats (all 0), then to Galerkin
+   with bumps (not 0).
+3. **(@sec-wf-energy, 3 min)** Nudge the exact solution along any direction: a
+   flat-bottomed parabola. Then choose "constant 1" to see why $w(1)=0$.
+4. **(@sec-wf-bowl, 2 min)** Have a student call out slider moves to find the bottom by
+   hand, then press *Snap*: "Each row of $\mathbf K\mathbf d=\mathbf F$ says the bowl is
+   flat in one direction."
+:::
+
+::: {.callout-note collapse="true"}
+## Check your understanding
+1. Why must a test function vanish on $\Gamma_g$ but not on $\Gamma_h$? Give a physical
+   reason and an energy reason.
+2. In the probe explorer with the Galerkin candidate, why do the FE hats read zero while a
+   bump of the same width centered *between* two nodes does not?
+3. Suppose $\kappa$ were negative somewhere. What happens to the energy parabola, and to
+   uniqueness?
+4. For the axially loaded rod, restate the table "The weak form, said three ways" with
+   "force balance" in place of "heat balance".
+:::
+
+The algebra and its implementation continue in
+[1D Poisson II: The Wall, by Galerkin's Method](Poisson1D_Heat_FEM.qmd). The mechanical
+interpretation, where the energy and virtual-work language is literal, is in
+[1D Poisson IV: The Rod, by Galerkin's Method](Poisson1D_Rod_FEM.qmd).

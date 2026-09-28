@@ -37,7 +37,10 @@ computed on the page so that the text and the drawings always agree.
 | | |
 |---|---|
 | [Norms and Function Spaces](chapters/3_Support_FunctionSpaces.qmd) | Where the integrals in $L^2$ and $H^1$ come from |
+| <!--[Why the Weak Form Works](chapters/WeakForm.qmd) | Conservation, test functions as sensors and soft control volumes, trial and test functions, energy minimization, and Galerkin's finite menu, with interactive plots |-->
 | [1D Poisson I: Heat Conduction Through a Wall](chapters/Poisson1D_Heat.qmd) | Hughes' model problem as steady heat flow: what $f$, $g$, and $h$ are, in pictures |
 | [1D Poisson II: The Wall, by Galerkin's Method](chapters/Poisson1D_Heat_FEM.qmd) | Weak form, Galerkin form, element arrays, assembly, and an interactive solver for the wall |
 | [1D Poisson III: An Axially Loaded Rod](chapters/Poisson1D_Rod.qmd) | The same model problem as a pile under load, and why $h$ changes sign when the problem is mirrored |
 | [1D Poisson IV: The Rod, by Galerkin's Method](chapters/Poisson1D_Rod_FEM.qmd) | The same steps read as virtual work, with the pile as the worked example |
+| [2D Poisson I: Heat Flow in a Battery Cell](chapters/Poisson2D_Heat.qmd) | The strong form in two dimensions: gradient, divergence, Laplacian, and a boundary split into $\Gamma_g$ and $\Gamma_h$, in vector and index notation |
+| [2D Poisson II: The Battery Cell, by Galerkin's Method](chapters/Poisson2D_Heat_FEM.qmd) | Quadrilateral basis functions, the isoparametric map and its Jacobian, and assembly in 2D, with an explorer that shows which rows and columns the Dirichlet nodes cut out |
