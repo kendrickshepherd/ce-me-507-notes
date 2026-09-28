@@ -1,0 +1,319 @@
+---
+title: "Class 11: Tensor-Product Basis Functions in 2D"
+subtitle: "Building 2D Lagrange bases from 1D ones"
+format:
+  html:
+    page-layout: full
+    include-in-header:
+      text: |
+        <script src="plotly.min.js"></script>
+---
+
+A 2D Lagrange basis function on the parent square $[-1,1]^2$ is the product of
+one 1D basis function in $\xi$ and one in $\eta$:
+
+$$
+N_A(\xi,\eta) = N_a(\xi)\,N_b(\eta), \qquad A = a + (p_\xi+1)\,b .
+$$
+
+The index $\xi$ varies fastest.
+<!--, which matches `ExtractMultiIndexFromSingleIndex`
+from HW6. -->
+The interpolation points are equally spaced.
+
+In the 3D plot:
+
+* **Blue curve on the back wall** ($\eta = 1$): the 1D factor $N_a(\xi)$.
+* **Orange curve on the side wall** ($\xi = -1$): the 1D factor $N_b(\eta)$.
+* **Dashed slices**: every cut through the surface is a 1D function times a constant,
+  $N_A(\xi,\eta_0) = N_b(\eta_0)\,N_a(\xi)$ and $N_A(\xi_0,\eta) = N_a(\xi_0)\,N_b(\eta)$.
+* **Nodes**: $N_A = 1$ at its own node (gold) and $0$ at every other node (black).
+
+Drag the 3D plot to rotate it; the view is kept when you change a slider. Hover over the surface or curves to read values.
+
+```{=html}
+<style>
+.tpb-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 28px;
+  padding:14px 16px;border:1px solid #dde1e7;border-radius:8px;background:#f8f9fb;margin-bottom:14px}
+.tpb-row{display:grid;grid-template-columns:110px 1fr 48px;align-items:center;gap:10px}
+.tpb-row output{font-family:monospace;text-align:right}
+.tpb-toggles{display:flex;flex-wrap:wrap;gap:4px 16px}
+.tpb-toggles label{display:flex;gap:5px;align-items:center}
+.tpb-readout{font-family:monospace;font-size:0.9em;margin:4px 0 0}
+.tpb-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:800px){.tpb-pair{grid-template-columns:1fr}}
+</style>
+
+<div class="tpb-controls">
+  <div>
+    <div class="tpb-row"><label for="pxi">p<sub>ξ</sub> (degree)</label><input id="pxi" type="range" min="1" max="6" step="1" value="2"><output id="pxi_o"></output></div>
+    <div class="tpb-row"><label for="peta">p<sub>η</sub> (degree)</label><input id="peta" type="range" min="1" max="6" step="1" value="2"><output id="peta_o"></output></div>
+  </div>
+  <div>
+    <div class="tpb-row"><label for="a">a (ξ index)</label><input id="a" type="range" min="0" max="2" step="1" value="1"><output id="a_o"></output></div>
+    <div class="tpb-row"><label for="b">b (η index)</label><input id="b" type="range" min="0" max="2" step="1" value="2"><output id="b_o"></output></div>
+  </div>
+  <div>
+    <div class="tpb-row"><label for="xi0">slice ξ<sub>0</sub></label><input id="xi0" type="range" min="-1" max="1" step="0.01" value="0.3"><output id="xi0_o"></output></div>
+    <div class="tpb-row"><label for="eta0">slice η<sub>0</sub></label><input id="eta0" type="range" min="-1" max="1" step="0.01" value="-0.4"><output id="eta0_o"></output></div>
+  </div>
+  <div class="tpb-toggles">
+    <label><input type="checkbox" id="t_walls" checked> 1D factors on walls</label>
+    <label><input type="checkbox" id="t_slices" checked> slices</label>
+    <label><input type="checkbox" id="t_nodes" checked> nodes</label>
+    <label><input type="checkbox" id="t_others" checked> other 1D bases</label>
+    <label><input type="checkbox" id="t_mesh"> surface mesh lines</label>
+  </div>
+</div>
+
+<div id="plot3d" style="width:100%;height:640px;"></div>
+```
+
+## The 1D factors
+
+Each panel shows every 1D basis function of that degree (grey), the active one
+(solid), and the 2D slice along that direction (dashed), which is the active one
+scaled by the printed constant.
+
+```{=html}
+<div class="tpb-pair">
+  <div><div class="tpb-readout" id="ro_xi"></div><div id="plot_xi" style="width:100%;height:370px;"></div></div>
+  <div><div class="tpb-readout" id="ro_eta"></div><div id="plot_eta" style="width:100%;height:370px;"></div></div>
+</div>
+```
+
+## Strides: from $(a,b)$ to $A$
+
+Looking straight down on the element, the basis functions sit on a
+$(p_\xi+1)\times(p_\eta+1)$ grid of nodes. Each direction gets a stride,
+$s_0 = 1$ and $s_i = \prod_{j=0}^{i-1}(p_j+1)$, so
+
+$$
+A = \sum_i a_i\,s_i = a\cdot 1 + b\,(p_\xi+1)\;\big[\,+\;c\,(p_\xi+1)(p_\eta+1)\text{ in 3D}\big],
+\qquad a_i = (A \,/\!/\, s_i) \bmod (p_i+1).
+$$
+
+A step in $\xi$ changes $A$ by 1; a step in $\eta$ jumps a whole row, $p_\xi+1$.
+The plot is the current $N_A$ seen from above, with each node labelled by its $A$.
+Click any node to select that basis function; the sliders and plots above follow.
+
+```{=html}
+<div class="tpb-pair">
+  <div id="plot_top" style="width:100%;height:440px;"></div>
+  <div>
+    <table class="table table-sm" style="font-family:monospace;max-width:420px">
+      <thead><tr><th>direction</th><th>index</th><th>stride s<sub>i</sub></th></tr></thead>
+      <tbody id="stride_rows"></tbody>
+    </table>
+    <div class="tpb-readout" id="ro_stride" style="white-space:pre"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+
+// equally spaced points on [-1, 1]
+const lin = n => Array.from({length: n}, (_, i) => -1 + 2*i/(n-1));
+const S = lin(61);
+
+// 1D Lagrange basis function a of degree p through equally spaced points
+function lagrange(p, a, x){
+  const pts = lin(p + 1);
+  let v = 1;
+  for (let j = 0; j <= p; j++) if (j !== a) v *= (x - pts[j])/(pts[a] - pts[j]);
+  return v;
+}
+
+const colors = {xi:"#1f5fbf", eta:"#c2410c", node:"#e0a800", ink:"#18202b",
+                grey:"#9aa3ae", neg:"#2f6db5", mid:"#f2f2f0", pos:"#b8322a"};
+
+function render(){
+  const pxi = +$("pxi").value, peta = +$("peta").value;
+  // keep a <= p_xi and b <= p_eta
+  $("a").max = pxi; $("b").max = peta;
+  if (+$("a").value > pxi) $("a").value = pxi;
+  if (+$("b").value > peta) $("b").value = peta;
+  const a = +$("a").value, b = +$("b").value;
+  const xi0 = +$("xi0").value, eta0 = +$("eta0").value;
+  const on = {walls:$("t_walls").checked, slices:$("t_slices").checked, nodes:$("t_nodes").checked,
+              others:$("t_others").checked, mesh:$("t_mesh").checked};
+  const c = colors;
+  const A = a + (pxi + 1)*b;
+  for (const id of ["pxi","peta","a","b"]) $(id + "_o").textContent = $(id).value;
+  $("xi0_o").textContent = xi0.toFixed(2); $("eta0_o").textContent = eta0.toFixed(2);
+
+  const Na = S.map(x => lagrange(pxi, a, x));
+  const Nb = S.map(y => lagrange(peta, b, y));
+  const Z = Nb.map(nb => Na.map(na => nb*na));      // Z[j][i] = N_b(eta_j) N_a(xi_i)
+  const Na0 = lagrange(pxi, a, xi0), Nb0 = lagrange(peta, b, eta0);
+
+  // largest magnitude over the surface and all 1D functions, so N = 0
+  // sits at the middle of the color scale
+  let zabs = 1;
+  for (const r of Z) for (const v of r) zabs = Math.max(zabs, Math.abs(v));
+  for (let k = 0; k <= pxi; k++) for (const x of S) zabs = Math.max(zabs, Math.abs(lagrange(pxi, k, x)));
+  for (let k = 0; k <= peta; k++) for (const y of S) zabs = Math.max(zabs, Math.abs(lagrange(peta, k, y)));
+
+  // ---------- 3D surface with the 1D factors, slices and nodes ----------
+  const ones = S.map(() => 1), negs = S.map(() => -1);
+  const traces = [{
+    type:"surface", x:S, y:S, z:Z, cmin:-zabs, cmax:zabs,
+    colorscale:[[0, c.neg], [0.5, c.mid], [1, c.pos]], opacity:0.93,
+    colorbar:{thickness:10, len:0.6},
+    contours:{x:{show:on.mesh, color:"#555", start:-1, end:1, size:0.1},
+              y:{show:on.mesh, color:"#555", start:-1, end:1, size:0.1}},
+    hovertemplate:"ξ=%{x:.2f}<br>η=%{y:.2f}<br>N=%{z:.4f}<extra></extra>", name:"N_A"
+  }];
+  if (on.walls){
+    if (on.others){
+      for (let k = 0; k <= pxi; k++) if (k !== a)
+        traces.push({type:"scatter3d", mode:"lines", x:S, y:ones, z:S.map(x => lagrange(pxi, k, x)),
+          line:{color:c.xi, width:2}, opacity:0.25, hoverinfo:"skip", showlegend:false});
+      for (let k = 0; k <= peta; k++) if (k !== b)
+        traces.push({type:"scatter3d", mode:"lines", x:negs, y:S, z:S.map(y => lagrange(peta, k, y)),
+          line:{color:c.eta, width:2}, opacity:0.25, hoverinfo:"skip", showlegend:false});
+    }
+    traces.push({type:"scatter3d", mode:"lines", x:S, y:ones, z:Na,
+      line:{color:c.xi, width:7}, name:`N${a}(ξ) on wall η = 1`});
+    traces.push({type:"scatter3d", mode:"lines", x:negs, y:S, z:Nb,
+      line:{color:c.eta, width:7}, name:`N${b}(η) on wall ξ = −1`});
+  }
+  if (on.slices){
+    traces.push({type:"scatter3d", mode:"lines", x:S, y:S.map(() => eta0), z:Na.map(v => Nb0*v),
+      line:{color:c.xi, width:6, dash:"dash"}, name:`slice η = ${eta0.toFixed(2)}`});
+    traces.push({type:"scatter3d", mode:"lines", x:S.map(() => xi0), y:S, z:Nb.map(v => Na0*v),
+      line:{color:c.eta, width:6, dash:"dash"}, name:`slice ξ = ${xi0.toFixed(2)}`});
+  }
+  if (on.nodes){
+    const px = lin(pxi + 1), py = lin(peta + 1), nx = [], ny = [], nz = [], txt = [];
+    for (let j = 0; j <= peta; j++) for (let i = 0; i <= pxi; i++){
+      if (i === a && j === b) continue;
+      nx.push(px[i]); ny.push(py[j]); nz.push(0); txt.push(`A=${i + (pxi + 1)*j} (a=${i}, b=${j})`);
+    }
+    traces.push({type:"scatter3d", mode:"markers", x:nx, y:ny, z:nz, text:txt,
+      marker:{size:4, color:c.ink}, name:"nodes (N = 0)",
+      hovertemplate:"%{text}<br>N_A = 0<extra></extra>"});
+    traces.push({type:"scatter3d", mode:"markers", x:[px[a]], y:[py[b]], z:[1],
+      marker:{size:7, color:c.node, line:{color:c.ink, width:1}}, name:`node A=${A} (N = 1)`});
+  }
+  const zmin = Math.min(-0.35, -0.4*zabs) - 0.05;
+  Plotly.react("plot3d", traces, {
+    uirevision:"keep-camera",
+    title:{text:`N<sub>${A}</sub>(ξ,η) = N<sub>${a}</sub>(ξ) · N<sub>${b}</sub>(η),   p<sub>ξ</sub>=${pxi}, p<sub>η</sub>=${peta}`},
+    margin:{l:0, r:0, t:40, b:0}, legend:{x:0, y:1},
+    scene:{xaxis:{title:"ξ", range:[-1, 1]}, yaxis:{title:"η", range:[-1, 1]},
+      zaxis:{title:"N", range:[zmin, zabs + 0.05]},
+      aspectmode:"manual", aspectratio:{x:1, y:1, z:0.75},
+      camera:{eye:{x:-1.45, y:-1.65, z:0.95}}}
+  }, {responsive:true, displaylogo:false});
+
+  // ---------- 1D panels ----------
+  draw1D("plot_xi", pxi, a, xi0, Nb0, "ξ", "η", c.xi, on);
+  draw1D("plot_eta", peta, b, eta0, Na0, "η", "ξ", c.eta, on);
+  $("ro_xi").textContent = `N${A}(ξ, η₀=${eta0.toFixed(2)}) = N${b}(η₀)·N${a}(ξ) = ${Nb0.toFixed(4)}·N${a}(ξ)`;
+  $("ro_eta").textContent = `N${A}(ξ₀=${xi0.toFixed(2)}, η) = N${a}(ξ₀)·N${b}(η) = ${Na0.toFixed(4)}·N${b}(η)`;
+
+  // ---------- top-down view with strides ----------
+  drawTop(pxi, peta, a, b, A, Z, zabs);
+}
+
+// all degree-p basis functions, the active one k highlighted, and the
+// 2D slice (active one times scale) dashed
+function draw1D(div, p, k, s0, scale, v, ov, color, on){
+  const tr = [];
+  if (on.others)
+    for (let j = 0; j <= p; j++) if (j !== k)
+      tr.push({x:S, y:S.map(x => lagrange(p, j, x)), mode:"lines",
+        line:{color:colors.grey, width:1.2}, name:`N${j}(${v})`, showlegend:false});
+  const act = S.map(x => lagrange(p, k, x));
+  tr.push({x:S, y:act, mode:"lines", line:{color, width:3}, name:`N${k}(${v})`});
+  if (on.slices)
+    tr.push({x:S, y:act.map(y => scale*y), mode:"lines", line:{color, width:2, dash:"dash"},
+      name:`N_A at ${ov}₀ (= ${scale.toFixed(3)}·N${k}(${v}))`});
+  const pts = lin(p + 1);
+  tr.push({x:pts, y:pts.map((_, i) => i === k ? 1 : 0), mode:"markers", showlegend:false,
+    marker:{size:pts.map((_, i) => i === k ? 11 : 7), color:pts.map((_, i) => i === k ? colors.node : colors.ink)}});
+  const shapes = on.slices ? [{type:"line", x0:s0, x1:s0, yref:"paper", y0:0, y1:1,
+    line:{color:colors.grey, width:1, dash:"dot"}}] : [];
+  Plotly.react(div, tr, {
+    title:{text:`1D factor in ${v} (degree ${p})`, font:{size:14}},
+    margin:{l:44, r:10, t:40, b:70}, shapes,
+    xaxis:{title:v, range:[-1.03, 1.03]}, legend:{orientation:"h", x:0, y:-0.3}
+  }, {responsive:true, displaylogo:false, displayModeBar:false});
+}
+
+// N_A seen from above, nodes labelled by global index A, with arrows
+// showing the stride in each direction from the selected node
+function drawTop(pxi, peta, a, b, A, Z, zabs){
+  const c = colors, px = lin(pxi + 1), py = lin(peta + 1);
+  const nx = [], ny = [], txt = [], cd = [], col = [], size = [];
+  for (let j = 0; j <= peta; j++) for (let i = 0; i <= pxi; i++){
+    const sel = (i === a && j === b);
+    nx.push(px[i]); ny.push(py[j]); txt.push(String(i + (pxi + 1)*j)); cd.push([i, j]);
+    col.push(sel ? c.node : c.ink); size.push(sel ? 16 : 9);
+  }
+  const traces = [
+    {type:"heatmap", x:S, y:S, z:Z, zmin:-zabs, zmax:zabs, zsmooth:"best",
+     colorscale:[[0, c.neg], [0.5, c.mid], [1, c.pos]], showscale:false, hoverinfo:"skip"},
+    {type:"scatter", mode:"markers+text", x:nx, y:ny, text:txt, customdata:cd,
+     textposition:"top right", textfont:{size:13, color:c.ink},
+     marker:{size, color:col, line:{color:"#fff", width:1.5}},
+     hovertemplate:"A=%{text}  (a=%{customdata[0]}, b=%{customdata[1]})<extra>click to select</extra>"}
+  ];
+  const arrow = (i, j, label, color) => ({x:px[i], y:py[j], ax:px[a], ay:py[b], xref:"x", yref:"y",
+    axref:"x", ayref:"y", showarrow:true, arrowhead:2, arrowwidth:2.5, arrowcolor:color, text:"",
+    standoff:9, startstandoff:9});
+  const note = (i, j, label, color, xs, ys) => ({x:(px[a] + px[i])/2, y:(py[b] + py[j])/2, text:label,
+    showarrow:false, font:{color, size:13}, xshift:xs, yshift:ys, bgcolor:"rgba(255,255,255,0.8)"});
+  const ann = [];
+  const ia = a < pxi ? a + 1 : a - 1, jb = b < peta ? b + 1 : b - 1;
+  ann.push(arrow(ia, b, "", c.xi), note(ia, b, (ia > a ? "+" : "−") + "1", c.xi, 0, -14));
+  ann.push(arrow(a, jb, "", c.eta), note(a, jb, (jb > b ? "+" : "−") + (pxi + 1), c.eta, 16, 0));
+  Plotly.react("plot_top", traces, {
+    title:{text:`top-down view of N<sub>${A}</sub>`, font:{size:14}},
+    margin:{l:40, r:10, t:40, b:40}, annotations:ann, showlegend:false,
+    xaxis:{title:"ξ", range:[-1.12, 1.12], zeroline:false, showgrid:false},
+    yaxis:{title:"η", range:[-1.15, 1.25], zeroline:false, showgrid:false, scaleanchor:"x"}
+  }, {responsive:true, displaylogo:false, displayModeBar:false});
+
+  const s1 = pxi + 1, s2 = (pxi + 1)*(peta + 1);
+  $("stride_rows").innerHTML =
+    `<tr><td>ξ</td><td>a = ${a}</td><td>s₀ = 1</td></tr>` +
+    `<tr><td>η</td><td>b = ${b}</td><td>s₁ = p_ξ+1 = ${s1}</td></tr>` +
+    `<tr style="opacity:.55"><td>ζ (3D)</td><td>c</td><td>s₂ = (p_ξ+1)(p_η+1) = ${s2}</td></tr>`;
+  $("ro_stride").textContent =
+    `A = ${a}·1 + ${b}·${s1} = ${A}\n` +
+    `a = (${A} // 1) mod ${pxi + 1} = ${a}\n` +
+    `b = (${A} // ${s1}) mod ${peta + 1} = ${b}\n` +
+    `Python:  r, a = divmod(${A}, ${pxi + 1})  ->  r = ${Math.floor(A/(pxi + 1))}, a = ${a}\n` +
+    `         r, b = divmod(${Math.floor(A/(pxi + 1))}, ${peta + 1})  ->  r = 0, b = ${b}`;
+}
+
+for (const id of ["pxi","peta","a","b","xi0","eta0"]) $(id).addEventListener("input", render);
+for (const id of ["t_walls","t_slices","t_nodes","t_others","t_mesh"]) $(id).addEventListener("change", render);
+render();
+$("plot_top").on("plotly_click", e => {
+  const pt = e.points.find(q => q.customdata);
+  if (!pt) return;
+  $("a").value = pt.customdata[0]; $("b").value = pt.customdata[1];
+  render();
+});
+})();
+</script>
+```
+
+## Things to try
+
+1. Set $p_\xi = p_\eta = 1$. Every basis function is a bilinear "tent corner", and each
+   slice is a straight line.
+2. Set $p_\xi = p_\eta = 2$ and pick the center node $(a,b) = (1,1)$. This is the
+   interior "bubble" function; it is zero on the whole boundary of the element.
+3. Pick an edge node such as $(a,b) = (1,0)$ and move $\eta_0$ onto $\eta = 0$ or
+   $\eta = 1$. The dashed $\xi$-slice collapses to zero, because $N_0(\eta)$ vanishes
+   at the other $\eta$ nodes.
+4. Raise the degree to 5 or 6 and look at a basis function next to the boundary.
+   The large oscillations in the 1D factors (the Runge effect) carry straight over
+   into the 2D surface.
+
+<!-- A matplotlib version with the same controls is in `Tensor_Product_Basis_Viewer.py`. -->

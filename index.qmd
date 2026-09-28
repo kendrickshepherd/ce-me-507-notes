@@ -30,6 +30,7 @@ computed on the page so that the text and the drawings always agree.
 | [Class 8](chapters/8_Class.qmd) | Assembly, sparsity, and the road to quadrature |
 | [Class 9](chapters/9_Class.qmd) | The isoparametric map and the Jacobian |
 | [Class 10](chapters/10_Class.qmd) | Assembly with the IEN array, and quadrature on an element |
+| [Class 11](chapters/11_Class.qmd) | Tensor-product basis functions in 2D, with an interactive viewer |
 
 ### Support material
 
