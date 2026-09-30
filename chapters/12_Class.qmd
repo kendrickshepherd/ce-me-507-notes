@@ -1,0 +1,548 @@
+---
+title: "Class 12: The Spatial Mapping"
+subtitle: "From the parent domain to a physical element"
+format:
+  html:
+    page-layout: full
+---
+
+[Class 11](11_Class.qmd) showed how to build 2D basis functions on the **parent domain** (also called the **reference domain**), the square $\hat\Omega = [-1,1]^2$ with coordinates $(\xi,\eta)$. 
+Elements in a mesh may not be squares, and if they are, they aren't always centered around the origin, so we need a method that takes a point of the parent domain to a point of the element. 
+That rule is the **spatial mapping**, and it uses the same basis functions. 
+In two dimensions, this looks like
+
+$$
+\underline{x}^e(\xi,\eta) = \sum_{A=0}^{n_{en}-1} \underline{x}_A^e \, N_A(\xi,\eta),
+$$
+
+where $\underline{x}_A^e$ is the position of node $A$ of element $e$, and
+$n_{en} = (p_\xi+1)(p_\eta+1)$ is the number of nodes on the element. 
+The above equation can be represented by two coordinate mappings for both the $x$ and the $y$ coordinates from the parent domain as
+
+$$
+x(\xi,\eta) = \sum_A x_A\,N_A(\xi,\eta), \qquad
+y(\xi,\eta) = \sum_A y_A\,N_A(\xi,\eta).
+$$
+
+Compare this with the approximate solution,
+
+$$
+u^h(\xi,\eta) = \sum_A d_A\,N_A(\xi,\eta).
+$$
+
+Both of these maps use the same basis functions but different coefficients, which coefficients are defined by the nodal positions of the element geometry.
+Using the same $N_A$ for both the solution, $u^h,$ and for the geometry is what **isoparametric** means.
+
+## The general form
+
+If we write $\underline{\xi}$ for the parametric coordinates, $\underline{\xi} = (\xi,\eta)$ in 2D and $\underline{\xi} = (\xi,\eta,\zeta)$ in 3D. Then
+
+$$
+\underline{x}^e(\underline{\xi}) = \sum_{A=0}^{n_{en}-1} \underline{x}_A^e \, N_A(\underline{\xi}),
+$$
+
+with the basis functions and the single index built as in Class 11,
+
+$$
+N_A(\underline{\xi}) = \prod_{i=0}^{n_{sd}-1} \ell^{p_i}_{a_i}(\xi_i),
+\qquad
+A = \sum_{i=0}^{n_{sd}-1} a_i\,s_i,
+\qquad
+s_0 = 1, \quad s_i = \prod_{j=0}^{i-1}(p_j+1),
+$$
+
+and $n_{en} = \prod_{i=0}^{n_{sd}-1}(p_i+1)$. 
+In 2D this is $N_A(\xi,\eta) = \ell^{p_\xi}_a(\xi)\,\ell^{p_\eta}_b(\eta)$ with $A = a + (p_\xi+1)b$, which is what the viewer below uses. 
+The interpolation points are typicallly equally spaced in each direction.
+
+## The map, interactively
+
+The left panel is the parent domain, the right is the physical element. The element you
+start with is a quarter annulus, $1 \le r \le 2$, with its nodes placed at the parametric
+node locations.
+
+* Drag the dot in the parent domain, or type $\xi$ and $\eta$ below it. The matching
+  point in the physical element follows.
+* Drag the gold control points in the physical element, or edit their coordinates in the
+  table. The element changes shape.
+* Nodes in the parent domain are drawn scaled by $N_A(\xi,\eta)$ at the current point, so
+  a large marker means a large weight. Blue is a positive weight, red a negative one.
+
+```{=html}
+<style>
+.sm-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px 28px;
+  padding:14px 16px;border:1px solid #dde1e7;border-radius:8px;background:#f8f9fb;margin-bottom:14px}
+.sm-row{display:grid;grid-template-columns:104px 1fr 56px;align-items:center;gap:10px}
+.sm-row output{font-family:monospace;text-align:right}
+.sm-row input[type=number]{width:100%;font-family:monospace}
+.sm-toggles{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center}
+.sm-toggles label{display:flex;gap:5px;align-items:center}
+.sm-btn{font:inherit;padding:4px 10px;border:1px solid #c3c9d2;border-radius:6px;background:#fff;cursor:pointer}
+.sm-btn:hover{background:#eef1f5}
+.sm-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+@media (max-width:900px){.sm-pair{grid-template-columns:1fr}}
+.sm-panel{border:1px solid #dde1e7;border-radius:8px;background:#fff;padding:6px}
+.sm-panel h4{margin:2px 0 0 6px;font-size:.95em;font-weight:600;color:#42506a}
+.sm-svg{width:100%;height:auto;display:block;touch-action:none;cursor:crosshair}
+.sm-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;margin-top:14px}
+@media (max-width:900px){.sm-grid{grid-template-columns:1fr}}
+.sm-tablewrap{max-height:330px;overflow:auto;border:1px solid #dde1e7;border-radius:8px}
+table.sm-cp{border-collapse:collapse;width:100%;font-family:monospace;font-size:.86em}
+table.sm-cp th,table.sm-cp td{padding:3px 6px;border-bottom:1px solid #eceff3;text-align:right;white-space:nowrap}
+table.sm-cp th{position:sticky;top:0;background:#f8f9fb;z-index:1;font-weight:600}
+table.sm-cp input{width:74px;font-family:monospace;font-size:1em;border:1px solid #d6dbe2;border-radius:4px;padding:1px 4px;text-align:right}
+table.sm-cp tr.hot{background:#fff6da}
+.sm-chain{font-family:monospace;font-size:.85em;line-height:1.65;background:#f8f9fb;border:1px solid #dde1e7;
+  border-radius:8px;padding:12px 14px;overflow-x:auto}
+.sm-chain .lbl{color:#6b7684;display:block;margin:10px 0 2px;font-size:.92em}
+.sm-chain .lbl:first-child{margin-top:0}
+.sm-chain .eq{white-space:pre-wrap;word-break:break-word}
+.sm-chain .big{font-weight:700;color:#b8322a}
+.sm-chain .res{font-weight:700;color:#18202b}
+.sm-note{color:#6b7684;font-size:.9em;margin-top:6px}
+.sm-warn{color:#b8322a;font-weight:600}
+</style>
+
+<div class="sm-controls">
+  <div>
+    <div class="sm-row"><label for="pxi">p<sub>ξ</sub> (degree)</label><input id="pxi" type="range" min="1" max="3" step="1" value="2"><output id="pxi_o"></output></div>
+    <div class="sm-row"><label for="peta">p<sub>η</sub> (degree)</label><input id="peta" type="range" min="1" max="3" step="1" value="2"><output id="peta_o"></output></div>
+  </div>
+  <div>
+    <div class="sm-row"><label for="xi">ξ</label><input id="xi" type="range" min="-1" max="1" step="0.005" value="0.35"><input id="xi_n" type="number" min="-1" max="1" step="0.01" value="0.35"></div>
+    <div class="sm-row"><label for="eta">η</label><input id="eta" type="range" min="-1" max="1" step="0.005" value="-0.25"><input id="eta_n" type="number" min="-1" max="1" step="0.01" value="-0.25"></div>
+  </div>
+  <div class="sm-toggles">
+    <label><input type="checkbox" id="t_weights" checked> scale nodes by weight</label>
+    <label><input type="checkbox" id="t_grid" checked> mapped grid lines</label>
+    <label><input type="checkbox" id="t_labels" checked> node labels</label>
+    <button class="sm-btn" id="b_reset">reset element</button>
+    <button class="sm-btn" id="b_fit">fit view</button>
+  </div>
+</div>
+
+<div class="sm-pair">
+  <div class="sm-panel">
+    <h4>Parent domain &nbsp;<span style="font-weight:400;color:#6b7684">(ξ, η) ∈ [−1,1]²</span></h4>
+    <svg id="svg_par" class="sm-svg" viewBox="0 0 440 440"></svg>
+  </div>
+  <div class="sm-panel">
+    <h4>Physical domain &nbsp;<span style="font-weight:400;color:#6b7684">(x, y)</span></h4>
+    <svg id="svg_phy" class="sm-svg" viewBox="0 0 440 440"></svg>
+  </div>
+</div>
+
+<div class="sm-grid">
+  <div>
+    <div class="sm-tablewrap">
+      <table class="sm-cp">
+        <thead><tr><th>A</th><th>(a, b)</th><th>x<sub>A</sub></th><th>y<sub>A</sub></th><th>N<sub>A</sub>(ξ,η)</th></tr></thead>
+        <tbody id="cp_rows"></tbody>
+      </table>
+    </div>
+    <div class="sm-note" id="sum_note"></div>
+  </div>
+  <div>
+    <div class="sm-chain">
+      <span class="lbl">1 — the sum, symbolically</span>
+      <span class="eq" id="eq1"></span>
+      <span class="lbl">2 — nodal coordinates substituted</span>
+      <span class="eq" id="eq2"></span>
+      <span class="lbl">3 — basis functions evaluated at (ξ, η)</span>
+      <span class="eq" id="eq3"></span>
+      <span class="lbl">4 — the mapped point</span>
+      <span class="eq res" id="eq4"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const VB = 440, PAD = 34;
+const C = {xi:"#1f5fbf", eta:"#c2410c", node:"#e0a800", ink:"#18202b",
+           grey:"#9aa3ae", neg:"#2f6db5", pos:"#b8322a", faint:"#dfe4ea"};
+
+/* ---------- 1D Lagrange machinery (equally spaced points) ---------- */
+const nodes1d = p => Array.from({length:p+1}, (_,i) => -1 + 2*i/p);
+
+function lag(p, a, t){
+  const P = nodes1d(p);
+  let v = 1;
+  for (let j = 0; j <= p; j++) if (j !== a) v *= (t - P[j])/(P[a] - P[j]);
+  return v;
+}
+
+/* ---------- state ---------- */
+const st = {pxi:2, peta:2, xi:0.35, eta:-0.25, cp:[], view:null, drag:null};
+
+// default element: a quarter annulus, 1 <= r <= 2, 0 <= theta <= pi/2,
+// sampled at the parametric node locations. Curved, and detJ > 0 at every degree.
+function defaultCP(pxi, peta){
+  const r0=1, r1=2, t0=0, t1=Math.PI/2, out=[];
+  const Pa = nodes1d(pxi), Pb = nodes1d(peta);
+  for (let b = 0; b <= peta; b++){
+    const th = t0 + (t1-t0)*(Pb[b]+1)/2;
+    for (let a = 0; a <= pxi; a++){
+      const r = r0 + (r1-r0)*(Pa[a]+1)/2;
+      out.push([r*Math.cos(th), r*Math.sin(th)]);
+    }
+  }
+  return out;
+}
+
+const nen  = () => (st.pxi+1)*(st.peta+1);
+const idxA = (a,b) => a + (st.pxi+1)*b;
+const ab   = A => [A % (st.pxi+1), Math.floor(A/(st.pxi+1))];
+
+// weights N_A at a parametric point
+function weights(xi, eta){
+  const w = new Array(nen());
+  for (let b = 0; b <= st.peta; b++){
+    const lb = lag(st.peta, b, eta);
+    for (let a = 0; a <= st.pxi; a++) w[idxA(a,b)] = lag(st.pxi, a, xi) * lb;
+  }
+  return w;
+}
+
+function mapPt(xi, eta){
+  const w = weights(xi, eta);
+  let x = 0, y = 0;
+  for (let A = 0; A < w.length; A++){ x += st.cp[A][0]*w[A]; y += st.cp[A][1]*w[A]; }
+  return [x, y];
+}
+
+/* ---------- coordinate transforms for a panel ---------- */
+// equal aspect, data range -> viewBox pixels
+function makeTx(x0, x1, y0, y1){
+  const iw = VB - 2*PAD, ih = VB - 2*PAD;
+  const s = Math.min(iw/Math.max(x1-x0, 1e-9), ih/Math.max(y1-y0, 1e-9));
+  const cx = (x0+x1)/2, cy = (y0+y1)/2;
+  return {
+    s,
+    px: x => VB/2 + (x - cx)*s,
+    py: y => VB/2 - (y - cy)*s,       // flip: +y is up
+    dx: px => cx + (px - VB/2)/s,
+    dy: py => cy - (py - VB/2)/s
+  };
+}
+const parTx = () => makeTx(-1.18, 1.18, -1.18, 1.18);
+
+function fitView(){
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  const bump = (x,y)=>{x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);};
+  for (const [x,y] of st.cp) bump(x,y);
+  const M = 25;                                  // sample the mapped boundary too
+  for (let i = 0; i <= M; i++){
+    const t = -1 + 2*i/M;
+    for (const q of [[t,-1],[t,1],[-1,t],[1,t]]){ const p = mapPt(q[0],q[1]); bump(p[0],p[1]); }
+  }
+  const mx = 0.12*Math.max(x1-x0, y1-y0, 1e-6);
+  st.view = [x0-mx, x1+mx, y0-mx, y1+mx];
+}
+const phyTx = () => makeTx(st.view[0], st.view[1], st.view[2], st.view[3]);
+
+/* ---------- small svg helpers ---------- */
+const esc = s => String(s);
+const line = (x1,y1,x2,y2,st_) => `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" ${st_}/>`;
+const poly = (pxy,st_) => `<polyline points="${pxy.map(p=>p[0].toFixed(2)+','+p[1].toFixed(2)).join(' ')}" fill="none" ${st_}/>`;
+const circ = (x,y,r,st_) => `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${r.toFixed(2)}" ${st_}/>`;
+const text = (x,y,s,st_) => `<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" ${st_}>${esc(s)}</text>`;
+
+const NSAMP = 41;
+const samples = n => Array.from({length:n}, (_,i) => -1 + 2*i/(n-1));
+
+/* ---------- parent panel ---------- */
+function drawParent(w){
+  const T = parTx(), o = [];
+  const gl = 'stroke="'+C.faint+'" stroke-width="1"';
+
+  // light grid at the interpolation lines
+  for (const v of nodes1d(st.pxi)) o.push(line(T.px(v),T.py(-1),T.px(v),T.py(1), gl));
+  for (const v of nodes1d(st.peta)) o.push(line(T.px(-1),T.py(v),T.px(1),T.py(v), gl));
+
+  // the square
+  o.push(`<rect x="${T.px(-1).toFixed(2)}" y="${T.py(1).toFixed(2)}" width="${(2*T.s).toFixed(2)}" height="${(2*T.s).toFixed(2)}" fill="none" stroke="${C.ink}" stroke-width="2"/>`);
+
+  // crosshair at the current point
+  o.push(line(T.px(st.xi),T.py(-1),T.px(st.xi),T.py(1), `stroke="${C.xi}" stroke-width="1.4" stroke-dasharray="4 3"`));
+  o.push(line(T.px(-1),T.py(st.eta),T.px(1),T.py(st.eta), `stroke="${C.eta}" stroke-width="1.4" stroke-dasharray="4 3"`));
+
+  // nodes, scaled by weight
+  const scaleOn = $("t_weights").checked, labOn = $("t_labels").checked;
+  for (let A = 0; A < nen(); A++){
+    const [a,b] = ab(A);
+    const X = T.px(nodes1d(st.pxi)[a]), Y = T.py(nodes1d(st.peta)[b]);
+    const wv = w[A], r = scaleOn ? 3.5 + 13*Math.min(Math.abs(wv),1.35) : 6;
+    const fill = Math.abs(wv) < 1e-12 ? C.grey : (wv > 0 ? C.neg : C.pos);
+    o.push(circ(X, Y, r, `fill="${fill}" fill-opacity="${scaleOn?0.75:0.9}" stroke="${C.ink}" stroke-width="1"`));
+    if (labOn) o.push(text(X, Y - r - 5, A, `text-anchor="middle" font-size="11" fill="${C.ink}" font-family="monospace"`));
+  }
+
+  // the evaluation point
+  o.push(circ(T.px(st.xi), T.py(st.eta), 7, `fill="#fff" stroke="${C.ink}" stroke-width="2.4"`));
+  o.push(circ(T.px(st.xi), T.py(st.eta), 2.6, `fill="${C.ink}"`));
+
+  // axis ticks
+  o.push(text(T.px(0), T.py(-1)+20, "ξ", `text-anchor="middle" font-size="13" fill="${C.xi}" font-style="italic"`));
+  o.push(text(T.px(-1)-16, T.py(0)+4, "η", `text-anchor="middle" font-size="13" fill="${C.eta}" font-style="italic"`));
+  o.push(text(T.px(st.xi), T.py(1)-8, `(${st.xi.toFixed(3)}, ${st.eta.toFixed(3)})`,
+        `text-anchor="middle" font-size="11" font-family="monospace" fill="${C.ink}"`));
+
+  $("svg_par").innerHTML = o.join("");
+}
+
+/* ---------- physical panel ---------- */
+function drawPhysical(w){
+  const T = phyTx(), o = [];
+  const S = samples(NSAMP);
+
+  // mapped grid lines: images of constant eta (blue) and constant xi (orange)
+  if ($("t_grid").checked){
+    const NL = 7;
+    for (let k = 0; k < NL; k++){
+      const c = -1 + 2*k/(NL-1);
+      o.push(poly(S.map(t => { const p = mapPt(t, c); return [T.px(p[0]), T.py(p[1])]; }),
+             `stroke="${C.xi}" stroke-width="0.9" stroke-opacity="0.55"`));
+      o.push(poly(S.map(t => { const p = mapPt(c, t); return [T.px(p[0]), T.py(p[1])]; }),
+             `stroke="${C.eta}" stroke-width="0.9" stroke-opacity="0.55"`));
+    }
+  }
+
+  // element boundary
+  for (const e of [[-1,'eta'],[1,'eta'],[-1,'xi'],[1,'xi']]){
+    const pts_ = S.map(t => { const p = e[1]==='eta' ? mapPt(t, e[0]) : mapPt(e[0], t); return [T.px(p[0]), T.py(p[1])]; });
+    o.push(poly(pts_, `stroke="${C.ink}" stroke-width="2.2"`));
+  }
+
+  // images of the current xi and eta lines
+  o.push(poly(S.map(t => { const p = mapPt(st.xi, t); return [T.px(p[0]), T.py(p[1])]; }),
+         `stroke="${C.xi}" stroke-width="1.6" stroke-dasharray="4 3"`));
+  o.push(poly(S.map(t => { const p = mapPt(t, st.eta); return [T.px(p[0]), T.py(p[1])]; }),
+         `stroke="${C.eta}" stroke-width="1.6" stroke-dasharray="4 3"`));
+
+  // control points
+  const labOn = $("t_labels").checked;
+  for (let A = 0; A < nen(); A++){
+    const X = T.px(st.cp[A][0]), Y = T.py(st.cp[A][1]);
+    const hot = st.drag && st.drag.kind === 'cp' && st.drag.A === A;
+    o.push(circ(X, Y, hot ? 8.5 : 6.5, `fill="${C.node}" stroke="${C.ink}" stroke-width="1.6" style="cursor:grab"`));
+    if (labOn) o.push(text(X + 10, Y - 8, A, `font-size="11" fill="${C.ink}" font-family="monospace"`));
+  }
+
+  // mapped evaluation point
+  const p = mapPt(st.xi, st.eta);
+  o.push(circ(T.px(p[0]), T.py(p[1]), 7, `fill="#fff" stroke="${C.ink}" stroke-width="2.4"`));
+  o.push(circ(T.px(p[0]), T.py(p[1]), 2.6, `fill="${C.ink}"`));
+  o.push(text(T.px(p[0]), T.py(p[1]) - 13, `(${p[0].toFixed(3)}, ${p[1].toFixed(3)})`,
+        `text-anchor="middle" font-size="11" font-family="monospace" fill="${C.ink}"`));
+
+  $("svg_phy").innerHTML = o.join("");
+}
+
+/* ---------- the symbolic chain ---------- */
+const SUB = "₀₁₂₃₄₅₆₇₈₉";
+const sub = n => String(n).split("").map(d => SUB[+d]).join("");
+const f3 = v => (Math.abs(v) < 5e-4 ? 0 : v).toFixed(3);
+const f4 = v => (Math.abs(v) < 5e-5 ? 0 : v).toFixed(4);
+
+function drawChain(w){
+  const n = nen();
+  let big = 0;
+  for (let A = 1; A < n; A++) if (Math.abs(w[A]) > Math.abs(w[big])) big = A;
+
+  const t1 = [], t2 = [], t3 = [];
+  for (let A = 0; A < n; A++){
+    const mark = A === big ? ' class="big"' : '';
+    t1.push(`<span${mark}>x${sub(A)}·N${sub(A)}(ξ,η)</span>`);
+    t2.push(`<span${mark}>(${f3(st.cp[A][0])}, ${f3(st.cp[A][1])})·N${sub(A)}(ξ,η)</span>`);
+    t3.push(`<span${mark}>(${f3(st.cp[A][0])}, ${f3(st.cp[A][1])})·(${f4(w[A])})</span>`);
+  }
+  const p = mapPt(st.xi, st.eta);
+
+  $("eq1").innerHTML = "x(ξ,η) = " + t1.join("  +  ");
+  $("eq2").innerHTML = "       = " + t2.join("  +  ");
+  $("eq3").innerHTML = "       = " + t3.join("  +  ");
+  $("eq4").innerHTML = `       = (${p[0].toFixed(4)}, ${p[1].toFixed(4)})`;
+
+  const s = w.reduce((q,v) => q+v, 0);
+  const bad = Math.abs(s - 1) > 1e-9;
+  $("sum_note").innerHTML =
+    `Σ<sub>A</sub> N<sub>A</sub>(ξ,η) = <b>${s.toFixed(10)}</b> ` +
+    (bad ? '<span class="sm-warn">— that should be 1</span>'
+         : '— the partition of unity, at every point, for every degree.');
+}
+
+/* ---------- table ---------- */
+function drawTable(w){
+  const rows = [];
+  let big = 0;
+  for (let A = 1; A < nen(); A++) if (Math.abs(w[A]) > Math.abs(w[big])) big = A;
+  for (let A = 0; A < nen(); A++){
+    const [a,b] = ab(A);
+    rows.push(
+      `<tr class="${A===big?'hot':''}"><td>${A}</td><td>(${a}, ${b})</td>` +
+      `<td><input type="number" step="0.05" data-A="${A}" data-c="0" value="${st.cp[A][0].toFixed(4)}"></td>` +
+      `<td><input type="number" step="0.05" data-A="${A}" data-c="1" value="${st.cp[A][1].toFixed(4)}"></td>` +
+      `<td>${f4(w[A])}</td></tr>`);
+  }
+  $("cp_rows").innerHTML = rows.join("");
+  for (const inp of $("cp_rows").querySelectorAll("input")){
+    inp.addEventListener("change", e => {
+      const A = +e.target.getAttribute("data-A");
+      const c = +e.target.getAttribute("data-c");
+      const v = parseFloat(e.target.value);
+      if (Number.isFinite(v)){ st.cp[A][c] = v; render(false); }
+    });
+  }
+}
+
+/* ---------- render ---------- */
+let w = [];
+function render(retable = true){
+  $("pxi_o").value = st.pxi; $("peta_o").value = st.peta;
+  $("xi").value = st.xi;  $("xi_n").value  = st.xi.toFixed(3);
+  $("eta").value = st.eta; $("eta_n").value = st.eta.toFixed(3);
+  w = weights(st.xi, st.eta);
+  if (!st.view) fitView();
+  drawParent(w);
+  drawPhysical(w);
+  drawChain(w);
+  if (retable) drawTable(w);
+  else { // just refresh the weight column without rebuilding the inputs
+    const tds = $("cp_rows").querySelectorAll("tr");
+    let big = 0;
+    for (let A = 1; A < nen(); A++) if (Math.abs(w[A]) > Math.abs(w[big])) big = A;
+    tds.forEach((tr, A) => {
+      tr.className = A === big ? 'hot' : '';
+      tr.lastElementChild.textContent = f4(w[A]);
+    });
+  }
+}
+
+/* ---------- pointer interaction ---------- */
+function svgPt(svg, ev){
+  const r = svg.getBoundingClientRect();
+  return [(ev.clientX - r.left)*(VB/r.width), (ev.clientY - r.top)*(VB/r.height)];
+}
+const clamp = v => Math.max(-1, Math.min(1, v));
+
+$("svg_par").addEventListener("pointerdown", ev => {
+  const T = parTx(), [px,py] = svgPt($("svg_par"), ev);
+  st.xi = clamp(T.dx(px)); st.eta = clamp(T.dy(py));
+  st.drag = {kind:'pt'};
+  $("svg_par").setPointerCapture(ev.pointerId);
+  render(false);
+});
+$("svg_par").addEventListener("pointermove", ev => {
+  if (!st.drag || st.drag.kind !== 'pt') return;
+  const T = parTx(), [px,py] = svgPt($("svg_par"), ev);
+  st.xi = clamp(T.dx(px)); st.eta = clamp(T.dy(py));
+  render(false);
+});
+
+$("svg_phy").addEventListener("pointerdown", ev => {
+  const T = phyTx(), [px,py] = svgPt($("svg_phy"), ev);
+  let best = -1, bd = 14;                       // grab radius in viewBox units
+  for (let A = 0; A < nen(); A++){
+    const d = Math.hypot(px - T.px(st.cp[A][0]), py - T.py(st.cp[A][1]));
+    if (d < bd){ bd = d; best = A; }
+  }
+  if (best < 0) return;
+  st.drag = {kind:'cp', A:best};
+  $("svg_phy").setPointerCapture(ev.pointerId);
+  render(false);
+});
+$("svg_phy").addEventListener("pointermove", ev => {
+  if (!st.drag || st.drag.kind !== 'cp') return;
+  const T = phyTx(), [px,py] = svgPt($("svg_phy"), ev);
+  st.cp[st.drag.A] = [T.dx(px), T.dy(py)];
+  render(true);
+});
+
+for (const sv of ["svg_par","svg_phy"]){
+  $(sv).addEventListener("pointerup",  () => { st.drag = null; render(true); });
+  $(sv).addEventListener("pointercancel", () => { st.drag = null; });
+}
+
+/* ---------- controls ---------- */
+function setDeg(){
+  st.pxi = +$("pxi").value; st.peta = +$("peta").value;
+  st.cp = defaultCP(st.pxi, st.peta);           // node count changed, so rebuild
+  fitView(); render(true);
+}
+$("pxi").addEventListener("input", setDeg);
+$("peta").addEventListener("input", setDeg);
+
+$("xi").addEventListener("input",  e => { st.xi  = +e.target.value; render(false); });
+$("eta").addEventListener("input", e => { st.eta = +e.target.value; render(false); });
+$("xi_n").addEventListener("change",  e => { const v = parseFloat(e.target.value); if (Number.isFinite(v)){ st.xi  = clamp(v); render(false);} });
+$("eta_n").addEventListener("change", e => { const v = parseFloat(e.target.value); if (Number.isFinite(v)){ st.eta = clamp(v); render(false);} });
+
+for (const id of ["t_weights","t_grid","t_labels"]) $(id).addEventListener("change", () => render(false));
+$("b_reset").addEventListener("click", () => { st.cp = defaultCP(st.pxi, st.peta); fitView(); render(true); });
+$("b_fit").addEventListener("click",   () => { fitView(); render(false); });
+
+/* ---------- go ---------- */
+st.cp = defaultCP(st.pxi, st.peta);
+fitView();
+render(true);
+})();
+</script>
+```
+
+## Reading the four lines
+
+The block to the right of the table is the same computation written four times.
+
+1. **The sum, symbolically.** One term per node, so the number of terms changes with the
+   degree: $n_{en} = (p_\xi+1)(p_\eta+1)$.
+2. **Nodal coordinates substituted.** The $\underline{x}_A$ are now numbers, the ones in
+   the table. The parametric point has not been used yet.
+3. **Basis functions evaluated.** Now $(\xi,\eta)$ is used and each $N_A$ becomes a
+   number. This is the only line that changes when you move the dot without changing the
+   element.
+4. **The mapped point.** Multiply and add.
+
+The term in red has the largest weight. Move the dot to a node and that weight becomes
+$1$ while the others become $0$, which is the interpolation property from Class 11.
+
+Below the table is the running value of $\sum_A N_A(\xi,\eta)$, which is $1$ everywhere.
+This is the **partition of unity**, and it says a constant is reproduced exactly: if every
+$\underline{x}_A$ were the same point, the map would return that point for any
+$(\xi,\eta)$. It is the $[0,0]$ case of the reproduction question in Homework 6,
+Problem 3.
+
+## The basis functions
+
+This page does not plot the 2D basis functions. The node markers in the parent domain
+show $N_A(\xi,\eta)$ at the current point, which is what is needed here. To see the
+surfaces themselves, go back to [Class 11](11_Class.qmd).
+
+## Things to try
+
+1. Drag the dot to the corner $(\xi,\eta) = (-1,-1)$. The mapped point is control point
+   $0$, and in line 3 every weight is zero except that one.
+2. Set $p_\xi = p_\eta = 1$. There are four nodes and the edges are straight: a bilinear
+   map cannot curve an edge. The mapped grid lines are still not parallel, so the map is
+   not affine.
+3. Go back to degree 2 and drag the mid-edge control point $A = 1$, at $(a,b) = (1,0)$,
+   away from the edge. The edge bends. This is how a quadratic element follows a curved
+   boundary.
+4. Keep moving that node past its neighbours until the mapped grid lines cross. The map
+   is no longer one-to-one and the element has folded. Nothing in the sum prevents this.
+5. Set $p_\xi = 3$, $p_\eta = 1$: cubic in $\xi$, linear in $\eta$, eight nodes. The
+   stride $A = a + (p_\xi+1)b$ renumbers the table.
+6. Put the dot at $(\xi,\eta) = (0,0)$ and read line 3. At degree 2 in both directions the
+   centre node has weight $1$ and the rest have weight $0$; at degree 1 the four corners
+   each have weight $0.25$. The centre of the element is a node only when the degree is
+   even.
+
+## Next
+
+The map says where a parametric point goes. It does not say how much a small piece of the
+parent domain is stretched or rotated on the way, and we need that to write
+$\int_{\Omega^e} (\cdot)\,d\Omega$ as an integral over the parent domain that quadrature
+can evaluate. Differentiating the sum with respect to $\underline{\xi}$ gives the
+deformation gradient and its determinant, the **Jacobian**, in Class 13. Item 4 above is
+the case where that determinant changes sign.
