@@ -31,6 +31,8 @@ computed on the page so that the text and the drawings always agree.
 | [Class 9](chapters/9_Class.qmd) | The isoparametric map and the Jacobian |
 | [Class 10](chapters/10_Class.qmd) | Assembly with the IEN array, and quadrature on an element |
 | [Class 11](chapters/11_Class.qmd) | Tensor-product basis functions in 2D, with an interactive viewer |
+| [Class 12](chapters/12_Class.qmd) | The spatial mapping from parent square to curved element, with an interactive viewer |
+| [Class 13](chapters/13_Class.qmd) | The Jacobian matrix, its determinant, and when an element folds, with an interactive viewer |
 
 ### Support material
 

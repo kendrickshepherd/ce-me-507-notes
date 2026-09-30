@@ -1,0 +1,981 @@
+---
+title: "Class 13: The Jacobian Matrix"
+subtitle: "The derivative of the spatial mapping"
+format:
+  html:
+    page-layout: full
+---
+
+In [Class 12](12_Class.qmd) the spatial mapping told us where a parametric point goes:
+
+$$
+\underline{x}^e(\underline{\xi}) = \sum_{A=0}^{n_{en}-1} \underline{x}_A^e\,N_A(\underline{\xi}).
+$$
+
+It does not say how much a small piece of the parent domain is stretched or turned on the
+way. We need that to change an integral over $\Omega^e$ into an integral over the parent
+domain, and we need it to tell whether the element is usable at all. Both come from the
+derivative of the map.
+
+## The deformation gradient
+
+Differentiating the sum gives the **deformation gradient**, also called the Jacobian
+matrix. Symbolically,
+
+$$
+DF = \frac{\partial \underline{x}}{\partial \underline{\xi}}
+   = \sum_{A=0}^{n_{en}-1} \underline{x}_A^e \left(\nabla_\xi N_A\right)^T .
+$$
+
+In index notation, with $i$ running over spatial directions and $j$ over parametric
+directions,
+
+$$
+\left(DF\right)_{ij} = \frac{\partial x_i}{\partial \xi_j}
+   = \sum_{A=0}^{n_{en}-1} x^e_{iA}\,\frac{\partial N_A}{\partial \xi_j}.
+$$
+
+In matrix form in 2D, with $\underline{\xi} = (\xi,\eta)$,
+
+$$
+DF =
+\begin{bmatrix}
+\dfrac{\partial x_1}{\partial \xi} & \dfrac{\partial x_1}{\partial \eta} \\[10pt]
+\dfrac{\partial x_2}{\partial \xi} & \dfrac{\partial x_2}{\partial \eta}
+\end{bmatrix}
+=
+\begin{bmatrix}
+\displaystyle\sum_A x_A \dfrac{\partial N_A}{\partial \xi} &
+\displaystyle\sum_A x_A \dfrac{\partial N_A}{\partial \eta} \\[14pt]
+\displaystyle\sum_A y_A \dfrac{\partial N_A}{\partial \xi} &
+\displaystyle\sum_A y_A \dfrac{\partial N_A}{\partial \eta}
+\end{bmatrix}.
+$$
+
+Two things to notice. The nodal coordinates $\underline{x}_A^e$ are constants, so the only
+thing being differentiated is the basis functions: $DF$ is built from
+$\partial N_A/\partial \xi_j$, which is Homework 6 work. And $DF$ depends on
+$\underline{\xi}$, so unless the element is a parallelogram it is a different matrix at
+every point.
+
+The determinant is the **Jacobian**,
+
+$$
+J = \det DF = \frac{\partial x_1}{\partial \xi}\frac{\partial x_2}{\partial \eta}
+            - \frac{\partial x_1}{\partial \eta}\frac{\partial x_2}{\partial \xi},
+\qquad
+d\Omega = J\,d\xi\,d\eta,
+$$
+
+which is what lets every element integral be computed on the parent domain:
+
+$$
+\int_{\Omega^e} (\cdot)\,d\Omega = \int_{-1}^{1}\!\!\int_{-1}^{1} (\cdot)\;J(\xi,\eta)\,d\xi\,d\eta .
+$$
+
+## What the columns are
+
+The first column of $DF$ is $\partial\underline{x}/\partial\xi$ and the second is
+$\partial\underline{x}/\partial\eta$. These are tangent vectors: column 1 points along the
+image of a line of constant $\eta$, column 2 along the image of a line of constant $\xi$.
+Those are the curves already drawn on the Class 12 viewer.
+
+Taken on their own, two arrows are not very informative. They become informative when you
+see what they are the edges of. Take a small square of side $h$ in the parent domain. Its
+image under the map is a slightly curved patch. The parallelogram spanned by $h$ times the
+two columns of $DF$ is the flat approximation of that patch, and
+
+$$
+\text{area of the parallelogram} = |J|\,h^2 .
+$$
+
+As $h$ shrinks the curved patch and the parallelogram become the same shape. That is the
+statement that $DF$ is the derivative. The sign of $J$ says whether the image keeps the
+orientation of the original square or reverses it.
+
+## The map and its derivative, interactively
+
+Same element as Class 12: a quarter annulus, $1 \le r \le 2$, with nodes at the parametric
+node locations.
+
+* Drag the dot in the parent domain, or type $\xi$ and $\eta$. Both panels follow.
+* Drag the gold control points in the physical panel, or edit the table.
+
+There are three separate things drawn, and it is worth keeping them apart:
+
+* The **mapped grid** is the faint blue and orange curves covering the whole element.
+  These are the images of lines of constant $\eta$ and constant $\xi$, the same curves as
+  in Class 12. They describe the map, not its derivative.
+* The **gold square** of side $h$ sits in the parent domain around the current point, and
+  its **image** is the filled patch in the physical panel. This is the actual image: every
+  point of the square's boundary put through $\underline{x}^e(\underline{\xi})$, so its
+  edges are curved.
+* The **parallelogram** is the dashed outline in the physical panel, built from $h$ times
+  the two columns of $DF$. It is the flat approximation to that patch.
+
+The gold square and its image each carry two arrowheads showing which way the boundary is
+traversed. On the gold square they always run counter-clockwise. If the arrowheads on the
+image run the other way, the map has reversed orientation there, which is $J < 0$.
+
+Shading is the value of $J$, blue where positive and red where negative. Where $J$ changes
+sign the black $J = 0$ curve is drawn in both panels.
+
+```{=html}
+<style>
+.jc-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px 26px;
+  padding:14px 16px;border:1px solid #dde1e7;border-radius:8px;background:#f8f9fb;margin-bottom:14px}
+.jc-row{display:grid;grid-template-columns:96px 1fr 58px;align-items:center;gap:10px}
+.jc-row output{font-family:monospace;text-align:right}
+.jc-row input[type=number]{width:100%;font-family:monospace}
+.jc-toggles{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
+.jc-toggles label{display:flex;gap:5px;align-items:center}
+.jc-btn{font:inherit;padding:4px 10px;border:1px solid #c3c9d2;border-radius:6px;background:#fff;cursor:pointer}
+.jc-btn:hover{background:#eef1f5}
+.jc-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+@media (max-width:900px){.jc-pair{grid-template-columns:1fr}}
+.jc-panel{border:1px solid #dde1e7;border-radius:8px;background:#fff;padding:6px}
+.jc-panel h4{margin:2px 0 0 6px;font-size:.95em;font-weight:600;color:#42506a}
+.jc-svg{width:100%;height:auto;display:block;touch-action:none;cursor:crosshair}
+.jc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;margin-top:14px}
+@media (max-width:900px){.jc-grid{grid-template-columns:1fr}}
+.jc-tablewrap{max-height:300px;overflow:auto;border:1px solid #dde1e7;border-radius:8px}
+table.jc-cp{border-collapse:collapse;width:100%;font-family:monospace;font-size:.82em}
+table.jc-cp th,table.jc-cp td{padding:3px 5px;border-bottom:1px solid #eceff3;text-align:right;white-space:nowrap}
+table.jc-cp th{position:sticky;top:0;background:#f8f9fb;z-index:1;font-weight:600}
+table.jc-cp input{width:66px;font-family:monospace;font-size:1em;border:1px solid #d6dbe2;border-radius:4px;padding:1px 3px;text-align:right}
+table.jc-cp tfoot td{font-weight:700;border-top:2px solid #c3c9d2;background:#f8f9fb}
+.jc-out{font-family:monospace;font-size:.88em;background:#f8f9fb;border:1px solid #dde1e7;border-radius:8px;padding:12px 14px}
+.jc-out .lbl{color:#6b7684;display:block;margin:12px 0 3px;font-size:.92em}
+.jc-out .lbl:first-child{margin-top:0}
+.jc-mat{display:inline-grid;grid-template-columns:auto auto;gap:2px 16px;padding:4px 12px;margin:2px 0;
+  border-left:2px solid #18202b;border-right:2px solid #18202b}
+.jc-mat span{text-align:right}
+.jc-pos{color:#2f6db5;font-weight:700}
+.jc-neg{color:#b8322a;font-weight:700}
+.jc-zero{color:#8a6d1a;font-weight:700}
+</style>
+
+<div class="jc-controls">
+  <div>
+    <div class="jc-row"><label for="pxi">p<sub>ξ</sub></label><input id="pxi" type="range" min="1" max="3" step="1" value="2"><output id="pxi_o"></output></div>
+    <div class="jc-row"><label for="peta">p<sub>η</sub></label><input id="peta" type="range" min="1" max="3" step="1" value="2"><output id="peta_o"></output></div>
+  </div>
+  <div>
+    <div class="jc-row"><label for="xi">ξ</label><input id="xi" type="range" min="-1" max="1" step="0.005" value="0.30"><input id="xi_n" type="number" min="-1" max="1" step="0.01" value="0.30"></div>
+    <div class="jc-row"><label for="eta">η</label><input id="eta" type="range" min="-1" max="1" step="0.005" value="-0.20"><input id="eta_n" type="number" min="-1" max="1" step="0.01" value="-0.20"></div>
+  </div>
+  <div>
+    <div class="jc-row"><label for="hh">h (square)</label><input id="hh" type="range" min="0.05" max="1.2" step="0.01" value="0.5"><output id="hh_o"></output></div>
+  </div>
+  <div class="jc-toggles">
+    <label><input type="checkbox" id="t_field" checked> shade by J</label>
+    <label><input type="checkbox" id="t_zero" checked> J = 0 curve</label>
+    <label><input type="checkbox" id="t_par" checked> DF parallelogram</label>
+    <label><input type="checkbox" id="t_img" checked> image of the square</label>
+    <label><input type="checkbox" id="t_grid" checked> mapped grid (whole element)</label>
+    <button class="jc-btn" id="b_reset">reset element</button>
+    <button class="jc-btn" id="b_fit">fit view</button>
+  </div>
+</div>
+
+<div class="jc-pair">
+  <div class="jc-panel">
+    <h4>Parent domain &nbsp;<span style="font-weight:400;color:#6b7684">(ξ, η)</span></h4>
+    <svg id="svg_par" class="jc-svg" viewBox="0 0 440 440"></svg>
+  </div>
+  <div class="jc-panel">
+    <h4>Physical domain &nbsp;<span style="font-weight:400;color:#6b7684">(x, y)</span></h4>
+    <svg id="svg_phy" class="jc-svg" viewBox="0 0 440 440"></svg>
+  </div>
+</div>
+
+<div class="jc-grid">
+  <div>
+    <div class="jc-tablewrap">
+      <table class="jc-cp">
+        <thead><tr><th>A</th><th>x<sub>A</sub></th><th>y<sub>A</sub></th>
+          <th>∂N<sub>A</sub>/∂ξ</th><th>∂N<sub>A</sub>/∂η</th></tr></thead>
+        <tbody id="cp_rows"></tbody>
+        <tfoot><tr><td colspan="3">Σ<sub>A</sub> x<sub>A</sub>·(…) , Σ<sub>A</sub> y<sub>A</sub>·(…)</td>
+          <td id="sum_xi"></td><td id="sum_eta"></td></tr></tfoot>
+      </table>
+    </div>
+    <div style="color:#6b7684;font-size:.86em;margin-top:6px">
+      The last two columns are the ingredients of <i>DF</i>: each column of the matrix is
+      the nodal coordinates weighted by one of them.
+    </div>
+  </div>
+  <div class="jc-out">
+    <span class="lbl">DF at (ξ, η)</span>
+    <div class="jc-mat" id="mat"></div>
+    <span class="lbl">J = det DF</span>
+    <div id="detline"></div>
+    <span class="lbl">areas of the small square (h = <span id="hshow"></span>)</span>
+    <div id="arealine"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const VB = 440, PAD = 34;
+const C = {xi:"#1f5fbf", eta:"#c2410c", node:"#e0a800", ink:"#18202b",
+           grey:"#9aa3ae", pos:"#2f6db5", neg:"#b8322a", faint:"#dfe4ea"};
+
+const nodes1d = p => Array.from({length:p+1}, (_,i) => -1 + 2*i/p);
+
+function lag(p,a,t){
+  const P = nodes1d(p); let v = 1;
+  for (let j=0;j<=p;j++) if (j!==a) v *= (t-P[j])/(P[a]-P[j]);
+  return v;
+}
+function dlag(p,a,t){
+  const P = nodes1d(p); let tot = 0;
+  for (let m=0;m<=p;m++){
+    if (m===a) continue;
+    let term = 1/(P[a]-P[m]);
+    for (let j=0;j<=p;j++) if (j!==a && j!==m) term *= (t-P[j])/(P[a]-P[j]);
+    tot += term;
+  }
+  return tot;
+}
+
+const st = {pxi:2, peta:2, xi:0.30, eta:-0.20, h:0.5, cp:[], view:null, drag:null};
+
+function defaultCP(pxi,peta){
+  const r0=1,r1=2,t0=0,t1=Math.PI/2,out=[];
+  const Pa=nodes1d(pxi), Pb=nodes1d(peta);
+  for (let b=0;b<=peta;b++){
+    const th=t0+(t1-t0)*(Pb[b]+1)/2;
+    for (let a=0;a<=pxi;a++){
+      const r=r0+(r1-r0)*(Pa[a]+1)/2;
+      out.push([r*Math.cos(th), r*Math.sin(th)]);
+    }
+  }
+  return out;
+}
+const nen  = () => (st.pxi+1)*(st.peta+1);
+const idxA = (a,b) => a + (st.pxi+1)*b;
+
+function shape(xi,eta){                       // N, dN/dxi, dN/deta
+  const n = nen(), N = new Array(n), Nx = new Array(n), Ne = new Array(n);
+  for (let b=0;b<=st.peta;b++){
+    const lb = lag(st.peta,b,eta), db = dlag(st.peta,b,eta);
+    for (let a=0;a<=st.pxi;a++){
+      const la = lag(st.pxi,a,xi), da = dlag(st.pxi,a,xi), A = idxA(a,b);
+      N[A] = la*lb; Nx[A] = da*lb; Ne[A] = la*db;
+    }
+  }
+  return {N,Nx,Ne};
+}
+function mapPt(xi,eta){
+  const {N} = shape(xi,eta); let x=0,y=0;
+  for (let A=0;A<N.length;A++){ x+=st.cp[A][0]*N[A]; y+=st.cp[A][1]*N[A]; }
+  return [x,y];
+}
+function DF(xi,eta){
+  const {Nx,Ne} = shape(xi,eta);
+  let a=0,b=0,c=0,d=0;
+  for (let A=0;A<Nx.length;A++){
+    a += st.cp[A][0]*Nx[A]; b += st.cp[A][0]*Ne[A];
+    c += st.cp[A][1]*Nx[A]; d += st.cp[A][1]*Ne[A];
+  }
+  return [a,b,c,d];                           // row-major [dx/dxi, dx/deta, dy/dxi, dy/deta]
+}
+const detOf = M => M[0]*M[3] - M[1]*M[2];
+const Jat = (xi,eta) => detOf(DF(xi,eta));
+
+/* ---------- transforms ---------- */
+function makeTx(x0,x1,y0,y1){
+  const iw = VB-2*PAD, s = Math.min(iw/Math.max(x1-x0,1e-9), iw/Math.max(y1-y0,1e-9));
+  const cx=(x0+x1)/2, cy=(y0+y1)/2;
+  return {s, px:x=>VB/2+(x-cx)*s, py:y=>VB/2-(y-cy)*s,
+             dx:p=>cx+(p-VB/2)/s, dy:p=>cy-(p-VB/2)/s};
+}
+const parTx = () => makeTx(-1.2,1.2,-1.2,1.2);
+function fitView(){
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  const bump=(x,y)=>{x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);};
+  for (const [x,y] of st.cp) bump(x,y);
+  for (let i=0;i<=25;i++){ const t=-1+2*i/25;
+    for (const q of [[t,-1],[t,1],[-1,t],[1,t]]){ const p=mapPt(q[0],q[1]); bump(p[0],p[1]); } }
+  const m=0.14*Math.max(x1-x0,y1-y0,1e-6);
+  st.view=[x0-m,x1+m,y0-m,y1+m];
+}
+const phyTx = () => makeTx(st.view[0],st.view[1],st.view[2],st.view[3]);
+
+/* ---------- svg helpers ---------- */
+const poly = (p,s) => `<polyline points="${p.map(q=>q[0].toFixed(2)+','+q[1].toFixed(2)).join(' ')}" fill="none" ${s}/>`;
+const pgon = (p,s) => `<polygon points="${p.map(q=>q[0].toFixed(2)+','+q[1].toFixed(2)).join(' ')}" ${s}/>`;
+const circ = (x,y,r,s) => `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${r}" ${s}/>`;
+const line = (a,b,c,d,s) => `<line x1="${a.toFixed(2)}" y1="${b.toFixed(2)}" x2="${c.toFixed(2)}" y2="${d.toFixed(2)}" ${s}/>`;
+const txt  = (x,y,t,s) => `<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" ${s}>${t}</text>`;
+
+function arrow(x1,y1,x2,y2,col,w){            // line plus head
+  const dx=x2-x1, dy=y2-y1, L=Math.hypot(dx,dy);
+  if (L < 1e-6) return "";
+  const ux=dx/L, uy=dy/L, hl=Math.min(11, L*0.36), hw=hl*0.52;
+  const bx=x2-ux*hl, by=y2-uy*hl;
+  return line(x1,y1,bx,by,`stroke="${col}" stroke-width="${w}"`) +
+         pgon([[x2,y2],[bx-uy*hw,by+ux*hw],[bx+uy*hw,by-ux*hw]], `fill="${col}"`);
+}
+// orientation arrowhead placed by arc length along a closed loop, fixed size
+function loopHead(pts, frac, col){
+  const seg = []; let L = 0;
+  for (let i=1;i<pts.length;i++){
+    const d = Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]);
+    seg.push(d); L += d;
+  }
+  if (L < 1e-6) return "";
+  let target = L*frac, acc = 0, k = 0;
+  while (k < seg.length-1 && acc + seg[k] < target){ acc += seg[k]; k++; }
+  const a = pts[k], b = pts[k+1];
+  const d = seg[k] || 1, t = Math.max(0, Math.min(1, (target-acc)/d));
+  const ux = (b[0]-a[0])/d, uy = (b[1]-a[1])/d;
+  const cx = a[0] + (b[0]-a[0])*t, cy = a[1] + (b[1]-a[1])*t;
+  const hl = 8.5, hw = 5.5;
+  return pgon([[cx+ux*hl, cy+uy*hl],
+               [cx-ux*hl-uy*hw, cy-uy*hl+ux*hw],
+               [cx-ux*hl+uy*hw, cy-uy*hl-ux*hw]],
+              `fill="${col}" stroke="#fff" stroke-width="1.3"`);
+}
+const loopHeads = (pts,col) => loopHead(pts,0.125,col) + loopHead(pts,0.625,col);
+
+/* ---------- J field + zero contour (marching squares on the parent grid) ---------- */
+const NG = 22;
+function buildField(){
+  const g = [], Jv = [], XY = [];
+  for (let i=0;i<=NG;i++) g.push(-1 + 2*i/NG);
+  for (let i=0;i<=NG;i++){
+    Jv.push([]); XY.push([]);
+    for (let j=0;j<=NG;j++){
+      Jv[i].push(Jat(g[i], g[j]));
+      XY[i].push(mapPt(g[i], g[j]));
+    }
+  }
+  let amax = 0;
+  for (const row of Jv) for (const v of row) amax = Math.max(amax, Math.abs(v));
+  return {g, Jv, XY, amax: amax || 1};
+}
+function jColor(v, amax){
+  const t = Math.max(-1, Math.min(1, v/amax));
+  const c = t >= 0 ? [47,109,181] : [184,50,42];
+  const a = 0.07 + 0.36*Math.abs(t);
+  return `fill="rgb(${c[0]},${c[1]},${c[2]})" fill-opacity="${a.toFixed(3)}"`;
+}
+function zeroSegments(F){                     // segments in parent coords where J = 0
+  const out = [], {g, Jv} = F;
+  const ip = (x1,y1,v1,x2,y2,v2) => { const t = v1/(v1-v2); return [x1+t*(x2-x1), y1+t*(y2-y1)]; };
+  for (let i=0;i<NG;i++) for (let j=0;j<NG;j++){
+    const P = [[g[i],g[j],Jv[i][j]], [g[i+1],g[j],Jv[i+1][j]],
+               [g[i+1],g[j+1],Jv[i+1][j+1]], [g[i],g[j+1],Jv[i][j+1]]];
+    const cr = [];
+    for (let k=0;k<4;k++){
+      const A = P[k], B = P[(k+1)%4];
+      if ((A[2] < 0) !== (B[2] < 0)) cr.push(ip(A[0],A[1],A[2],B[0],B[1],B[2]));
+    }
+    if (cr.length === 2) out.push([cr[0], cr[1]]);
+    else if (cr.length === 4){ out.push([cr[0],cr[1]]); out.push([cr[2],cr[3]]); }
+  }
+  return out;
+}
+
+/* ---------- the small square ---------- */
+function effH(){ return Math.max(0.02, Math.min(st.h, 2*(1-Math.abs(st.xi)), 2*(1-Math.abs(st.eta)))); }
+function squareLoop(h, n){                    // parent-space boundary, counter-clockwise
+  const s = h/2, pts = [];
+  const cs = [[-s,-s],[s,-s],[s,s],[-s,s]];
+  for (let k=0;k<4;k++){
+    const A = cs[k], B = cs[(k+1)%4];
+    for (let m=0;m<n;m++){
+      const t = m/n;
+      pts.push([st.xi + A[0] + t*(B[0]-A[0]), st.eta + A[1] + t*(B[1]-A[1])]);
+    }
+  }
+  pts.push(pts[0].slice());
+  return pts;
+}
+function shoelace(p){
+  let a = 0;
+  for (let i=0;i<p.length-1;i++) a += p[i][0]*p[i+1][1] - p[i+1][0]*p[i][1];
+  return a/2;
+}
+
+/* ---------- drawing ---------- */
+function drawParent(F){
+  const T = parTx(), o = [], h = effH();
+
+  if ($("t_field").checked){
+    for (let i=0;i<NG;i++) for (let j=0;j<NG;j++){
+      const q = [[F.g[i],F.g[j]],[F.g[i+1],F.g[j]],[F.g[i+1],F.g[j+1]],[F.g[i],F.g[j+1]]]
+                .map(p => [T.px(p[0]), T.py(p[1])]);
+      const v = (F.Jv[i][j]+F.Jv[i+1][j]+F.Jv[i+1][j+1]+F.Jv[i][j+1])/4;
+      o.push(pgon(q, jColor(v, F.amax) + ' stroke="none"'));
+    }
+  }
+  for (const v of nodes1d(st.pxi))  o.push(line(T.px(v),T.py(-1),T.px(v),T.py(1), `stroke="${C.faint}"`));
+  for (const v of nodes1d(st.peta)) o.push(line(T.px(-1),T.py(v),T.px(1),T.py(v), `stroke="${C.faint}"`));
+  o.push(pgon([[-1,-1],[1,-1],[1,1],[-1,1]].map(p=>[T.px(p[0]),T.py(p[1])]),
+        `fill="none" stroke="${C.ink}" stroke-width="2"`));
+
+  if ($("t_zero").checked)
+    for (const s of zeroSegments(F))
+      o.push(line(T.px(s[0][0]),T.py(s[0][1]),T.px(s[1][0]),T.py(s[1][1]),
+             `stroke="${C.ink}" stroke-width="2.6"`));
+
+  // the small square, drawn counter-clockwise
+  const loop = squareLoop(h, 6).map(p => [T.px(p[0]), T.py(p[1])]);
+  o.push(pgon(loop.slice(0,-1), `fill="${C.node}" fill-opacity="0.28" stroke="${C.node}" stroke-width="2"`));
+  o.push(loopHeads(loop, C.ink));
+
+  // unit parametric directions
+  const L = 0.30*T.s;
+  o.push(arrow(T.px(st.xi),T.py(st.eta),T.px(st.xi)+L,T.py(st.eta), C.xi, 2));
+  o.push(arrow(T.px(st.xi),T.py(st.eta),T.px(st.xi),T.py(st.eta)-L, C.eta, 2));
+  o.push(circ(T.px(st.xi),T.py(st.eta),5,`fill="#fff" stroke="${C.ink}" stroke-width="2.2"`));
+
+  o.push(txt(T.px(0), T.py(-1)+20, "ξ", `text-anchor="middle" font-size="13" fill="${C.xi}" font-style="italic"`));
+  o.push(txt(T.px(-1)-15, T.py(0)+4, "η", `text-anchor="middle" font-size="13" fill="${C.eta}" font-style="italic"`));
+  $("svg_par").innerHTML = o.join("");
+}
+
+function drawPhysical(F){
+  const T = phyTx(), o = [], h = effH();
+  const S = Array.from({length:41},(_,i)=>-1+2*i/40);
+
+  if ($("t_field").checked){
+    for (let i=0;i<NG;i++) for (let j=0;j<NG;j++){
+      const q = [F.XY[i][j], F.XY[i+1][j], F.XY[i+1][j+1], F.XY[i][j+1]]
+                .map(p => [T.px(p[0]), T.py(p[1])]);
+      const v = (F.Jv[i][j]+F.Jv[i+1][j]+F.Jv[i+1][j+1]+F.Jv[i][j+1])/4;
+      o.push(pgon(q, jColor(v, F.amax) + ' stroke="none"'));
+    }
+  }
+  if ($("t_grid").checked){
+    for (let k=0;k<7;k++){
+      const c = -1 + 2*k/6;
+      o.push(poly(S.map(t=>{const p=mapPt(t,c);return [T.px(p[0]),T.py(p[1])];}),
+             `stroke="${C.xi}" stroke-width="0.8" stroke-opacity="0.5"`));
+      o.push(poly(S.map(t=>{const p=mapPt(c,t);return [T.px(p[0]),T.py(p[1])];}),
+             `stroke="${C.eta}" stroke-width="0.8" stroke-opacity="0.5"`));
+    }
+  }
+  for (const e of [[-1,1],[1,1],[-1,0],[1,0]]){
+    const pts = S.map(t=>{const p = e[1] ? mapPt(t,e[0]) : mapPt(e[0],t); return [T.px(p[0]),T.py(p[1])];});
+    o.push(poly(pts, `stroke="${C.ink}" stroke-width="2.2"`));
+  }
+  if ($("t_zero").checked)
+    for (const s of zeroSegments(F)){
+      const a = mapPt(s[0][0],s[0][1]), b = mapPt(s[1][0],s[1][1]);
+      o.push(line(T.px(a[0]),T.py(a[1]),T.px(b[0]),T.py(b[1]),`stroke="${C.ink}" stroke-width="2.6"`));
+    }
+
+  const M = DF(st.xi, st.eta), J = detOf(M);
+  const P = mapPt(st.xi, st.eta);
+  const sgn = J > 1e-9 ? C.pos : (J < -1e-9 ? C.neg : "#8a6d1a");
+
+  // image of the small square: every boundary point put through the map
+  const img = squareLoop(h, 12).map(p => mapPt(p[0], p[1]));
+  if ($("t_img").checked){
+    const ip = img.map(p => [T.px(p[0]), T.py(p[1])]);
+    o.push(pgon(ip, `fill="${sgn}" fill-opacity="0.26" stroke="${sgn}" stroke-width="1.6"`));
+    o.push(loopHeads(ip, C.ink));
+  }
+  // parallelogram predicted by DF
+  if ($("t_par").checked){
+    const s = h/2;
+    const cor = [[-s,-s],[s,-s],[s,s],[-s,s]].map(([u,v]) =>
+      [T.px(P[0] + M[0]*u + M[1]*v), T.py(P[1] + M[2]*u + M[3]*v)]);
+    o.push(pgon(cor, `fill="none" stroke="${C.ink}" stroke-width="1.8" stroke-dasharray="6 4"`));
+  }
+  // the two columns of DF
+  o.push(arrow(T.px(P[0]),T.py(P[1]),T.px(P[0]+M[0]*h/2),T.py(P[1]+M[2]*h/2), C.xi, 2.6));
+  o.push(arrow(T.px(P[0]),T.py(P[1]),T.px(P[0]+M[1]*h/2),T.py(P[1]+M[3]*h/2), C.eta, 2.6));
+
+  for (let A=0;A<nen();A++){
+    const hot = st.drag && st.drag.kind==='cp' && st.drag.A===A;
+    o.push(circ(T.px(st.cp[A][0]),T.py(st.cp[A][1]), hot?8:6,
+           `fill="${C.node}" stroke="${C.ink}" stroke-width="1.5"`));
+    o.push(txt(T.px(st.cp[A][0])+9, T.py(st.cp[A][1])-8, A,
+           `font-size="10.5" font-family="monospace" fill="${C.ink}"`));
+  }
+  o.push(circ(T.px(P[0]),T.py(P[1]),5,`fill="#fff" stroke="${C.ink}" stroke-width="2.2"`));
+  $("svg_phy").innerHTML = o.join("");
+}
+
+/* ---------- numbers ---------- */
+const f4 = v => (Math.abs(v) < 5e-5 ? 0 : v).toFixed(4);
+
+function drawNumbers(){
+  const M = DF(st.xi, st.eta), J = detOf(M), h = effH();
+  $("mat").innerHTML =
+    `<span>${f4(M[0])}</span><span>${f4(M[1])}</span>` +
+    `<span>${f4(M[2])}</span><span>${f4(M[3])}</span>`;
+
+  const cls = J > 1e-9 ? "jc-pos" : (J < -1e-9 ? "jc-neg" : "jc-zero");
+  const word = J > 1e-9 ? "positive — orientation preserved"
+             : (J < -1e-9 ? "negative — orientation reversed, the element is folded here"
+                          : "zero — the map is singular here");
+  $("detline").innerHTML =
+    `(${f4(M[0])})(${f4(M[3])}) − (${f4(M[1])})(${f4(M[2])}) = ` +
+    `<span class="${cls}">${f4(J)}</span><br><span class="${cls}">${word}</span>`;
+
+  const img = squareLoop(h, 12).map(p => mapPt(p[0], p[1]));
+  const trueA = shoelace(img), paraA = J*h*h;
+  $("hshow").textContent = h.toFixed(3) + (h < st.h - 1e-9 ? " (reduced to fit)" : "");
+  $("arealine").innerHTML =
+    `parent square      h²      = ${f4(h*h)}<br>` +
+    `DF parallelogram   J·h²    = ${f4(paraA)}<br>` +
+    `image of the square (signed) = ${f4(trueA)}<br>` +
+    `<span style="color:#6b7684">ratio image/parallelogram = ${f4(trueA/(paraA||1e-12))} → 1 as h → 0</span>`;
+}
+
+function drawTable(rebuild){
+  const {Nx,Ne} = shape(st.xi, st.eta);
+  const M = DF(st.xi, st.eta);
+  if (rebuild){
+    const rows = [];
+    for (let A=0;A<nen();A++)
+      rows.push(`<tr><td>${A}</td>` +
+        `<td><input type="number" step="0.05" data-A="${A}" data-c="0" value="${st.cp[A][0].toFixed(4)}"></td>` +
+        `<td><input type="number" step="0.05" data-A="${A}" data-c="1" value="${st.cp[A][1].toFixed(4)}"></td>` +
+        `<td>${f4(Nx[A])}</td><td>${f4(Ne[A])}</td></tr>`);
+    $("cp_rows").innerHTML = rows.join("");
+    for (const inp of $("cp_rows").querySelectorAll("input"))
+      inp.addEventListener("change", e => {
+        const A = +e.target.getAttribute("data-A"), c = +e.target.getAttribute("data-c");
+        const v = parseFloat(e.target.value);
+        if (Number.isFinite(v)){ st.cp[A][c] = v; render(false); }
+      });
+  } else {
+    const trs = $("cp_rows").querySelectorAll("tr");
+    trs.forEach((tr,A) => {
+      const td = tr.querySelectorAll("td");
+      td[3].textContent = f4(Nx[A]); td[4].textContent = f4(Ne[A]);
+    });
+  }
+  $("sum_xi").textContent  = `${f4(M[0])}, ${f4(M[2])}`;
+  $("sum_eta").textContent = `${f4(M[1])}, ${f4(M[3])}`;
+}
+
+function render(rebuild = true){
+  $("pxi_o").value = st.pxi; $("peta_o").value = st.peta; $("hh_o").value = st.h.toFixed(2);
+  $("xi").value = st.xi; $("xi_n").value = st.xi.toFixed(3);
+  $("eta").value = st.eta; $("eta_n").value = st.eta.toFixed(3);
+  if (!st.view) fitView();
+  const F = buildField();
+  drawParent(F); drawPhysical(F); drawNumbers(); drawTable(rebuild);
+}
+
+/* ---------- interaction ---------- */
+function svgPt(svg, ev){
+  const r = svg.getBoundingClientRect();
+  return [(ev.clientX-r.left)*(VB/r.width), (ev.clientY-r.top)*(VB/r.height)];
+}
+const clamp = v => Math.max(-1, Math.min(1, v));
+
+$("svg_par").addEventListener("pointerdown", ev => {
+  const T = parTx(), [px,py] = svgPt($("svg_par"), ev);
+  st.xi = clamp(T.dx(px)); st.eta = clamp(T.dy(py)); st.drag = {kind:'pt'};
+  $("svg_par").setPointerCapture(ev.pointerId); render(false);
+});
+$("svg_par").addEventListener("pointermove", ev => {
+  if (!st.drag || st.drag.kind!=='pt') return;
+  const T = parTx(), [px,py] = svgPt($("svg_par"), ev);
+  st.xi = clamp(T.dx(px)); st.eta = clamp(T.dy(py)); render(false);
+});
+$("svg_phy").addEventListener("pointerdown", ev => {
+  const T = phyTx(), [px,py] = svgPt($("svg_phy"), ev);
+  let best=-1, bd=14;
+  for (let A=0;A<nen();A++){
+    const d = Math.hypot(px-T.px(st.cp[A][0]), py-T.py(st.cp[A][1]));
+    if (d < bd){ bd = d; best = A; }
+  }
+  if (best < 0) return;
+  st.drag = {kind:'cp', A:best};
+  $("svg_phy").setPointerCapture(ev.pointerId); render(false);
+});
+$("svg_phy").addEventListener("pointermove", ev => {
+  if (!st.drag || st.drag.kind!=='cp') return;
+  const T = phyTx(), [px,py] = svgPt($("svg_phy"), ev);
+  st.cp[st.drag.A] = [T.dx(px), T.dy(py)]; render(true);
+});
+for (const s of ["svg_par","svg_phy"]){
+  $(s).addEventListener("pointerup", () => { st.drag = null; render(true); });
+  $(s).addEventListener("pointercancel", () => { st.drag = null; });
+}
+
+function setDeg(){
+  st.pxi = +$("pxi").value; st.peta = +$("peta").value;
+  st.cp = defaultCP(st.pxi, st.peta); fitView(); render(true);
+}
+$("pxi").addEventListener("input", setDeg);
+$("peta").addEventListener("input", setDeg);
+$("xi").addEventListener("input",  e => { st.xi  = +e.target.value; render(false); });
+$("eta").addEventListener("input", e => { st.eta = +e.target.value; render(false); });
+$("hh").addEventListener("input",  e => { st.h   = +e.target.value; render(false); });
+$("xi_n").addEventListener("change",  e => { const v=parseFloat(e.target.value); if(Number.isFinite(v)){st.xi=clamp(v);render(false);} });
+$("eta_n").addEventListener("change", e => { const v=parseFloat(e.target.value); if(Number.isFinite(v)){st.eta=clamp(v);render(false);} });
+for (const id of ["t_field","t_zero","t_par","t_img","t_grid"]) $(id).addEventListener("change", () => render(false));
+$("b_reset").addEventListener("click", () => { st.cp = defaultCP(st.pxi,st.peta); fitView(); render(true); });
+$("b_fit").addEventListener("click",   () => { fitView(); render(false); });
+
+st.cp = defaultCP(st.pxi, st.peta);
+fitView(); render(true);
+})();
+</script>
+```
+
+## Reading the output
+
+The table holds the ingredients. Columns $\partial N_A/\partial\xi$ and
+$\partial N_A/\partial\eta$ are the two components of $\nabla_\xi N_A$, and the footer row
+is each of them weighted by the nodal coordinates, which is to say the two columns of
+$DF$. Nothing in the matrix comes from anywhere else.
+
+Under $J = \det DF$ the three areas are printed together:
+
+* $h^2$, the area of the square in the parent domain;
+* $J h^2$, the area of the parallelogram $DF$ predicts;
+* the signed area of the image of that square. <!--, by the shoelace formula.-->
+
+Shrink $h$ and the ratio of the last two goes to $1$. That limit is the definition of the
+derivative, and it is the reason $d\Omega = J\,d\xi\,d\eta$ is allowed inside an integral.
+
+## Things to try
+
+1. Move the point around the default element. $J$ changes from place to place: the quarter
+   annulus stretches more at the outer radius than the inner one. A single number does not
+   describe the whole element.
+2. Set $h = 1.2$ and compare the filled patch with the dashed parallelogram. They differ.
+   Now drag $h$ down to $0.05$ and they coincide. $DF$ is a local statement.
+3. Set $p_\xi = p_\eta = 1$. The four-node element is a bilinear map, and $J$ is not
+   constant: the shading still varies. A bilinear element is only a pure stretch when it
+   is a parallelogram.
+4. Drag control point $A = 1$ toward the interior of the element, past its neighbours,
+   until part of the shading turns red. The $J = 0$ curve appears, the image of the square
+   flips over, and its arrowheads run opposite to the ones on the gold square. That is the
+   2D version of $dx^e/d\xi < 0$ from Homework 7, case 4.
+5. Put the point on the $J = 0$ curve. The parallelogram collapses to a line: the two
+   columns of $DF$ have become parallel, so the map squashes a 2D neighbourhood onto a 1D
+   one and $DF$ has no inverse. Derivatives with respect to $x$, which need $DF^{-1}$,
+   are undefined there.
+6. Swap two control points that are not neighbours, for instance give $A = 1$ the
+   coordinates of $A = 3$ and vice versa. The element outline may still look reasonable
+   while the shading is entirely red. The outline does not tell you whether an element is
+   valid; the sign of $J$ does.
+
+## Derivatives with respect to $x$
+
+The weak form needs $\nabla_x N_A$, the gradient in physical coordinates. But $N_A$ is
+defined on the parent domain, so the only derivatives we can take directly are
+$\partial N_A/\partial \xi_j$. The chain rule connects them. Since
+$N_A$ reaches $\underline{\xi}$ only through $\underline{x}$,
+
+$$
+\frac{\partial N_A}{\partial \xi_j}
+ = \frac{\partial N_A}{\partial x_i}\,\frac{\partial x_i}{\partial \xi_j}
+ = \frac{\partial x_i}{\partial \xi_j}\,\frac{\partial N_A}{\partial x_i},
+$$
+
+which in matrix form is $\nabla_\xi N_A = \left(DF\right)^T \nabla_x N_A$. Solving for the
+part we want,
+
+$$
+\boxed{\;\nabla_x N_A = \left(DF\right)^{-T}\,\nabla_\xi N_A\;}
+$$
+
+In 2D the inverse is written out easily, since
+
+$$
+DF^{-1} = \frac{1}{J}
+\begin{bmatrix}
+\dfrac{\partial x_2}{\partial \eta} & -\dfrac{\partial x_1}{\partial \eta} \\[10pt]
+-\dfrac{\partial x_2}{\partial \xi} & \dfrac{\partial x_1}{\partial \xi}
+\end{bmatrix},
+\qquad\text{so}\qquad
+DF^{-T} = \frac{1}{J}
+\begin{bmatrix}
+\dfrac{\partial x_2}{\partial \eta} & -\dfrac{\partial x_2}{\partial \xi} \\[10pt]
+-\dfrac{\partial x_1}{\partial \eta} & \dfrac{\partial x_1}{\partial \xi}
+\end{bmatrix}.
+$$
+
+Note the $1/J$. Everything said above about $J$ changing sign now has a second
+consequence: at $J = 0$ the spatial gradient does not exist, and near $J = 0$ it is large.
+An element that is merely folded gives wrong areas; an element that is folded also gives
+unusable derivatives, which is what actually enters the stiffness matrix.
+
+The viewer below shows one basis function at a time. In each panel the thin curve is the
+level set of $N_A$ through the current point, and the arrow is the gradient, which is
+perpendicular to its own level set in its own domain. The two arrows generally point in
+**different directions**: $DF^{-T}$ rotates and rescales, so a gradient that points one
+way in the parent domain need not point that way in the element.
+
+```{=html}
+<style>
+.g-wrap{margin-top:8px}
+.g-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px 26px;
+  padding:14px 16px;border:1px solid #dde1e7;border-radius:8px;background:#f8f9fb;margin-bottom:14px}
+.g-row{display:grid;grid-template-columns:96px 1fr 58px;align-items:center;gap:10px}
+.g-row output{font-family:monospace;text-align:right}
+.g-row input[type=number]{width:100%;font-family:monospace}
+.g-toggles{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
+.g-toggles label{display:flex;gap:5px;align-items:center}
+.g-btn{font:inherit;padding:4px 10px;border:1px solid #c3c9d2;border-radius:6px;background:#fff;cursor:pointer}
+.g-btn:hover{background:#eef1f5}
+.g-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+@media (max-width:900px){.g-pair{grid-template-columns:1fr}}
+.g-panel{border:1px solid #dde1e7;border-radius:8px;background:#fff;padding:6px}
+.g-panel h4{margin:2px 0 0 6px;font-size:.95em;font-weight:600;color:#42506a}
+.g-svg{width:100%;height:auto;display:block;touch-action:none;cursor:crosshair}
+.g-out{font-family:monospace;font-size:.88em;background:#f8f9fb;border:1px solid #dde1e7;
+  border-radius:8px;padding:12px 14px;margin-top:14px}
+.g-out .lbl{color:#6b7684;display:block;margin:12px 0 3px;font-size:.92em}
+.g-out .lbl:first-child{margin-top:0}
+.g-mat{display:inline-grid;grid-template-columns:auto auto;gap:2px 16px;padding:4px 12px;margin:2px 0;
+  border-left:2px solid #18202b;border-right:2px solid #18202b}
+.g-mat span{text-align:right}
+.g-warn{color:#b8322a;font-weight:700}
+</style>
+
+<div class="g-wrap">
+<div class="g-controls">
+  <div>
+    <div class="g-row"><label for="g_A">basis N<sub>A</sub></label><input id="g_A" type="range" min="0" max="8" step="1" value="4"><output id="g_A_o"></output></div>
+    <div class="g-row"><label for="g_p">degree p</label><input id="g_p" type="range" min="1" max="3" step="1" value="2"><output id="g_p_o"></output></div>
+  </div>
+  <div>
+    <div class="g-row"><label for="g_xi">ξ</label><input id="g_xi" type="range" min="-1" max="1" step="0.005" value="0.30"><input id="g_xi_n" type="number" min="-1" max="1" step="0.01" value="0.30"></div>
+    <div class="g-row"><label for="g_eta">η</label><input id="g_eta" type="range" min="-1" max="1" step="0.005" value="-0.20"><input id="g_eta_n" type="number" min="-1" max="1" step="0.01" value="-0.20"></div>
+  </div>
+  <div class="g-toggles">
+    <label><input type="checkbox" id="g_t_lvl" checked> level set of N<sub>A</sub></label>
+    <label><input type="checkbox" id="g_t_grid" checked> mapped grid</label>
+    <button class="g-btn" id="g_reset">reset element</button>
+  </div>
+</div>
+
+<div class="g-pair">
+  <div class="g-panel">
+    <h4>Parent domain &nbsp;<span style="font-weight:400;color:#6b7684">∇<sub>ξ</sub>N<sub>A</sub></span></h4>
+    <svg id="g_par" class="g-svg" viewBox="0 0 440 440"></svg>
+  </div>
+  <div class="g-panel">
+    <h4>Physical domain &nbsp;<span style="font-weight:400;color:#6b7684">∇<sub>x</sub>N<sub>A</sub></span></h4>
+    <svg id="g_phy" class="g-svg" viewBox="0 0 440 440"></svg>
+  </div>
+</div>
+
+<div class="g-out">
+  <span class="lbl">∇<sub>ξ</sub>N<sub>A</sub> (what Homework 6 gives you)</span>
+  <div id="g_gp"></div>
+  <span class="lbl">DF<sup>−T</sup> = (1/J)·adj</span>
+  <div class="g-mat" id="g_mit"></div>
+  <span class="lbl">∇<sub>x</sub>N<sub>A</sub> = DF<sup>−T</sup> ∇<sub>ξ</sub>N<sub>A</sub></span>
+  <div id="g_gx"></div>
+  <span class="lbl">angle between them, and J</span>
+  <div id="g_ang"></div>
+</div>
+</div>
+
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const VB = 440, PAD = 34;
+const C = {xi:"#1f5fbf", eta:"#c2410c", node:"#e0a800", ink:"#18202b",
+           grey:"#9aa3ae", lvl:"#3f8f5e", faint:"#dfe4ea"};
+
+const nodes1d = p => Array.from({length:p+1},(_,i)=>-1+2*i/p);
+function lag(p,a,t){const P=nodes1d(p);let v=1;for(let j=0;j<=p;j++)if(j!==a)v*=(t-P[j])/(P[a]-P[j]);return v;}
+function dlag(p,a,t){const P=nodes1d(p);let s=0;
+  for(let m=0;m<=p;m++){if(m===a)continue;let q=1/(P[a]-P[m]);
+    for(let j=0;j<=p;j++)if(j!==a&&j!==m)q*=(t-P[j])/(P[a]-P[j]);s+=q;}return s;}
+
+const G = {p:2, A:4, xi:0.30, eta:-0.20, cp:[], view:null, drag:null};
+
+function defaultCP(p){
+  const r0=1,r1=2,t0=0,t1=Math.PI/2,out=[],P=nodes1d(p);
+  for(let b=0;b<=p;b++){const th=t0+(t1-t0)*(P[b]+1)/2;
+    for(let a=0;a<=p;a++){const r=r0+(r1-r0)*(P[a]+1)/2;out.push([r*Math.cos(th),r*Math.sin(th)]);}}
+  return out;
+}
+const nen = () => (G.p+1)*(G.p+1);
+function NofA(A,xi,eta){const a=A%(G.p+1),b=Math.floor(A/(G.p+1));return lag(G.p,a,xi)*lag(G.p,b,eta);}
+function gradParam(A,xi,eta){
+  const a=A%(G.p+1), b=Math.floor(A/(G.p+1));
+  return [dlag(G.p,a,xi)*lag(G.p,b,eta), lag(G.p,a,xi)*dlag(G.p,b,eta)];
+}
+function mapPt(xi,eta){let x=0,y=0;
+  for(let A=0;A<nen();A++){const n=NofA(A,xi,eta);x+=G.cp[A][0]*n;y+=G.cp[A][1]*n;}return [x,y];}
+function DFat(xi,eta){let a=0,b=0,c=0,d=0;
+  for(let A=0;A<nen();A++){const g=gradParam(A,xi,eta);
+    a+=G.cp[A][0]*g[0];b+=G.cp[A][0]*g[1];c+=G.cp[A][1]*g[0];d+=G.cp[A][1]*g[1];}
+  return [a,b,c,d];}
+const det4 = M => M[0]*M[3]-M[1]*M[2];
+function invT(M){const J=det4(M);                // DF^{-T} = (1/J)[[d,-c],[-b,a]]
+  return [M[3]/J, -M[2]/J, -M[1]/J, M[0]/J];}
+const matvec = (M,v) => [M[0]*v[0]+M[1]*v[1], M[2]*v[0]+M[3]*v[1]];
+
+function makeTx(x0,x1,y0,y1){
+  const iw=VB-2*PAD, s=Math.min(iw/Math.max(x1-x0,1e-9), iw/Math.max(y1-y0,1e-9));
+  const cx=(x0+x1)/2, cy=(y0+y1)/2;
+  return {s,px:x=>VB/2+(x-cx)*s,py:y=>VB/2-(y-cy)*s,dx:p=>cx+(p-VB/2)/s,dy:p=>cy-(p-VB/2)/s};
+}
+const parTx = () => makeTx(-1.2,1.2,-1.2,1.2);
+function fit(){let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  const B=(x,y)=>{x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);};
+  for(const [x,y] of G.cp) B(x,y);
+  for(let i=0;i<=24;i++){const t=-1+2*i/24;
+    for(const q of [[t,-1],[t,1],[-1,t],[1,t]]){const p=mapPt(q[0],q[1]);B(p[0],p[1]);}}
+  const m=0.14*Math.max(x1-x0,y1-y0,1e-6);G.view=[x0-m,x1+m,y0-m,y1+m];}
+const phyTx = () => makeTx(G.view[0],G.view[1],G.view[2],G.view[3]);
+
+const poly=(p,s)=>`<polyline points="${p.map(q=>q[0].toFixed(2)+','+q[1].toFixed(2)).join(' ')}" fill="none" ${s}/>`;
+const pgon=(p,s)=>`<polygon points="${p.map(q=>q[0].toFixed(2)+','+q[1].toFixed(2)).join(' ')}" ${s}/>`;
+const circ=(x,y,r,s)=>`<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${r}" ${s}/>`;
+const line=(a,b,c,d,s)=>`<line x1="${a.toFixed(2)}" y1="${b.toFixed(2)}" x2="${c.toFixed(2)}" y2="${d.toFixed(2)}" ${s}/>`;
+function arrow(x1,y1,x2,y2,col,w){
+  const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy); if(L<1e-6) return "";
+  const ux=dx/L,uy=dy/L,hl=Math.min(13,L*0.34),hw=hl*0.5,bx=x2-ux*hl,by=y2-uy*hl;
+  return line(x1,y1,bx,by,`stroke="${col}" stroke-width="${w}"`)+
+         pgon([[x2,y2],[bx-uy*hw,by+ux*hw],[bx+uy*hw,by-ux*hw]],`fill="${col}"`);
+}
+
+// level set of N_A through the current point, by marching squares in the parent domain
+const NL = 40;
+function levelSegs(){
+  const lvl = NofA(G.A, G.xi, G.eta), g=[], V=[];
+  for(let i=0;i<=NL;i++) g.push(-1+2*i/NL);
+  for(let i=0;i<=NL;i++){V.push([]);for(let j=0;j<=NL;j++) V[i].push(NofA(G.A,g[i],g[j])-lvl);}
+  const out=[], ip=(x1,y1,v1,x2,y2,v2)=>{const t=v1/(v1-v2);return [x1+t*(x2-x1),y1+t*(y2-y1)];};
+  for(let i=0;i<NL;i++)for(let j=0;j<NL;j++){
+    const P=[[g[i],g[j],V[i][j]],[g[i+1],g[j],V[i+1][j]],[g[i+1],g[j+1],V[i+1][j+1]],[g[i],g[j+1],V[i][j+1]]];
+    const cr=[];
+    for(let k=0;k<4;k++){const a=P[k],b=P[(k+1)%4];
+      if((a[2]<0)!==(b[2]<0)) cr.push(ip(a[0],a[1],a[2],b[0],b[1],b[2]));}
+    if(cr.length===2) out.push([cr[0],cr[1]]);
+    else if(cr.length===4){out.push([cr[0],cr[1]]);out.push([cr[2],cr[3]]);}
+  }
+  return out;
+}
+
+function draw(){
+  const Tp=parTx(), Tx=phyTx(), o=[], q=[];
+  const gp=gradParam(G.A,G.xi,G.eta), M=DFat(G.xi,G.eta), J=det4(M);
+  const MIT=invT(M), gx=matvec(MIT,gp), P=mapPt(G.xi,G.eta);
+  const segs = $("g_t_lvl").checked ? levelSegs() : [];
+
+  // ---- parent ----
+  for(const v of nodes1d(G.p)){
+    o.push(line(Tp.px(v),Tp.py(-1),Tp.px(v),Tp.py(1),`stroke="${C.faint}"`));
+    o.push(line(Tp.px(-1),Tp.py(v),Tp.px(1),Tp.py(v),`stroke="${C.faint}"`));
+  }
+  o.push(pgon([[-1,-1],[1,-1],[1,1],[-1,1]].map(p=>[Tp.px(p[0]),Tp.py(p[1])]),
+        `fill="none" stroke="${C.ink}" stroke-width="2"`));
+  for(const s of segs) o.push(line(Tp.px(s[0][0]),Tp.py(s[0][1]),Tp.px(s[1][0]),Tp.py(s[1][1]),
+        `stroke="${C.lvl}" stroke-width="2"`));
+  for(let A=0;A<nen();A++){
+    const a=A%(G.p+1),b=Math.floor(A/(G.p+1));
+    o.push(circ(Tp.px(nodes1d(G.p)[a]),Tp.py(nodes1d(G.p)[b]), A===G.A?7:4,
+      `fill="${A===G.A?C.node:C.grey}" stroke="${C.ink}" stroke-width="1"`));
+  }
+  const sp = 0.42*Tp.s/Math.max(1e-6,Math.hypot(gp[0],gp[1]));
+  o.push(arrow(Tp.px(G.xi),Tp.py(G.eta),Tp.px(G.xi)+gp[0]*sp,Tp.py(G.eta)-gp[1]*sp,C.xi,2.8));
+  o.push(circ(Tp.px(G.xi),Tp.py(G.eta),5,`fill="#fff" stroke="${C.ink}" stroke-width="2.2"`));
+  $("g_par").innerHTML=o.join("");
+
+  // ---- physical ----
+  const S=Array.from({length:41},(_,i)=>-1+2*i/40);
+  if($("g_t_grid").checked)
+    for(let k=0;k<7;k++){const c=-1+2*k/6;
+      q.push(poly(S.map(t=>{const p=mapPt(t,c);return [Tx.px(p[0]),Tx.py(p[1])];}),
+             `stroke="${C.xi}" stroke-width="0.8" stroke-opacity="0.45"`));
+      q.push(poly(S.map(t=>{const p=mapPt(c,t);return [Tx.px(p[0]),Tx.py(p[1])];}),
+             `stroke="${C.eta}" stroke-width="0.8" stroke-opacity="0.45"`));}
+  for(const e of [[-1,1],[1,1],[-1,0],[1,0]])
+    q.push(poly(S.map(t=>{const p=e[1]?mapPt(t,e[0]):mapPt(e[0],t);return [Tx.px(p[0]),Tx.py(p[1])];}),
+           `stroke="${C.ink}" stroke-width="2.2"`));
+  for(const s of segs){const a=mapPt(s[0][0],s[0][1]),b=mapPt(s[1][0],s[1][1]);
+    q.push(line(Tx.px(a[0]),Tx.py(a[1]),Tx.px(b[0]),Tx.py(b[1]),`stroke="${C.lvl}" stroke-width="2"`));}
+  for(let A=0;A<nen();A++)
+    q.push(circ(Tx.px(G.cp[A][0]),Tx.py(G.cp[A][1]), A===G.A?8:5.5,
+      `fill="${A===G.A?C.node:"#cfd5dd"}" stroke="${C.ink}" stroke-width="1.4"`));
+  const sx = 0.42*Tx.s/Math.max(1e-6,Math.hypot(gx[0],gx[1]));
+  q.push(arrow(Tx.px(P[0]),Tx.py(P[1]),Tx.px(P[0])+gx[0]*sx,Tx.py(P[1])-gx[1]*sx,C.xi,2.8));
+  q.push(circ(Tx.px(P[0]),Tx.py(P[1]),5,`fill="#fff" stroke="${C.ink}" stroke-width="2.2"`));
+  $("g_phy").innerHTML=q.join("");
+
+  // ---- numbers ----
+  const f=v=>(Math.abs(v)<5e-5?0:v).toFixed(4);
+  $("g_gp").textContent = `( ${f(gp[0])}, ${f(gp[1])} )`;
+  $("g_mit").innerHTML = `<span>${f(MIT[0])}</span><span>${f(MIT[1])}</span>`+
+                         `<span>${f(MIT[2])}</span><span>${f(MIT[3])}</span>`;
+  $("g_gx").textContent = `( ${f(gx[0])}, ${f(gx[1])} )     magnitude ${f(Math.hypot(gx[0],gx[1]))}`;
+  const n1=Math.hypot(gp[0],gp[1]), n2=Math.hypot(gx[0],gx[1]);
+  let ang = NaN;
+  if(n1>1e-9 && n2>1e-9){
+    const c=(gp[0]*gx[0]+gp[1]*gx[1])/(n1*n2);
+    ang = Math.acos(Math.max(-1,Math.min(1,c)))*180/Math.PI;
+  }
+  $("g_ang").innerHTML = `${Number.isFinite(ang)?ang.toFixed(1)+"°":"—"}` +
+    `     J = ${f(J)}` + (Math.abs(J)<0.05 ? ` <span class="g-warn">— J near zero, the gradient is blowing up</span>` : "");
+}
+
+function svgPt(svg,ev){const r=svg.getBoundingClientRect();
+  return [(ev.clientX-r.left)*(VB/r.width),(ev.clientY-r.top)*(VB/r.height)];}
+const cl=v=>Math.max(-1,Math.min(1,v));
+function sync(){$("g_A_o").value=G.A;$("g_p_o").value=G.p;
+  $("g_xi").value=G.xi;$("g_xi_n").value=G.xi.toFixed(3);
+  $("g_eta").value=G.eta;$("g_eta_n").value=G.eta.toFixed(3);}
+function render(){sync();if(!G.view)fit();draw();}
+
+$("g_par").addEventListener("pointerdown",ev=>{const T=parTx(),[a,b]=svgPt($("g_par"),ev);
+  G.xi=cl(T.dx(a));G.eta=cl(T.dy(b));G.drag={k:'pt'};$("g_par").setPointerCapture(ev.pointerId);render();});
+$("g_par").addEventListener("pointermove",ev=>{if(!G.drag||G.drag.k!=='pt')return;
+  const T=parTx(),[a,b]=svgPt($("g_par"),ev);G.xi=cl(T.dx(a));G.eta=cl(T.dy(b));render();});
+$("g_phy").addEventListener("pointerdown",ev=>{const T=phyTx(),[a,b]=svgPt($("g_phy"),ev);
+  let best=-1,bd=14;
+  for(let A=0;A<nen();A++){const d=Math.hypot(a-T.px(G.cp[A][0]),b-T.py(G.cp[A][1]));if(d<bd){bd=d;best=A;}}
+  if(best<0)return; G.drag={k:'cp',A:best}; G.A=best; $("g_A").value=best;
+  $("g_phy").setPointerCapture(ev.pointerId); render();});
+$("g_phy").addEventListener("pointermove",ev=>{if(!G.drag||G.drag.k!=='cp')return;
+  const T=phyTx(),[a,b]=svgPt($("g_phy"),ev);G.cp[G.drag.A]=[T.dx(a),T.dy(b)];render();});
+for(const s of ["g_par","g_phy"]){
+  $(s).addEventListener("pointerup",()=>{G.drag=null;});
+  $(s).addEventListener("pointercancel",()=>{G.drag=null;});}
+
+$("g_A").addEventListener("input",e=>{G.A=+e.target.value;render();});
+$("g_p").addEventListener("input",e=>{G.p=+e.target.value;G.cp=defaultCP(G.p);
+  $("g_A").max=nen()-1; if(G.A>nen()-1)G.A=nen()-1; fit();render();});
+$("g_xi").addEventListener("input",e=>{G.xi=+e.target.value;render();});
+$("g_eta").addEventListener("input",e=>{G.eta=+e.target.value;render();});
+$("g_xi_n").addEventListener("change",e=>{const v=parseFloat(e.target.value);if(Number.isFinite(v)){G.xi=cl(v);render();}});
+$("g_eta_n").addEventListener("change",e=>{const v=parseFloat(e.target.value);if(Number.isFinite(v)){G.eta=cl(v);render();}});
+for(const id of ["g_t_lvl","g_t_grid"]) $(id).addEventListener("change",render);
+$("g_reset").addEventListener("click",()=>{G.cp=defaultCP(G.p);fit();render();});
+
+G.cp=defaultCP(G.p); $("g_A").max=nen()-1; fit(); render();
+})();
+</script>
+```
+
+Things to notice here:
+
+1. Move the point around with the default element. The angle between the two gradients is
+   rarely zero, and it changes from place to place. $DF^{-T}$ is a different matrix at
+   every point.
+2. Pick a corner basis function and put the point near the opposite corner. Both gradients
+   are nearly zero: that basis function has almost no influence there.
+3. Drag a control point until $J$ gets small. The magnitude of $\nabla_x N_A$ grows,
+   because of the $1/J$. The parametric gradient does not change at all, since it knows
+   nothing about the element's shape.
+4. Set $p = 1$ and compare with $p = 2$. The parametric gradients are simpler, but the
+   spatial ones are still position-dependent, because $DF^{-T}$ is.
+
+## Next
+
+$J$ is a polynomial in $\xi$ and $\eta$ whose degree depends on the element, and that
+degree is what decides how many quadrature points are enough. With $J$ for the area
+change and $DF^{-T}$ for the derivatives, every piece of the element stiffness matrix can
+now be written as an integral over the parent domain and evaluated by quadrature.

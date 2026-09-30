@@ -8,3 +8,7 @@ __pycache__/
 Class_PDFs/
 *.docx
 /scratch/
+
+# course-development material, not public-facing
+/Archive/
+/DELETEME_Homework/
