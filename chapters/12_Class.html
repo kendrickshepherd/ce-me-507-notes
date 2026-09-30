@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Finite Element Methods">
+
+<title>12&nbsp; Class 12: The Spatial Mapping – CE/ME 507 — Class Notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/13_Class.html" rel="next">
+<link href="../chapters/11_Class.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-5a6c5cd077c1ead4086784ad1389866e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script>
+window.MathJax = {
+  tex: {
+    tags: 'ams',
+    macros: {
+      RR: '{\\mathbb{R}}',
+      Om: '{\\Omega}'
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/12_Class.html"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Class 12: The Spatial Mapping</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">CE/ME 507 — Class Notes</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">CE/ME 507 — Class Notes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/2_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Class 2: Linear FEM</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Class 3: Index Notation, Function Spaces, and the Weak Form</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/4_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Class 4: Strong and Weak Forms of the Boundary Value Problem</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/5_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/6_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Class 6: Basis Functions and Lagrange Polynomials</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/7_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Class 7: From Galerkin to a Matrix Equation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/8_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Class 8: Assembly, Sparsity, and the Road to Quadrature</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/9_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Class 9: The Isoparametric Map and the Jacobian</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Class 10: Assembly with the IEN Array, and Quadrature on an Element</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Class 11: Tensor-Product Basis Functions in 2D</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12_Class.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Class 12: The Spatial Mapping</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Class 13: The Jacobian Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">1D Poisson I: Heat Conduction Through a Wall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">1D Poisson II: The Wall, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">1D Poisson III: An Axially Loaded Rod</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#the-general-form" id="toc-the-general-form" class="nav-link active" data-scroll-target="#the-general-form"><span class="header-section-number">12.1</span> The general form</a></li>
+  <li><a href="#the-map-interactively" id="toc-the-map-interactively" class="nav-link" data-scroll-target="#the-map-interactively"><span class="header-section-number">12.2</span> The map, interactively</a></li>
+  <li><a href="#reading-the-four-lines" id="toc-reading-the-four-lines" class="nav-link" data-scroll-target="#reading-the-four-lines"><span class="header-section-number">12.3</span> Reading the four lines</a></li>
+  <li><a href="#the-basis-functions" id="toc-the-basis-functions" class="nav-link" data-scroll-target="#the-basis-functions"><span class="header-section-number">12.4</span> The basis functions</a></li>
+  <li><a href="#things-to-try" id="toc-things-to-try" class="nav-link" data-scroll-target="#things-to-try"><span class="header-section-number">12.5</span> Things to try</a></li>
+  <li><a href="#next" id="toc-next" class="nav-link" data-scroll-target="#next"><span class="header-section-number">12.6</span> Next</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content column-body" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Class 12: The Spatial Mapping</span></h1>
+<p class="subtitle lead">From the parent domain to a physical element</p>
+</div>
+
+
+
+<div class="quarto-title-meta column-body">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p><a href="../chapters/11_Class.html">Class 11</a> showed how to build 2D basis functions on the <strong>parent domain</strong> (also called the <strong>reference domain</strong>), the square <span class="math inline">\(\hat\Omega = [-1,1]^2\)</span> with coordinates <span class="math inline">\((\xi,\eta)\)</span>. Elements in a mesh may not be squares, and if they are, they aren’t always centered around the origin, so we need a method that takes a point of the parent domain to a point of the element. That rule is the <strong>spatial mapping</strong>, and it uses the same basis functions. In two dimensions, this looks like</p>
+<p><span class="math display">\[
+\underline{x}^e(\xi,\eta) = \sum_{A=0}^{n_{en}-1} \underline{x}_A^e \, N_A(\xi,\eta),
+\]</span></p>
+<p>where <span class="math inline">\(\underline{x}_A^e\)</span> is the position of node <span class="math inline">\(A\)</span> of element <span class="math inline">\(e\)</span>, and <span class="math inline">\(n_{en} = (p_\xi+1)(p_\eta+1)\)</span> is the number of nodes on the element. The above equation can be represented by two coordinate mappings for both the <span class="math inline">\(x\)</span> and the <span class="math inline">\(y\)</span> coordinates from the parent domain as</p>
+<p><span class="math display">\[
+x(\xi,\eta) = \sum_A x_A\,N_A(\xi,\eta), \qquad
+y(\xi,\eta) = \sum_A y_A\,N_A(\xi,\eta).
+\]</span></p>
+<p>Compare this with the approximate solution,</p>
+<p><span class="math display">\[
+u^h(\xi,\eta) = \sum_A d_A\,N_A(\xi,\eta).
+\]</span></p>
+<p>Both of these maps use the same basis functions but different coefficients, which coefficients are defined by the nodal positions of the element geometry. Using the same <span class="math inline">\(N_A\)</span> for both the solution, <span class="math inline">\(u^h,\)</span> and for the geometry is what <strong>isoparametric</strong> means.</p>
+<section id="the-general-form" class="level2" data-number="12.1">
+<h2 data-number="12.1" class="anchored" data-anchor-id="the-general-form"><span class="header-section-number">12.1</span> The general form</h2>
+<p>If we write <span class="math inline">\(\underline{\xi}\)</span> for the parametric coordinates, <span class="math inline">\(\underline{\xi} = (\xi,\eta)\)</span> in 2D and <span class="math inline">\(\underline{\xi} = (\xi,\eta,\zeta)\)</span> in 3D. Then</p>
+<p><span class="math display">\[
+\underline{x}^e(\underline{\xi}) = \sum_{A=0}^{n_{en}-1} \underline{x}_A^e \, N_A(\underline{\xi}),
+\]</span></p>
+<p>with the basis functions and the single index built as in Class 11,</p>
+<p><span class="math display">\[
+N_A(\underline{\xi}) = \prod_{i=0}^{n_{sd}-1} \ell^{p_i}_{a_i}(\xi_i),
+\qquad
+A = \sum_{i=0}^{n_{sd}-1} a_i\,s_i,
+\qquad
+s_0 = 1, \quad s_i = \prod_{j=0}^{i-1}(p_j+1),
+\]</span></p>
+<p>and <span class="math inline">\(n_{en} = \prod_{i=0}^{n_{sd}-1}(p_i+1)\)</span>. In 2D this is <span class="math inline">\(N_A(\xi,\eta) = \ell^{p_\xi}_a(\xi)\,\ell^{p_\eta}_b(\eta)\)</span> with <span class="math inline">\(A = a + (p_\xi+1)b\)</span>, which is what the viewer below uses. The interpolation points are typicallly equally spaced in each direction.</p>
+</section>
+<section id="the-map-interactively" class="level2" data-number="12.2">
+<h2 data-number="12.2" class="anchored" data-anchor-id="the-map-interactively"><span class="header-section-number">12.2</span> The map, interactively</h2>
+<p>The left panel is the parent domain, the right is the physical element. The element you start with is a quarter annulus, <span class="math inline">\(1 \le r \le 2\)</span>, with its nodes placed at the parametric node locations.</p>
+<ul>
+<li>Drag the dot in the parent domain, or type <span class="math inline">\(\xi\)</span> and <span class="math inline">\(\eta\)</span> below it. The matching point in the physical element follows.</li>
+<li>Drag the gold control points in the physical element, or edit their coordinates in the table. The element changes shape.</li>
+<li>Nodes in the parent domain are drawn scaled by <span class="math inline">\(N_A(\xi,\eta)\)</span> at the current point, so a large marker means a large weight. Blue is a positive weight, red a negative one.</li>
+</ul>
+<style>
+.sm-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px 28px;
+  padding:14px 16px;border:1px solid #dde1e7;border-radius:8px;background:#f8f9fb;margin-bottom:14px}
+.sm-row{display:grid;grid-template-columns:104px 1fr 56px;align-items:center;gap:10px}
+.sm-row output{font-family:monospace;text-align:right}
+.sm-row input[type=number]{width:100%;font-family:monospace}
+.sm-toggles{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center}
+.sm-toggles label{display:flex;gap:5px;align-items:center}
+.sm-btn{font:inherit;padding:4px 10px;border:1px solid #c3c9d2;border-radius:6px;background:#fff;cursor:pointer}
+.sm-btn:hover{background:#eef1f5}
+.sm-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+@media (max-width:900px){.sm-pair{grid-template-columns:1fr}}
+.sm-panel{border:1px solid #dde1e7;border-radius:8px;background:#fff;padding:6px}
+.sm-panel h4{margin:2px 0 0 6px;font-size:.95em;font-weight:600;color:#42506a}
+.sm-svg{width:100%;height:auto;display:block;touch-action:none;cursor:crosshair}
+.sm-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;margin-top:14px}
+@media (max-width:900px){.sm-grid{grid-template-columns:1fr}}
+.sm-tablewrap{max-height:330px;overflow:auto;border:1px solid #dde1e7;border-radius:8px}
+table.sm-cp{border-collapse:collapse;width:100%;font-family:monospace;font-size:.86em}
+table.sm-cp th,table.sm-cp td{padding:3px 6px;border-bottom:1px solid #eceff3;text-align:right;white-space:nowrap}
+table.sm-cp th{position:sticky;top:0;background:#f8f9fb;z-index:1;font-weight:600}
+table.sm-cp input{width:74px;font-family:monospace;font-size:1em;border:1px solid #d6dbe2;border-radius:4px;padding:1px 4px;text-align:right}
+table.sm-cp tr.hot{background:#fff6da}
+.sm-chain{font-family:monospace;font-size:.85em;line-height:1.65;background:#f8f9fb;border:1px solid #dde1e7;
+  border-radius:8px;padding:12px 14px;overflow-x:auto}
+.sm-chain .lbl{color:#6b7684;display:block;margin:10px 0 2px;font-size:.92em}
+.sm-chain .lbl:first-child{margin-top:0}
+.sm-chain .eq{white-space:pre-wrap;word-break:break-word}
+.sm-chain .big{font-weight:700;color:#b8322a}
+.sm-chain .res{font-weight:700;color:#18202b}
+.sm-note{color:#6b7684;font-size:.9em;margin-top:6px}
+.sm-warn{color:#b8322a;font-weight:600}
+</style>
+
+<div class="sm-controls">
+  <div>
+    <div class="sm-row"><label for="pxi">p<sub>ξ</sub> (degree)</label><input id="pxi" type="range" min="1" max="3" step="1" value="2"><output id="pxi_o"></output></div>
+    <div class="sm-row"><label for="peta">p<sub>η</sub> (degree)</label><input id="peta" type="range" min="1" max="3" step="1" value="2"><output id="peta_o"></output></div>
+  </div>
+  <div>
+    <div class="sm-row"><label for="xi">ξ</label><input id="xi" type="range" min="-1" max="1" step="0.005" value="0.35"><input id="xi_n" type="number" min="-1" max="1" step="0.01" value="0.35"></div>
+    <div class="sm-row"><label for="eta">η</label><input id="eta" type="range" min="-1" max="1" step="0.005" value="-0.25"><input id="eta_n" type="number" min="-1" max="1" step="0.01" value="-0.25"></div>
+  </div>
+  <div class="sm-toggles">
+    <label><input type="checkbox" id="t_weights" checked=""> scale nodes by weight</label>
+    <label><input type="checkbox" id="t_grid" checked=""> mapped grid lines</label>
+    <label><input type="checkbox" id="t_labels" checked=""> node labels</label>
+    <button class="sm-btn" id="b_reset">reset element</button>
+    <button class="sm-btn" id="b_fit">fit view</button>
+  </div>
+</div>
+
+<div class="sm-pair">
+  <div class="sm-panel">
+    <h4 class="anchored">Parent domain &nbsp;<span style="font-weight:400;color:#6b7684">(ξ, η) ∈ [−1,1]²</span></h4>
+    <svg id="svg_par" class="sm-svg" viewbox="0 0 440 440"></svg>
+  </div>
+  <div class="sm-panel">
+    <h4 class="anchored">Physical domain &nbsp;<span style="font-weight:400;color:#6b7684">(x, y)</span></h4>
+    <svg id="svg_phy" class="sm-svg" viewbox="0 0 440 440"></svg>
+  </div>
+</div>
+
+<div class="sm-grid">
+  <div>
+    <div class="sm-tablewrap">
+      
+<table class="sm-cp caption-top">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">A</th>
+<th data-quarto-table-cell-role="th">(a, b)</th>
+<th data-quarto-table-cell-role="th">x<sub>A</sub></th>
+<th data-quarto-table-cell-role="th">y<sub>A</sub></th>
+<th data-quarto-table-cell-role="th">N<sub>A</sub>(ξ,η)</th>
+</tr>
+</thead>
+<tbody id="cp_rows">
+</tbody>
+</table>
+
+    </div>
+    <div class="sm-note" id="sum_note"></div>
+  </div>
+  <div>
+    <div class="sm-chain">
+      <span class="lbl">1 — the sum, symbolically</span>
+      <span class="eq" id="eq1"></span>
+      <span class="lbl">2 — nodal coordinates substituted</span>
+      <span class="eq" id="eq2"></span>
+      <span class="lbl">3 — basis functions evaluated at (ξ, η)</span>
+      <span class="eq" id="eq3"></span>
+      <span class="lbl">4 — the mapped point</span>
+      <span class="eq res" id="eq4"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const VB = 440, PAD = 34;
+const C = {xi:"#1f5fbf", eta:"#c2410c", node:"#e0a800", ink:"#18202b",
+           grey:"#9aa3ae", neg:"#2f6db5", pos:"#b8322a", faint:"#dfe4ea"};
+
+/* ---------- 1D Lagrange machinery (equally spaced points) ---------- */
+const nodes1d = p => Array.from({length:p+1}, (_,i) => -1 + 2*i/p);
+
+function lag(p, a, t){
+  const P = nodes1d(p);
+  let v = 1;
+  for (let j = 0; j <= p; j++) if (j !== a) v *= (t - P[j])/(P[a] - P[j]);
+  return v;
+}
+
+/* ---------- state ---------- */
+const st = {pxi:2, peta:2, xi:0.35, eta:-0.25, cp:[], view:null, drag:null};
+
+// default element: a quarter annulus, 1 <= r <= 2, 0 <= theta <= pi/2,
+// sampled at the parametric node locations. Curved, and detJ > 0 at every degree.
+function defaultCP(pxi, peta){
+  const r0=1, r1=2, t0=0, t1=Math.PI/2, out=[];
+  const Pa = nodes1d(pxi), Pb = nodes1d(peta);
+  for (let b = 0; b <= peta; b++){
+    const th = t0 + (t1-t0)*(Pb[b]+1)/2;
+    for (let a = 0; a <= pxi; a++){
+      const r = r0 + (r1-r0)*(Pa[a]+1)/2;
+      out.push([r*Math.cos(th), r*Math.sin(th)]);
+    }
+  }
+  return out;
+}
+
+const nen  = () => (st.pxi+1)*(st.peta+1);
+const idxA = (a,b) => a + (st.pxi+1)*b;
+const ab   = A => [A % (st.pxi+1), Math.floor(A/(st.pxi+1))];
+
+// weights N_A at a parametric point
+function weights(xi, eta){
+  const w = new Array(nen());
+  for (let b = 0; b <= st.peta; b++){
+    const lb = lag(st.peta, b, eta);
+    for (let a = 0; a <= st.pxi; a++) w[idxA(a,b)] = lag(st.pxi, a, xi) * lb;
+  }
+  return w;
+}
+
+function mapPt(xi, eta){
+  const w = weights(xi, eta);
+  let x = 0, y = 0;
+  for (let A = 0; A < w.length; A++){ x += st.cp[A][0]*w[A]; y += st.cp[A][1]*w[A]; }
+  return [x, y];
+}
+
+/* ---------- coordinate transforms for a panel ---------- */
+// equal aspect, data range -> viewBox pixels
+function makeTx(x0, x1, y0, y1){
+  const iw = VB - 2*PAD, ih = VB - 2*PAD;
+  const s = Math.min(iw/Math.max(x1-x0, 1e-9), ih/Math.max(y1-y0, 1e-9));
+  const cx = (x0+x1)/2, cy = (y0+y1)/2;
+  return {
+    s,
+    px: x => VB/2 + (x - cx)*s,
+    py: y => VB/2 - (y - cy)*s,       // flip: +y is up
+    dx: px => cx + (px - VB/2)/s,
+    dy: py => cy - (py - VB/2)/s
+  };
+}
+const parTx = () => makeTx(-1.18, 1.18, -1.18, 1.18);
+
+function fitView(){
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  const bump = (x,y)=>{x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);};
+  for (const [x,y] of st.cp) bump(x,y);
+  const M = 25;                                  // sample the mapped boundary too
+  for (let i = 0; i <= M; i++){
+    const t = -1 + 2*i/M;
+    for (const q of [[t,-1],[t,1],[-1,t],[1,t]]){ const p = mapPt(q[0],q[1]); bump(p[0],p[1]); }
+  }
+  const mx = 0.12*Math.max(x1-x0, y1-y0, 1e-6);
+  st.view = [x0-mx, x1+mx, y0-mx, y1+mx];
+}
+const phyTx = () => makeTx(st.view[0], st.view[1], st.view[2], st.view[3]);
+
+/* ---------- small svg helpers ---------- */
+const esc = s => String(s);
+const line = (x1,y1,x2,y2,st_) => `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" ${st_}/>`;
+const poly = (pxy,st_) => `<polyline points="${pxy.map(p=>p[0].toFixed(2)+','+p[1].toFixed(2)).join(' ')}" fill="none" ${st_}/>`;
+const circ = (x,y,r,st_) => `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${r.toFixed(2)}" ${st_}/>`;
+const text = (x,y,s,st_) => `<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" ${st_}>${esc(s)}</text>`;
+
+const NSAMP = 41;
+const samples = n => Array.from({length:n}, (_,i) => -1 + 2*i/(n-1));
+
+/* ---------- parent panel ---------- */
+function drawParent(w){
+  const T = parTx(), o = [];
+  const gl = 'stroke="'+C.faint+'" stroke-width="1"';
+
+  // light grid at the interpolation lines
+  for (const v of nodes1d(st.pxi)) o.push(line(T.px(v),T.py(-1),T.px(v),T.py(1), gl));
+  for (const v of nodes1d(st.peta)) o.push(line(T.px(-1),T.py(v),T.px(1),T.py(v), gl));
+
+  // the square
+  o.push(`<rect x="${T.px(-1).toFixed(2)}" y="${T.py(1).toFixed(2)}" width="${(2*T.s).toFixed(2)}" height="${(2*T.s).toFixed(2)}" fill="none" stroke="${C.ink}" stroke-width="2"/>`);
+
+  // crosshair at the current point
+  o.push(line(T.px(st.xi),T.py(-1),T.px(st.xi),T.py(1), `stroke="${C.xi}" stroke-width="1.4" stroke-dasharray="4 3"`));
+  o.push(line(T.px(-1),T.py(st.eta),T.px(1),T.py(st.eta), `stroke="${C.eta}" stroke-width="1.4" stroke-dasharray="4 3"`));
+
+  // nodes, scaled by weight
+  const scaleOn = $("t_weights").checked, labOn = $("t_labels").checked;
+  for (let A = 0; A < nen(); A++){
+    const [a,b] = ab(A);
+    const X = T.px(nodes1d(st.pxi)[a]), Y = T.py(nodes1d(st.peta)[b]);
+    const wv = w[A], r = scaleOn ? 3.5 + 13*Math.min(Math.abs(wv),1.35) : 6;
+    const fill = Math.abs(wv) < 1e-12 ? C.grey : (wv > 0 ? C.neg : C.pos);
+    o.push(circ(X, Y, r, `fill="${fill}" fill-opacity="${scaleOn?0.75:0.9}" stroke="${C.ink}" stroke-width="1"`));
+    if (labOn) o.push(text(X, Y - r - 5, A, `text-anchor="middle" font-size="11" fill="${C.ink}" font-family="monospace"`));
+  }
+
+  // the evaluation point
+  o.push(circ(T.px(st.xi), T.py(st.eta), 7, `fill="#fff" stroke="${C.ink}" stroke-width="2.4"`));
+  o.push(circ(T.px(st.xi), T.py(st.eta), 2.6, `fill="${C.ink}"`));
+
+  // axis ticks
+  o.push(text(T.px(0), T.py(-1)+20, "ξ", `text-anchor="middle" font-size="13" fill="${C.xi}" font-style="italic"`));
+  o.push(text(T.px(-1)-16, T.py(0)+4, "η", `text-anchor="middle" font-size="13" fill="${C.eta}" font-style="italic"`));
+  o.push(text(T.px(st.xi), T.py(1)-8, `(${st.xi.toFixed(3)}, ${st.eta.toFixed(3)})`,
+        `text-anchor="middle" font-size="11" font-family="monospace" fill="${C.ink}"`));
+
+  $("svg_par").innerHTML = o.join("");
+}
+
+/* ---------- physical panel ---------- */
+function drawPhysical(w){
+  const T = phyTx(), o = [];
+  const S = samples(NSAMP);
+
+  // mapped grid lines: images of constant eta (blue) and constant xi (orange)
+  if ($("t_grid").checked){
+    const NL = 7;
+    for (let k = 0; k < NL; k++){
+      const c = -1 + 2*k/(NL-1);
+      o.push(poly(S.map(t => { const p = mapPt(t, c); return [T.px(p[0]), T.py(p[1])]; }),
+             `stroke="${C.xi}" stroke-width="0.9" stroke-opacity="0.55"`));
+      o.push(poly(S.map(t => { const p = mapPt(c, t); return [T.px(p[0]), T.py(p[1])]; }),
+             `stroke="${C.eta}" stroke-width="0.9" stroke-opacity="0.55"`));
+    }
+  }
+
+  // element boundary
+  for (const e of [[-1,'eta'],[1,'eta'],[-1,'xi'],[1,'xi']]){
+    const pts_ = S.map(t => { const p = e[1]==='eta' ? mapPt(t, e[0]) : mapPt(e[0], t); return [T.px(p[0]), T.py(p[1])]; });
+    o.push(poly(pts_, `stroke="${C.ink}" stroke-width="2.2"`));
+  }
+
+  // images of the current xi and eta lines
+  o.push(poly(S.map(t => { const p = mapPt(st.xi, t); return [T.px(p[0]), T.py(p[1])]; }),
+         `stroke="${C.xi}" stroke-width="1.6" stroke-dasharray="4 3"`));
+  o.push(poly(S.map(t => { const p = mapPt(t, st.eta); return [T.px(p[0]), T.py(p[1])]; }),
+         `stroke="${C.eta}" stroke-width="1.6" stroke-dasharray="4 3"`));
+
+  // control points
+  const labOn = $("t_labels").checked;
+  for (let A = 0; A < nen(); A++){
+    const X = T.px(st.cp[A][0]), Y = T.py(st.cp[A][1]);
+    const hot = st.drag && st.drag.kind === 'cp' && st.drag.A === A;
+    o.push(circ(X, Y, hot ? 8.5 : 6.5, `fill="${C.node}" stroke="${C.ink}" stroke-width="1.6" style="cursor:grab"`));
+    if (labOn) o.push(text(X + 10, Y - 8, A, `font-size="11" fill="${C.ink}" font-family="monospace"`));
+  }
+
+  // mapped evaluation point
+  const p = mapPt(st.xi, st.eta);
+  o.push(circ(T.px(p[0]), T.py(p[1]), 7, `fill="#fff" stroke="${C.ink}" stroke-width="2.4"`));
+  o.push(circ(T.px(p[0]), T.py(p[1]), 2.6, `fill="${C.ink}"`));
+  o.push(text(T.px(p[0]), T.py(p[1]) - 13, `(${p[0].toFixed(3)}, ${p[1].toFixed(3)})`,
+        `text-anchor="middle" font-size="11" font-family="monospace" fill="${C.ink}"`));
+
+  $("svg_phy").innerHTML = o.join("");
+}
+
+/* ---------- the symbolic chain ---------- */
+const SUB = "₀₁₂₃₄₅₆₇₈₉";
+const sub = n => String(n).split("").map(d => SUB[+d]).join("");
+const f3 = v => (Math.abs(v) < 5e-4 ? 0 : v).toFixed(3);
+const f4 = v => (Math.abs(v) < 5e-5 ? 0 : v).toFixed(4);
+
+function drawChain(w){
+  const n = nen();
+  let big = 0;
+  for (let A = 1; A < n; A++) if (Math.abs(w[A]) > Math.abs(w[big])) big = A;
+
+  const t1 = [], t2 = [], t3 = [];
+  for (let A = 0; A < n; A++){
+    const mark = A === big ? ' class="big"' : '';
+    t1.push(`<span${mark}>x${sub(A)}·N${sub(A)}(ξ,η)</span>`);
+    t2.push(`<span${mark}>(${f3(st.cp[A][0])}, ${f3(st.cp[A][1])})·N${sub(A)}(ξ,η)</span>`);
+    t3.push(`<span${mark}>(${f3(st.cp[A][0])}, ${f3(st.cp[A][1])})·(${f4(w[A])})</span>`);
+  }
+  const p = mapPt(st.xi, st.eta);
+
+  $("eq1").innerHTML = "x(ξ,η) = " + t1.join("  +  ");
+  $("eq2").innerHTML = "       = " + t2.join("  +  ");
+  $("eq3").innerHTML = "       = " + t3.join("  +  ");
+  $("eq4").innerHTML = `       = (${p[0].toFixed(4)}, ${p[1].toFixed(4)})`;
+
+  const s = w.reduce((q,v) => q+v, 0);
+  const bad = Math.abs(s - 1) > 1e-9;
+  $("sum_note").innerHTML =
+    `Σ<sub>A</sub> N<sub>A</sub>(ξ,η) = <b>${s.toFixed(10)}</b> ` +
+    (bad ? '<span class="sm-warn">— that should be 1</span>'
+         : '— the partition of unity, at every point, for every degree.');
+}
+
+/* ---------- table ---------- */
+function drawTable(w){
+  const rows = [];
+  let big = 0;
+  for (let A = 1; A < nen(); A++) if (Math.abs(w[A]) > Math.abs(w[big])) big = A;
+  for (let A = 0; A < nen(); A++){
+    const [a,b] = ab(A);
+    rows.push(
+      `<tr class="${A===big?'hot':''}"><td>${A}</td><td>(${a}, ${b})</td>` +
+      `<td><input type="number" step="0.05" data-A="${A}" data-c="0" value="${st.cp[A][0].toFixed(4)}"></td>` +
+      `<td><input type="number" step="0.05" data-A="${A}" data-c="1" value="${st.cp[A][1].toFixed(4)}"></td>` +
+      `<td>${f4(w[A])}</td></tr>`);
+  }
+  $("cp_rows").innerHTML = rows.join("");
+  for (const inp of $("cp_rows").querySelectorAll("input")){
+    inp.addEventListener("change", e => {
+      const A = +e.target.getAttribute("data-A");
+      const c = +e.target.getAttribute("data-c");
+      const v = parseFloat(e.target.value);
+      if (Number.isFinite(v)){ st.cp[A][c] = v; render(false); }
+    });
+  }
+}
+
+/* ---------- render ---------- */
+let w = [];
+function render(retable = true){
+  $("pxi_o").value = st.pxi; $("peta_o").value = st.peta;
+  $("xi").value = st.xi;  $("xi_n").value  = st.xi.toFixed(3);
+  $("eta").value = st.eta; $("eta_n").value = st.eta.toFixed(3);
+  w = weights(st.xi, st.eta);
+  if (!st.view) fitView();
+  drawParent(w);
+  drawPhysical(w);
+  drawChain(w);
+  if (retable) drawTable(w);
+  else { // just refresh the weight column without rebuilding the inputs
+    const tds = $("cp_rows").querySelectorAll("tr");
+    let big = 0;
+    for (let A = 1; A < nen(); A++) if (Math.abs(w[A]) > Math.abs(w[big])) big = A;
+    tds.forEach((tr, A) => {
+      tr.className = A === big ? 'hot' : '';
+      tr.lastElementChild.textContent = f4(w[A]);
+    });
+  }
+}
+
+/* ---------- pointer interaction ---------- */
+function svgPt(svg, ev){
+  const r = svg.getBoundingClientRect();
+  return [(ev.clientX - r.left)*(VB/r.width), (ev.clientY - r.top)*(VB/r.height)];
+}
+const clamp = v => Math.max(-1, Math.min(1, v));
+
+$("svg_par").addEventListener("pointerdown", ev => {
+  const T = parTx(), [px,py] = svgPt($("svg_par"), ev);
+  st.xi = clamp(T.dx(px)); st.eta = clamp(T.dy(py));
+  st.drag = {kind:'pt'};
+  $("svg_par").setPointerCapture(ev.pointerId);
+  render(false);
+});
+$("svg_par").addEventListener("pointermove", ev => {
+  if (!st.drag || st.drag.kind !== 'pt') return;
+  const T = parTx(), [px,py] = svgPt($("svg_par"), ev);
+  st.xi = clamp(T.dx(px)); st.eta = clamp(T.dy(py));
+  render(false);
+});
+
+$("svg_phy").addEventListener("pointerdown", ev => {
+  const T = phyTx(), [px,py] = svgPt($("svg_phy"), ev);
+  let best = -1, bd = 14;                       // grab radius in viewBox units
+  for (let A = 0; A < nen(); A++){
+    const d = Math.hypot(px - T.px(st.cp[A][0]), py - T.py(st.cp[A][1]));
+    if (d < bd){ bd = d; best = A; }
+  }
+  if (best < 0) return;
+  st.drag = {kind:'cp', A:best};
+  $("svg_phy").setPointerCapture(ev.pointerId);
+  render(false);
+});
+$("svg_phy").addEventListener("pointermove", ev => {
+  if (!st.drag || st.drag.kind !== 'cp') return;
+  const T = phyTx(), [px,py] = svgPt($("svg_phy"), ev);
+  st.cp[st.drag.A] = [T.dx(px), T.dy(py)];
+  render(true);
+});
+
+for (const sv of ["svg_par","svg_phy"]){
+  $(sv).addEventListener("pointerup",  () => { st.drag = null; render(true); });
+  $(sv).addEventListener("pointercancel", () => { st.drag = null; });
+}
+
+/* ---------- controls ---------- */
+function setDeg(){
+  st.pxi = +$("pxi").value; st.peta = +$("peta").value;
+  st.cp = defaultCP(st.pxi, st.peta);           // node count changed, so rebuild
+  fitView(); render(true);
+}
+$("pxi").addEventListener("input", setDeg);
+$("peta").addEventListener("input", setDeg);
+
+$("xi").addEventListener("input",  e => { st.xi  = +e.target.value; render(false); });
+$("eta").addEventListener("input", e => { st.eta = +e.target.value; render(false); });
+$("xi_n").addEventListener("change",  e => { const v = parseFloat(e.target.value); if (Number.isFinite(v)){ st.xi  = clamp(v); render(false);} });
+$("eta_n").addEventListener("change", e => { const v = parseFloat(e.target.value); if (Number.isFinite(v)){ st.eta = clamp(v); render(false);} });
+
+for (const id of ["t_weights","t_grid","t_labels"]) $(id).addEventListener("change", () => render(false));
+$("b_reset").addEventListener("click", () => { st.cp = defaultCP(st.pxi, st.peta); fitView(); render(true); });
+$("b_fit").addEventListener("click",   () => { fitView(); render(false); });
+
+/* ---------- go ---------- */
+st.cp = defaultCP(st.pxi, st.peta);
+fitView();
+render(true);
+})();
+</script>
+</section>
+<section id="reading-the-four-lines" class="level2" data-number="12.3">
+<h2 data-number="12.3" class="anchored" data-anchor-id="reading-the-four-lines"><span class="header-section-number">12.3</span> Reading the four lines</h2>
+<p>The block to the right of the table is the same computation written four times.</p>
+<ol type="1">
+<li><strong>The sum, symbolically.</strong> One term per node, so the number of terms changes with the degree: <span class="math inline">\(n_{en} = (p_\xi+1)(p_\eta+1)\)</span>.</li>
+<li><strong>Nodal coordinates substituted.</strong> The <span class="math inline">\(\underline{x}_A\)</span> are now numbers, the ones in the table. The parametric point has not been used yet.</li>
+<li><strong>Basis functions evaluated.</strong> Now <span class="math inline">\((\xi,\eta)\)</span> is used and each <span class="math inline">\(N_A\)</span> becomes a number. This is the only line that changes when you move the dot without changing the element.</li>
+<li><strong>The mapped point.</strong> Multiply and add.</li>
+</ol>
+<p>The term in red has the largest weight. Move the dot to a node and that weight becomes <span class="math inline">\(1\)</span> while the others become <span class="math inline">\(0\)</span>, which is the interpolation property from Class 11.</p>
+<p>Below the table is the running value of <span class="math inline">\(\sum_A N_A(\xi,\eta)\)</span>, which is <span class="math inline">\(1\)</span> everywhere. This is the <strong>partition of unity</strong>, and it says a constant is reproduced exactly: if every <span class="math inline">\(\underline{x}_A\)</span> were the same point, the map would return that point for any <span class="math inline">\((\xi,\eta)\)</span>. It is the <span class="math inline">\([0,0]\)</span> case of the reproduction question in Homework 6, Problem 3.</p>
+</section>
+<section id="the-basis-functions" class="level2" data-number="12.4">
+<h2 data-number="12.4" class="anchored" data-anchor-id="the-basis-functions"><span class="header-section-number">12.4</span> The basis functions</h2>
+<p>This page does not plot the 2D basis functions. The node markers in the parent domain show <span class="math inline">\(N_A(\xi,\eta)\)</span> at the current point, which is what is needed here. To see the surfaces themselves, go back to <a href="../chapters/11_Class.html">Class 11</a>.</p>
+</section>
+<section id="things-to-try" class="level2" data-number="12.5">
+<h2 data-number="12.5" class="anchored" data-anchor-id="things-to-try"><span class="header-section-number">12.5</span> Things to try</h2>
+<ol type="1">
+<li>Drag the dot to the corner <span class="math inline">\((\xi,\eta) = (-1,-1)\)</span>. The mapped point is control point <span class="math inline">\(0\)</span>, and in line 3 every weight is zero except that one.</li>
+<li>Set <span class="math inline">\(p_\xi = p_\eta = 1\)</span>. There are four nodes and the edges are straight: a bilinear map cannot curve an edge. The mapped grid lines are still not parallel, so the map is not affine.</li>
+<li>Go back to degree 2 and drag the mid-edge control point <span class="math inline">\(A = 1\)</span>, at <span class="math inline">\((a,b) = (1,0)\)</span>, away from the edge. The edge bends. This is how a quadratic element follows a curved boundary.</li>
+<li>Keep moving that node past its neighbours until the mapped grid lines cross. The map is no longer one-to-one and the element has folded. Nothing in the sum prevents this.</li>
+<li>Set <span class="math inline">\(p_\xi = 3\)</span>, <span class="math inline">\(p_\eta = 1\)</span>: cubic in <span class="math inline">\(\xi\)</span>, linear in <span class="math inline">\(\eta\)</span>, eight nodes. The stride <span class="math inline">\(A = a + (p_\xi+1)b\)</span> renumbers the table.</li>
+<li>Put the dot at <span class="math inline">\((\xi,\eta) = (0,0)\)</span> and read line 3. At degree 2 in both directions the centre node has weight <span class="math inline">\(1\)</span> and the rest have weight <span class="math inline">\(0\)</span>; at degree 1 the four corners each have weight <span class="math inline">\(0.25\)</span>. The centre of the element is a node only when the degree is even.</li>
+</ol>
+</section>
+<section id="next" class="level2" data-number="12.6">
+<h2 data-number="12.6" class="anchored" data-anchor-id="next"><span class="header-section-number">12.6</span> Next</h2>
+<p>The map says where a parametric point goes. It does not say how much a small piece of the parent domain is stretched or rotated on the way, and we need that to write <span class="math inline">\(\int_{\Omega^e} (\cdot)\,d\Omega\)</span> as an integral over the parent domain that quadrature can evaluate. Differentiating the sum with respect to <span class="math inline">\(\underline{\xi}\)</span> gives the deformation gradient and its determinant, the <strong>Jacobian</strong>, in Class 13. Item 4 above is the case where that determinant changes sign.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation column-body">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/11_Class.html" class="pagination-link" aria-label="Class 11: Tensor-Product Basis Functions in 2D">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Class 11: Tensor-Product Basis Functions in 2D</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/13_Class.html" class="pagination-link" aria-label="Class 13: The Jacobian Matrix">
+        <span class="nav-page-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Class 13: The Jacobian Matrix</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

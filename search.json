@@ -14,7 +14,7 @@
     "href": "index.html#welcome",
     "title": "CE/ME 507 — Class Notes",
     "section": "",
-    "text": "0.0.1 Chapters\n\n\n\nClass\nTopic\n\n\n\n\nClass 2\nLinear FEM: from physical problems to a boundary value problem\n\n\nClass 3\nIndex notation, function spaces, and the weak form\n\n\nClass 4\nThe strong form of a boundary value problem\n\n\nClass 5\nWeak form ⇒ strong form, and the Galerkin method\n\n\nClass 6\nBasis functions and Lagrange polynomials\n\n\nClass 7\nFrom Galerkin to a matrix equation\n\n\nClass 8\nAssembly, sparsity, and the road to quadrature\n\n\nClass 9\nThe isoparametric map and the Jacobian\n\n\nClass 10\nAssembly with the IEN array, and quadrature on an element\n\n\nClass 11\nTensor-product basis functions in 2D, with an interactive viewer\n\n\n\n\n\n0.0.2 Support material\n\n\n\nNorms and Function Spaces\nWhere the integrals in \\(L^2\\) and \\(H^1\\) come from\n\n\n1D Poisson I: Heat Conduction Through a Wall\nHughes’ model problem as steady heat flow: what \\(f\\), \\(g\\), and \\(h\\) are, in pictures\n\n\n1D Poisson II: The Wall, by Galerkin’s Method\nWeak form, Galerkin form, element arrays, assembly, and an interactive solver for the wall\n\n\n1D Poisson III: An Axially Loaded Rod\nThe same model problem as a pile under load, and why \\(h\\) changes sign when the problem is mirrored\n\n\n1D Poisson IV: The Rod, by Galerkin’s Method\nThe same steps read as virtual work, with the pile as the worked example",
+    "text": "0.0.1 Chapters\n\n\n\nClass\nTopic\n\n\n\n\nClass 2\nLinear FEM: from physical problems to a boundary value problem\n\n\nClass 3\nIndex notation, function spaces, and the weak form\n\n\nClass 4\nThe strong form of a boundary value problem\n\n\nClass 5\nWeak form ⇒ strong form, and the Galerkin method\n\n\nClass 6\nBasis functions and Lagrange polynomials\n\n\nClass 7\nFrom Galerkin to a matrix equation\n\n\nClass 8\nAssembly, sparsity, and the road to quadrature\n\n\nClass 9\nThe isoparametric map and the Jacobian\n\n\nClass 10\nAssembly with the IEN array, and quadrature on an element\n\n\nClass 11\nTensor-product basis functions in 2D, with an interactive viewer\n\n\nClass 12\nThe spatial mapping from parent square to curved element, with an interactive viewer\n\n\nClass 13\nThe Jacobian matrix, its determinant, and when an element folds, with an interactive viewer\n\n\n\n\n\n0.0.2 Support material\n\n\n\nNorms and Function Spaces\nWhere the integrals in \\(L^2\\) and \\(H^1\\) come from\n\n\n1D Poisson I: Heat Conduction Through a Wall\nHughes’ model problem as steady heat flow: what \\(f\\), \\(g\\), and \\(h\\) are, in pictures\n\n\n1D Poisson II: The Wall, by Galerkin’s Method\nWeak form, Galerkin form, element arrays, assembly, and an interactive solver for the wall\n\n\n1D Poisson III: An Axially Loaded Rod\nThe same model problem as a pile under load, and why \\(h\\) changes sign when the problem is mirrored\n\n\n1D Poisson IV: The Rod, by Galerkin’s Method\nThe same steps read as virtual work, with the pile as the worked example",
     "crumbs": [
       "<span class='chapter-number'>1</span>  <span class='chapter-title'>CE/ME 507 — Class Notes</span>"
     ]
@@ -287,6 +287,136 @@
     "text": "11.3 Things to try\n\nSet \\(p_\\xi = p_\\eta = 1\\). Every basis function is a bilinear “tent corner”, and each slice is a straight line.\nSet \\(p_\\xi = p_\\eta = 2\\) and pick the center node \\((a,b) = (1,1)\\). This is the interior “bubble” function; it is zero on the whole boundary of the element.\nPick an edge node such as \\((a,b) = (1,0)\\) and move \\(\\eta_0\\) onto \\(\\eta = 0\\) or \\(\\eta = 1\\). The dashed \\(\\xi\\)-slice collapses to zero, because \\(N_0(\\eta)\\) vanishes at the other \\(\\eta\\) nodes.\nRaise the degree to 5 or 6 and look at a basis function next to the boundary. The large oscillations in the 1D factors (the Runge effect) carry straight over into the 2D surface.",
     "crumbs": [
       "<span class='chapter-number'>11</span>  <span class='chapter-title'>Class 11: Tensor-Product Basis Functions in 2D</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/12_Class.html",
+    "href": "chapters/12_Class.html",
+    "title": "12  Class 12: The Spatial Mapping",
+    "section": "",
+    "text": "12.1 The general form\nClass 11 showed how to build 2D basis functions on the parent domain (also called the reference domain), the square \\(\\hat\\Omega = [-1,1]^2\\) with coordinates \\((\\xi,\\eta)\\). Elements in a mesh may not be squares, and if they are, they aren’t always centered around the origin, so we need a method that takes a point of the parent domain to a point of the element. That rule is the spatial mapping, and it uses the same basis functions. In two dimensions, this looks like\n\\[\n\\underline{x}^e(\\xi,\\eta) = \\sum_{A=0}^{n_{en}-1} \\underline{x}_A^e \\, N_A(\\xi,\\eta),\n\\]\nwhere \\(\\underline{x}_A^e\\) is the position of node \\(A\\) of element \\(e\\), and \\(n_{en} = (p_\\xi+1)(p_\\eta+1)\\) is the number of nodes on the element. The above equation can be represented by two coordinate mappings for both the \\(x\\) and the \\(y\\) coordinates from the parent domain as\n\\[\nx(\\xi,\\eta) = \\sum_A x_A\\,N_A(\\xi,\\eta), \\qquad\ny(\\xi,\\eta) = \\sum_A y_A\\,N_A(\\xi,\\eta).\n\\]\nCompare this with the approximate solution,\n\\[\nu^h(\\xi,\\eta) = \\sum_A d_A\\,N_A(\\xi,\\eta).\n\\]\nBoth of these maps use the same basis functions but different coefficients, which coefficients are defined by the nodal positions of the element geometry. Using the same \\(N_A\\) for both the solution, \\(u^h,\\) and for the geometry is what isoparametric means.\nIf we write \\(\\underline{\\xi}\\) for the parametric coordinates, \\(\\underline{\\xi} = (\\xi,\\eta)\\) in 2D and \\(\\underline{\\xi} = (\\xi,\\eta,\\zeta)\\) in 3D. Then\n\\[\n\\underline{x}^e(\\underline{\\xi}) = \\sum_{A=0}^{n_{en}-1} \\underline{x}_A^e \\, N_A(\\underline{\\xi}),\n\\]\nwith the basis functions and the single index built as in Class 11,\n\\[\nN_A(\\underline{\\xi}) = \\prod_{i=0}^{n_{sd}-1} \\ell^{p_i}_{a_i}(\\xi_i),\n\\qquad\nA = \\sum_{i=0}^{n_{sd}-1} a_i\\,s_i,\n\\qquad\ns_0 = 1, \\quad s_i = \\prod_{j=0}^{i-1}(p_j+1),\n\\]\nand \\(n_{en} = \\prod_{i=0}^{n_{sd}-1}(p_i+1)\\). In 2D this is \\(N_A(\\xi,\\eta) = \\ell^{p_\\xi}_a(\\xi)\\,\\ell^{p_\\eta}_b(\\eta)\\) with \\(A = a + (p_\\xi+1)b\\), which is what the viewer below uses. The interpolation points are typicallly equally spaced in each direction.",
+    "crumbs": [
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Class 12: The Spatial Mapping</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/12_Class.html#the-map-interactively",
+    "href": "chapters/12_Class.html#the-map-interactively",
+    "title": "12  Class 12: The Spatial Mapping",
+    "section": "12.2 The map, interactively",
+    "text": "12.2 The map, interactively\nThe left panel is the parent domain, the right is the physical element. The element you start with is a quarter annulus, \\(1 \\le r \\le 2\\), with its nodes placed at the parametric node locations.\n\nDrag the dot in the parent domain, or type \\(\\xi\\) and \\(\\eta\\) below it. The matching point in the physical element follows.\nDrag the gold control points in the physical element, or edit their coordinates in the table. The element changes shape.\nNodes in the parent domain are drawn scaled by \\(N_A(\\xi,\\eta)\\) at the current point, so a large marker means a large weight. Blue is a positive weight, red a negative one.\n\n\n\n\n  \n    pξ (degree)\n    pη (degree)\n  \n  \n    ξ\n    η\n  \n  \n     scale nodes by weight\n     mapped grid lines\n     node labels\n    reset element\n    fit view\n  \n\n\n\n  \n    Parent domain  (ξ, η) ∈ [−1,1]²\n    \n  \n  \n    Physical domain  (x, y)\n    \n  \n\n\n\n  \n    \n      \n\n\n\nA\n(a, b)\nxA\nyA\nNA(ξ,η)\n\n\n\n\n\n\n    \n    \n  \n  \n    \n      1 — the sum, symbolically\n      \n      2 — nodal coordinates substituted\n      \n      3 — basis functions evaluated at (ξ, η)\n      \n      4 — the mapped point",
+    "crumbs": [
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Class 12: The Spatial Mapping</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/12_Class.html#reading-the-four-lines",
+    "href": "chapters/12_Class.html#reading-the-four-lines",
+    "title": "12  Class 12: The Spatial Mapping",
+    "section": "12.3 Reading the four lines",
+    "text": "12.3 Reading the four lines\nThe block to the right of the table is the same computation written four times.\n\nThe sum, symbolically. One term per node, so the number of terms changes with the degree: \\(n_{en} = (p_\\xi+1)(p_\\eta+1)\\).\nNodal coordinates substituted. The \\(\\underline{x}_A\\) are now numbers, the ones in the table. The parametric point has not been used yet.\nBasis functions evaluated. Now \\((\\xi,\\eta)\\) is used and each \\(N_A\\) becomes a number. This is the only line that changes when you move the dot without changing the element.\nThe mapped point. Multiply and add.\n\nThe term in red has the largest weight. Move the dot to a node and that weight becomes \\(1\\) while the others become \\(0\\), which is the interpolation property from Class 11.\nBelow the table is the running value of \\(\\sum_A N_A(\\xi,\\eta)\\), which is \\(1\\) everywhere. This is the partition of unity, and it says a constant is reproduced exactly: if every \\(\\underline{x}_A\\) were the same point, the map would return that point for any \\((\\xi,\\eta)\\). It is the \\([0,0]\\) case of the reproduction question in Homework 6, Problem 3.",
+    "crumbs": [
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Class 12: The Spatial Mapping</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/12_Class.html#the-basis-functions",
+    "href": "chapters/12_Class.html#the-basis-functions",
+    "title": "12  Class 12: The Spatial Mapping",
+    "section": "12.4 The basis functions",
+    "text": "12.4 The basis functions\nThis page does not plot the 2D basis functions. The node markers in the parent domain show \\(N_A(\\xi,\\eta)\\) at the current point, which is what is needed here. To see the surfaces themselves, go back to Class 11.",
+    "crumbs": [
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Class 12: The Spatial Mapping</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/12_Class.html#things-to-try",
+    "href": "chapters/12_Class.html#things-to-try",
+    "title": "12  Class 12: The Spatial Mapping",
+    "section": "12.5 Things to try",
+    "text": "12.5 Things to try\n\nDrag the dot to the corner \\((\\xi,\\eta) = (-1,-1)\\). The mapped point is control point \\(0\\), and in line 3 every weight is zero except that one.\nSet \\(p_\\xi = p_\\eta = 1\\). There are four nodes and the edges are straight: a bilinear map cannot curve an edge. The mapped grid lines are still not parallel, so the map is not affine.\nGo back to degree 2 and drag the mid-edge control point \\(A = 1\\), at \\((a,b) = (1,0)\\), away from the edge. The edge bends. This is how a quadratic element follows a curved boundary.\nKeep moving that node past its neighbours until the mapped grid lines cross. The map is no longer one-to-one and the element has folded. Nothing in the sum prevents this.\nSet \\(p_\\xi = 3\\), \\(p_\\eta = 1\\): cubic in \\(\\xi\\), linear in \\(\\eta\\), eight nodes. The stride \\(A = a + (p_\\xi+1)b\\) renumbers the table.\nPut the dot at \\((\\xi,\\eta) = (0,0)\\) and read line 3. At degree 2 in both directions the centre node has weight \\(1\\) and the rest have weight \\(0\\); at degree 1 the four corners each have weight \\(0.25\\). The centre of the element is a node only when the degree is even.",
+    "crumbs": [
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Class 12: The Spatial Mapping</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/12_Class.html#next",
+    "href": "chapters/12_Class.html#next",
+    "title": "12  Class 12: The Spatial Mapping",
+    "section": "12.6 Next",
+    "text": "12.6 Next\nThe map says where a parametric point goes. It does not say how much a small piece of the parent domain is stretched or rotated on the way, and we need that to write \\(\\int_{\\Omega^e} (\\cdot)\\,d\\Omega\\) as an integral over the parent domain that quadrature can evaluate. Differentiating the sum with respect to \\(\\underline{\\xi}\\) gives the deformation gradient and its determinant, the Jacobian, in Class 13. Item 4 above is the case where that determinant changes sign.",
+    "crumbs": [
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Class 12: The Spatial Mapping</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/13_Class.html",
+    "href": "chapters/13_Class.html",
+    "title": "13  Class 13: The Jacobian Matrix",
+    "section": "",
+    "text": "13.1 The deformation gradient\nIn Class 12 the spatial mapping told us where a parametric point goes:\n\\[\n\\underline{x}^e(\\underline{\\xi}) = \\sum_{A=0}^{n_{en}-1} \\underline{x}_A^e\\,N_A(\\underline{\\xi}).\n\\]\nIt does not say how much a small piece of the parent domain is stretched or turned on the way. We need that to change an integral over \\(\\Omega^e\\) into an integral over the parent domain, and we need it to tell whether the element is usable at all. Both come from the derivative of the map.\nDifferentiating the sum gives the deformation gradient, also called the Jacobian matrix. Symbolically,\n\\[\nDF = \\frac{\\partial \\underline{x}}{\\partial \\underline{\\xi}}\n   = \\sum_{A=0}^{n_{en}-1} \\underline{x}_A^e \\left(\\nabla_\\xi N_A\\right)^T .\n\\]\nIn index notation, with \\(i\\) running over spatial directions and \\(j\\) over parametric directions,\n\\[\n\\left(DF\\right)_{ij} = \\frac{\\partial x_i}{\\partial \\xi_j}\n   = \\sum_{A=0}^{n_{en}-1} x^e_{iA}\\,\\frac{\\partial N_A}{\\partial \\xi_j}.\n\\]\nIn matrix form in 2D, with \\(\\underline{\\xi} = (\\xi,\\eta)\\),\n\\[\nDF =\n\\begin{bmatrix}\n\\dfrac{\\partial x_1}{\\partial \\xi} & \\dfrac{\\partial x_1}{\\partial \\eta} \\\\[10pt]\n\\dfrac{\\partial x_2}{\\partial \\xi} & \\dfrac{\\partial x_2}{\\partial \\eta}\n\\end{bmatrix}\n=\n\\begin{bmatrix}\n\\displaystyle\\sum_A x_A \\dfrac{\\partial N_A}{\\partial \\xi} &\n\\displaystyle\\sum_A x_A \\dfrac{\\partial N_A}{\\partial \\eta} \\\\[14pt]\n\\displaystyle\\sum_A y_A \\dfrac{\\partial N_A}{\\partial \\xi} &\n\\displaystyle\\sum_A y_A \\dfrac{\\partial N_A}{\\partial \\eta}\n\\end{bmatrix}.\n\\]\nTwo things to notice. The nodal coordinates \\(\\underline{x}_A^e\\) are constants, so the only thing being differentiated is the basis functions: \\(DF\\) is built from \\(\\partial N_A/\\partial \\xi_j\\), which is Homework 6 work. And \\(DF\\) depends on \\(\\underline{\\xi}\\), so unless the element is a parallelogram it is a different matrix at every point.\nThe determinant is the Jacobian,\n\\[\nJ = \\det DF = \\frac{\\partial x_1}{\\partial \\xi}\\frac{\\partial x_2}{\\partial \\eta}\n            - \\frac{\\partial x_1}{\\partial \\eta}\\frac{\\partial x_2}{\\partial \\xi},\n\\qquad\nd\\Omega = J\\,d\\xi\\,d\\eta,\n\\]\nwhich is what lets every element integral be computed on the parent domain:\n\\[\n\\int_{\\Omega^e} (\\cdot)\\,d\\Omega = \\int_{-1}^{1}\\!\\!\\int_{-1}^{1} (\\cdot)\\;J(\\xi,\\eta)\\,d\\xi\\,d\\eta .\n\\]",
+    "crumbs": [
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Class 13: The Jacobian Matrix</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/13_Class.html#what-the-columns-are",
+    "href": "chapters/13_Class.html#what-the-columns-are",
+    "title": "13  Class 13: The Jacobian Matrix",
+    "section": "13.2 What the columns are",
+    "text": "13.2 What the columns are\nThe first column of \\(DF\\) is \\(\\partial\\underline{x}/\\partial\\xi\\) and the second is \\(\\partial\\underline{x}/\\partial\\eta\\). These are tangent vectors: column 1 points along the image of a line of constant \\(\\eta\\), column 2 along the image of a line of constant \\(\\xi\\). Those are the curves already drawn on the Class 12 viewer.\nTaken on their own, two arrows are not very informative. They become informative when you see what they are the edges of. Take a small square of side \\(h\\) in the parent domain. Its image under the map is a slightly curved patch. The parallelogram spanned by \\(h\\) times the two columns of \\(DF\\) is the flat approximation of that patch, and\n\\[\n\\text{area of the parallelogram} = |J|\\,h^2 .\n\\]\nAs \\(h\\) shrinks the curved patch and the parallelogram become the same shape. That is the statement that \\(DF\\) is the derivative. The sign of \\(J\\) says whether the image keeps the orientation of the original square or reverses it.",
+    "crumbs": [
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Class 13: The Jacobian Matrix</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/13_Class.html#the-map-and-its-derivative-interactively",
+    "href": "chapters/13_Class.html#the-map-and-its-derivative-interactively",
+    "title": "13  Class 13: The Jacobian Matrix",
+    "section": "13.3 The map and its derivative, interactively",
+    "text": "13.3 The map and its derivative, interactively\nSame element as Class 12: a quarter annulus, \\(1 \\le r \\le 2\\), with nodes at the parametric node locations.\n\nDrag the dot in the parent domain, or type \\(\\xi\\) and \\(\\eta\\). Both panels follow.\nDrag the gold control points in the physical panel, or edit the table.\n\nThere are three separate things drawn, and it is worth keeping them apart:\n\nThe mapped grid is the faint blue and orange curves covering the whole element. These are the images of lines of constant \\(\\eta\\) and constant \\(\\xi\\), the same curves as in Class 12. They describe the map, not its derivative.\nThe gold square of side \\(h\\) sits in the parent domain around the current point, and its image is the filled patch in the physical panel. This is the actual image: every point of the square’s boundary put through \\(\\underline{x}^e(\\underline{\\xi})\\), so its edges are curved.\nThe parallelogram is the dashed outline in the physical panel, built from \\(h\\) times the two columns of \\(DF\\). It is the flat approximation to that patch.\n\nThe gold square and its image each carry two arrowheads showing which way the boundary is traversed. On the gold square they always run counter-clockwise. If the arrowheads on the image run the other way, the map has reversed orientation there, which is \\(J &lt; 0\\).\nShading is the value of \\(J\\), blue where positive and red where negative. Where \\(J\\) changes sign the black \\(J = 0\\) curve is drawn in both panels.\n\n\n\n  \n    pξ\n    pη\n  \n  \n    ξ\n    η\n  \n  \n    h (square)\n  \n  \n     shade by J\n     J = 0 curve\n     DF parallelogram\n     image of the square\n     mapped grid (whole element)\n    reset element\n    fit view\n  \n\n\n\n  \n    Parent domain  (ξ, η)\n    \n  \n  \n    Physical domain  (x, y)\n    \n  \n\n\n\n  \n    \n      \n\n\n\nA\nxA\nyA\n∂NA/∂ξ\n∂NA/∂η\n\n\n\n\n\nΣA xA·(…) , ΣA yA·(…)\n\n\n\n\n\n\n\n    \n    \n      The last two columns are the ingredients of DF: each column of the matrix is\n      the nodal coordinates weighted by one of them.\n    \n  \n  \n    DF at (ξ, η)\n    \n    J = det DF\n    \n    areas of the small square (h = )",
+    "crumbs": [
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Class 13: The Jacobian Matrix</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/13_Class.html#reading-the-output",
+    "href": "chapters/13_Class.html#reading-the-output",
+    "title": "13  Class 13: The Jacobian Matrix",
+    "section": "13.4 Reading the output",
+    "text": "13.4 Reading the output\nThe table holds the ingredients. Columns \\(\\partial N_A/\\partial\\xi\\) and \\(\\partial N_A/\\partial\\eta\\) are the two components of \\(\\nabla_\\xi N_A\\), and the footer row is each of them weighted by the nodal coordinates, which is to say the two columns of \\(DF\\). Nothing in the matrix comes from anywhere else.\nUnder \\(J = \\det DF\\) the three areas are printed together:\n\n\\(h^2\\), the area of the square in the parent domain;\n\\(J h^2\\), the area of the parallelogram \\(DF\\) predicts;\nthe signed area of the image of that square. \n\nShrink \\(h\\) and the ratio of the last two goes to \\(1\\). That limit is the definition of the derivative, and it is the reason \\(d\\Omega = J\\,d\\xi\\,d\\eta\\) is allowed inside an integral.",
+    "crumbs": [
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Class 13: The Jacobian Matrix</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/13_Class.html#things-to-try",
+    "href": "chapters/13_Class.html#things-to-try",
+    "title": "13  Class 13: The Jacobian Matrix",
+    "section": "13.5 Things to try",
+    "text": "13.5 Things to try\n\nMove the point around the default element. \\(J\\) changes from place to place: the quarter annulus stretches more at the outer radius than the inner one. A single number does not describe the whole element.\nSet \\(h = 1.2\\) and compare the filled patch with the dashed parallelogram. They differ. Now drag \\(h\\) down to \\(0.05\\) and they coincide. \\(DF\\) is a local statement.\nSet \\(p_\\xi = p_\\eta = 1\\). The four-node element is a bilinear map, and \\(J\\) is not constant: the shading still varies. A bilinear element is only a pure stretch when it is a parallelogram.\nDrag control point \\(A = 1\\) toward the interior of the element, past its neighbours, until part of the shading turns red. The \\(J = 0\\) curve appears, the image of the square flips over, and its arrowheads run opposite to the ones on the gold square. That is the 2D version of \\(dx^e/d\\xi &lt; 0\\) from Homework 7, case 4.\nPut the point on the \\(J = 0\\) curve. The parallelogram collapses to a line: the two columns of \\(DF\\) have become parallel, so the map squashes a 2D neighbourhood onto a 1D one and \\(DF\\) has no inverse. Derivatives with respect to \\(x\\), which need \\(DF^{-1}\\), are undefined there.\nSwap two control points that are not neighbours, for instance give \\(A = 1\\) the coordinates of \\(A = 3\\) and vice versa. The element outline may still look reasonable while the shading is entirely red. The outline does not tell you whether an element is valid; the sign of \\(J\\) does.",
+    "crumbs": [
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Class 13: The Jacobian Matrix</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/13_Class.html#derivatives-with-respect-to-x",
+    "href": "chapters/13_Class.html#derivatives-with-respect-to-x",
+    "title": "13  Class 13: The Jacobian Matrix",
+    "section": "13.6 Derivatives with respect to \\(x\\)",
+    "text": "13.6 Derivatives with respect to \\(x\\)\nThe weak form needs \\(\\nabla_x N_A\\), the gradient in physical coordinates. But \\(N_A\\) is defined on the parent domain, so the only derivatives we can take directly are \\(\\partial N_A/\\partial \\xi_j\\). The chain rule connects them. Since \\(N_A\\) reaches \\(\\underline{\\xi}\\) only through \\(\\underline{x}\\),\n\\[\n\\frac{\\partial N_A}{\\partial \\xi_j}\n= \\frac{\\partial N_A}{\\partial x_i}\\,\\frac{\\partial x_i}{\\partial \\xi_j}\n= \\frac{\\partial x_i}{\\partial \\xi_j}\\,\\frac{\\partial N_A}{\\partial x_i},\n\\]\nwhich in matrix form is \\(\\nabla_\\xi N_A = \\left(DF\\right)^T \\nabla_x N_A\\). Solving for the part we want,\n\\[\n\\boxed{\\;\\nabla_x N_A = \\left(DF\\right)^{-T}\\,\\nabla_\\xi N_A\\;}\n\\]\nIn 2D the inverse is written out easily, since\n\\[\nDF^{-1} = \\frac{1}{J}\n\\begin{bmatrix}\n\\dfrac{\\partial x_2}{\\partial \\eta} & -\\dfrac{\\partial x_1}{\\partial \\eta} \\\\[10pt]\n-\\dfrac{\\partial x_2}{\\partial \\xi} & \\dfrac{\\partial x_1}{\\partial \\xi}\n\\end{bmatrix},\n\\qquad\\text{so}\\qquad\nDF^{-T} = \\frac{1}{J}\n\\begin{bmatrix}\n\\dfrac{\\partial x_2}{\\partial \\eta} & -\\dfrac{\\partial x_2}{\\partial \\xi} \\\\[10pt]\n-\\dfrac{\\partial x_1}{\\partial \\eta} & \\dfrac{\\partial x_1}{\\partial \\xi}\n\\end{bmatrix}.\n\\]\nNote the \\(1/J\\). Everything said above about \\(J\\) changing sign now has a second consequence: at \\(J = 0\\) the spatial gradient does not exist, and near \\(J = 0\\) it is large. An element that is merely folded gives wrong areas; an element that is folded also gives unusable derivatives, which is what actually enters the stiffness matrix.\nThe viewer below shows one basis function at a time. In each panel the thin curve is the level set of \\(N_A\\) through the current point, and the arrow is the gradient, which is perpendicular to its own level set in its own domain. The two arrows generally point in different directions: \\(DF^{-T}\\) rotates and rescales, so a gradient that points one way in the parent domain need not point that way in the element.\n\n\n\n\n  \n    basis NA\n    degree p\n  \n  \n    ξ\n    η\n  \n  \n     level set of NA\n     mapped grid\n    reset element\n  \n\n\n\n  \n    Parent domain  ∇ξNA\n    \n  \n  \n    Physical domain  ∇xNA\n    \n  \n\n\n\n  ∇ξNA (what Homework 6 gives you)\n  \n  DF−T = (1/J)·adj\n  \n  ∇xNA = DF−T ∇ξNA\n  \n  angle between them, and J\n  \n\n\n\n\nThings to notice here:\n\nMove the point around with the default element. The angle between the two gradients is rarely zero, and it changes from place to place. \\(DF^{-T}\\) is a different matrix at every point.\nPick a corner basis function and put the point near the opposite corner. Both gradients are nearly zero: that basis function has almost no influence there.\nDrag a control point until \\(J\\) gets small. The magnitude of \\(\\nabla_x N_A\\) grows, because of the \\(1/J\\). The parametric gradient does not change at all, since it knows nothing about the element’s shape.\nSet \\(p = 1\\) and compare with \\(p = 2\\). The parametric gradients are simpler, but the spatial ones are still position-dependent, because \\(DF^{-T}\\) is.",
+    "crumbs": [
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Class 13: The Jacobian Matrix</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/13_Class.html#next",
+    "href": "chapters/13_Class.html#next",
+    "title": "13  Class 13: The Jacobian Matrix",
+    "section": "13.7 Next",
+    "text": "13.7 Next\n\\(J\\) is a polynomial in \\(\\xi\\) and \\(\\eta\\) whose degree depends on the element, and that degree is what decides how many quadrature points are enough. With \\(J\\) for the area change and \\(DF^{-T}\\) for the derivatives, every piece of the element stiffness matrix can now be written as an integral over the parent domain and evaluated by quadrature.",
+    "crumbs": [
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Class 13: The Jacobian Matrix</span>"
     ]
   },
   {
