@@ -14,7 +14,7 @@
     "href": "index.html#welcome",
     "title": "CE/ME 507 — Class Notes",
     "section": "",
-    "text": "0.0.1 Chapters\n\n\n\nClass\nTopic\n\n\n\n\nClass 2\nLinear FEM: from physical problems to a boundary value problem\n\n\nClass 3\nIndex notation, function spaces, and the weak form\n\n\nClass 4\nThe strong form of a boundary value problem\n\n\nClass 5\nWeak form ⇒ strong form, and the Galerkin method\n\n\nClass 6\nBasis functions and Lagrange polynomials\n\n\nClass 7\nFrom Galerkin to a matrix equation\n\n\nClass 8\nAssembly, sparsity, and the road to quadrature\n\n\nClass 9\nThe isoparametric map and the Jacobian\n\n\nClass 10\nAssembly with the IEN array, and quadrature on an element\n\n\nClass 11\nTensor-product basis functions in 2D, with an interactive viewer\n\n\nClass 12\nThe spatial mapping from parent square to curved element, with an interactive viewer\n\n\nClass 13\nThe Jacobian matrix, its determinant, and when an element folds, with an interactive viewer\n\n\n\n\n\n0.0.2 Support material\n\n\n\nNorms and Function Spaces\nWhere the integrals in \\(L^2\\) and \\(H^1\\) come from\n\n\n1D Poisson I: Heat Conduction Through a Wall\nHughes’ model problem as steady heat flow: what \\(f\\), \\(g\\), and \\(h\\) are, in pictures\n\n\n1D Poisson II: The Wall, by Galerkin’s Method\nWeak form, Galerkin form, element arrays, assembly, and an interactive solver for the wall\n\n\n1D Poisson III: An Axially Loaded Rod\nThe same model problem as a pile under load, and why \\(h\\) changes sign when the problem is mirrored\n\n\n1D Poisson IV: The Rod, by Galerkin’s Method\nThe same steps read as virtual work, with the pile as the worked example",
+    "text": "0.0.1 Chapters\n\n\n\nClass\nTopic\n\n\n\n\nClass 2\nLinear FEM: from physical problems to a boundary value problem\n\n\nClass 3\nIndex notation, function spaces, and the weak form\n\n\nClass 4\nThe strong form of a boundary value problem\n\n\nClass 5\nWeak form ⇒ strong form, and the Galerkin method\n\n\nClass 6\nBasis functions and Lagrange polynomials\n\n\nClass 7\nFrom Galerkin to a matrix equation\n\n\nClass 8\nAssembly, sparsity, and the road to quadrature\n\n\nClass 9\nThe isoparametric map and the Jacobian\n\n\nClass 10\nAssembly with the IEN array, and quadrature on an element\n\n\nClass 11\nTensor-product basis functions in 2D, with an interactive viewer\n\n\nClass 12\nThe spatial mapping from parent square to curved element, with an interactive viewer\n\n\nClass 13\nThe Jacobian matrix, its determinant, and when an element folds, with an interactive viewer\n\n\nClass 14\nThe ID and IEN arrays on a five-element mesh, with an interactive viewer\n\n\n\n\n\n\n0.0.2 Support material\n\n\n\nNorms and Function Spaces\nWhere the integrals in \\(L^2\\) and \\(H^1\\) come from\n\n\n1D Poisson I: Heat Conduction Through a Wall\nHughes’ model problem as steady heat flow: what \\(f\\), \\(g\\), and \\(h\\) are, in pictures\n\n\n1D Poisson II: The Wall, by Galerkin’s Method\nWeak form, Galerkin form, element arrays, assembly, and an interactive solver for the wall\n\n\n1D Poisson III: An Axially Loaded Rod\nThe same model problem as a pile under load, and why \\(h\\) changes sign when the problem is mirrored\n\n\n1D Poisson IV: The Rod, by Galerkin’s Method\nThe same steps read as virtual work, with the pile as the worked example",
     "crumbs": [
       "<span class='chapter-number'>1</span>  <span class='chapter-title'>CE/ME 507 — Class Notes</span>"
     ]
@@ -417,6 +417,46 @@
     "text": "13.7 Next\n\\(J\\) is a polynomial in \\(\\xi\\) and \\(\\eta\\) whose degree depends on the element, and that degree is what decides how many quadrature points are enough. With \\(J\\) for the area change and \\(DF^{-T}\\) for the derivatives, every piece of the element stiffness matrix can now be written as an integral over the parent domain and evaluated by quadrature.",
     "crumbs": [
       "<span class='chapter-number'>13</span>  <span class='chapter-title'>Class 13: The Jacobian Matrix</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/14_Class.html",
+    "href": "chapters/14_Class.html",
+    "title": "14  Class 14: The ID and IEN Arrays",
+    "section": "",
+    "text": "14.1 The mesh\nAssembly needs two pieces of bookkeeping, and they do different jobs.\nIEN describes given an element and a local basis function, which global basis function is this? Given a local index \\(a\\) on element \\(e\\), it returns the global index \\(A\\):\n\\[\nA = \\mathrm{IEN}(a,e).\n\\]\nFor a tensor-product element the local index itself comes from the stride rule of Class 11, \\(a = a_\\xi + (p+1)\\,a_\\eta\\), so each element carries \\(n_{en} = (p+1)^2\\) of them.\nID clarifies whether this basis function has an unknown attached to it? Given a global index \\(A\\), it returns the equation number, or \\(-1\\) when the value there is prescribed:\n\\[\n\\mathrm{ID}[A] =\n\\begin{cases}\n\\text{equation number}, & u(A) \\text{ unknown} \\\\\n-1, & u(A) \\text{ prescribed}\n\\end{cases}\n\\]\nEquation numbers run consecutively from \\(0\\), skipping the prescribed nodes, so the global system is \\(n_{eq} \\times n_{eq}\\) rather than \\(n_{bf} \\times n_{bf}\\).\nComposed, they are what the assembly loop actually uses:\n\\[\nA = \\mathrm{ID}\\big[\\mathrm{IEN}(a,e)\\big],\n\\]\nsometimes written as its own array, \\(\\mathrm{LM}(a,e)\\).\nFive elements: four around the boundary and one in the middle. At degree 1 the boundary edges are straight and the domain is a square with four trapezoids around a central square. At degree 2 and above the extra nodes on each boundary edge are placed on a circle, and the same five elements describe a disk.\nThe local origin of each element has been rotated so that they do not all start in the same corner. That is deliberate: nothing requires element 3’s local node 0 to sit where element 0’s does, and the domain boundary ends up on a different local edge in each of the four outer elements.",
+    "crumbs": [
+      "<span class='chapter-number'>14</span>  <span class='chapter-title'>Class 14: The ID and IEN Arrays</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/14_Class.html#the-mesh",
+    "href": "chapters/14_Class.html#the-mesh",
+    "title": "14  Class 14: The ID and IEN Arrays",
+    "section": "",
+    "text": "Click a node to follow it. Every element that contains it lights up, its local index is shown in each, and the matching cells in IEN and ID are highlighted.\nClick inside an element to see all of its local indices at once.\nClick a boundary edge to switch it between Neumann and Dirichlet. Dirichlet edges are hatched, and the ID array renumbers immediately.\n\n\n\n\n\n  \n    degree p\n    label size\n  \n  \n     global index\n     ID value\n     all local indices\n     element numbers\n  \n  \n    all Neumann\n    all Dirichlet\n    clear selection\n  \n\n\n\n\n\n\n  \n    IEN(a, e)  rows: local index a   columns: element e\n    \n  \n  \n    ID[A]  top: global index A   bottom: equation number, −1 if prescribed",
+    "crumbs": [
+      "<span class='chapter-number'>14</span>  <span class='chapter-title'>Class 14: The ID and IEN Arrays</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/14_Class.html#what-the-widget-is-showing",
+    "href": "chapters/14_Class.html#what-the-widget-is-showing",
+    "title": "14  Class 14: The ID and IEN Arrays",
+    "section": "14.2 What the widget is showing",
+    "text": "14.2 What the widget is showing\nOne global basis function, several local names. Click any node on a shared edge. It lights up in two elements, sometimes three or four at the inner corners, and the readout lists every \\(\\mathrm{IEN}(a,e)\\) that returns it. That is the whole content of the IEN array: the same unknown is local node 6 in one element and local node 2 in its neighbour, and assembly has to add both contributions into the same global row.\nThe local numbering is arbitrary, the global numbering is not. Because the origins are rotated, element 1’s local node 0 is in a different physical corner from element 0’s. The mesh does not care. What matters is only that IEN is consistent with however each element chose to number itself.\nPrescribed nodes drop out of the equations, not out of the mesh. Hatch an edge and watch the ID array: those nodes go to \\(-1\\), and every ID value after them shifts down by one, because equation numbers are consecutive over the unknowns. The node is still there, still has a basis function, still appears in IEN. It just has no equation of its own, and its known value moves to the right-hand side of its neighbours’ equations.\nTwo different lengths. IEN is indexed by local node and element, so it has \\(n_{en} \\times n_{el}\\) entries no matter what the boundary conditions are. ID is indexed by global node, so it has \\(n_{bf}\\) entries, of which \\(n_{eq}\\) are equation numbers. Changing a boundary condition changes ID and leaves IEN untouched.",
+    "crumbs": [
+      "<span class='chapter-number'>14</span>  <span class='chapter-title'>Class 14: The ID and IEN Arrays</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/14_Class.html#things-to-try",
+    "href": "chapters/14_Class.html#things-to-try",
+    "title": "14  Class 14: The ID and IEN Arrays",
+    "section": "14.3 Things to try",
+    "text": "14.3 Things to try\n\nClick the node at the centre of a shared edge between two outer elements. It has two local names. Now click an inner corner of the middle element: three elements meet there, so it has three.\nHatch one edge, then a second. Watch \\(n_{eq}\\) drop and the equation numbers renumber. The corner shared by the two hatched edges is prescribed once, not twice.\nSet all four edges to Dirichlet. Every boundary node goes to \\(-1\\) and only the interior nodes carry equations — at degree 1 that leaves just the four inner corners.\nSet every edge to Neumann. Nothing is prescribed, \\(n_{eq} = n_{bf}\\), and the global matrix would be singular: this is the two-prescribed-fluxes case from Project 1, Task 5, in two dimensions.\nChange the degree from 2 to 1. The disk becomes a square and the mid-edge nodes disappear, but the five elements and their connectivity are unchanged — degree changes the number of basis functions, not the mesh.\nGo to degree 3 and turn on all local indices. This is what the bookkeeping actually looks like at modest degree, and why nobody writes it out by hand.",
+    "crumbs": [
+      "<span class='chapter-number'>14</span>  <span class='chapter-title'>Class 14: The ID and IEN Arrays</span>"
     ]
   },
   {
