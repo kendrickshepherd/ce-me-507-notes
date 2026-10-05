@@ -347,10 +347,11 @@ A = \mathrm{ID}\big[\mathrm{IEN}(a,e)\big],
 .id-tog label{display:flex;gap:5px;align-items:center}
 .id-btn{font:inherit;padding:4px 10px;border:1px solid #c3c9d2;border-radius:6px;background:#fff;cursor:pointer}
 .id-btn:hover{background:#eef1f5}
-.id-tables{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:22px;align-items:start;margin-top:16px}
-@media (max-width:900px){.id-tables{grid-template-columns:1fr}}
+.id-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(290px,360px);gap:18px;align-items:start}
+.id-tables{display:block}
+@media (max-width:980px){.id-main{grid-template-columns:1fr}}
 .id-panel{border:1px solid #dde1e7;border-radius:8px;background:#fff;padding:6px}
-.id-svg{width:100%;height:auto;display:block;touch-action:none}
+.id-svg{width:100%;height:auto;max-height:min(62vh,620px);display:block;touch-action:none}
 .id-read{font-family:monospace;font-size:.86em;background:#f8f9fb;border:1px solid #dde1e7;
   border-radius:8px;padding:10px 12px;margin-top:12px;min-height:3.2em;line-height:1.6}
 .id-read b{color:#b8322a}
@@ -375,7 +376,7 @@ table.id-t th.col{background:#dce7f7}
 <div class="id-controls">
   <div>
     <div class="id-row"><label for="dp">degree p</label><input id="dp" type="range" min="1" max="3" step="1" value="2"><output id="dp_o"></output></div>
-    <div class="id-row"><label for="dsz">label size</label><input id="dsz" type="range" min="7" max="15" step="1" value="10"><output id="dsz_o"></output></div>
+    <div class="id-row"><label for="dsz">label size</label><input id="dsz" type="range" min="8" max="18" step="1" value="12"><output id="dsz_o"></output></div>
   </div>
   <div class="id-tog">
     <label><input type="checkbox" id="t_glob" checked=""> global index</label>
@@ -390,9 +391,11 @@ table.id-t th.col{background:#dce7f7}
   </div>
 </div>
 
-<div class="id-panel"><svg id="svg" class="id-svg" viewbox="0 0 700 700"></svg></div>
-<div class="id-read" id="read"></div>
-
+<div class="id-main">
+<div>
+  <div class="id-panel"><svg id="svg" class="id-svg" viewbox="0 0 700 700"></svg></div>
+  <div class="id-read" id="read"></div>
+</div>
 <div class="id-tables">
   <div>
     <div class="id-h">IEN(a, e) &nbsp;<span style="font-weight:400;color:#6b7684">rows: local index a &nbsp; columns: element e</span></div>
@@ -405,17 +408,18 @@ table.id-t th.col{background:#dce7f7}
   </div>
 </div>
 </div>
+</div>
 
 <script>
 (function(){
 const $ = id => document.getElementById(id);
-const VB = 700, PAD = 58, S = 0.40;
+const VB = 700, PAD = 42, S = 0.40;
 const ROT = [0, 3, 2, 1, 2];                    // rotate each element's local origin
 const EC = ["#dce9f8","#fae4d7","#dff0e2","#f0e2f2","#fbf0d2"];
 const ECs= ["#2f6db5","#c2410c","#3f8f5e","#8a4f9e","#b08900"];
 const INK = "#18202b", GREY = "#9aa3ae", FAINT = "#dfe4ea", HOT = "#e0a800", PRE = "#b8322a";
 
-const st = {p:2, node:null, elem:null, dir:[false,false,false,false], sz:10};
+const st = {p:2, node:null, elem:null, dir:[false,false,false,false], sz:12};
 
 /* ---------------- geometry ---------------- */
 const ANG = [225, 315, 45, 135].map(d => d*Math.PI/180);

@@ -434,7 +434,7 @@
     "href": "chapters/14_Class.html#the-mesh",
     "title": "14  Class 14: The ID and IEN Arrays",
     "section": "",
-    "text": "Click a node to follow it. Every element that contains it lights up, its local index is shown in each, and the matching cells in IEN and ID are highlighted.\nClick inside an element to see all of its local indices at once.\nClick a boundary edge to switch it between Neumann and Dirichlet. Dirichlet edges are hatched, and the ID array renumbers immediately.\n\n\n\n\n\n  \n    degree p\n    label size\n  \n  \n     global index\n     ID value\n     all local indices\n     element numbers\n  \n  \n    all Neumann\n    all Dirichlet\n    clear selection\n  \n\n\n\n\n\n\n  \n    IEN(a, e)  rows: local index a   columns: element e\n    \n  \n  \n    ID[A]  top: global index A   bottom: equation number, −1 if prescribed",
+    "text": "Click a node to follow it. Every element that contains it lights up, its local index is shown in each, and the matching cells in IEN and ID are highlighted.\nClick inside an element to see all of its local indices at once.\nClick a boundary edge to switch it between Neumann and Dirichlet. Dirichlet edges are hatched, and the ID array renumbers immediately.\n\n\n\n\n\n  \n    degree p\n    label size\n  \n  \n     global index\n     ID value\n     all local indices\n     element numbers\n  \n  \n    all Neumann\n    all Dirichlet\n    clear selection\n  \n\n\n\n\n  \n  \n\n\n  \n    IEN(a, e)  rows: local index a   columns: element e\n    \n  \n  \n    ID[A]  top: global index A   bottom: equation number, −1 if prescribed",
     "crumbs": [
       "<span class='chapter-number'>14</span>  <span class='chapter-title'>Class 14: The ID and IEN Arrays</span>"
     ]
