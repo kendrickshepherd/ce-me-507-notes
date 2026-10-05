@@ -1,0 +1,495 @@
+---
+title: "Class 14: The ID and IEN Arrays"
+subtitle: "From local basis functions to global equations"
+format:
+  html:
+    page-layout: full
+    toc: false
+---
+
+Assembly needs two pieces of bookkeeping, and they do different jobs.
+
+**IEN** describes given an element and a local basis function, *which global basis function is this?* 
+Given a local index $a$ on element $e$, it returns the global index $A$:
+
+$$
+A = \mathrm{IEN}(a,e).
+$$
+
+For a tensor-product element the local index itself comes from the stride rule of
+[Class 11](11_Class.qmd), $a = a_\xi + (p+1)\,a_\eta$, so each element carries
+$n_{en} = (p+1)^2$ of them.
+
+**ID** clarifies whether *this basis function has an unknown attached to it?* 
+Given a global index $A$, it returns the equation number, or $-1$ when the value there is prescribed:
+
+$$
+\mathrm{ID}[A] =
+\begin{cases}
+\text{equation number}, & u(A) \text{ unknown} \\
+-1, & u(A) \text{ prescribed}
+\end{cases}
+$$
+
+Equation numbers run consecutively from $0$, skipping the prescribed nodes, so the global
+system is $n_{eq} \times n_{eq}$ rather than $n_{bf} \times n_{bf}$.
+
+Composed, they are what the assembly loop actually uses:
+
+$$
+A = \mathrm{ID}\big[\mathrm{IEN}(a,e)\big],
+$$
+
+sometimes written as its own array, $\mathrm{LM}(a,e)$.
+
+## The mesh
+
+Five elements: four around the boundary and one in the middle. At degree 1 the boundary
+edges are straight and the domain is a square with four trapezoids around a central square.
+At degree 2 and above the extra nodes on each boundary edge are placed on a circle, and the
+same five elements describe a disk.
+
+The local origin of each element has been rotated so that they do not all start in the same
+corner. That is deliberate: nothing requires element 3's local node 0 to sit where element
+0's does, and the domain boundary ends up on a different *local* edge in each of the four
+outer elements.
+
+* **Click a node** to follow it. Every element that contains it lights up, its local index
+  is shown in each, and the matching cells in IEN and ID are highlighted.
+* **Click inside an element** to see all of its local indices at once.
+* **Click a boundary edge** to switch it between Neumann and Dirichlet. Dirichlet edges are
+  hatched, and the ID array renumbers immediately.
+
+```{=html}
+<style>
+.id-wrap{--ink:#18202b;--grey:#9aa3ae;--faint:#dfe4ea}
+.id-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px 24px;
+  padding:14px 16px;border:1px solid #dde1e7;border-radius:8px;background:#f8f9fb;margin-bottom:14px}
+.id-row{display:grid;grid-template-columns:86px 1fr 34px;align-items:center;gap:10px}
+.id-row output{font-family:monospace;text-align:right}
+.id-tog{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
+.id-tog label{display:flex;gap:5px;align-items:center}
+.id-btn{font:inherit;padding:4px 10px;border:1px solid #c3c9d2;border-radius:6px;background:#fff;cursor:pointer}
+.id-btn:hover{background:#eef1f5}
+.id-tables{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:22px;align-items:start;margin-top:16px}
+@media (max-width:900px){.id-tables{grid-template-columns:1fr}}
+.id-panel{border:1px solid #dde1e7;border-radius:8px;background:#fff;padding:6px}
+.id-svg{width:100%;height:auto;display:block;touch-action:none}
+.id-read{font-family:monospace;font-size:.86em;background:#f8f9fb;border:1px solid #dde1e7;
+  border-radius:8px;padding:10px 12px;margin-top:12px;min-height:3.2em;line-height:1.6}
+.id-read b{color:#b8322a}
+.id-h{font-size:.95em;font-weight:600;color:#42506a;margin:14px 0 5px}
+table.id-t{border-collapse:collapse;font-family:monospace;font-size:.84em}
+table.id-t th,table.id-t td{border:1px solid #e3e7ec;padding:2px 7px;text-align:center;min-width:30px}
+table.id-t th{background:#f3f5f8;font-weight:600;color:#42506a}
+table.id-t td.hot{background:#ffe9a8;font-weight:700;outline:2px solid #e0a800;outline-offset:-2px}
+table.id-t td.col{background:#eef3fb}
+table.id-t th.col{background:#dce7f7}
+.id-ids{display:flex;flex-wrap:wrap;gap:3px;font-family:monospace;font-size:.8em}
+.id-ids div{border:1px solid #e3e7ec;border-radius:4px;padding:2px 5px;text-align:center;min-width:30px;line-height:1.35}
+.id-ids div span{display:block;color:#6b7684;font-size:.86em}
+.id-ids div.hot{background:#ffe9a8;outline:2px solid #e0a800;outline-offset:-2px}
+.id-ids div.pre{background:#fbe6e4;color:#b8322a}
+.id-ids div.pre span{color:#b8322a}
+.id-note{color:#6b7684;font-size:.86em;margin-top:6px}
+.id-scroll{overflow:auto;max-height:420px}
+</style>
+
+<div class="id-wrap">
+<div class="id-controls">
+  <div>
+    <div class="id-row"><label for="dp">degree p</label><input id="dp" type="range" min="1" max="3" step="1" value="2"><output id="dp_o"></output></div>
+    <div class="id-row"><label for="dsz">label size</label><input id="dsz" type="range" min="7" max="15" step="1" value="10"><output id="dsz_o"></output></div>
+  </div>
+  <div class="id-tog">
+    <label><input type="checkbox" id="t_glob" checked> global index</label>
+    <label><input type="checkbox" id="t_id" checked> ID value</label>
+    <label><input type="checkbox" id="t_allloc"> all local indices</label>
+    <label><input type="checkbox" id="t_elem" checked> element numbers</label>
+  </div>
+  <div class="id-tog">
+    <button class="id-btn" id="b_alln">all Neumann</button>
+    <button class="id-btn" id="b_alld">all Dirichlet</button>
+    <button class="id-btn" id="b_clear">clear selection</button>
+  </div>
+</div>
+
+<div class="id-panel"><svg id="svg" class="id-svg" viewBox="0 0 700 700"></svg></div>
+<div class="id-read" id="read"></div>
+
+<div class="id-tables">
+  <div>
+    <div class="id-h">IEN(a, e) &nbsp;<span style="font-weight:400;color:#6b7684">rows: local index a &nbsp; columns: element e</span></div>
+    <div class="id-scroll"><table class="id-t" id="ient"></table></div>
+  </div>
+  <div>
+    <div class="id-h">ID[A] &nbsp;<span style="font-weight:400;color:#6b7684">top: global index A &nbsp; bottom: equation number, &minus;1 if prescribed</span></div>
+    <div class="id-ids" id="idt"></div>
+    <div class="id-note" id="idnote"></div>
+  </div>
+</div>
+</div>
+
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const VB = 700, PAD = 58, S = 0.40;
+const ROT = [0, 3, 2, 1, 2];                    // rotate each element's local origin
+const EC = ["#dce9f8","#fae4d7","#dff0e2","#f0e2f2","#fbf0d2"];
+const ECs= ["#2f6db5","#c2410c","#3f8f5e","#8a4f9e","#b08900"];
+const INK = "#18202b", GREY = "#9aa3ae", FAINT = "#dfe4ea", HOT = "#e0a800", PRE = "#b8322a";
+
+const st = {p:2, node:null, elem:null, dir:[false,false,false,false], sz:10};
+
+/* ---------------- geometry ---------------- */
+const ANG = [225, 315, 45, 135].map(d => d*Math.PI/180);
+function cornersFor(p){
+  const O = (p === 1) ? [[-1,-1],[1,-1],[1,1],[-1,1]]
+                      : ANG.map(a => [Math.cos(a), Math.sin(a)]);
+  const I = [[-S,-S],[S,-S],[S,S],[-S,S]];
+  return {O, I};
+}
+// bedge marks the edge that lies on the domain boundary; arc marks the edges drawn as
+// circular arcs.  At degree 1 the boundary is a straight chord, so bedge is set but arc
+// is not -- keeping them separate is what lets the disk collapse to a square cleanly.
+function baseElems(O, I){
+  const E = [];
+  for (let k=0;k<4;k++)
+    E.push({c:[O[k], O[(k+1)%4], I[(k+1)%4], I[k]], bedge:[true,false,false,false], ring:k});
+  E.push({c:[I[0],I[1],I[2],I[3]], bedge:[false,false,false,false], ring:-1});
+  return E;
+}
+const rot = (arr, r) => arr.map((_,i) => arr[(i+r)%4]);
+
+function edgePt(c, arc, i, t){
+  const a = c[i], b = c[(i+1)%4];
+  if (!arc[i]) return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t];
+  let t0 = Math.atan2(a[1],a[0]), t1 = Math.atan2(b[1],b[0]);
+  let d = ((t1-t0+Math.PI) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI) - Math.PI;
+  const th = t0 + t*d;
+  return [Math.cos(th), Math.sin(th)];
+}
+function coons(c, arc, u, v){
+  const B = edgePt(c,arc,0,u), R = edgePt(c,arc,1,v);
+  const T = edgePt(c,arc,2,1-u), L = edgePt(c,arc,3,1-v);
+  const P00=c[0],P10=c[1],P11=c[2],P01=c[3];
+  return [0,1].map(k =>
+    (1-v)*B[k] + v*T[k] + (1-u)*L[k] + u*R[k]
+    - ((1-u)*(1-v)*P00[k] + u*(1-v)*P10[k] + u*v*P11[k] + (1-u)*v*P01[k]));
+}
+// local index A -> (a_xi, a_eta) with the stride rule A = a_xi + (p+1) a_eta
+const axi  = (A,p) => A % (p+1);
+const aeta = (A,p) => Math.floor(A/(p+1));
+
+// local indices along local edge i, in order
+function edgeLocal(i, p){
+  const out = [];
+  if (i===0) for (let a=0;a<=p;a++) out.push(a);
+  if (i===1) for (let b=0;b<=p;b++) out.push(p + (p+1)*b);
+  if (i===2) for (let a=p;a>=0;a--) out.push((p+1)*p + a);
+  if (i===3) for (let b=p;b>=0;b--) out.push((p+1)*b);
+  return out;
+}
+
+let M = null;                                    // the mesh
+function buildMesh(p){
+  const {O,I} = cornersFor(p);
+  const base = baseElems(O,I);
+  const nodes = [], elems = [];
+  const gid = q => {
+    for (let k=0;k<nodes.length;k++)
+      if (Math.abs(nodes[k][0]-q[0])<1e-7 && Math.abs(nodes[k][1]-q[1])<1e-7) return k;
+    nodes.push(q); return nodes.length-1;
+  };
+  base.forEach((B,e) => {
+    const r = ROT[e], c = rot(B.c, r), bedge = rot(B.bedge, r);
+    const arc = bedge.map(x => x && p >= 2);     // straight chords at degree 1
+    const ien = [];
+    for (let b=0;b<=p;b++) for (let a=0;a<=p;a++) ien.push(gid(coons(c,arc,a/p,b/p)));
+    const bEdge = bedge.findIndex(x => x);       // which LOCAL edge is the domain boundary
+    elems.push({c, arc, ien, ring:B.ring, bEdge});
+  });
+  // boundary segments, one per outer element
+  const bnd = [];
+  elems.forEach((E,e) => { if (E.bEdge >= 0) bnd.push({e, local:E.bEdge, k:E.ring}); });
+  bnd.sort((x,y) => x.k - y.k);
+  return {nodes, elems, bnd, p, nen:(p+1)*(p+1)};
+}
+
+function buildID(){
+  const pre = new Set();
+  M.bnd.forEach(b => {
+    if (!st.dir[b.k]) return;
+    edgeLocal(b.local, M.p).forEach(A => pre.add(M.elems[b.e].ien[A]));
+  });
+  const ID = []; let eq = 0;
+  for (let A=0;A<M.nodes.length;A++){
+    if (pre.has(A)) ID.push(-1); else ID.push(eq++);
+  }
+  return {ID, neq:eq, pre};
+}
+
+/* ---------------- drawing ---------------- */
+let TX = null;
+function makeTx(){
+  let lim = 1.0;
+  M.nodes.forEach(n => { lim = Math.max(lim, Math.abs(n[0]), Math.abs(n[1])); });
+  lim *= 1.04;
+  const s = (VB - 2*PAD)/(2*lim);
+  return {s, px: x => VB/2 + x*s, py: y => VB/2 - y*s,
+             dx: q => (q - VB/2)/s, dy: q => -(q - VB/2)/s};
+}
+const esc = s => String(s);
+const poly=(p,a)=>`<polygon points="${p.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')}" ${a}/>`;
+const line=(a,b,c,d,s)=>`<line x1="${a.toFixed(1)}" y1="${b.toFixed(1)}" x2="${c.toFixed(1)}" y2="${d.toFixed(1)}" ${s}/>`;
+const circ=(x,y,r,s)=>`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" ${s}/>`;
+const txt=(x,y,t,s)=>`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" ${s}>${esc(t)}</text>`;
+
+function elemLoop(E, n){
+  const pts = [];
+  for (let i=0;i<4;i++)
+    for (let j=0;j<n;j++) pts.push(edgePt(E.c, E.arc, i, j/n));
+  return pts.map(q => [TX.px(q[0]), TX.py(q[1])]);
+}
+
+function hatch(E, local){
+  const o = [], N = 13, L = 15;
+  const pts = [];
+  for (let j=0;j<=N;j++) pts.push(edgePt(E.c, E.arc, local, j/N));
+  const px = pts.map(q => [TX.px(q[0]), TX.py(q[1])]);
+  o.push(`<polyline points="${px.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')}" fill="none" stroke="${INK}" stroke-width="3"/>`);
+  for (let j=0;j<N;j++){
+    const a = px[j], b = px[j+1];
+    let tx = b[0]-a[0], ty = b[1]-a[1];
+    const len = Math.hypot(tx,ty) || 1; tx/=len; ty/=len;
+    // outward normal: away from the centre of the picture
+    let nx = ty, ny = -tx;
+    const mx = (a[0]+b[0])/2 - VB/2, my = (a[1]+b[1])/2 - VB/2;
+    if (nx*mx + ny*my < 0){ nx = -nx; ny = -ny; }
+    const dx = (nx - tx)/Math.SQRT2, dy = (ny - ty)/Math.SQRT2;   // 45 degrees
+    o.push(line(a[0], a[1], a[0]+L*dx, a[1]+L*dy, `stroke="${INK}" stroke-width="1.6"`));
+  }
+  return o.join("");
+}
+
+function render(){
+  M = buildMesh(st.p);
+  TX = makeTx();
+  const {ID, neq, pre} = buildID();
+  const p = M.p, nen = M.nen;
+  $("dp_o").value = p; $("dsz_o").value = st.sz;
+
+  // which elements are lit, and which local index to show at which node
+  const lit = new Set(), locLab = new Map();      // global node -> [[e, A], ...]
+  if (st.elem !== null) lit.add(st.elem);
+  if (st.node !== null)
+    M.elems.forEach((E,e) => { if (E.ien.includes(st.node)) lit.add(e); });
+  M.elems.forEach((E,e) => {
+    const show = $("t_allloc").checked || lit.has(e);
+    if (!show) return;
+    E.ien.forEach((g,A) => {
+      if (st.node !== null && st.elem === null && g !== st.node && !$("t_allloc").checked) return;
+      if (!locLab.has(g)) locLab.set(g, []);
+      locLab.get(g).push([e, A]);
+    });
+  });
+
+  const o = [];
+  // element patches
+  M.elems.forEach((E,e) => {
+    const on = lit.has(e);
+    o.push(poly(elemLoop(E, 22),
+      `fill="${EC[e]}" fill-opacity="${on?1:0.55}" stroke="${on?ECs[e]:FAINT}" stroke-width="${on?2.6:1.4}" `+
+      `data-elem="${e}" style="cursor:pointer"`));
+  });
+  // parametric grid lines inside each element, faint
+  M.elems.forEach(E => {
+    for (let k=1;k<p;k++){
+      for (const fixed of [0,1]){
+        const pts = [];
+        for (let j=0;j<=16;j++){
+          const t = j/16, u = fixed? k/p : t, v = fixed? t : k/p;
+          const q = coons(E.c, E.arc, u, v); pts.push([TX.px(q[0]), TX.py(q[1])]);
+        }
+        o.push(`<polyline points="${pts.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')}" fill="none" stroke="${FAINT}" stroke-width="1"/>`);
+      }
+    }
+  });
+  // boundary: hatch the Dirichlet segments, plain line otherwise
+  M.bnd.forEach(b => {
+    const E = M.elems[b.e];
+    if (st.dir[b.k]) o.push(hatch(E, b.local));
+    else {
+      const pts = [];
+      for (let j=0;j<=22;j++) { const q = edgePt(E.c, E.arc, b.local, j/22); pts.push([TX.px(q[0]), TX.py(q[1])]); }
+      o.push(`<polyline points="${pts.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')}" fill="none" stroke="${INK}" stroke-width="2.6"/>`);
+    }
+    // fat invisible hit strip
+    const hp = [];
+    for (let j=0;j<=22;j++) { const q = edgePt(E.c, E.arc, b.local, j/22); hp.push([TX.px(q[0]), TX.py(q[1])]); }
+    o.push(`<polyline points="${hp.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')}" fill="none" stroke="transparent" stroke-width="18" data-bnd="${b.k}" style="cursor:pointer"/>`);
+  });
+  // element numbers
+  // placed at v = 0.28 so it never lands on a node (nodes sit at v = k/p)
+  if ($("t_elem").checked)
+    M.elems.forEach((E,e) => {
+      const q = coons(E.c, E.arc, 0.5, 0.28);
+      o.push(txt(TX.px(q[0]), TX.py(q[1])+5, "e" + e,
+        `text-anchor="middle" font-size="${st.sz+9}" font-weight="700" fill="${ECs[e]}" `+
+        `opacity="0.75" stroke="#fff" stroke-width="3.5" paint-order="stroke" style="pointer-events:none"`));
+    });
+
+  // nodes
+  M.nodes.forEach((q,A) => {
+    const X = TX.px(q[0]), Y = TX.py(q[1]);
+    const sel = (A === st.node), isPre = pre.has(A);
+    const r = sel ? 9 : 6;
+    o.push(circ(X, Y, r+6, `fill="transparent" data-node="${A}" style="cursor:pointer"`));
+    o.push(circ(X, Y, r, `fill="${sel?HOT:(isPre?PRE:"#fff")}" stroke="${INK}" stroke-width="${sel?2.4:1.5}" style="pointer-events:none"`));
+    const gOn = $("t_glob").checked, iOn = $("t_id").checked;
+    if (gOn || iOn){
+      let inner = "";
+      if (gOn) inner += `<tspan fill="${isPre?PRE:INK}" font-weight="600">${A}</tspan>`;
+      if (gOn && iOn) inner += `<tspan fill="${GREY}">:</tspan>`;
+      if (iOn) inner += `<tspan fill="${isPre?PRE:GREY}">${ID[A] < 0 ? "−1" : ID[A]}</tspan>`;
+      o.push(`<text x="${X.toFixed(1)}" y="${(Y-r-4).toFixed(1)}" text-anchor="middle" `+
+             `font-size="${st.sz}" font-family="monospace" stroke="#fff" stroke-width="3" `+
+             `paint-order="stroke" style="pointer-events:none">${inner}</text>`);
+    }
+    // local indices, offset per owning element so they do not collide
+    const ls = locLab.get(A);
+    if (ls) ls.forEach(([e,Aloc],i) => {
+      const ang = -Math.PI/2 + (i+1)*(2*Math.PI/Math.max(3,ls.length+1));
+      const rr = r + 13;
+      o.push(txt(X + rr*Math.cos(ang), Y + rr*Math.sin(ang) + 3.5, Aloc,
+        `text-anchor="middle" font-size="${st.sz}" font-weight="700" font-family="monospace" fill="${ECs[e]}" style="pointer-events:none"`));
+    });
+  });
+  $("svg").innerHTML = o.join("");
+
+  drawIEN(ID);
+  drawIDs(ID, pre);
+  readout(ID, neq, pre);
+  $("idnote").textContent =
+    `${M.nodes.length} global basis functions, ${neq} equations, ${M.nodes.length - neq} prescribed.`;
+}
+
+function drawIEN(ID){
+  const p = M.p, nen = M.nen;
+  let h = "<thead><tr><th>a</th>";
+  for (let e=0;e<5;e++) h += `<th class="${st.elem===e?'col':''}" style="color:${ECs[e]}">e${e}</th>`;
+  h += "</tr></thead><tbody>";
+  for (let A=0;A<nen;A++){
+    h += `<tr><th>${A}<span style="color:#9aa3ae;font-weight:400"> (${axi(A,p)},${aeta(A,p)})</span></th>`;
+    for (let e=0;e<5;e++){
+      const g = M.elems[e].ien[A];
+      const cls = (st.node !== null && g === st.node) ? "hot" : (st.elem === e ? "col" : "");
+      h += `<td class="${cls}" data-cell="${e},${A}" style="cursor:pointer">${g}</td>`;
+    }
+    h += "</tr>";
+  }
+  $("ient").innerHTML = h + "</tbody>";
+}
+
+function drawIDs(ID, pre){
+  let h = "";
+  for (let A=0;A<M.nodes.length;A++){
+    const cls = (A === st.node ? "hot" : "") + (pre.has(A) ? " pre" : "");
+    h += `<div class="${cls}" data-idn="${A}" style="cursor:pointer">${A}<span>${ID[A] < 0 ? "−1" : ID[A]}</span></div>`;
+  }
+  $("idt").innerHTML = h;
+}
+
+function readout(ID, neq, pre){
+  const r = $("read");
+  if (st.node !== null){
+    const A = st.node, hits = [];
+    M.elems.forEach((E,e) => E.ien.forEach((g,Al) => { if (g === A) hits.push([e,Al]); }));
+    const where = hits.map(([e,Al]) =>
+      `<span style="color:${ECs[e]}">IEN(${Al},&nbsp;${e})&nbsp;=&nbsp;${A}</span>`).join(" &nbsp;&middot;&nbsp; ");
+    r.innerHTML =
+      `global basis function <b>A = ${A}</b> &nbsp; appears in ${hits.length} element${hits.length>1?"s":""}<br>` +
+      where + `<br>` +
+      (pre.has(A)
+        ? `ID[${A}] = <b>−1</b> &nbsp; prescribed, so it contributes no equation; in assembly the <code>a</code> loop skips it and its known value moves to the right-hand side`
+        : `ID[${A}] = <b>${ID[A]}</b> &nbsp; row and column ${ID[A]} of the global system`);
+  } else if (st.elem !== null){
+    const e = st.elem;
+    r.innerHTML = `element <b>e${e}</b> &nbsp; local indices 0 … ${M.nen-1}, laid out by the stride rule `+
+      `a = a<sub>ξ</sub> + (p+1)·a<sub>η</sub><br>` +
+      `its ${M.nen} local basis functions map to global ` + M.elems[e].ien.join(", ");
+  } else {
+    r.innerHTML = `Click a node, an element, or a boundary edge.`;
+  }
+}
+
+/* ---------------- interaction ---------------- */
+$("svg").addEventListener("click", ev => {
+  const t = ev.target;
+  if (t.dataset.node !== undefined){ st.node = +t.dataset.node; st.elem = null; render(); return; }
+  if (t.dataset.bnd  !== undefined){ const k = +t.dataset.bnd; st.dir[k] = !st.dir[k]; render(); return; }
+  if (t.dataset.elem !== undefined){ st.elem = +t.dataset.elem; st.node = null; render(); return; }
+});
+$("ient").addEventListener("click", ev => {
+  const c = ev.target.dataset.cell; if (!c) return;
+  const [e,A] = c.split(",").map(Number);
+  st.node = M.elems[e].ien[A]; st.elem = null; render();
+});
+$("idt").addEventListener("click", ev => {
+  const n = ev.target.closest("[data-idn]"); if (!n) return;
+  st.node = +n.dataset.idn; st.elem = null; render();
+});
+$("dp").addEventListener("input", e => { st.p = +e.target.value; st.node = null; st.elem = null; render(); });
+$("dsz").addEventListener("input", e => { st.sz = +e.target.value; render(); });
+for (const id of ["t_glob","t_id","t_allloc","t_elem"]) $(id).addEventListener("change", render);
+$("b_alln").addEventListener("click", () => { st.dir = [false,false,false,false]; render(); });
+$("b_alld").addEventListener("click", () => { st.dir = [true,true,true,true]; render(); });
+$("b_clear").addEventListener("click", () => { st.node = null; st.elem = null; render(); });
+
+st.dir = [true,false,false,false];
+render();
+})();
+</script>
+```
+
+## What the widget is showing
+
+**One global basis function, several local names.** Click any node on a shared edge. It
+lights up in two elements, sometimes three or four at the inner corners, and the readout
+lists every $\mathrm{IEN}(a,e)$ that returns it. That is the whole content of the IEN array:
+the same unknown is local node 6 in one element and local node 2 in its neighbour, and
+assembly has to add both contributions into the same global row.
+
+**The local numbering is arbitrary, the global numbering is not.** Because the origins are
+rotated, element 1's local node 0 is in a different physical corner from element 0's. The
+mesh does not care. What matters is only that IEN is consistent with however each element
+chose to number itself.
+
+**Prescribed nodes drop out of the equations, not out of the mesh.** Hatch an edge and
+watch the ID array: those nodes go to $-1$, and every ID value after them shifts down by
+one, because equation numbers are consecutive over the *unknowns*. The node is still there,
+still has a basis function, still appears in IEN. It just has no equation of its own, and
+its known value moves to the right-hand side of its neighbours' equations.
+
+**Two different lengths.** IEN is indexed by local node and element, so it has
+$n_{en} \times n_{el}$ entries no matter what the boundary conditions are. ID is indexed by
+global node, so it has $n_{bf}$ entries, of which $n_{eq}$ are equation numbers. Changing a
+boundary condition changes ID and leaves IEN untouched.
+
+## Things to try
+
+1. Click the node at the centre of a shared edge between two outer elements. It has two
+   local names. Now click an inner corner of the middle element: three elements meet there,
+   so it has three.
+2. Hatch one edge, then a second. Watch $n_{eq}$ drop and the equation numbers renumber.
+   The corner shared by the two hatched edges is prescribed once, not twice.
+3. Set all four edges to Dirichlet. Every boundary node goes to $-1$ and only the interior
+   nodes carry equations — at degree 1 that leaves just the four inner corners.
+4. Set every edge to Neumann. Nothing is prescribed, $n_{eq} = n_{bf}$, and the global
+   matrix would be singular: this is the two-prescribed-fluxes case from Project 1, Task 5,
+   in two dimensions.
+5. Change the degree from 2 to 1. The disk becomes a square and the mid-edge nodes
+   disappear, but the five elements and their connectivity are unchanged — degree changes
+   the number of basis functions, not the mesh.
+6. Go to degree 3 and turn on **all local indices**. This is what the bookkeeping actually
+   looks like at modest degree, and why nobody writes it out by hand.
