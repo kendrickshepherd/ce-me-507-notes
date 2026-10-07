@@ -8,7 +8,7 @@
 
 <meta name="description" content="Finite Element Methods">
 
-<title>Appendix A — Support: Norms and Function Spaces – CE/ME 507 — Class Notes</title>
+<title>15&nbsp; Class 15: Unidimensional Finite Element Code – CE/ME 507 — Class Notes</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -37,8 +37,8 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../chapters/Poisson1D_Heat.html" rel="next">
-<link href="../chapters/15_Class.html" rel="prev">
+<link href="../chapters/3_Support_FunctionSpaces.html" rel="next">
+<link href="../chapters/14_Class.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
@@ -88,35 +88,6 @@ window.MathJax = {
 };
 </script>
 
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
 
 </head>
 
@@ -129,7 +100,7 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/15_Class.html"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Class 15: Unidimensional Finite Element Code</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -139,7 +110,7 @@ window.Quarto = {
   </nav>
 </header>
 <!-- content -->
-<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full">
 <!-- sidebar -->
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
@@ -240,7 +211,7 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/15_Class.html" class="sidebar-item-text sidebar-link">
+  <a href="../chapters/15_Class.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Class 15: Unidimensional Finite Element Code</span></span></a>
   </div>
 </li>
@@ -255,7 +226,7 @@ window.Quarto = {
       <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link active">
+  <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span></a>
   </div>
 </li>
@@ -290,28 +261,19 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">Table of contents</h2>
-   
-  <ul>
-  <li><a href="#from-a-discrete-norm-to-an-integral" id="toc-from-a-discrete-norm-to-an-integral" class="nav-link active" data-scroll-target="#from-a-discrete-norm-to-an-integral"><span class="header-section-number">B</span> From a discrete norm to an integral</a></li>
-  <li><a href="#the-l2-lebesgue-norm" id="toc-the-l2-lebesgue-norm" class="nav-link" data-scroll-target="#the-l2-lebesgue-norm"><span class="header-section-number">C</span> The <span class="math inline">\(L^2\)</span> (Lebesgue) norm</a></li>
-  <li><a href="#sobolev-norms-h0-and-h1" id="toc-sobolev-norms-h0-and-h1" class="nav-link" data-scroll-target="#sobolev-norms-h0-and-h1"><span class="header-section-number">D</span> Sobolev norms: <span class="math inline">\(H^0\)</span> and <span class="math inline">\(H^1\)</span></a></li>
-  </ul>
-</nav>
-    </div>
+    
 <!-- main -->
-<main class="content" id="quarto-document-content">
+<main class="content column-page-right" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Appendix A — Support: Norms and Function Spaces</h1>
+<h1 class="title"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Class 15: Unidimensional Finite Element Code</span></h1>
+<p class="subtitle lead">The Flowchart</p>
 </div>
 
 
 
-<div class="quarto-title-meta">
+<div class="quarto-title-meta column-page-right">
 
     
   
@@ -323,139 +285,331 @@ window.Quarto = {
 </header>
 
 
-<p>Supporting material for <a href="../chapters/3_Class.html">Class 3</a>, from a conversation at the board about where the integrals in <span class="math inline">\(L^2\)</span> and <span class="math inline">\(H^1\)</span> come from.</p>
-<section id="from-a-discrete-norm-to-an-integral" class="level1" data-number="B">
-<h1 data-number="B"><span class="header-section-number">B</span> From a discrete norm to an integral</h1>
-<p>For a finite list of numbers, the norm is the familiar one:</p>
-<div class="derivation">
-<p><span class="math display">\[
-\|\underline{u}\| = \sqrt{u_1^2 + u_2^2 + \cdots + u_n^2}
-\qquad\qquad
-\|\underline{u}\|^2 = \sum_{i=1}^{n} u_i^2
-\]</span></p>
-</div>
-<p>Now let those numbers be <strong>samples of a function</strong>, <span class="math inline">\(u_i = u(x_i)\)</span>. Adding more samples must not make the norm grow without bound, so each term carries a <strong>weight</strong> <span class="math inline">\(w_i\)</span> — the piece of the domain it stands for:</p>
-<div class="derivation">
-<p><span class="math display">\[
-\|\underline{u}\|^2 = \sum_{i=1}^{n} u_i^2 \, w_i
-\qquad \xrightarrow[\;n \to \infty\;]{} \qquad
-\int_0^L u^2 \, dx
-\]</span></p>
-</div>
-<div id="fig-s3-discrete" class="quarto-float quarto-figure quarto-figure-center anchored">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-s3-discrete-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="generated_images/Class3_Support/S3_Fig1_DiscreteToIntegral.png" class="img-fluid figure-img" style="width:100.0%">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-s3-discrete-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;B.1: The integral is the infinite-dimensional version of the vector norm: weight each sample by the piece of domain it represents, then refine.
-</figcaption>
-</figure>
-</div>
-</section>
-<section id="the-l2-lebesgue-norm" class="level1" data-number="C">
-<h1 data-number="C"><span class="header-section-number">C</span> The <span class="math inline">\(L^2\)</span> (Lebesgue) norm</h1>
-<div class="derivation">
-<p><span class="math display">\[
-u \in L^2(\Omega)
-\quad\Longleftrightarrow\quad
-\int_\Omega u^2 \, d\Omega &lt; \infty
-\qquad\qquad
-\|u\|_{L^2} = \left(\int_\Omega u^2 \, d\Omega\right)^{1/2}
-\]</span></p>
-</div>
-<p>Membership depends on the <strong>domain</strong> as much as on the formula. Since the test is on <span class="math inline">\(u^2\)</span>, compare two functions whose squares are the two classic borderline integrands:</p>
-<div class="derivation">
-<p><span class="math display">\[
-u(x) = \frac{1}{x} \;\Rightarrow\; u^2 = \frac{1}{x^2}
-\qquad\qquad
-v(x) = \frac{1}{x^{1/4}} \;\Rightarrow\; v^2 = \frac{1}{\sqrt{x}}
-\]</span></p>
-</div>
-<div class="step">
-<p>(<span class="math inline">\(v\)</span> is the fourth root of <span class="math inline">\(1/x\)</span>; squaring it gives <span class="math inline">\(1/\sqrt{x}\)</span>.)</p>
-</div>
-<div id="fig-s3-four" class="quarto-float quarto-figure quarto-figure-center anchored">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-s3-four-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="generated_images/Class3_Support/S3_Fig2_FourIntegrals.png" class="img-fluid figure-img" style="width:100.0%">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-s3-four-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;C.1: Both left-hand integrands blow up at the origin, yet only one encloses a finite area — you cannot tell by looking, you have to do the integral. In the tail the verdicts reverse.
-</figcaption>
-</figure>
-</div>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
-<thead>
-<tr class="header">
-<th></th>
-<th><span class="math inline">\(\Omega = (0,1)\)</span></th>
-<th><span class="math inline">\(\Omega = (1,\infty)\)</span></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><span class="math inline">\(u = \dfrac{1}{x}\)</span></td>
-<td><span class="math inline">\(\displaystyle\int_0^1 \frac{dx}{x^2} = \infty\)</span></td>
-<td><span class="math inline">\(\displaystyle\int_1^\infty \frac{dx}{x^2} = 1\)</span></td>
-</tr>
-<tr class="even">
-<td><span class="math inline">\(v = \dfrac{1}{x^{1/4}}\)</span></td>
-<td><span class="math inline">\(\displaystyle\int_0^1 \frac{dx}{\sqrt{x}} = 2\)</span></td>
-<td><span class="math inline">\(\displaystyle\int_1^\infty \frac{dx}{\sqrt{x}} = \infty\)</span></td>
-</tr>
-</tbody>
-</table>
-<p>Reading those off as membership in <span class="math inline">\(H^0 = L^2\)</span>:</p>
-<div class="notes">
-<ul>
-<li><span class="math inline">\(\dfrac{1}{x} \notin H^0\big((0,1)\big)\)</span> &nbsp;&nbsp;but&nbsp;&nbsp; <span class="math inline">\(\dfrac{1}{x} \in H^0\big((1,\infty)\big)\)</span></li>
-<li><span class="math inline">\(\dfrac{1}{x^{1/4}} \in H^0\big((0,1)\big)\)</span> &nbsp;&nbsp;but&nbsp;&nbsp; <span class="math inline">\(\dfrac{1}{x^{1/4}} \notin H^0\big((1,\infty)\big)\)</span></li>
-</ul>
-</div>
-<p>The two ends make <strong>opposite</strong> demands: near a singularity the function must not blow up too fast, while over an infinite tail it must decay fast enough. For a pure power <span class="math inline">\(u = x^{-p}\)</span>, so <span class="math inline">\(u^2 = x^{-2p}\)</span>,</p>
-<div class="derivation">
-<p><span class="math display">\[
-\int_0^1 x^{-2p}\,dx &lt; \infty \iff p &lt; \tfrac{1}{2}
-\qquad\qquad
-\int_1^\infty x^{-2p}\,dx &lt; \infty \iff p &gt; \tfrac{1}{2}
-\]</span></p>
-</div>
-<div class="step">
-<p>No single <span class="math inline">\(p\)</span> satisfies both — so <strong>no pure power lies in <span class="math inline">\(L^2\big((0,\infty)\big)\)</span></strong>, <span class="math inline">\(1/x\)</span> included.</p>
-</div>
-</section>
-<section id="sobolev-norms-h0-and-h1" class="level1" data-number="D">
-<h1 data-number="D"><span class="header-section-number">D</span> Sobolev norms: <span class="math inline">\(H^0\)</span> and <span class="math inline">\(H^1\)</span></h1>
-<div class="derivation">
-<p><span class="math display">\[
-\underbrace{\|u\|_{H^0} = \left(\int_\Omega u^2\, d\Omega\right)^{1/2}}_{H^0 \;=\; L^2}
-\qquad\qquad
-\|u\|_{H^1} = \left(\int_\Omega u^2 + \left(u_{,x}\right)^2 d\Omega\right)^{1/2}
-\]</span></p>
-</div>
-<p>The extra derivative term is what makes <span class="math inline">\(H^1\)</span> a measure of a function’s <strong>energy</strong>: two functions can be the same “size” in <span class="math inline">\(L^2\)</span> while costing very different amounts to bend.</p>
-<div id="fig-s3-energy" class="quarto-float quarto-figure quarto-figure-center anchored">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-s3-energy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="generated_images/Class3_Support/S3_Fig3_Energy.png" class="img-fluid figure-img" style="width:100.0%">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-s3-energy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;D.1: All three have the <strong>same</strong> <span class="math inline">\(L^2\)</span> norm; the derivative term grows in proportion to <span class="math inline">\(k\)</span>. That term is the energy <span class="math inline">\(H^1\)</span> sees and <span class="math inline">\(L^2\)</span> does not.
-</figcaption>
-</figure>
-</div>
-<div class="step">
-<p>This is why the weak form of Class 3 is posed in <span class="math inline">\(H^1\)</span>: the integral <span class="math inline">\(\int_0^1 w_{,x}u_{,x}\,dx\)</span> only makes sense for functions whose derivatives are square integrable.</p>
+<p>The chart below gives a rough layout of the finite element method in one dimension. This integrates much of what you have learned previously and grounds the multidimensional in a case study.</p>
+<p>Switch between <strong>hard-coded assembly</strong> and <strong>general polynomial degree</strong> and note the similarities and the differences. This is a clean representation of how to use the basis functions and quadrature points to operate within a 1D finite element code that has been hard-coded to work with linear hat functions.</p>
+<style>
+.fc15{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;
+      --acc:#b8322a;--amb:#e0a800;--ambbg:#fff6da;
+      max-width:900px;margin:0 auto;color:var(--ink)}
+.fc15 .bar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;
+  padding:11px 14px;background:var(--paper);border:1px solid var(--faint);
+  border-radius:8px;margin-bottom:14px}
+.fc15 .bar b{font-size:12.5px;letter-spacing:.05em;color:var(--grey)}
+.fc15 .seg{display:inline-flex;border:1px solid var(--faint);border-radius:6px;
+  overflow:hidden;background:#fff}
+.fc15 .seg button{border:0;background:#fff;padding:6px 14px;font:inherit;font-size:14px;
+  cursor:pointer;color:var(--grey);border-right:1px solid var(--faint)}
+.fc15 .seg button:last-child{border-right:0}
+.fc15 .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.fc15 .seg button:disabled{opacity:.35;cursor:default}
+.fc15 svg{display:block;width:100%;height:auto;
+  border:1px solid var(--faint);border-radius:8px;background:#fff}
+.fc15 .cap{font-size:13px;color:var(--grey);line-height:1.55;margin:9px 2px 0}
+.fc15 .cap b{color:var(--ink)}
+</style>
+
+<div class="fc15">
+  <div class="bar">
+    <b>VERSION</b>
+    <span class="seg" id="fcver">
+      <button data-v="p1" aria-pressed="true">Hard-coded&nbsp;assembly</button>
+      <button data-v="c15" aria-pressed="false">General&nbsp;polynomial&nbsp;degree</button>
+    </span>
+    <b>DEGREE</b>
+    <span class="seg" id="fcdeg">
+      <button data-p="1" aria-pressed="true">p&nbsp;=&nbsp;1</button>
+      <button data-p="2" aria-pressed="false">p&nbsp;=&nbsp;2</button>
+      <button data-p="3" aria-pressed="false">p&nbsp;=&nbsp;3</button>
+    </span>
+  </div>
+  <svg id="fcsvg" viewbox="0 0 880 1210" role="img" aria-label="Flowchart of the finite element solver"></svg>
+  <div class="cap" id="fccap"></div>
 </div>
 
+<script>
+(function(){
+var V='p1', P=1;
+var INK='#18202b', GREY='#6b7684', FAINT='#dfe4ea', ACC='#b8322a',
+    PAPER='#f8f9fb', AMB='#ffe9a8', S='';
 
-</section>
+function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function box(x,y,w,h,fill,stroke,sw){
+  S+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="7" fill="'+(fill||'#fff')+
+     '" stroke="'+(stroke||INK)+'" stroke-width="'+(sw||1.3)+'"/>';}
+function txt(x,y,t,o){o=o||{};
+  S+='<text x="'+x+'" y="'+y+'" font-size="'+(o.s||13)+'" fill="'+(o.f||INK)+
+     '" text-anchor="'+(o.a||'start')+'" font-weight="'+(o.w||400)+
+     '" font-family="'+(o.m?'ui-monospace,Menlo,monospace':'inherit')+
+     '" letter-spacing="'+(o.ls||0)+'">'+esc(t)+'</text>';}
+function arrow(x,y1,y2,col){col=col||INK;
+  S+='<line x1="'+x+'" y1="'+y1+'" x2="'+x+'" y2="'+(y2-7)+'" stroke="'+col+'" stroke-width="1.5"/>';
+  S+='<path d="M'+(x-4.5)+' '+(y2-7)+' L'+x+' '+y2+' L'+(x+4.5)+' '+(y2-7)+'Z" fill="'+col+'"/>';}
+function dot(x,y,r,f){S+='<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+f+'"/>';}
+function ring(x,y,r,f){S+='<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="#fff" stroke="'+f+'" stroke-width="2"/>';}
+function grid(x,y,n,c,fill){ // n x n cells of size c
+  for(var i=0;i<n;i++)for(var j=0;j<n;j++)
+    S+='<rect x="'+(x+j*c)+'" y="'+(y+i*c)+'" width="'+c+'" height="'+c+
+       '" fill="'+(fill||'none')+'" stroke="'+GREY+'" stroke-width=".8"/>';}
+function vec(x,y,n,c,fill){
+  for(var i=0;i<n;i++)
+    S+='<rect x="'+x+'" y="'+(y+i*c)+'" width="'+c+'" height="'+c+
+       '" fill="'+(fill||'none')+'" stroke="'+GREY+'" stroke-width=".8"/>';}
+
+/* ---------- pictograms, drawn in a 92 x 56 cell at (ox, oy) ---------- */
+function picMesh(ox,oy){
+  var x0=ox+4,x1=ox+88,y=oy+28,nb=3*P+1;
+  S+='<line x1="'+x0+'" y1="'+y+'" x2="'+x1+'" y2="'+y+'" stroke="'+INK+'" stroke-width="1.4"/>';
+  for(var e=0;e<=3;e++){var xx=x0+(x1-x0)*e/3;
+    S+='<line x1="'+xx+'" y1="'+(y-7)+'" x2="'+xx+'" y2="'+(y+7)+'" stroke="'+INK+'" stroke-width="1.4"/>';}
+  for(var A=0;A<nb;A++) dot(x0+(x1-x0)*A/(nb-1),y,2.8,(A%P===0)?INK:ACC);
+}
+function picID(ox,oy){
+  var x0=ox+4,x1=ox+88,y=oy+28,nb=3*P+1;
+  S+='<line x1="'+x0+'" y1="'+y+'" x2="'+x1+'" y2="'+y+'" stroke="'+FAINT+'" stroke-width="1.4"/>';
+  for(var A=0;A<nb;A++){var xx=x0+(x1-x0)*A/(nb-1);
+    if(A===nb-1) ring(xx,y,3.6,ACC); else dot(xx,y,3,INK);}
+  txt(ox+46,oy+50,'unknown / given',{s:8.5,a:'middle',f:GREY});
+}
+function picEmpty(ox,oy){
+  var n=Math.min(3*P,6), c=Math.min(9,34/n);
+  grid(ox+6,oy+13,n,c,'#fff'); vec(ox+6+n*c+9,oy+13,n,c,'#fff');
+}
+function picElem(ox,oy){
+  var x0=ox+14,x1=ox+78,y=oy+28;
+  S+='<rect x="'+(x0-6)+'" y="'+(y-12)+'" width="'+(x1-x0+12)+'" height="24" rx="4" fill="'+AMB+'" opacity=".55"/>';
+  S+='<line x1="'+x0+'" y1="'+y+'" x2="'+x1+'" y2="'+y+'" stroke="'+INK+'" stroke-width="1.4"/>';
+  for(var a=0;a<=P;a++) dot(x0+(x1-x0)*a/P,y,3.2,INK);
+}
+function picQuadPt(ox,oy){
+  var x0=ox+12,x1=ox+80,y=oy+40,nq=P+1;
+  S+='<line x1="'+x0+'" y1="'+y+'" x2="'+x1+'" y2="'+y+'" stroke="'+INK+'" stroke-width="1.3"/>';
+  for(var q=0;q<nq;q++){var xx=x0+(x1-x0)*(q+0.5)/nq;
+    S+='<path d="M'+(xx-3.4)+' '+(y-3.4)+' L'+(xx+3.4)+' '+(y+3.4)+' M'+(xx+3.4)+' '+(y-3.4)+
+       ' L'+(xx-3.4)+' '+(y+3.4)+'" stroke="'+ACC+'" stroke-width="1.6"/>';
+    S+='<line x1="'+xx+'" y1="'+(y-7)+'" x2="'+xx+'" y2="'+(oy+16)+'" stroke="'+ACC+
+       '" stroke-width=".9" stroke-dasharray="2 2"/>';}
+  grid(ox+34,oy+4,2,6,'#fff');
+}
+function picKeFe(ox,oy,closed){
+  var n=P+1,c=Math.min(13,40/n),gx=ox+10,gy=oy+28-n*c/2;
+  grid(gx,gy,n,c,closed?PAPER:'#fff');
+  if(closed){ // the +/- checkerboard of the Hughes form
+    for(var i=0;i<2;i++)for(var j=0;j<2;j++)
+      txt(gx+j*c+c/2,gy+i*c+c/2+3.5,(i===j)?'+':'−',{s:9,a:'middle',f:GREY});
+  } else {
+    for(var i2=0;i2<n;i2++)for(var j2=0;j2<n;j2++)
+      S+='<rect x="'+(gx+j2*c+1.5)+'" y="'+(gy+i2*c+1.5)+'" width="'+(c-3)+'" height="'+(c-3)+
+         '" fill="'+ACC+'" opacity="'+(0.13+0.1*((i2+j2)%3))+'"/>';
+  }
+  vec(gx+n*c+10,gy,n,c,closed?PAPER:'#fff');
+}
+function picScatter(ox,oy){
+  var n=Math.min(3*P,6),c=Math.min(9,34/n);
+  grid(ox+40,oy+13,n,c,'#fff');
+  var m=Math.min(P+1,3),cc=7;
+  grid(ox+4,oy+20,m,cc,AMB);
+  S+='<path d="M'+(ox+6+m*cc)+' '+(oy+24)+' q 12 -4 '+(34-m*cc)+' 0" stroke="'+ACC+
+     '" stroke-width="1.2" fill="none" marker-end="url(#fcar)"/>';
+}
+function picSolve(ox,oy){
+  var n=4,c=8,gy=oy+12;
+  grid(ox+2,gy,n,c,PAPER); vec(ox+2+n*c+4,gy,n,c,'#fff');
+  txt(ox+2+n*c+4+c+5,gy+n*c/2+4,'=',{s:12,f:GREY});
+  vec(ox+2+n*c+4+c+14,gy,n,c,PAPER);
+}
+function picRebuild(ox,oy){
+  var nb=3*P+1,c=Math.min(9,46/nb),x=ox+46-nb*c/2;
+  for(var A=0;A<nb;A++)
+    S+='<rect x="'+x+'" y="'+(oy+14+A*0)+'" width="'+c+'" height="'+c+
+       '" fill="'+(A===nb-1?AMB:'#fff')+'" stroke="'+GREY+'" stroke-width=".8" '+
+       'transform="translate('+(A*c)+',0)"/>';
+  txt(ox+46,oy+40,'all '+nb+' coefficients',{s:8.5,a:'middle',f:GREY});
+}
+function picPlot(ox,oy){
+  var x0=ox+8,x1=ox+84,yb=oy+46,h=30;
+  S+='<line x1="'+x0+'" y1="'+yb+'" x2="'+x1+'" y2="'+yb+'" stroke="'+FAINT+'" stroke-width="1"/>';
+  var u=function(t){return Math.sin(Math.PI*t)*0.95;}, d='', nb=3*P+1;
+  if(P===1){ for(var A=0;A<nb;A++){var t=A/(nb-1);
+      d+=(A?' L':'M')+(x0+(x1-x0)*t)+' '+(yb-h*u(t));} }
+  else { for(var k=0;k<=36;k++){var t2=k/36;
+      d+=(k?' L':'M')+(x0+(x1-x0)*t2)+' '+(yb-h*u(t2));} }
+  S+='<path d="'+d+'" stroke="'+ACC+'" stroke-width="1.8" fill="none"/>';
+  for(var A2=0;A2<nb;A2++){var t3=A2/(nb-1); dot(x0+(x1-x0)*t3,yb-h*u(t3),2.3,INK);}
+}
+
+/* ---------- layout ---------- */
+function node(y,h,title,sub,pic,opt){
+  opt=opt||{};
+  var x=opt.x!==undefined?opt.x:210, w=opt.w!==undefined?opt.w:470;
+  box(x,y,w,h,opt.fill||'#fff',opt.stroke||INK,opt.sw||1.3);
+  pic(x+12,y+(h-56)/2);
+  txt(x+118,y+(sub?h/2-4:h/2+5),title,{w:600,s:opt.ts||14.5});
+  if(sub) txt(x+118,y+h/2+14,sub,{s:12.5,f:GREY});
+  if(opt.badge){
+    var bw=opt.badge.length*6.0+14;
+    S+='<rect x="'+(x+w-bw-10)+'" y="'+(y+9)+'" width="'+bw+'" height="16" rx="3" fill="'+
+       (opt.badgeFill||'#fbeeec')+'" stroke="'+(opt.badgeStroke||'#f0d4d0')+'"/>';
+    txt(x+w-bw/2-10,y+20.5,opt.badge,{s:9.5,a:'middle',f:opt.badgeInk||ACC,w:700,ls:.5});
+  }
+  return y+h;
+}
+function loopFrame(x,y,w,h,label,col){
+  col=col||GREY;
+  S+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="9" fill="none" stroke="'+col+
+     '" stroke-width="1.2" stroke-dasharray="6 4"/>';
+  var lw=label.length*7.0+20;
+  S+='<rect x="'+(x+26)+'" y="'+(y-9)+'" width="'+lw+'" height="18" rx="4" fill="#fff" stroke="'+col+'" stroke-width="1"/>';
+  txt(x+26+lw/2,y+3.5,label,{s:10.5,a:'middle',f:col,w:700,ls:.6});
+  // a clean return line down the right margin, so the frame reads as a loop
+  var rx=x+w-16, ty=y+16, by=y+h-16, r=9;
+  S+='<path d="M'+(x+w-40)+' '+by+' H'+(rx-r)+' Q'+rx+' '+by+' '+rx+' '+(by-r)+
+     ' V'+(ty+r)+' Q'+rx+' '+ty+' '+(rx-r)+' '+ty+' H'+(x+w-40)+
+     '" stroke="'+col+'" stroke-width="1.2" fill="none" stroke-dasharray="4 3"'+
+     ' marker-end="url(#'+(col===ACC?'fcar':'fcarg')+')"/>';
+}
+
+function draw(){
+  S='<defs>'
+   +'<marker id="fcar" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">'
+   +'<path d="M0 0 L7 3.5 L0 7Z" fill="'+ACC+'"/></marker>'
+   +'<marker id="fcarg" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">'
+   +'<path d="M0 0 L7 3.5 L0 7Z" fill="'+GREY+'"/></marker></defs>';
+
+  var c15=(V==='c15'), y=26, cx=445, GAP=26;
+
+  txt(445,16,c15?('GENERAL POLYNOMIAL DEGREE  \u2014  here p = '+P)
+                 :'HARD-CODED ASSEMBLY  \u2014  degree 1 only',
+      {a:'middle',s:11.5,w:700,ls:1.4,f:c15?ACC:GREY});
+
+  y=node(y,72,'The mesh and the data',
+           'where the elements are, and where the basis functions sit', picMesh,
+           c15?{badge:'n_bf = '+(3*P+1),badgeFill:'#fbeeec'}:{badge:'n_bf = 4',badgeFill:'#f1f3f6',badgeStroke:FAINT,badgeInk:GREY});
+  arrow(cx,y,y+GAP); y+=GAP;
+
+  y=node(y,72,'Decide what is unknown',
+           'prescribed values get no equation — the ID array', picID);
+  arrow(cx,y,y+GAP); y+=GAP;
+
+  y=node(y,72,'Make room for the big system',
+           'an empty K and F, one row per unknown', picEmpty);
+  arrow(cx,y,y+GAP); y+=GAP;
+
+  /* ------- the element loop ------- */
+  var loopTop=y, inner=y+30;
+
+  inner=node(inner,72,'Look at one element',
+           'just its own nodes, mapped to the parent element', picElem,{x:232,w:426});
+  arrow(cx,inner,inner+GAP); inner+=GAP;
+
+  if(c15){
+    var qTop=inner;
+    var qi=node(inner+30,78,'Add one quadrature point’s contribution',
+           'N, dN/d\u03be and J, evaluated right there', picQuadPt,
+           {x:240,w:412,ts:13.5,fill:'#fffaf2',stroke:ACC,sw:1.4});
+    loopFrame(226,qTop,440,qi-qTop+16,'FOR EACH QUADRATURE POINT',ACC);
+    inner=qi+16;
+    arrow(cx,inner,inner+GAP); inner+=GAP;
+    inner=node(inner,72,'The element’s own matrix and vector',
+           'built up point by point — size '+(P+1)+'×'+(P+1),
+           function(a,b){picKeFe(a,b,false);},{x:232,w:426});
+  } else {
+    inner=node(inner,72,'The element’s own matrix and vector',
+           'one formula, integrated by hand once, forever 2×2',
+           function(a,b){picKeFe(a,b,true);},{x:232,w:426,
+           badge:'CLOSED FORM',badgeFill:'#f1f3f6',badgeStroke:FAINT,badgeInk:GREY});
+  }
+  arrow(cx,inner,inner+GAP); inner+=GAP;
+
+  inner=node(inner,72,'Add it into the big system',
+           'IEN gives the global basis function, ID gives its equation',
+           picScatter,{x:232,w:426,ts:14});
+
+  loopFrame(216,loopTop,458,inner-loopTop+22,'FOR EACH ELEMENT',GREY);
+  y=inner+22;
+  arrow(cx,y,y+GAP); y+=GAP;
+
+  y=node(y,72,'Solve','one linear system, K D = F', picSolve);
+  arrow(cx,y,y+GAP); y+=GAP;
+
+  y=node(y,72,'Put the prescribed values back',
+           'so every basis function has a coefficient', picRebuild);
+  arrow(cx,y,y+GAP); y+=GAP;
+
+  y=node(y,76,'Evaluate and draw it',
+           c15?'the solution between the nodes, not just at them'
+              :'straight lines between the nodal values', picPlot,
+           {});
+
+  document.getElementById('fcsvg').setAttribute('viewBox','0 0 880 '+(y+26));
+  document.getElementById('fcsvg').innerHTML=S;
+
+  document.getElementById('fccap').innerHTML =
+      'A flowchart of a hard-coded assembly is represented against one that allows for computation with general polynomial degree.';
+}
+
+document.getElementById('fcver').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b) return; V=b.dataset.v;
+  [].forEach.call(this.querySelectorAll('button'),function(x){
+    x.setAttribute('aria-pressed',x===b?'true':'false');});
+  var dg=document.getElementById('fcdeg');
+  [].forEach.call(dg.querySelectorAll('button'),function(x){ x.disabled=(V!=='c15'); });
+  if(V!=='c15'){ P=1;
+    [].forEach.call(dg.querySelectorAll('button'),function(x){
+      x.setAttribute('aria-pressed',x.dataset.p==='1'?'true':'false');});}
+  draw();
+});
+document.getElementById('fcdeg').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b||b.disabled) return; P=+b.dataset.p;
+  [].forEach.call(this.querySelectorAll('button'),function(x){
+    x.setAttribute('aria-pressed',x===b?'true':'false');});
+  draw();
+});
+[].forEach.call(document.querySelectorAll('#fcdeg button'),function(x){x.disabled=true;});
+draw();
+})();
+</script>
+<!-- 
+## What the picture is telling you
+
+**The chart has the same shape in both versions.** Set up, loop over elements, build two
+small arrays, add them into the big ones, solve, fill the prescribed values back in, draw
+the answer. That sequence is not a degree-1 thing or a one-dimensional thing. It is what a
+production code does in three dimensions with a million elements.
+
+**Only one box changes.** With a single hard-coded degree, the element's matrix and vector
+come out of a formula that was integrated once, by hand, and then written into the code.
+That is possible because at degree 1 an element carries two basis functions and the Jacobian
+$dx/d\xi = h^e/2$ is constant, so it leaves the integral. Neither of those survives at
+$p \geq 2$, so the formula is replaced by the thing it was standing in for: a sum over
+quadrature points.
+
+**That is why a loop appears.** Nothing was reorganised to make room for it — the box that
+said "use the formula" became a box that says "add up contributions", and adding up
+contributions is a loop.
+
+**Two arrays are needed to place a contribution, not one.** IEN answers *which global basis
+function is local function $a$ of element $e$?* The ID array answers *does that basis
+function have an equation, and which one?* Composed, $\mathrm{LM}(a,e) = \mathrm{ID}(\mathrm{IEN}(a,e))$,
+they turn a local index pair into a row and column of the global system — or into $-1$, meaning
+the value there is prescribed and its contribution moves to the right-hand side instead.
+
+**The last box has to change too.** Drawing straight lines between nodal values is replaced by
+evaluating $u^h(\xi) = \sum_a d_{\mathrm{IEN}(a,e)} N_a(\xi)$ inside each element. At degree 1
+the straight lines happened to *be* the answer; at higher degree they are a different,
+plausible-looking curve. Switch the degree control and watch the drawn solution stop passing
+straight between its dots.
+
+::: {.callout-note collapse="true"}
+## The earlier version of this page
+
+The first version drew the whole method as one large zoomable, pannable diagram with a
+1D / multi-D notation switch, including the pieces this page leaves out — where $\kappa$
+enters, what the boundary integral does, how the multidimensional notation maps on. It is
+kept at `chapters/15_Class_Archive_ZoomableDiagram.qmd`, unlisted so that it is not built.
+:::
+-->
+
+
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -858,15 +1012,15 @@ Figure&nbsp;D.1: All three have the <strong>same</strong> <span class="math inli
     }
   });
   </script>
-<nav class="page-navigation">
+<nav class="page-navigation column-page-right">
   <div class="nav-page nav-page-previous">
-      <a href="../chapters/15_Class.html" class="pagination-link" aria-label="Class 15: Unidimensional Finite Element Code">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Class 15: Unidimensional Finite Element Code</span></span>
+      <a href="../chapters/14_Class.html" class="pagination-link" aria-label="Class 14: The ID and IEN Arrays">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Class 14: The ID and IEN Arrays</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../chapters/Poisson1D_Heat.html" class="pagination-link" aria-label="1D Poisson I: Heat Conduction Through a Wall">
-        <span class="nav-page-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">1D Poisson I: Heat Conduction Through a Wall</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../chapters/3_Support_FunctionSpaces.html" class="pagination-link" aria-label="Support: Norms and Function Spaces">
+        <span class="nav-page-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
