@@ -11,5 +11,7 @@ Class_PDFs/
 
 # course-development material, not public-facing
 /Archive/
-/DELETEME_Homework/
 /Class_Content/
+
+# symlink to ../CE_ME_507_Homework -- no trailing slash, git sees a symlink as a file
+/CE_ME_507_Homework

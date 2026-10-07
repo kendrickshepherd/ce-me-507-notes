@@ -1,0 +1,340 @@
+---
+title: "Class 15: Unidimensional Finite Element Code"
+subtitle: "The Flowchart"
+format:
+  html:
+    page-layout: full
+    toc: false
+---
+
+The chart below gives a rough layout of the finite element method in one dimension.
+This integrates much of what you have learned previously and grounds the multidimensional in a case study.
+
+Switch between **hard-coded assembly** and **general polynomial degree** and note the similarities and the differences. 
+This is a clean representation of how to use the basis functions and quadrature points to operate within a 1D finite element code that has been hard-coded to work with linear hat functions.
+
+```{=html}
+<style>
+.fc15{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;
+      --acc:#b8322a;--amb:#e0a800;--ambbg:#fff6da;
+      max-width:900px;margin:0 auto;color:var(--ink)}
+.fc15 .bar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;
+  padding:11px 14px;background:var(--paper);border:1px solid var(--faint);
+  border-radius:8px;margin-bottom:14px}
+.fc15 .bar b{font-size:12.5px;letter-spacing:.05em;color:var(--grey)}
+.fc15 .seg{display:inline-flex;border:1px solid var(--faint);border-radius:6px;
+  overflow:hidden;background:#fff}
+.fc15 .seg button{border:0;background:#fff;padding:6px 14px;font:inherit;font-size:14px;
+  cursor:pointer;color:var(--grey);border-right:1px solid var(--faint)}
+.fc15 .seg button:last-child{border-right:0}
+.fc15 .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.fc15 .seg button:disabled{opacity:.35;cursor:default}
+.fc15 svg{display:block;width:100%;height:auto;
+  border:1px solid var(--faint);border-radius:8px;background:#fff}
+.fc15 .cap{font-size:13px;color:var(--grey);line-height:1.55;margin:9px 2px 0}
+.fc15 .cap b{color:var(--ink)}
+</style>
+
+<div class="fc15">
+  <div class="bar">
+    <b>VERSION</b>
+    <span class="seg" id="fcver">
+      <button data-v="p1" aria-pressed="true">Hard-coded&nbsp;assembly</button>
+      <button data-v="c15" aria-pressed="false">General&nbsp;polynomial&nbsp;degree</button>
+    </span>
+    <b>DEGREE</b>
+    <span class="seg" id="fcdeg">
+      <button data-p="1" aria-pressed="true">p&nbsp;=&nbsp;1</button>
+      <button data-p="2" aria-pressed="false">p&nbsp;=&nbsp;2</button>
+      <button data-p="3" aria-pressed="false">p&nbsp;=&nbsp;3</button>
+    </span>
+  </div>
+  <svg id="fcsvg" viewBox="0 0 880 1210" role="img"
+       aria-label="Flowchart of the finite element solver"></svg>
+  <div class="cap" id="fccap"></div>
+</div>
+
+<script>
+(function(){
+var V='p1', P=1;
+var INK='#18202b', GREY='#6b7684', FAINT='#dfe4ea', ACC='#b8322a',
+    PAPER='#f8f9fb', AMB='#ffe9a8', S='';
+
+function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function box(x,y,w,h,fill,stroke,sw){
+  S+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="7" fill="'+(fill||'#fff')+
+     '" stroke="'+(stroke||INK)+'" stroke-width="'+(sw||1.3)+'"/>';}
+function txt(x,y,t,o){o=o||{};
+  S+='<text x="'+x+'" y="'+y+'" font-size="'+(o.s||13)+'" fill="'+(o.f||INK)+
+     '" text-anchor="'+(o.a||'start')+'" font-weight="'+(o.w||400)+
+     '" font-family="'+(o.m?'ui-monospace,Menlo,monospace':'inherit')+
+     '" letter-spacing="'+(o.ls||0)+'">'+esc(t)+'</text>';}
+function arrow(x,y1,y2,col){col=col||INK;
+  S+='<line x1="'+x+'" y1="'+y1+'" x2="'+x+'" y2="'+(y2-7)+'" stroke="'+col+'" stroke-width="1.5"/>';
+  S+='<path d="M'+(x-4.5)+' '+(y2-7)+' L'+x+' '+y2+' L'+(x+4.5)+' '+(y2-7)+'Z" fill="'+col+'"/>';}
+function dot(x,y,r,f){S+='<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+f+'"/>';}
+function ring(x,y,r,f){S+='<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="#fff" stroke="'+f+'" stroke-width="2"/>';}
+function grid(x,y,n,c,fill){ // n x n cells of size c
+  for(var i=0;i<n;i++)for(var j=0;j<n;j++)
+    S+='<rect x="'+(x+j*c)+'" y="'+(y+i*c)+'" width="'+c+'" height="'+c+
+       '" fill="'+(fill||'none')+'" stroke="'+GREY+'" stroke-width=".8"/>';}
+function vec(x,y,n,c,fill){
+  for(var i=0;i<n;i++)
+    S+='<rect x="'+x+'" y="'+(y+i*c)+'" width="'+c+'" height="'+c+
+       '" fill="'+(fill||'none')+'" stroke="'+GREY+'" stroke-width=".8"/>';}
+
+/* ---------- pictograms, drawn in a 92 x 56 cell at (ox, oy) ---------- */
+function picMesh(ox,oy){
+  var x0=ox+4,x1=ox+88,y=oy+28,nb=3*P+1;
+  S+='<line x1="'+x0+'" y1="'+y+'" x2="'+x1+'" y2="'+y+'" stroke="'+INK+'" stroke-width="1.4"/>';
+  for(var e=0;e<=3;e++){var xx=x0+(x1-x0)*e/3;
+    S+='<line x1="'+xx+'" y1="'+(y-7)+'" x2="'+xx+'" y2="'+(y+7)+'" stroke="'+INK+'" stroke-width="1.4"/>';}
+  for(var A=0;A<nb;A++) dot(x0+(x1-x0)*A/(nb-1),y,2.8,(A%P===0)?INK:ACC);
+}
+function picID(ox,oy){
+  var x0=ox+4,x1=ox+88,y=oy+28,nb=3*P+1;
+  S+='<line x1="'+x0+'" y1="'+y+'" x2="'+x1+'" y2="'+y+'" stroke="'+FAINT+'" stroke-width="1.4"/>';
+  for(var A=0;A<nb;A++){var xx=x0+(x1-x0)*A/(nb-1);
+    if(A===nb-1) ring(xx,y,3.6,ACC); else dot(xx,y,3,INK);}
+  txt(ox+46,oy+50,'unknown / given',{s:8.5,a:'middle',f:GREY});
+}
+function picEmpty(ox,oy){
+  var n=Math.min(3*P,6), c=Math.min(9,34/n);
+  grid(ox+6,oy+13,n,c,'#fff'); vec(ox+6+n*c+9,oy+13,n,c,'#fff');
+}
+function picElem(ox,oy){
+  var x0=ox+14,x1=ox+78,y=oy+28;
+  S+='<rect x="'+(x0-6)+'" y="'+(y-12)+'" width="'+(x1-x0+12)+'" height="24" rx="4" fill="'+AMB+'" opacity=".55"/>';
+  S+='<line x1="'+x0+'" y1="'+y+'" x2="'+x1+'" y2="'+y+'" stroke="'+INK+'" stroke-width="1.4"/>';
+  for(var a=0;a<=P;a++) dot(x0+(x1-x0)*a/P,y,3.2,INK);
+}
+function picQuadPt(ox,oy){
+  var x0=ox+12,x1=ox+80,y=oy+40,nq=P+1;
+  S+='<line x1="'+x0+'" y1="'+y+'" x2="'+x1+'" y2="'+y+'" stroke="'+INK+'" stroke-width="1.3"/>';
+  for(var q=0;q<nq;q++){var xx=x0+(x1-x0)*(q+0.5)/nq;
+    S+='<path d="M'+(xx-3.4)+' '+(y-3.4)+' L'+(xx+3.4)+' '+(y+3.4)+' M'+(xx+3.4)+' '+(y-3.4)+
+       ' L'+(xx-3.4)+' '+(y+3.4)+'" stroke="'+ACC+'" stroke-width="1.6"/>';
+    S+='<line x1="'+xx+'" y1="'+(y-7)+'" x2="'+xx+'" y2="'+(oy+16)+'" stroke="'+ACC+
+       '" stroke-width=".9" stroke-dasharray="2 2"/>';}
+  grid(ox+34,oy+4,2,6,'#fff');
+}
+function picKeFe(ox,oy,closed){
+  var n=P+1,c=Math.min(13,40/n),gx=ox+10,gy=oy+28-n*c/2;
+  grid(gx,gy,n,c,closed?PAPER:'#fff');
+  if(closed){ // the +/- checkerboard of the Hughes form
+    for(var i=0;i<2;i++)for(var j=0;j<2;j++)
+      txt(gx+j*c+c/2,gy+i*c+c/2+3.5,(i===j)?'+':'−',{s:9,a:'middle',f:GREY});
+  } else {
+    for(var i2=0;i2<n;i2++)for(var j2=0;j2<n;j2++)
+      S+='<rect x="'+(gx+j2*c+1.5)+'" y="'+(gy+i2*c+1.5)+'" width="'+(c-3)+'" height="'+(c-3)+
+         '" fill="'+ACC+'" opacity="'+(0.13+0.1*((i2+j2)%3))+'"/>';
+  }
+  vec(gx+n*c+10,gy,n,c,closed?PAPER:'#fff');
+}
+function picScatter(ox,oy){
+  var n=Math.min(3*P,6),c=Math.min(9,34/n);
+  grid(ox+40,oy+13,n,c,'#fff');
+  var m=Math.min(P+1,3),cc=7;
+  grid(ox+4,oy+20,m,cc,AMB);
+  S+='<path d="M'+(ox+6+m*cc)+' '+(oy+24)+' q 12 -4 '+(34-m*cc)+' 0" stroke="'+ACC+
+     '" stroke-width="1.2" fill="none" marker-end="url(#fcar)"/>';
+}
+function picSolve(ox,oy){
+  var n=4,c=8,gy=oy+12;
+  grid(ox+2,gy,n,c,PAPER); vec(ox+2+n*c+4,gy,n,c,'#fff');
+  txt(ox+2+n*c+4+c+5,gy+n*c/2+4,'=',{s:12,f:GREY});
+  vec(ox+2+n*c+4+c+14,gy,n,c,PAPER);
+}
+function picRebuild(ox,oy){
+  var nb=3*P+1,c=Math.min(9,46/nb),x=ox+46-nb*c/2;
+  for(var A=0;A<nb;A++)
+    S+='<rect x="'+x+'" y="'+(oy+14+A*0)+'" width="'+c+'" height="'+c+
+       '" fill="'+(A===nb-1?AMB:'#fff')+'" stroke="'+GREY+'" stroke-width=".8" '+
+       'transform="translate('+(A*c)+',0)"/>';
+  txt(ox+46,oy+40,'all '+nb+' coefficients',{s:8.5,a:'middle',f:GREY});
+}
+function picPlot(ox,oy){
+  var x0=ox+8,x1=ox+84,yb=oy+46,h=30;
+  S+='<line x1="'+x0+'" y1="'+yb+'" x2="'+x1+'" y2="'+yb+'" stroke="'+FAINT+'" stroke-width="1"/>';
+  var u=function(t){return Math.sin(Math.PI*t)*0.95;}, d='', nb=3*P+1;
+  if(P===1){ for(var A=0;A<nb;A++){var t=A/(nb-1);
+      d+=(A?' L':'M')+(x0+(x1-x0)*t)+' '+(yb-h*u(t));} }
+  else { for(var k=0;k<=36;k++){var t2=k/36;
+      d+=(k?' L':'M')+(x0+(x1-x0)*t2)+' '+(yb-h*u(t2));} }
+  S+='<path d="'+d+'" stroke="'+ACC+'" stroke-width="1.8" fill="none"/>';
+  for(var A2=0;A2<nb;A2++){var t3=A2/(nb-1); dot(x0+(x1-x0)*t3,yb-h*u(t3),2.3,INK);}
+}
+
+/* ---------- layout ---------- */
+function node(y,h,title,sub,pic,opt){
+  opt=opt||{};
+  var x=opt.x!==undefined?opt.x:210, w=opt.w!==undefined?opt.w:470;
+  box(x,y,w,h,opt.fill||'#fff',opt.stroke||INK,opt.sw||1.3);
+  pic(x+12,y+(h-56)/2);
+  txt(x+118,y+(sub?h/2-4:h/2+5),title,{w:600,s:opt.ts||14.5});
+  if(sub) txt(x+118,y+h/2+14,sub,{s:12.5,f:GREY});
+  if(opt.badge){
+    var bw=opt.badge.length*6.0+14;
+    S+='<rect x="'+(x+w-bw-10)+'" y="'+(y+9)+'" width="'+bw+'" height="16" rx="3" fill="'+
+       (opt.badgeFill||'#fbeeec')+'" stroke="'+(opt.badgeStroke||'#f0d4d0')+'"/>';
+    txt(x+w-bw/2-10,y+20.5,opt.badge,{s:9.5,a:'middle',f:opt.badgeInk||ACC,w:700,ls:.5});
+  }
+  return y+h;
+}
+function loopFrame(x,y,w,h,label,col){
+  col=col||GREY;
+  S+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="9" fill="none" stroke="'+col+
+     '" stroke-width="1.2" stroke-dasharray="6 4"/>';
+  var lw=label.length*7.0+20;
+  S+='<rect x="'+(x+26)+'" y="'+(y-9)+'" width="'+lw+'" height="18" rx="4" fill="#fff" stroke="'+col+'" stroke-width="1"/>';
+  txt(x+26+lw/2,y+3.5,label,{s:10.5,a:'middle',f:col,w:700,ls:.6});
+  // a clean return line down the right margin, so the frame reads as a loop
+  var rx=x+w-16, ty=y+16, by=y+h-16, r=9;
+  S+='<path d="M'+(x+w-40)+' '+by+' H'+(rx-r)+' Q'+rx+' '+by+' '+rx+' '+(by-r)+
+     ' V'+(ty+r)+' Q'+rx+' '+ty+' '+(rx-r)+' '+ty+' H'+(x+w-40)+
+     '" stroke="'+col+'" stroke-width="1.2" fill="none" stroke-dasharray="4 3"'+
+     ' marker-end="url(#'+(col===ACC?'fcar':'fcarg')+')"/>';
+}
+
+function draw(){
+  S='<defs>'
+   +'<marker id="fcar" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">'
+   +'<path d="M0 0 L7 3.5 L0 7Z" fill="'+ACC+'"/></marker>'
+   +'<marker id="fcarg" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">'
+   +'<path d="M0 0 L7 3.5 L0 7Z" fill="'+GREY+'"/></marker></defs>';
+
+  var c15=(V==='c15'), y=26, cx=445, GAP=26;
+
+  txt(445,16,c15?('GENERAL POLYNOMIAL DEGREE  \u2014  here p = '+P)
+                 :'HARD-CODED ASSEMBLY  \u2014  degree 1 only',
+      {a:'middle',s:11.5,w:700,ls:1.4,f:c15?ACC:GREY});
+
+  y=node(y,72,'The mesh and the data',
+           'where the elements are, and where the basis functions sit', picMesh,
+           c15?{badge:'n_bf = '+(3*P+1),badgeFill:'#fbeeec'}:{badge:'n_bf = 4',badgeFill:'#f1f3f6',badgeStroke:FAINT,badgeInk:GREY});
+  arrow(cx,y,y+GAP); y+=GAP;
+
+  y=node(y,72,'Decide what is unknown',
+           'prescribed values get no equation — the ID array', picID);
+  arrow(cx,y,y+GAP); y+=GAP;
+
+  y=node(y,72,'Make room for the big system',
+           'an empty K and F, one row per unknown', picEmpty);
+  arrow(cx,y,y+GAP); y+=GAP;
+
+  /* ------- the element loop ------- */
+  var loopTop=y, inner=y+30;
+
+  inner=node(inner,72,'Look at one element',
+           'just its own nodes, mapped to the parent element', picElem,{x:232,w:426});
+  arrow(cx,inner,inner+GAP); inner+=GAP;
+
+  if(c15){
+    var qTop=inner;
+    var qi=node(inner+30,78,'Add one quadrature point’s contribution',
+           'N, dN/d\u03be and J, evaluated right there', picQuadPt,
+           {x:240,w:412,ts:13.5,fill:'#fffaf2',stroke:ACC,sw:1.4});
+    loopFrame(226,qTop,440,qi-qTop+16,'FOR EACH QUADRATURE POINT',ACC);
+    inner=qi+16;
+    arrow(cx,inner,inner+GAP); inner+=GAP;
+    inner=node(inner,72,'The element’s own matrix and vector',
+           'built up point by point — size '+(P+1)+'×'+(P+1),
+           function(a,b){picKeFe(a,b,false);},{x:232,w:426});
+  } else {
+    inner=node(inner,72,'The element’s own matrix and vector',
+           'one formula, integrated by hand once, forever 2×2',
+           function(a,b){picKeFe(a,b,true);},{x:232,w:426,
+           badge:'CLOSED FORM',badgeFill:'#f1f3f6',badgeStroke:FAINT,badgeInk:GREY});
+  }
+  arrow(cx,inner,inner+GAP); inner+=GAP;
+
+  inner=node(inner,72,'Add it into the big system',
+           'IEN gives the global basis function, ID gives its equation',
+           picScatter,{x:232,w:426,ts:14});
+
+  loopFrame(216,loopTop,458,inner-loopTop+22,'FOR EACH ELEMENT',GREY);
+  y=inner+22;
+  arrow(cx,y,y+GAP); y+=GAP;
+
+  y=node(y,72,'Solve','one linear system, K D = F', picSolve);
+  arrow(cx,y,y+GAP); y+=GAP;
+
+  y=node(y,72,'Put the prescribed values back',
+           'so every basis function has a coefficient', picRebuild);
+  arrow(cx,y,y+GAP); y+=GAP;
+
+  y=node(y,76,'Evaluate and draw it',
+           c15?'the solution between the nodes, not just at them'
+              :'straight lines between the nodal values', picPlot,
+           {});
+
+  document.getElementById('fcsvg').setAttribute('viewBox','0 0 880 '+(y+26));
+  document.getElementById('fcsvg').innerHTML=S;
+
+  document.getElementById('fccap').innerHTML =
+      'A flowchart of a hard-coded assembly is represented against one that allows for computation with general polynomial degree.';
+}
+
+document.getElementById('fcver').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b) return; V=b.dataset.v;
+  [].forEach.call(this.querySelectorAll('button'),function(x){
+    x.setAttribute('aria-pressed',x===b?'true':'false');});
+  var dg=document.getElementById('fcdeg');
+  [].forEach.call(dg.querySelectorAll('button'),function(x){ x.disabled=(V!=='c15'); });
+  if(V!=='c15'){ P=1;
+    [].forEach.call(dg.querySelectorAll('button'),function(x){
+      x.setAttribute('aria-pressed',x.dataset.p==='1'?'true':'false');});}
+  draw();
+});
+document.getElementById('fcdeg').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b||b.disabled) return; P=+b.dataset.p;
+  [].forEach.call(this.querySelectorAll('button'),function(x){
+    x.setAttribute('aria-pressed',x===b?'true':'false');});
+  draw();
+});
+[].forEach.call(document.querySelectorAll('#fcdeg button'),function(x){x.disabled=true;});
+draw();
+})();
+</script>
+```
+
+<!-- 
+## What the picture is telling you
+
+**The chart has the same shape in both versions.** Set up, loop over elements, build two
+small arrays, add them into the big ones, solve, fill the prescribed values back in, draw
+the answer. That sequence is not a degree-1 thing or a one-dimensional thing. It is what a
+production code does in three dimensions with a million elements.
+
+**Only one box changes.** With a single hard-coded degree, the element's matrix and vector
+come out of a formula that was integrated once, by hand, and then written into the code.
+That is possible because at degree 1 an element carries two basis functions and the Jacobian
+$dx/d\xi = h^e/2$ is constant, so it leaves the integral. Neither of those survives at
+$p \geq 2$, so the formula is replaced by the thing it was standing in for: a sum over
+quadrature points.
+
+**That is why a loop appears.** Nothing was reorganised to make room for it — the box that
+said "use the formula" became a box that says "add up contributions", and adding up
+contributions is a loop.
+
+**Two arrays are needed to place a contribution, not one.** IEN answers *which global basis
+function is local function $a$ of element $e$?* The ID array answers *does that basis
+function have an equation, and which one?* Composed, $\mathrm{LM}(a,e) = \mathrm{ID}(\mathrm{IEN}(a,e))$,
+they turn a local index pair into a row and column of the global system — or into $-1$, meaning
+the value there is prescribed and its contribution moves to the right-hand side instead.
+
+**The last box has to change too.** Drawing straight lines between nodal values is replaced by
+evaluating $u^h(\xi) = \sum_a d_{\mathrm{IEN}(a,e)} N_a(\xi)$ inside each element. At degree 1
+the straight lines happened to *be* the answer; at higher degree they are a different,
+plausible-looking curve. Switch the degree control and watch the drawn solution stop passing
+straight between its dots.
+
+::: {.callout-note collapse="true"}
+## The earlier version of this page
+
+The first version drew the whole method as one large zoomable, pannable diagram with a
+1D / multi-D notation switch, including the pieces this page leaves out — where $\kappa$
+enters, what the boundary integral does, how the multidimensional notation maps on. It is
+kept at `chapters/15_Class_Archive_ZoomableDiagram.qmd`, unlisted so that it is not built.
+:::
+-->
