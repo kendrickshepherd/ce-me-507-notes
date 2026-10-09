@@ -596,9 +596,5 @@ error. Use more points than you think you need and confirm that adding points do
 - **Class 18** takes up *why* the estimate is true — Galerkin orthogonality, and the fact
   that the finite element solution is the best approximation available in its space.
 
-Two things we are deliberately leaving until later. The estimate assumes the exact solution
-is smooth enough to live in $H^{k+1}$; when it is not, the rate is capped by the solution's
-own roughness instead, and no amount of polynomial degree fixes it. And we have said nothing
-yet about where the exact solution $u$ comes from in the first place — on a real problem you
-do not have one. The answer is to **manufacture** one, and that is the first thing we will do
-next class.
+Note that there has been no statement about where the exact solution $u$ comes from, and on a real problem you don't know this already.
+As a result, we typically test convergence rates by manufacturing a contrived solution, which will be discussed next time.
