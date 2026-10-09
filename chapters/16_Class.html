@@ -8,7 +8,7 @@
 
 <meta name="description" content="Finite Element Methods">
 
-<title>3&nbsp; Class 3: Index Notation, Function Spaces, and the Weak Form – CE/ME 507 — Class Notes</title>
+<title>16&nbsp; Class 16: Derivatives of the Solution – CE/ME 507 — Class Notes</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -37,8 +37,8 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../chapters/4_Class.html" rel="next">
-<link href="../chapters/2_Class.html" rel="prev">
+<link href="../chapters/17_Class.html" rel="next">
+<link href="../chapters/15_Class.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
@@ -129,7 +129,7 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/3_Class.html"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Class 3: Index Notation, Function Spaces, and the Weak Form</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/16_Class.html"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Class 16: Derivatives of the Solution</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -139,7 +139,7 @@ window.Quarto = {
   </nav>
 </header>
 <!-- content -->
-<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full">
 <!-- sidebar -->
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
@@ -168,7 +168,7 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/3_Class.html" class="sidebar-item-text sidebar-link active">
+  <a href="../chapters/3_Class.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Class 3: Index Notation, Function Spaces, and the Weak Form</span></span></a>
   </div>
 </li>
@@ -246,7 +246,7 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../chapters/16_Class.html" class="sidebar-item-text sidebar-link">
+  <a href="../chapters/16_Class.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Class 16: Derivatives of the Solution</span></span></a>
   </div>
 </li>
@@ -302,30 +302,19 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">Table of contents</h2>
-   
-  <ul>
-  <li><a href="#notation" id="toc-notation" class="nav-link active" data-scroll-target="#notation"><span class="header-section-number">4</span> Notation</a></li>
-  <li><a href="#the-1d-poisson-equation" id="toc-the-1d-poisson-equation" class="nav-link" data-scroll-target="#the-1d-poisson-equation"><span class="header-section-number">5</span> The 1D Poisson equation</a></li>
-  <li><a href="#function-spaces" id="toc-function-spaces" class="nav-link" data-scroll-target="#function-spaces"><span class="header-section-number">6</span> Function spaces</a></li>
-  <li><a href="#the-weak-form" id="toc-the-weak-form" class="nav-link" data-scroll-target="#the-weak-form"><span class="header-section-number">7</span> The weak form</a></li>
-  <li><a href="#a-brief-note-on-bilinearity" id="toc-a-brief-note-on-bilinearity" class="nav-link" data-scroll-target="#a-brief-note-on-bilinearity"><span class="header-section-number">8</span> A brief note on bilinearity</a></li>
-  </ul>
-</nav>
-    </div>
+    
 <!-- main -->
-<main class="content" id="quarto-document-content">
+<main class="content column-page-right" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Class 3: Index Notation, Function Spaces, and the Weak Form</span></h1>
+<h1 class="title"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Class 16: Derivatives of the Solution</span></h1>
+<p class="subtitle lead">What we actually compute when we ask for strain, flux, or error</p>
 </div>
 
 
 
-<div class="quarto-title-meta">
+<div class="quarto-title-meta column-page-right">
 
     
   
@@ -337,301 +326,292 @@ window.Quarto = {
 </header>
 
 
-<p>It is often easier to write multivariable calculus ideas in “index” notation, or “Einstein Summation” notation.</p>
-<div class="derivation">
-<p><span class="math display">\[
-f := f \qquad \leftarrow \text{a function or value}
-\]</span></p>
+<p>The solution <span class="math inline">\(u^h\)</span> is built from basis functions. However, many quantities of interest, such as strain, stress, and flux, are built from the derivatives of <span class="math inline">\(u^h\)</span>. The derivative of the solution is built from the derivative of the basis functions used to approximate <span class="math inline">\(u^h\)</span>. This page aims to clarify that difference in one dimension and visually shows why approximation error is larger for these quantities of interest and describes how fast that error can shrink.</p>
+<section id="one-basis-function-and-its-derivative" class="level2" data-number="16.1">
+<h2 data-number="16.1" class="anchored" data-anchor-id="one-basis-function-and-its-derivative"><span class="header-section-number">16.1</span> One basis function, and its derivative</h2>
+<p>Pick a basis function and watch both curves. The function itself is continuous across element boundaries. Its derivative is not.</p>
+<style>
+.bw{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;--acc:#b8322a;--blue:#2b5fa8;
+    max-width:900px;margin:0 auto;color:var(--ink)}
+.bw .bar{display:flex;flex-wrap:wrap;gap:9px 20px;align-items:center;padding:11px 14px;
+  background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.bw .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey)}
+.bw .seg{display:inline-flex;border:1px solid var(--faint);border-radius:6px;overflow:hidden;background:#fff}
+.bw .seg button{border:0;background:#fff;padding:5px 12px;font:inherit;font-size:13.5px;cursor:pointer;
+  color:var(--grey);border-right:1px solid var(--faint)}
+.bw .seg button:last-child{border-right:0}
+.bw .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.bw input[type=range]{width:150px;vertical-align:middle}
+.bw .val{font:600 13px ui-monospace,Menlo,monospace;color:var(--ink);min-width:2.2em;display:inline-block}
+.bw svg{display:block;width:100%;height:auto;border:1px solid var(--faint);border-radius:8px;background:#fff}
+.bw .cap{font-size:13px;color:var(--grey);line-height:1.55;margin:9px 2px 22px}
+.bw .cap b{color:var(--ink)}
+.bw .nums{font:12.5px ui-monospace,Menlo,monospace;color:var(--ink)}
+.bw .nums i{font-style:normal;color:var(--acc)}
+</style>
+
+<div class="bw">
+  <div class="bar">
+    <b>DEGREE</b>
+    <span class="seg" id="b1deg">
+      <button data-p="1" aria-pressed="true">p=1</button>
+      <button data-p="2" aria-pressed="false">p=2</button>
+      <button data-p="3" aria-pressed="false">p=3</button>
+    </span>
+    <b>ELEMENTS</b> <input type="range" id="b1ne" min="1" max="8" value="4"><span class="val" id="b1nev">4</span>
+    <b>BASIS FN</b> <input type="range" id="b1a" min="0" max="4" value="2"><span class="val" id="b1av">2</span>
+    <span class="nums" id="b1info"></span>
+  </div>
+  <svg id="b1svg" viewbox="0 0 880 430" role="img" aria-label="A basis function and its derivative"></svg>
+  <div class="cap" id="b1cap"></div>
 </div>
-<div class="derivation">
-<p><span class="math display">\[
-\text{(gradient)}\qquad \nabla f := f_{,i}
-\qquad \leftarrow
-\text{commas indicate derivatives, } i\text{'s indicate indices}
-\]</span></p>
-</div>
-<div class="step">
-<p>e.g.&nbsp;in 2D</p>
-</div>
-<div class="derivation">
-<p><span class="math display">\[
-\nabla f = \begin{bmatrix} \partial f_1/\partial x \\[2pt] \partial f_2/\partial x \end{bmatrix}
-\qquad ; \qquad
-f_{,1} = \frac{\partial f_1}{\partial x}
-\qquad
-f_{,2} = \frac{\partial f_2}{\partial x}
-\]</span></p>
-</div>
-<div class="derivation">
-<p><span class="math display">\[
-\text{(double gradient)}\qquad \nabla(\nabla f) := f_{,ij}
-\qquad\qquad
-\begin{bmatrix}
-f_{,11} &amp; f_{,12} &amp; f_{,13} \\
-f_{,21} &amp; f_{,22} &amp; f_{,23} \\
-f_{,31} &amp; f_{,32} &amp; f_{,33}
-\end{bmatrix}
-\]</span></p>
-</div>
-<div class="derivation">
-<p><span class="math display">\[
-\text{(Laplacian)}\qquad \Delta f := \nabla \cdot \nabla f := f_{,ii}
-\qquad \leftarrow
-\text{repeated indices are "dummy" indices \&amp; indicate sums}
-\]</span></p>
-</div>
-<div class="derivation">
-<p><span class="math display">\[
-f_{,ii} = f_{,11} + f_{,22} + f_{,33}
-= \frac{\partial^2 f}{\partial x^2} + \frac{\partial^2 f}{\partial y^2}
-+ \frac{\partial^2 f}{\partial z^2}
-\]</span></p>
-</div>
-<div class="derivation">
-<p><span class="math display">\[
-\text{a vector (-valued function)}\qquad \underline{V} := V_i
-\qquad\qquad
-\underline{V} = \begin{bmatrix} V_1 \\ V_2 \\ V_3 \end{bmatrix}
-\]</span></p>
-</div>
-<div class="derivation">
-<p><span class="math display">\[
-\text{(divergence)}\qquad \nabla \cdot \underline{V} := V_{i,i}
-\qquad\qquad
-V_{i,i} = \frac{\partial v_1}{\partial x} + \frac{\partial v_2}{\partial y}
-+ \frac{\partial v_3}{\partial z} \quad \text{in 3D}
-\]</span></p>
-</div>
-<div class="derivation">
-<p><span class="math display">\[
-\text{(dot product)}\qquad \underline{V}\cdot\underline{n} := V_i n_i
-\qquad\qquad
-V_i n_i = V_1 n_1 + V_2 n_2 + V_3 n_3
-\]</span></p>
-</div>
-<div class="derivation">
-<p><span class="math display">\[
-\underline{\underline{A}} = A_{ij}
-\qquad \text{(matrix w/ row entries in } i \text{, column entries in } j)
-\]</span></p>
-</div>
-<div class="derivation">
-<p><span class="math display">\[
-\underline{\underline{A}}\,\underline{x} = \underline{b}
-\qquad\Longrightarrow\qquad
-A_{ij} x_j = b_i
-\qquad \text{(matrix-vector multiplication)}
-\]</span></p>
-</div>
-<p>If time… let</p>
-<div class="derivation">
-<p><span class="math display">\[
-\underline{\underline{A}} = \begin{bmatrix} 1 &amp; 2 \\ 3 &amp; 4 \end{bmatrix}
-\qquad
-\underline{f} = \begin{bmatrix} x^2 + y \\ y + z \end{bmatrix}
-\qquad
-\underline{V} = \begin{bmatrix} 2 \\ 5 \end{bmatrix}
-\]</span></p>
-</div>
-<div class="step">
-<p>what is &nbsp; <span class="math inline">\(A_{ij} f_j\)</span> ? &nbsp;&nbsp; <span class="math inline">\(A_{ij,j}\)</span> ? &nbsp;&nbsp; <span class="math inline">\(f_{j,k}\)</span> ? &nbsp;&nbsp; <span class="math inline">\(f_i V_i\)</span> ? &nbsp;&nbsp; <span class="math inline">\(f_i V_j\)</span> ?</p>
-</div>
-<section id="notation" class="level1" data-number="4">
-<h1 data-number="4"><span class="header-section-number">4</span> Notation</h1>
-<div class="derivation">
-<p><span class="math display">\[
-u_{,xx} := \frac{\partial^2 u}{\partial x^2}
-\qquad
-u_{,x} := \frac{\partial u}{\partial x}
-\qquad
-\dot{u} = \frac{Du}{Dt}
-\qquad
-\ddot{u} = \frac{D^2 u}{Dt^2}
-\]</span></p>
-</div>
-<div class="step">
-<p>(<span class="math inline">\(D/Dt\)</span> is the total derivative — don’t worry about it for now.)</p>
-</div>
-<p><strong>Function</strong></p>
-<div class="derivation">
-<p><span class="math display">\[
-f : \Omega \longrightarrow \mathbb{R}
-\]</span></p>
-</div>
-<div class="step notes">
-<ul>
-<li><span class="math inline">\(\Omega\)</span> is the <strong>domain</strong>, <span class="math inline">\(\mathbb{R}\)</span> is the <strong>range</strong></li>
-</ul>
-</div>
-<div class="step notes">
-<ul>
-<li><span class="math inline">\(\mathbb{R}\)</span> &nbsp; real #s</li>
-<li><span class="math inline">\(\mathbb{R}^2\)</span> &nbsp; Euclidean plane</li>
-<li><span class="math inline">\(\mathbb{R}^3\)</span> &nbsp; Euclidean 3-space (real world)</li>
-<li><span class="math inline">\(\mathbb{I}\)</span> &nbsp; unit interval</li>
-<li><span class="math inline">\(\mathbb{I}\times\mathbb{I} = \mathbb{I}^2\)</span> &nbsp; unit square</li>
-</ul>
-</div>
-<div class="step notes">
-<ul>
-<li><span class="math inline">\([a,b]\)</span> &nbsp; closed interval from <span class="math inline">\(a\)</span> to <span class="math inline">\(b\)</span></li>
-<li><span class="math inline">\((a,b)\)</span> &nbsp; open interval from <span class="math inline">\(a\)</span> to <span class="math inline">\(b\)</span></li>
-<li><span class="math inline">\(\bar{\Omega}\)</span> &nbsp; closed domain (include the boundary)</li>
-<li><span class="math inline">\(a \in \mathbb{R}\)</span> &nbsp; <span class="math inline">\(a\)</span> is in <span class="math inline">\(\mathbb{R}\)</span> (so it is <span class="math inline">\(1\)</span>, <span class="math inline">\(\sqrt{3}\)</span>, <span class="math inline">\(-\pi\)</span>, etc.)</li>
-</ul>
-</div>
+
+<script>
+(function(){
+var P=1, NE=4, A=2;
+var INK='#18202b', GREY='#6b7684', FAINT='#dfe4ea', ACC='#b8322a', BLUE='#2b5fa8';
+
+function nodes(p){ var v=[]; for(var i=0;i<=p;i++) v.push(-1+2*i/p); return v; }
+function Lag(p,pts,xi,a){ var n=1,d=1;
+  for(var i=0;i<=p;i++){ if(i===a) continue; n*=(xi-pts[i]); d*=(pts[a]-pts[i]); } return n/d; }
+function dLag(p,pts,xi,a){ var s=0;
+  for(var j=0;j<=p;j++){ if(j===a) continue;
+    var t=1/(pts[a]-pts[j]);
+    for(var i=0;i<=p;i++){ if(i===a||i===j) continue; t*=(xi-pts[i])/(pts[a]-pts[i]); }
+    s+=t; } return s; }
+
+// basis fn A restricted to element e, at parent coordinate xi.  Sampling per
+// element (rather than globally in x) is what keeps the derivative curve from
+// being bridged across an element boundary.
+function evalLocal(e, xi, deriv){
+  var h=1/NE, pts=nodes(P);
+  var a=A-P*e;
+  if(a<0||a>P) return 0;
+  return deriv ? dLag(P,pts,xi,a)/(h/2) : Lag(P,pts,xi,a);
+}
+
+function draw(){
+  var W=880, L=58, R=864, S='';
+  var nbf=P*NE+1;
+  if(A>nbf-1){ A=nbf-1; }
+  document.getElementById('b1a').max=nbf-1;
+  document.getElementById('b1a').value=A;
+  document.getElementById('b1av').textContent=A;
+  document.getElementById('b1nev').textContent=NE;
+  document.getElementById('b1info').innerHTML='n_bf = p&middot;n_elem + 1 = <i>'+nbf+'</i>';
+
+  var M=80, segsF=[], segsD=[], dmax=1;
+  for(var e=0;e<NE;e++){
+    var sf=[], sd=[];
+    for(var j=0;j<=M;j++){
+      var xi=-1+2*j/M, x=(e+j/M)/NE;
+      sf.push([x, evalLocal(e,xi,false)]);
+      var dd=evalLocal(e,xi,true); sd.push([x,dd]); dmax=Math.max(dmax,Math.abs(dd));
+    }
+    segsF.push(sf); segsD.push(sd);
+  }
+  dmax=Math.ceil(dmax*10)/10;
+
+  function panel(y0,y1,segs,lim,label,col){
+    var mid=(y0+y1)/2, amp=(y1-y0)/2-14;
+    S+='<line x1="'+L+'" y1="'+mid+'" x2="'+R+'" y2="'+mid+'" stroke="'+FAINT+'" stroke-width="1"/>';
+    for(var e=0;e<=NE;e++){ var xx=L+(R-L)*e/NE;
+      S+='<line x1="'+xx+'" y1="'+y0+'" x2="'+xx+'" y2="'+y1+'" stroke="'+FAINT+'" stroke-width="1" stroke-dasharray="3 3"/>'; }
+    // one path per element: adjacent elements are never joined
+    segs.forEach(function(seg){
+      var d='';
+      seg.forEach(function(pt,i){
+        d+=(i?' L':'M')+(L+(R-L)*pt[0]).toFixed(1)+' '+(mid-amp*pt[1]/lim).toFixed(1); });
+      S+='<path d="'+d+'" stroke="'+col+'" stroke-width="2" fill="none"/>';
+    });
+    S+='<text x="'+(L-8)+'" y="'+(mid-amp-2)+'" font-size="11" fill="'+GREY+'" text-anchor="end">'+(+lim.toFixed(1))+'</text>';
+    S+='<text x="'+(L-8)+'" y="'+(mid+4)+'" font-size="11" fill="'+GREY+'" text-anchor="end">0</text>';
+    S+='<text x="'+(L-8)+'" y="'+(mid+amp+10)+'" font-size="11" fill="'+GREY+'" text-anchor="end">'+(-lim).toFixed(1)+'</text>';
+    S+='<text x="'+L+'" y="'+(y0-6)+'" font-size="12.5" font-weight="600" fill="'+INK+'">'+label+'</text>';
+  }
+
+  panel(30,195,segsF,1,'Nₐ(x) — continuous across elements',BLUE);
+  panel(250,415,segsD,dmax,'dNₐ/dx — jumps at every element boundary',ACC);
+  // node ticks on the lower axis
+  for(var A2=0;A2<nbf;A2++){ var xx=L+(R-L)*A2/(nbf-1);
+    S+='<circle cx="'+xx+'" cy="415" r="'+(A2===A?4:2.4)+'" fill="'+(A2===A?ACC:GREY)+'"/>'; }
+  S+='<text x="'+R+'" y="428" font-size="11" fill="'+GREY+'" text-anchor="end">basis function locations</text>';
+  document.getElementById('b1svg').innerHTML=S;
+
+  document.getElementById('b1cap').innerHTML =
+    'At degree '+P+', N<sub>'+A+'</sub> is a piecewise polynomial of degree '+P+
+    ', so its derivative is piecewise degree '+(P-1)+
+    '. <b>The function is continuous and the derivative is not</b> — the breaks in the lower '+
+    'curve are actual discontinuities. Raising the degree makes the jumps smaller '+
+    'but never removes them, because nothing in a Lagrange basis forces neighbouring elements '+
+    'to agree on a slope.';
+}
+document.getElementById('b1deg').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b) return; P=+b.dataset.p;
+  [].forEach.call(this.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+  draw(); });
+document.getElementById('b1ne').addEventListener('input',function(){ NE=+this.value; draw(); });
+document.getElementById('b1a').addEventListener('input',function(){ A=+this.value; draw(); });
+draw();
+})();
+</script>
 </section>
-<section id="the-1d-poisson-equation" class="level1" data-number="5">
-<h1 data-number="5"><span class="header-section-number">5</span> The 1D Poisson equation</h1>
-<p>The following is important for diffusion-related problems (heat, contaminant), well drawdown, electromagnetics, axial rod deformation, etc.</p>
-<p>Called the <strong>1D Poisson equation</strong> (but potentially w/ different boundary conditions).</p>
-<p>Given <span class="math inline">\(f : \bar{\Omega} \to \mathbb{R}\)</span> &amp; constants <span class="math inline">\(g, h \in \mathbb{R}\)</span>, find <span class="math inline">\(u : \bar{\Omega} \to \mathbb{R}\)</span> such that</p>
-<div class="derivation">
-<p><span class="math display">\[
-(\mathrm{S})\quad
-\begin{cases}
-u_{,xx} + f = 0 &amp; \text{on } \Omega \\[6pt]
-u(1) = g \\[6pt]
--u_{,x}(0) = h
-\end{cases}
-\]</span></p>
+<section id="approximating-a-function-and-approximating-its-slope" class="level2" data-number="16.2">
+<h2 data-number="16.2" class="anchored" data-anchor-id="approximating-a-function-and-approximating-its-slope"><span class="header-section-number">16.2</span> Approximating a function, and approximating its slope</h2>
+<p>Now build <span class="math inline">\(u^h\)</span> by interpolating a known function at the basis function locations, and compare both the function and its derivative against the truth.</p>
+<div class="bw">
+  <div class="bar">
+    <b>DEGREE</b>
+    <span class="seg" id="b2deg">
+      <button data-p="1" aria-pressed="true">p=1</button>
+      <button data-p="2" aria-pressed="false">p=2</button>
+      <button data-p="3" aria-pressed="false">p=3</button>
+    </span>
+    <b>ELEMENTS</b> <input type="range" id="b2ne" min="1" max="12" value="3"><span class="val" id="b2nev">3</span>
+    <label style="font-size:13px;color:#6b7684"><input type="checkbox" id="b2err"> show the error instead</label>
+  </div>
+  <div class="bar" style="margin-top:-4px">
+    <b>FUNCTION</b>
+    <span class="seg" id="b2fn">
+      <button data-f="0" aria-pressed="true">gentle</button>
+      <button data-f="1" aria-pressed="false">wiggly</button>
+      <button data-f="2" aria-pressed="false">sharp bump</button>
+      <button data-f="3" aria-pressed="false">rough at x=0</button>
+    </span>
+    <span style="font-size:12.5px;color:#6b7684" id="b2fnote"></span>
+  </div>
+  <svg id="b2svg" viewbox="0 0 880 430" role="img" aria-label="A function and its derivative, approximated"></svg>
+  <div class="cap" id="b2cap"></div>
 </div>
-<p>If <span class="math inline">\(f = 0\)</span>, it is called the <strong>Laplace equation</strong>, &amp; the <span class="math inline">\(\partial_{xx}\)</span> operator is the 1D <strong>Laplace operator</strong>.</p>
-<p><strong>Exact Solution:</strong></p>
-<div class="derivation">
-<p><span class="math display">\[
-u(x) = g + (1-x)h + \int_x^1\left(\int_0^y f(z)\,dz\right) dy
-\]</span></p>
-</div>
-<div class="step">
-<p>…but we want to approximate &amp; understand so we can do similar for 2D / 3D.</p>
-</div>
-<div class="step">
-<div id="fig-c3-exact" class="quarto-float quarto-figure quarto-figure-center anchored">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-c3-exact-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="generated_images/Class3/C3_Fig1_ExactSolution.png" class="img-fluid figure-img" style="width:62.0%">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c3-exact-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;5.1: The exact solution for <span class="math inline">\(f(x) = 1 + 2x\)</span>, <span class="math inline">\(g = 0.7\)</span>, <span class="math inline">\(h = 1.3\)</span> — the Dirichlet condition fixes the value at <span class="math inline">\(x=1\)</span>, the Neumann condition fixes the slope at <span class="math inline">\(x=0\)</span>.
-</figcaption>
-</figure>
-</div>
-</div>
+
+<script>
+(function(){
+var P=1, NE=3, ERR=false;
+var INK='#18202b', GREY='#6b7684', FAINT='#dfe4ea', ACC='#b8322a', BLUE='#2b5fa8';
+var FNS=[
+ {u:function(x){ return 0.6*Math.sin(2*Math.PI*x)+0.25*Math.sin(Math.PI*x); },
+  d:function(x){ return 1.2*Math.PI*Math.cos(2*Math.PI*x)+0.25*Math.PI*Math.cos(Math.PI*x); },
+  note:'one gentle oscillation \u2014 easy to resolve, so the jumps shrink quickly'},
+ {u:function(x){ return 0.4*Math.sin(7*Math.PI*x)+0.15*Math.sin(2*Math.PI*x); },
+  d:function(x){ return 2.8*Math.PI*Math.cos(7*Math.PI*x)+0.3*Math.PI*Math.cos(2*Math.PI*x); },
+  note:'too wiggly for a coarse mesh \u2014 at p=2 and p=3 the jumps are large, not small'},
+ {u:function(x){ return Math.exp(-70*(x-0.45)*(x-0.45)); },
+  d:function(x){ return -140*(x-0.45)*Math.exp(-70*(x-0.45)*(x-0.45)); },
+  note:'all the action in one place \u2014 elements away from the bump are nearly exact'},
+ {u:function(x){ return Math.pow(Math.max(x,0),1.25); },
+  d:function(x){ return 1.25*Math.pow(Math.max(x,1e-300),0.25); },
+  note:'u = x^(5/4): the curvature blows up at x=0, and no mesh resolves that corner'}
+];
+var F=0;
+function u(x){ return FNS[F].u(x); }
+function du(x){ return FNS[F].d(x); }
+function nodes(p){ var v=[]; for(var i=0;i<=p;i++) v.push(-1+2*i/p); return v; }
+function Lag(p,pts,xi,a){ var n=1,d=1;
+  for(var i=0;i<=p;i++){ if(i===a) continue; n*=(xi-pts[i]); d*=(pts[a]-pts[i]); } return n/d; }
+function dLag(p,pts,xi,a){ var s=0;
+  for(var j=0;j<=p;j++){ if(j===a) continue; var t=1/(pts[a]-pts[j]);
+    for(var i=0;i<=p;i++){ if(i===a||i===j) continue; t*=(xi-pts[i])/(pts[a]-pts[i]); }
+    s+=t; } return s; }
+
+// u^h restricted to element e, at parent coordinate xi.  Evaluated per element
+// so the derivative is never drawn through an element boundary.
+function uhLocal(e,xi,deriv){
+  var h=1/NE, pts=nodes(P), v=0;
+  for(var a=0;a<=P;a++){
+    var xa=(e + a/P)*h;                       // spatial location of local node a
+    v += u(xa) * (deriv ? dLag(P,pts,xi,a)/(h/2) : Lag(P,pts,xi,a));
+  }
+  return v;
+}
+
+function draw(){
+  var W=880,L=58,R=864,S='',N=801;
+  document.getElementById('b2nev').textContent=NE;
+  document.getElementById('b2fnote').textContent=FNS[F].note;
+  // exact curves: one smooth global sampling
+  var xs=[],U=[],DU=[];
+  for(var i=0;i<N;i++){ var x=i/(N-1); xs.push(x); U.push(u(x)); DU.push(du(x)); }
+  // approximations and errors: sampled element by element
+  var M=80, segU=[], segD=[], segE0=[], segE1=[], e0=0, e1=0;
+  for(var e=0;e<NE;e++){
+    var a=[],b=[],c=[],d2=[];
+    for(var j=0;j<=M;j++){
+      var xi=-1+2*j/M, x=(e+j/M)/NE;
+      var vh=uhLocal(e,xi,false), dh=uhLocal(e,xi,true);
+      a.push([x,vh]); b.push([x,dh]);
+      var r0=u(x)-vh, r1=du(x)-dh;
+      c.push([x,r0]); d2.push([x,r1]);
+      e0=Math.max(e0,Math.abs(r0)); e1=Math.max(e1,Math.abs(r1));
+    }
+    segU.push(a); segD.push(b); segE0.push(c); segE1.push(d2);
+  }
+
+  function panel(y0,y1,lim,label,exact,segs,isDeriv){
+    var mid=(y0+y1)/2, amp=(y1-y0)/2-14;
+    S+='<line x1="'+L+'" y1="'+mid+'" x2="'+R+'" y2="'+mid+'" stroke="'+FAINT+'" stroke-width="1"/>';
+    for(var e=0;e<=NE;e++){ var xx=L+(R-L)*e/NE;
+      S+='<line x1="'+xx+'" y1="'+y0+'" x2="'+xx+'" y2="'+y1+'" stroke="'+FAINT+'" stroke-width="1" stroke-dasharray="3 3"/>'; }
+    if(exact){ var d='';
+      for(var i=0;i<N;i++) d+=(i?' L':'M')+(L+(R-L)*xs[i]).toFixed(1)+' '+(mid-amp*exact[i]/lim).toFixed(1);
+      S+='<path d="'+d+'" stroke="'+INK+'" stroke-width="2" fill="none" opacity=".45"/>'; }
+    segs.forEach(function(seg){ var d='';
+      seg.forEach(function(pt,i){
+        d+=(i?' L':'M')+(L+(R-L)*pt[0]).toFixed(1)+' '+(mid-amp*pt[1]/lim).toFixed(1); });
+      S+='<path d="'+d+'" stroke="'+(isDeriv?ACC:BLUE)+'" stroke-width="2" fill="none"/>'; });
+    S+='<text x="'+L+'" y="'+(y0-6)+'" font-size="12.5" font-weight="600" fill="'+INK+'">'+label+'</text>';
+    S+='<text x="'+(L-8)+'" y="'+(mid+4)+'" font-size="11" fill="'+GREY+'" text-anchor="end">0</text>';
+  }
+
+  if(!ERR){
+    var ul=0; for(var q=0;q<N;q++) ul=Math.max(ul,Math.abs(U[q]));
+    segU.forEach(function(sg){ sg.forEach(function(pt){ ul=Math.max(ul,Math.abs(pt[1])); }); });
+    panel(30,195,ul*1.12,'u(x) grey, and uʰ(x) blue',U,segU,false);
+    var dl=Math.max.apply(null,DU.map(Math.abs))*1.15;
+    panel(250,415,dl,'du/dx grey, and duʰ/dx red',DU,segD,true);
+  } else {
+    panel(30,195,Math.max(e0,1e-6)*1.2,'error in u',null,segE0,false);
+    panel(250,415,Math.max(e1,1e-6)*1.2,'error in du/dx',null,segE1,true);
+  }
+  document.getElementById('b2svg').innerHTML=S;
+
+  var ratio=(e1/Math.max(e0,1e-12));
+  document.getElementById('b2cap').innerHTML =
+    '<b>max |u − uʰ| = '+e0.toExponential(2)+'</b> &nbsp;&nbsp; '+
+    '<b>max |du/dx − duʰ/dx| = '+e1.toExponential(2)+'</b> &nbsp;&nbsp; '+
+    'the derivative error is <b>'+ratio.toFixed(0)+'×</b> larger.<br>'+
+    'Halve the element size and the top error falls by about 2<sup>'+(P+1)+'</sup> = '+Math.pow(2,P+1)+
+    ', while the bottom falls by only about 2<sup>'+P+'</sup> = '+Math.pow(2,P)+
+    '. That one-order gap is the whole story of the next two classes.';
+}
+document.getElementById('b2deg').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b) return; P=+b.dataset.p;
+  [].forEach.call(this.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+  draw(); });
+document.getElementById('b2ne').addEventListener('input',function(){ NE=+this.value; draw(); });
+document.getElementById('b2fn').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b) return; F=+b.dataset.f;
+  [].forEach.call(this.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+  draw(); });
+document.getElementById('b2err').addEventListener('change',function(){ ERR=this.checked; draw(); });
+draw();
+})();
+</script>
 </section>
-<section id="function-spaces" class="level1" data-number="6">
-<h1 data-number="6"><span class="header-section-number">6</span> Function spaces</h1>
-<p>For FEM, we need to write down <span class="math inline">\((\mathrm{S})\)</span> in an alternative, but equivalent, manner: the <strong>variational form</strong> or <strong>weak form</strong>.</p>
-<p>Need to talk about kinds of functions we can have, or “function spaces”.</p>
-<div id="fig-c3-spaces" class="quarto-float quarto-figure quarto-figure-center anchored" width="100%">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-c3-spaces-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="generated_images/Class3/C3_Fig2_FunctionSpaces.png" id="fig-c3-spaces" class="img-fluid figure-img" style="width:100.0%">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-c3-spaces-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;6.1
-</figcaption>
-</figure>
-</div>
-<div class="notes">
-<ul>
-<li><span class="math inline">\(C^0 \to\)</span> continuous function</li>
-<li><span class="math inline">\(C^{-1} \to\)</span> discontinuous function</li>
-<li><span class="math inline">\(C^1 \to\)</span> continuous function w/ continuous derivatives</li>
-<li><span class="math inline">\(C^\infty \to\)</span> continuous function w/ every derivative continuous</li>
-</ul>
-</div>
-<p><span class="math inline">\(H^1(\mathbb{R}) \to\)</span> <strong>First Sobolev Space</strong> of <span class="math inline">\(\mathbb{R}\)</span>… quite a complicated group of functions, we will discuss more later in class.</p>
-<div class="step">
-<p>See <a href="../chapters/3_Support_FunctionSpaces.html">Support: Norms and Function Spaces</a> for where these integrals come from.</p>
-</div>
-<div class="step">
-<p>The <strong>Sobolev Embedding Theorem</strong> says these are essentially continuous functions (actually Hölder continuous).</p>
-</div>
-<p>Alternatively, <span class="math inline">\(H^1\)</span> functions are functions such that</p>
-<div class="derivation">
+<section id="why-this-matters-for-error" class="level2" data-number="16.3">
+<h2 data-number="16.3" class="anchored" data-anchor-id="why-this-matters-for-error"><span class="header-section-number">16.3</span> Why this matters for error</h2>
+<p>Pushing the sliders should clarify two things. First, the approximation of <span class="math inline">\(u\)</span> looks good long before the approximation of <span class="math inline">\(du/dx\)</span> does, and second the derivative for Lagrange basis functions are never required to be continuous.</p>
+<p>To talk how error deteriorates, we need to be able to measure the energy of the error. To do so, we will use <strong>Sobolev norms</strong>. In one dimension, these look like</p>
 <p><span class="math display">\[
-\left.
-\begin{aligned}
-\int_\Omega (f)^2 \, d\Omega &amp;&lt; \infty \qquad \leftarrow L^2 \text{ functions} \\[6pt]
-\int_\Omega (f_{,x})^2 \, d\Omega &amp;&lt; \infty
-\end{aligned}
-\;\right\}
-\quad \text{when } \Omega \subset \mathbb{R}
+\|e\|_{H^0(\Omega)}^2 = \int_\Omega e^2 \, d\Omega,
+\qquad
+\|e\|_{H^1(\Omega)}^2 = \int_\Omega e^2 + \left(e_{,x}\right)^2 d\Omega,
 \]</span></p>
-</div>
-</section>
-<section id="the-weak-form" class="level1" data-number="7">
-<h1 data-number="7"><span class="header-section-number">7</span> The weak form</h1>
-<p>Then define two sets:</p>
-<div class="derivation">
+<p>and in general <span class="math inline">\(\|e\|_{H^s}\)</span> includes every derivative up to the <span class="math inline">\(s\)</span>-th. <span class="math inline">\(H^0\)</span> is the same thing as <span class="math inline">\(L^2\)</span>: it only asks whether the <em>values</em> are close. <span class="math inline">\(H^1\)</span> also asks whether the <em>slopes</em> are close — which, as the lower plot shows, is a harder thing to get right.</p>
+<p>Approximation of a derivative, as opposed to a solution, reduces the convergence rate by one, meaning that the exponent on <span class="math inline">\(h\)</span> (the size of the mesh, which forces error down as <span class="math inline">\(h\)</span> decreases) decreases by one.</p>
 <p><span class="math display">\[
-\text{trial solutions}\qquad
-\mathcal{S} = \left\{\, u \;\middle|\; u \in H^1(\mathbb{I}),\; u(1) = g \,\right\}
+\|e\|_{H^s(\Omega)} \;\leq\; C \, h^{\beta} \, \|u\|_{H^{k+1}(\Omega)}
 \]</span></p>
-</div>
-<div class="derivation">
-<p><span class="math display">\[
-\text{test solutions / variations}\qquad
-\mathcal{V} = \left\{\, w \;\middle|\; w \in H^1,\; w(1) = 0 \,\right\}
-\]</span></p>
-</div>
-<p><strong>Weak (variational) formulation:</strong></p>
-<p>Given <span class="math inline">\(f\)</span>, <span class="math inline">\(g\)</span>, &amp; <span class="math inline">\(h\)</span> as before, find <span class="math inline">\(u \in \mathcal{S}\)</span> such that <span class="math inline">\(\forall\, w \in \mathcal{V}\)</span></p>
-<div class="derivation">
-<p><span class="math display">\[
-(\mathrm{W})\qquad
-\int_0^1 w_{,x}\, u_{,x}\, dx = \int_0^1 w f\, dx + w(0)\, h
-\]</span></p>
-</div>
-<div class="step">
-<p>Inner product — or just multiply by <span class="math inline">\(w\)</span> &amp; integrate.</p>
-</div>
-<div class="derivation">
-<p><span class="math display">\[
-(\mathrm{W}) \iff (\mathrm{S})
-\]</span></p>
-</div>
-</section>
-<section id="a-brief-note-on-bilinearity" class="level1" data-number="8">
-<h1 data-number="8"><span class="header-section-number">8</span> A brief note on bilinearity</h1>
-<p>Assume <span class="math inline">\(\underline{v}\)</span>, <span class="math inline">\(\underline{w}\)</span> are vectors. The inner product of <span class="math inline">\(\underline{v}\)</span> and <span class="math inline">\(\underline{w}\)</span>, written <span class="math inline">\(\langle \underline{v}, \underline{w}\rangle\)</span>, is defined as</p>
-<div class="derivation">
-<p><span class="math display">\[
-\langle \underline{v}, \underline{w}\rangle = v_i w_i = \sum_{i=1}^{n} v_i w_i
-= v_1 w_1 + \cdots + v_n w_n
-\]</span></p>
-</div>
-<p>We show that <span class="math inline">\(\langle \cdot, \cdot \rangle\)</span> is <strong>bilinear</strong> if for an arbitrary set of coefficients <span class="math inline">\(\alpha\)</span>, <span class="math inline">\(\beta\)</span>, &amp; arbitrary vectors <span class="math inline">\(\underline{v}\)</span>, <span class="math inline">\(\underline{w}\)</span>, <span class="math inline">\(\underline{z}\)</span></p>
-<div class="derivation">
-<p><span class="math display">\[
-\begin{aligned}
-\langle \alpha\underline{v} + \beta\underline{z},\; \underline{w}\rangle
-  &amp;= \alpha\langle \underline{v}, \underline{w}\rangle
-   + \beta\langle \underline{z}, \underline{w}\rangle \\[6pt]
-\text{\&amp;}\qquad
-\langle \underline{v},\; \alpha\underline{w} + \beta\underline{z}\rangle
-  &amp;= \alpha\langle \underline{v}, \underline{w}\rangle
-   + \beta\langle \underline{v}, \underline{z}\rangle
-\end{aligned}
-\]</span></p>
-</div>
-<p>How do we show this? Go back to the definition.</p>
-<div class="step">
-<p>e.g.</p>
-</div>
-<div class="derivation">
-<p><span class="math display">\[
-\begin{aligned}
-\langle \alpha\underline{v} + \beta\underline{z},\; \underline{w}\rangle
-  &amp;= \left(\alpha\underline{v} + \beta\underline{z}\right)_i w_i \\
-  &amp;= \left(\alpha v_i + \beta z_i\right) w_i \\
-  &amp;= \alpha v_i w_i + \beta z_i w_i \\
-  &amp;= \alpha\langle \underline{v}, \underline{w}\rangle
-   + \beta\langle \underline{z}, \underline{w}\rangle
-\end{aligned}
-\]</span></p>
-</div>
+<p>where typically in this class <span class="math inline">\(\beta = k+1-s\)</span>. Each derivative we want to measure in our error decreases accuracy by a power of <span class="math inline">\(h\)</span>. At degree <span class="math inline">\(k\)</span>, the solution converges at rate <span class="math inline">\(k+1,\)</span> while the slope of the solution converges at rate <span class="math inline">\(k\)</span>. This will be made more precise and more concrete in the next class, where error estimates will be discussed more completely. We will also discuss how to measure the convergence rate, <span class="math inline">\(\beta\)</span> in a software code to make sure that the finite element solver is working correctly.</p>
 
 
 </section>
@@ -1037,15 +1017,15 @@ Figure&nbsp;6.1
     }
   });
   </script>
-<nav class="page-navigation">
+<nav class="page-navigation column-page-right">
   <div class="nav-page nav-page-previous">
-      <a href="../chapters/2_Class.html" class="pagination-link" aria-label="Class 2: Linear FEM">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Class 2: Linear FEM</span></span>
+      <a href="../chapters/15_Class.html" class="pagination-link" aria-label="Class 15: Unidimensional Finite Element Code">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Class 15: Unidimensional Finite Element Code</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../chapters/4_Class.html" class="pagination-link" aria-label="Class 4: Strong and Weak Forms of the Boundary Value Problem">
-        <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Class 4: Strong and Weak Forms of the Boundary Value Problem</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../chapters/17_Class.html" class="pagination-link" aria-label="Class 17: Convergence Rates">
+        <span class="nav-page-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

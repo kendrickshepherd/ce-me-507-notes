@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Finite Element Methods">
+
+<title>17&nbsp; Class 17: Convergence Rates – CE/ME 507 — Class Notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/3_Support_FunctionSpaces.html" rel="next">
+<link href="../chapters/16_Class.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-5a6c5cd077c1ead4086784ad1389866e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script>
+window.MathJax = {
+  tex: {
+    tags: 'ams',
+    macros: {
+      RR: '{\\mathbb{R}}',
+      Om: '{\\Omega}'
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/17_Class.html"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">CE/ME 507 — Class Notes</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">CE/ME 507 — Class Notes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/2_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Class 2: Linear FEM</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Class 3: Index Notation, Function Spaces, and the Weak Form</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/4_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Class 4: Strong and Weak Forms of the Boundary Value Problem</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/5_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/6_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Class 6: Basis Functions and Lagrange Polynomials</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/7_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Class 7: From Galerkin to a Matrix Equation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/8_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Class 8: Assembly, Sparsity, and the Road to Quadrature</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/9_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Class 9: The Isoparametric Map and the Jacobian</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Class 10: Assembly with the IEN Array, and Quadrature on an Element</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Class 11: Tensor-Product Basis Functions in 2D</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Class 12: The Spatial Mapping</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Class 13: The Jacobian Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Class 14: The ID and IEN Arrays</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Class 15: Unidimensional Finite Element Code</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Class 16: Derivatives of the Solution</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17_Class.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">1D Poisson I: Heat Conduction Through a Wall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">1D Poisson II: The Wall, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">1D Poisson III: An Axially Loaded Rod</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#what-we-measure-the-error-in" id="toc-what-we-measure-the-error-in" class="nav-link active" data-scroll-target="#what-we-measure-the-error-in"><span class="header-section-number">17.1</span> What we measure the error in</a></li>
+  <li><a href="#what-h-means" id="toc-what-h-means" class="nav-link" data-scroll-target="#what-h-means"><span class="header-section-number">17.2</span> What <span class="math inline">\(h\)</span> means</a>
+  <ul class="collapse">
+  <li><a href="#quasi-uniformity-is-a-property-of-a-family-of-meshes" id="toc-quasi-uniformity-is-a-property-of-a-family-of-meshes" class="nav-link" data-scroll-target="#quasi-uniformity-is-a-property-of-a-family-of-meshes"><span class="header-section-number">17.2.1</span> Quasi-uniformity is a property of a <em>family</em> of meshes</a></li>
+  <li><a href="#refining-in-the-right-place-beats-refining-everywhere" id="toc-refining-in-the-right-place-beats-refining-everywhere" class="nav-link" data-scroll-target="#refining-in-the-right-place-beats-refining-everywhere"><span class="header-section-number">17.2.2</span> Refining in the right place beats refining everywhere</a></li>
+  </ul></li>
+  <li><a href="#a-priori-error-estimates" id="toc-a-priori-error-estimates" class="nav-link" data-scroll-target="#a-priori-error-estimates"><span class="header-section-number">17.3</span> A-priori error estimates</a>
+  <ul class="collapse">
+  <li><a href="#when-the-solution-is-not-smooth-enough" id="toc-when-the-solution-is-not-smooth-enough" class="nav-link" data-scroll-target="#when-the-solution-is-not-smooth-enough"><span class="header-section-number">17.3.1</span> When the solution is not smooth enough</a></li>
+  <li><a href="#what-the-constant-is" id="toc-what-the-constant-is" class="nav-link" data-scroll-target="#what-the-constant-is"><span class="header-section-number">17.3.2</span> What the constant is</a></li>
+  </ul></li>
+  <li><a href="#turning-the-estimate-into-a-straight-line" id="toc-turning-the-estimate-into-a-straight-line" class="nav-link" data-scroll-target="#turning-the-estimate-into-a-straight-line"><span class="header-section-number">17.4</span> Turning the estimate into a straight line</a>
+  <ul class="collapse">
+  <li><a href="#dyadic-refinement" id="toc-dyadic-refinement" class="nav-link" data-scroll-target="#dyadic-refinement"><span class="header-section-number">17.4.1</span> Dyadic refinement</a></li>
+  <li><a href="#what-the-plots-look-like" id="toc-what-the-plots-look-like" class="nav-link" data-scroll-target="#what-the-plots-look-like"><span class="header-section-number">17.4.2</span> What the plots look like</a></li>
+  </ul></li>
+  <li><a href="#actually-computing-the-error-norm" id="toc-actually-computing-the-error-norm" class="nav-link" data-scroll-target="#actually-computing-the-error-norm"><span class="header-section-number">17.5</span> Actually computing the error norm</a>
+  <ul class="collapse">
+  <li><a href="#the-two-solutions-are-evaluated-differently" id="toc-the-two-solutions-are-evaluated-differently" class="nav-link" data-scroll-target="#the-two-solutions-are-evaluated-differently"><span class="header-section-number">17.5.1</span> The two solutions are evaluated differently</a></li>
+  <li><a href="#a-practical-warning-about-quadrature" id="toc-a-practical-warning-about-quadrature" class="nav-link" data-scroll-target="#a-practical-warning-about-quadrature"><span class="header-section-number">17.5.2</span> A practical warning about quadrature</a></li>
+  </ul></li>
+  <li><a href="#where-this-is-going" id="toc-where-this-is-going" class="nav-link" data-scroll-target="#where-this-is-going"><span class="header-section-number">17.6</span> Where this is going</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content column-body" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></h1>
+<p class="subtitle lead">How fast the error goes away, and how we measure it</p>
+</div>
+
+
+
+<div class="quarto-title-meta column-body">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>We have built a finite element solver and we have looked at its solution and its derivative. The obvious next question is whether the answer is any good, and that question has a surprisingly precise answer: not <em>what</em> the error is, but <em>how fast it goes away</em> as we refine the mesh.</p>
+<section id="what-we-measure-the-error-in" class="level2" data-number="17.1">
+<h2 data-number="17.1" class="anchored" data-anchor-id="what-we-measure-the-error-in"><span class="header-section-number">17.1</span> What we measure the error in</h2>
+<p>The error is a function, not a number:</p>
+<p><span class="math display">\[ e(x) := u(x) - u^h(x) . \]</span></p>
+<p>To get a number out of it we need a norm, and we need one that can ask about derivatives, because we already know the derivative is approximated particularly poorly. The <strong>Sobolev norms</strong> do exactly that. In one dimension:</p>
+<p><span class="math display">\[
+\|e\|_{H^0(\Omega)}^2 = \int_\Omega e^2 \, dx, \qquad
+\|e\|_{H^1(\Omega)}^2 = \int_\Omega e^2 + \left(e_{,x}\right)^2 dx, \qquad
+\|e\|_{H^2(\Omega)}^2 = \int_\Omega e^2 + \left(e_{,x}\right)^2 + \left(e_{,xx}\right)^2 dx .
+\]</span></p>
+<p>Each one includes everything the previous one had, plus one more derivative. <span class="math inline">\(H^0\)</span> is the same thing as <span class="math inline">\(L^2\)</span> — it only asks whether the <em>values</em> are close. <span class="math inline">\(H^1\)</span> also asks whether the <em>slopes</em> are close. <span class="math inline">\(H^2\)</span> also asks about curvature.</p>
+<p>In several dimensions the same thing, written with the gradient:</p>
+<p><span class="math display">\[
+\|e\|_{H^0(\Omega)}^2 = \int_\Omega e^2 \, d\Omega, \qquad
+\|e\|_{H^1(\Omega)}^2 = \int_\Omega e^2 + \nabla e \cdot \nabla e \; d\Omega, \qquad
+\|e\|_{H^2(\Omega)}^2 = \int_\Omega e^2 + \nabla e \cdot \nabla e + \nabla^2 e : \nabla^2 e \; d\Omega ,
+\]</span></p>
+<p>or in index notation, which is often easier to implement from:</p>
+<p><span class="math display">\[
+\|e\|_{H^0}^2 = \int_\Omega e^2 \, d\Omega, \qquad
+\|e\|_{H^1}^2 = \int_\Omega e^2 + e_{,i}\,e_{,i} \; d\Omega, \qquad
+\|e\|_{H^2}^2 = \int_\Omega e^2 + e_{,i}\,e_{,i} + e_{,ij}\,e_{,ij} \; d\Omega .
+\]</span></p>
+<p>Repeated indices are summed, so <span class="math inline">\(e_{,i}e_{,i}\)</span> in two dimensions is <span class="math inline">\(\left(e_{,x}\right)^2 + \left(e_{,y}\right)^2\)</span>, which is exactly <span class="math inline">\(\nabla e \cdot \nabla e\)</span>.</p>
+<p>In practice we almost always report <span class="math inline">\(H^0\)</span> and <span class="math inline">\(H^1\)</span>. <span class="math inline">\(H^0\)</span> tells you whether the solution is right, while <span class="math inline">\(H^1\)</span> tells you whether the fluxes and strains you extract from it are right, and those are usually the quantities of interest. <span class="math inline">\(H^2\)</span> is not particularly usefule for the Poisson equation, but plays a bigger role in beam and shell problems and in mixing theory.</p>
+</section>
+<section id="what-h-means" class="level2" data-number="17.2">
+<h2 data-number="17.2" class="anchored" data-anchor-id="what-h-means"><span class="header-section-number">17.2</span> What <span class="math inline">\(h\)</span> means</h2>
+<p>Every element has a size. The one the estimate uses is the <strong>diameter</strong> of the element — the longest distance between any two of its points — and then <span class="math inline">\(h\)</span> is the largest of those over the whole mesh:</p>
+<p><span class="math display">\[ h_K = \mathrm{diam}\left(\Omega^K\right) = \max_{\underline{a},\underline{b}\,\in\,\Omega^K} \left|\underline{a}-\underline{b}\right| ,
+\qquad h = \max_K h_K . \]</span></p>
+<p>In one dimension that is just the length of the interval. In two and three dimensions it is a diagonal, not an edge — which matters, because a long thin element has a much larger diameter than its short edge suggests.</p>
+<div class="cv"><svg id="hsvg" viewbox="0 0 880 260" role="img" aria-label="The element size h in one, two and three dimensions"></svg>
+<div class="cap"><b>h is the diameter, not an edge length.</b> In 2D and 3D it is the longest
+diagonal across the element.The mesh's <i>h</i> is the largest of them.
+Note the stretched element: its short edge is small, but its diameter — and
+therefore its <i>h</i> — is not.</div></div>
+
+<script>
+(function(){
+var S='',INK='#18202b',GREY='#6b7684',ACC='#b8322a',FAINT='#dfe4ea',BLUE='#2b5fa8';
+function lbl(x,y,t,c){ S+='<text x="'+x+'" y="'+y+'" font-size="12.5" font-weight="600" fill="'+(c||INK)+'" text-anchor="middle">'+t+'</text>'; }
+// --- 1D ---
+lbl(110,34,'one dimension');
+S+='<line x1="40" y1="110" x2="180" y2="110" stroke="'+INK+'" stroke-width="2"/>';
+['40','180'].forEach(function(x){ S+='<line x1="'+x+'" y1="100" x2="'+x+'" y2="120" stroke="'+INK+'" stroke-width="2"/>'; });
+S+='<line x1="40" y1="142" x2="180" y2="142" stroke="'+ACC+'" stroke-width="2"/>';
+lbl(110,160,'h<tspan baseline-shift="sub" font-size="9">K</tspan> = length',ACC);
+// --- 2D ---
+lbl(390,34,'two dimensions');
+var q='300,80 470,92 452,186 288,168';
+S+='<polygon points="'+q+'" fill="#f3f6fa" stroke="'+INK+'" stroke-width="1.8"/>';
+S+='<line x1="300" y1="80" x2="452" y2="186" stroke="'+ACC+'" stroke-width="2" stroke-dasharray="5 3"/>';
+lbl(392,215,'h<tspan baseline-shift="sub" font-size="9">K</tspan> = longest diagonal',ACC);
+// --- 3D (hex, oblique) ---
+lbl(700,34,'three dimensions');
+function P(x,y){return x+','+y;}
+var f0=[[600,100],[730,100],[730,190],[600,190]], bk=[[640,72],[770,72],[770,162],[640,162]];
+S+='<polygon points="'+bk.map(function(p){return P(p[0],p[1]);}).join(' ')+'" fill="none" stroke="'+GREY+'" stroke-width="1.2" stroke-dasharray="4 3"/>';
+for(var i=0;i<4;i++) S+='<line x1="'+f0[i][0]+'" y1="'+f0[i][1]+'" x2="'+bk[i][0]+'" y2="'+bk[i][1]+'" stroke="'+GREY+'" stroke-width="1.2"/>';
+S+='<polygon points="'+f0.map(function(p){return P(p[0],p[1]);}).join(' ')+'" fill="#f3f6fa" fill-opacity=".85" stroke="'+INK+'" stroke-width="1.8"/>';
+S+='<line x1="600" y1="190" x2="770" y2="72" stroke="'+ACC+'" stroke-width="2" stroke-dasharray="5 3"/>';
+lbl(700,215,'h<tspan baseline-shift="sub" font-size="9">K</tspan> = body diagonal',ACC);
+// stretched warning element
+S+='<polygon points="40,200 180,205 180,222 40,217" fill="#fdf2f1" stroke="'+ACC+'" stroke-width="1.4"/>';
+S+='<text x="190" y="218" font-size="11.5" fill="'+ACC+'">a stretched element: small edge, large h</text>';
+document.getElementById('hsvg').innerHTML=S;
+})();
+</script>
+<section id="quasi-uniformity-is-a-property-of-a-family-of-meshes" class="level3" data-number="17.2.1">
+<h3 data-number="17.2.1" class="anchored" data-anchor-id="quasi-uniformity-is-a-property-of-a-family-of-meshes"><span class="header-section-number">17.2.1</span> Quasi-uniformity is a property of a <em>family</em> of meshes</h3>
+<p>The estimates come with a hidden assumption, and it is easy to state imprecisely. A family of meshes <span class="math inline">\(\{\mathcal{T}_h\}\)</span>, indexed by <span class="math inline">\(h \to 0\)</span>, is <strong>quasi-uniform</strong> if there is a constant <span class="math inline">\(\rho &gt; 0\)</span> that does <strong>not depend on <span class="math inline">\(h\)</span></strong> such that</p>
+<p><span class="math display">\[ \min_K h_K \;\geq\; \rho \, h \qquad \text{for every mesh in the family.} \]</span></p>
+<p>The whole content is in <em>does not depend on <span class="math inline">\(h\)</span></em>. Any single mesh has finitely many elements, so <span class="math inline">\(h/h_{\min}\)</span> is automatically some finite number — you can always find a constant that works. <strong>You cannot look at one mesh and say whether it is quasi-uniform.</strong> The question is whether that ratio stays bounded as you refine, or grows without limit.</p>
+<div class="cv"><svg id="qusvg" viewbox="0 0 880 230" role="img" aria-label="Two refinement families: uniform and graded"></svg>
+<div class="cap"><b>You have to watch a sequence, not a mesh.</b> Top: uniform refinement, where
+the ratio of largest to smallest element stays at 1 forever. Bottom: graded refinement toward
+the left end, where the ratio grows at every level and is unbounded over the family. The
+bottom family is <i>not</i> quasi-uniform.
+The particular error estimators given here assume a quasi-uniform refinement, but we will see that in some cases not having such a quasi-uniform refinement may be good.
+This goes to show that these a-priori error estimators are just one resource that we have to improve accuracy.
+</div></div>
+
+<script>
+(function(){
+var S='',INK='#18202b',GREY='#6b7684',ACC='#b8322a',OK='#1d7a4c';
+function row(y,label,gen,col){
+  S+='<text x="12" y="'+(y-26)+'" font-size="13" font-weight="600" fill="'+INK+'">'+label+'</text>';
+  [0,1,2].forEach(function(lv){
+    var L=150+lv*245, W=195, edges=gen(lv);
+    S+='<line x1="'+L+'" y1="'+y+'" x2="'+(L+W)+'" y2="'+y+'" stroke="'+INK+'" stroke-width="1.3"/>';
+    var big=0,small=1e9;
+    edges.forEach(function(t,i){ var x=L+W*t;
+      S+='<line x1="'+x+'" y1="'+(y-8)+'" x2="'+x+'" y2="'+(y+8)+'" stroke="'+INK+'" stroke-width="1.2"/>';
+      if(i>0){var w=t-edges[i-1]; if(w>big)big=w; if(w<small)small=w;} });
+    S+='<text x="'+(L+W/2)+'" y="'+(y+26)+'" font-size="11.5" fill="'+col+'" text-anchor="middle">h/h'+
+       '<tspan baseline-shift="sub" font-size="8">min</tspan> = '+(big/small).toFixed(0)+'</text>';
+  });
+}
+row(58,'uniform refinement', function(lv){ var n=4*Math.pow(2,lv),a=[];
+  for(var i=0;i<=n;i++)a.push(i/n); return a; }, OK);
+row(160,'graded toward the left', function(lv){ var n=4*Math.pow(2,lv),a=[];
+  for(var i=0;i<=n;i++)a.push(Math.pow(i/n,2.5)); return a; }, ACC);
+document.getElementById('qusvg').innerHTML=S;
+})();
+</script>
+<p>So why does the assumption appear at all? Because it is what lets us write the estimate in terms of a <em>single</em> number <span class="math inline">\(h\)</span>. The underlying approximation results are local — they hold element by element in terms of <span class="math inline">\(h_K\)</span>, and need only <strong>shape regularity</strong>, a bound on how stretched any individual element may be. Quasi-uniformity is the extra condition that lets us replace every <span class="math inline">\(h_K\)</span> by one global <span class="math inline">\(h\)</span> and still have a sharp statement. The error constant <span class="math inline">\(C\)</span> that we will see later degrades as <span class="math inline">\(h/h_{\min}\)</span> grows.</p>
+</section>
+<section id="refining-in-the-right-place-beats-refining-everywhere" class="level3" data-number="17.2.2">
+<h3 data-number="17.2.2" class="anchored" data-anchor-id="refining-in-the-right-place-beats-refining-everywhere"><span class="header-section-number">17.2.2</span> Refining in the right place beats refining everywhere</h3>
+<p>A non-quasi-uniform family for mesh refinement is not always bad. If the solution is hard to resolve in one small region, putting your elements there is far more effective than spreading them evenly — and the a-priori estimate below, written for a single <span class="math inline">\(h\)</span>, simply does not describe what you get.</p>
+<p>Here is the demonstration. Take</p>
+<p><span class="math display">\[ u(x) = \tanh\!\big(25(x-\tfrac{1}{2})\big), \qquad f = -u_{,xx} , \]</span></p>
+<p>which is perfectly <strong>smooth</strong> — it has derivatives of every order — but swings from <span class="math inline">\(-1\)</span> to <span class="math inline">\(1\)</span> across a narrow layer in the middle and is nearly flat everywhere else. Use quadratic elements, <span class="math inline">\(k=2\)</span>. Refine three ways, always to the same number of elements.</p>
+<div class="cv"><svg id="rfsvg" viewbox="0 0 880 350" role="img" aria-label="The solution, and three refinement strategies on the same domain"></svg>
+<div class="cap"><b>Why that region and not another.</b> The top panel is the exact solution.
+Almost all of its variation happens inside the
+shaded strip — outside it, <i>u</i> is within a hair of ±1 and a single element
+would reproduce it almost exactly. The three meshes below put the same sixteen elements in
+different places. Only the second one puts them where the function is actually doing
+something.</div></div>
+
+<script>
+(function(){
+var S='',INK='#18202b',GREY='#6b7684',ACC='#b8322a',OK='#1d7a4c',BLUE='#2b5fa8',FAINT='#dfe4ea';
+var K=25,C=0.5, L=250,R=840;
+function u(x){ return Math.tanh(K*(x-C)); }
+
+// ---- shaded layer strip, spanning the whole figure ----
+var sx0=L+(R-L)*0.40, sx1=L+(R-L)*0.60;
+S+='<rect x="'+sx0+'" y="14" width="'+(sx1-sx0)+'" height="310" fill="'+ACC+'" opacity=".06"/>';
+S+='<text x="'+((sx0+sx1)/2)+'" y="12" font-size="11" fill="'+ACC+'" text-anchor="middle">the layer</text>';
+
+// ---- solution panel ----
+var y0=26,y1=150, mid=(y0+y1)/2, amp=(y1-y0)/2-10;
+S+='<line x1="'+L+'" y1="'+mid+'" x2="'+R+'" y2="'+mid+'" stroke="'+FAINT+'" stroke-width="1"/>';
+var d='';
+for(var i=0;i<=600;i++){ var x=i/600, px=L+(R-L)*x;
+  d+=(i?' L':'M')+px.toFixed(1)+' '+(mid-amp*u(x)).toFixed(1);
+}
+S+='<path d="'+d+'" stroke="'+INK+'" stroke-width="2.2" fill="none"/>';
+S+='<text x="'+(L+6)+'" y="'+(y0+12)+'" font-size="12.5" font-weight="600" fill="'+INK+'">u(x) = tanh(25(x − ½))</text>';
+S+='<text x="'+(L-8)+'" y="'+(mid-amp+4)+'" font-size="11" fill="'+GREY+'" text-anchor="end">+1</text>';
+S+='<text x="'+(L-8)+'" y="'+(mid+amp+4)+'" font-size="11" fill="'+GREY+'" text-anchor="end">−1</text>';
+
+// ---- the three meshes ----
+function row(y,label,f,col,note){
+  var N=16;
+  S+='<text x="12" y="'+(y+4)+'" font-size="12.5" font-weight="600" fill="'+INK+'">'+label+'</text>';
+  S+='<line x1="'+L+'" y1="'+y+'" x2="'+R+'" y2="'+y+'" stroke="'+INK+'" stroke-width="1.3"/>';
+  for(var i=0;i<=N;i++){ var x=L+(R-L)*f(i/N);
+    S+='<line x1="'+x+'" y1="'+(y-9)+'" x2="'+x+'" y2="'+(y+9)+'" stroke="'+INK+'" stroke-width="1.1"/>'; }
+  S+='<text x="'+R+'" y="'+(y+25)+'" font-size="11.5" fill="'+col+'" text-anchor="end">'+note+'</text>';
+}
+function pw(g){ return function(t){ var z=2*t-1; return 0.5+0.5*(z<0?-1:1)*Math.pow(Math.abs(z),g); }; }
+row(192,'uniform',                 function(t){return t;}, BLUE,'L² rate 2.60');
+row(248,'clustered at the layer',  pw(2.5),                OK,  'L² rate 2.91  —  the full degree-2 rate');
+row(304,'clustered at the ends',   pw(1/2.5),              ACC, 'L² rate 0.87  —  far worse than uniform');
+document.getElementById('rfsvg').innerHTML=S;
+})();
+</script>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>elements</th>
+<th>uniform <span class="math inline">\(\|e\|_{L^2}\)</span></th>
+<th>at the layer</th>
+<th>at the ends</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>8</td>
+<td>3.01e−2</td>
+<td>7.04e−3</td>
+<td>1.41e−1</td>
+</tr>
+<tr class="even">
+<td>16</td>
+<td>1.99e−3</td>
+<td>1.20e−3</td>
+<td>9.54e−2</td>
+</tr>
+<tr class="odd">
+<td>32</td>
+<td>8.37e−4</td>
+<td>1.49e−4</td>
+<td>5.80e−2</td>
+</tr>
+<tr class="even">
+<td>64</td>
+<td>1.18e−4</td>
+<td>1.88e−5</td>
+<td>3.01e−2</td>
+</tr>
+<tr class="odd">
+<td>128</td>
+<td>1.49e−5</td>
+<td><strong>2.36e−6</strong></td>
+<td>1.23e−2</td>
+</tr>
+<tr class="even">
+<td><strong>observed rate</strong></td>
+<td><strong>2.60</strong></td>
+<td><strong>2.91</strong></td>
+<td><strong>0.87</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Three things to take from this.</p>
+<p><strong>This has nothing to do with smoothness.</strong> <span class="math inline">\(\tanh\)</span> is infinitely differentiable, so the solution is as regular as anyone could ask. The only thing that differs between the three rows is <em>where the elements sit</em>. Resolution and regularity are separate issues, and this is the resolution one.</p>
+<p><strong>Refining where it matters gives the least amount of error.</strong> Clustering at the layer reaches 2.91 — essentially the rate quadratic elements are capable of — and at 128 elements it is <strong>six times more accurate</strong> than uniform for exactly the same cost. That family is deliberately not quasi-uniform.</p>
+<p><strong>Refining in the wrong place doesn’t help.</strong> Clustering at the ends means that you don’t refine in the one region that needed elements. Its measured rate is 0.87, and at 128 elements it is still <em>a thousand times</em> less accurate than clustering at the layer. Putting elements somewhere is not the same as putting them somewhere useful.</p>
+<p>Note also that the uniform row reads 2.60 rather than 3. The estimate is asymptotic, and on these meshes the layer is still only a few elements wide, so we are not yet in the range where it applies. That is a different effect again, and we return to it later.</p>
+<p>So when we write <span class="math inline">\(\|e\| \leq C h^\beta \|u\|\)</span> in the next section and talk about measuring a slope, understand what it describes: <strong>uniform refinement of a quasi-uniform family.</strong> That is the setting where a single <span class="math inline">\(h\)</span> means something. Adaptive and graded meshes are common and are frequently better. Deciding where to put the elements needs different tools, a-posteriori estimators, which we are not covering here.</p>
+</section>
+</section>
+<section id="a-priori-error-estimates" class="level2" data-number="17.3">
+<h2 data-number="17.3" class="anchored" data-anchor-id="a-priori-error-estimates"><span class="header-section-number">17.3</span> A-priori error estimates</h2>
+<p><strong>A priori</strong> means <em>before the fact</em>: before you solve anything, you can say how the error will behave, purely from the polynomial degree, the mesh size, and how smooth the exact solution is. You do not need the computed answer to write it down. (The contrast is an <strong>a-posteriori</strong> estimate, which is computed <em>after</em> you solve, out of the solution you got, and which can give you an actual number and tell you which elements to refine. We are not doing those here.)</p>
+<p>The standard a-priori estimate, for a sufficiently smooth exact solution, is</p>
+<p><span class="math display">\[
+\boxed{\;\|e\|_{H^s(\Omega)} \;\leq\; C \, h^{\beta} \, \|u\|_{H^{k+1}(\Omega)},
+\qquad \beta = \min\big(k+1-s,\; 2(k+1-m)\big)\;}
+\]</span></p>
+<p>with <span class="math inline">\(k\)</span> the polynomial degree, <span class="math inline">\(s\)</span> the norm we measure in, and <span class="math inline">\(m\)</span> the number of derivatives on a single term of the weak form. For the problems we solve in this class, <span class="math inline">\(m=1\)</span>, and the second argument is never lower, so in practice</p>
+<p><span class="math display">\[ \beta = k + 1 - s . \]</span></p>
+<section id="when-the-solution-is-not-smooth-enough" class="level3" data-number="17.3.1">
+<h3 data-number="17.3.1" class="anchored" data-anchor-id="when-the-solution-is-not-smooth-enough"><span class="header-section-number">17.3.1</span> When the solution is not smooth enough</h3>
+<p>If you look at the right hand side of the above boxed equation carefully, you will see that it contains <span class="math inline">\(\|u\|_{H^{k+1}}\)</span>. The estimate is only meaningful if that quantity is <strong>finite</strong> — that is, if the exact solution actually lives in <span class="math inline">\(H^{k+1}(\Omega)\)</span>. If it does not, the bound is vacuous as written, and the correct statement replaces <span class="math inline">\(k+1\)</span> by however much regularity the solution really has.</p>
+<p>If <span class="math inline">\(u \in H^{r}(\Omega)\)</span> and <span class="math inline">\(r &lt; k+1\)</span>, then</p>
+<p><span class="math display">\[
+\boxed{\;\|e\|_{H^s(\Omega)} \;\leq\; C \, h^{\min(k+1,\,r)-s} \, \|u\|_{H^{r}(\Omega)}\;}
+\]</span></p>
+<p>so <strong>the rate is governed by the solution, not by the degree</strong>, and the norm bounding it is the one the solution actually belongs to. Once <span class="math inline">\(r\)</span> drops below <span class="math inline">\(k+1\)</span>, using higher more polynomial degree does not improve the a priori error estimate because <span class="math inline">\(\min(k+1,r)\)</span> stops moving.</p>
+<p>This is not the <span class="math inline">\(\min\)</span> in the earlier formula doing something. That one compares the approximation space against the variational form, and both of its arguments grow with <span class="math inline">\(k\)</span>. This is a third, separate limiter sitting outside that estimate entirely.</p>
+<p>A worked example: suppose the exact solution happens to lie in <span class="math inline">\(H^{2}\)</span>, and we discretise it with quadratic elements, <span class="math inline">\(k=2\)</span>. Then <span class="math inline">\(\min(k+1, r) = \min(3, 2) = 2\)</span>, so</p>
+<p><span class="math display">\[ \|e\|_{L^2} \leq C\,h^{2}\|u\|_{H^2}, \qquad \|e\|_{H^1} \leq C\,h^{1}\|u\|_{H^2} , \]</span></p>
+<p>rather than the <span class="math inline">\(h^3\)</span> and <span class="math inline">\(h^2\)</span> that quadratic elements deliver on a smooth solution. One order has been lost in each norm, and switching to cubic elements would not recover it — <span class="math inline">\(\min(4,2)\)</span> is still 2.</p>
+<p>It is worth being clear in advance that it is a <em>different</em> mechanism from anything in Section&nbsp;2.2: there, the solution was perfectly smooth and only the mesh was badly placed. Here the mesh may be flawless and the solution itself is the limit.</p>
+</section>
+<section id="what-the-constant-is" class="level3" data-number="17.3.2">
+<h3 data-number="17.3.2" class="anchored" data-anchor-id="what-the-constant-is"><span class="header-section-number">17.3.2</span> What the constant is</h3>
+<p>The constant in this above error estimate, <span class="math inline">\(C,\)</span> is typically nebulous. While we don’t know exactly what it is, we do know that it is <strong>independent of</strong>:</p>
+<ul>
+<li>the mesh size <span class="math inline">\(h\)</span>, so we can talk about the rate of error decrease, and</li>
+<li>the exact solution <span class="math inline">\(u\)</span>, because the complexity of the error in from the solution has been factored into <span class="math inline">\(\|u\|_{H^{k+1}}\)</span>.</li>
+</ul>
+<p>It <strong>depends on</strong>: the domain <span class="math inline">\(\Omega\)</span>, the polynomial degree <span class="math inline">\(k\)</span>, the shape-regularity and quasi-uniformity constants of the mesh family, and the coefficients of the problem (for us, <span class="math inline">\(\underline{\underline{\kappa}}\)</span>, through how strongly elliptic the operator is).</p>
+<p>So the estimate tells you the <em>slope</em> of the error curve and not its <em>height</em>. You cannot use it to predict that your error will be <span class="math inline">\(10^{-4}\)</span>. You can use it to predict that halving <span class="math inline">\(h\)</span> will divide the error by <span class="math inline">\(2^\beta\)</span>, and doing this in code tells you if your software is correct.</p>
+</section>
+</section>
+<section id="turning-the-estimate-into-a-straight-line" class="level2" data-number="17.4">
+<h2 data-number="17.4" class="anchored" data-anchor-id="turning-the-estimate-into-a-straight-line"><span class="header-section-number">17.4</span> Turning the estimate into a straight line</h2>
+<p>The estimate is a power law, which is awkward to look at. Take a logarithm of both sides:</p>
+<p><span class="math display">\[
+\log \|e\|_{H^s} \;\leq\; \log\left(C\,\|u\|_{H^{k+1}}\right) + \beta \log h .
+\]</span></p>
+<p>Everything in the first term on the right is a constant — it does not change as we refine. So if we plot <span class="math inline">\(\log\|e\|\)</span> against <span class="math inline">\(\log h\)</span>, we should see a <strong>straight line of slope <span class="math inline">\(\beta\)</span></strong>, sitting at a height we do not get to predict:</p>
+<p><span class="math display">\[ \underbrace{\log\|e\|}_{y} = \beta \underbrace{\log h}_{x} + \underbrace{\log(C\|u\|)}_{\text{intercept}} . \]</span></p>
+<p>Consequently, convergence results typically always shown on log–log axes. The quantity we care about is a slope, and only these axes make it a slope.</p>
+<section id="dyadic-refinement" class="level3" data-number="17.4.1">
+<h3 data-number="17.4.1" class="anchored" data-anchor-id="dyadic-refinement"><span class="header-section-number">17.4.1</span> Dyadic refinement</h3>
+<p>To measure that slope we typically refine the mesh <strong>dyadically</strong>, where each level halves the element size, so <span class="math inline">\(h_{i+1} = h_i/2\)</span>. In one dimension that means splitting every element in two; in two dimensions, splitting every element into four.</p>
+<div class="cv"><svg id="dysvg" viewbox="0 0 880 300" role="img" aria-label="Dyadic refinement in one and two dimensions"></svg>
+<div class="cap"><b>Each level halves <i>h</i>.</b> In 1D the element count doubles; in 2D it
+quadruples, because each element splits in both directions. The element <i>size</i> halves
+either way, which is what the estimate is written in terms of. Note what this costs: in 2D,
+three levels of refinement is 64 times as many elements.</div></div>
+
+<script>
+(function(){
+var S='',INK='#18202b',GREY='#6b7684',FAINT='#dfe4ea',BLUE='#2b5fa8';
+// 1D row
+S+='<text x="12" y="40" font-size="13" font-weight="600" fill="'+INK+'">one dimension</text>';
+[2,4,8].forEach(function(n,r){
+  var L=150+r*250, W=200, y=36;
+  S+='<line x1="'+L+'" y1="'+y+'" x2="'+(L+W)+'" y2="'+y+'" stroke="'+INK+'" stroke-width="1.4"/>';
+  for(var i=0;i<=n;i++){ var x=L+W*i/n;
+    S+='<line x1="'+x+'" y1="'+(y-8)+'" x2="'+x+'" y2="'+(y+8)+'" stroke="'+INK+'" stroke-width="1.3"/>'; }
+  S+='<text x="'+(L+W/2)+'" y="'+(y+28)+'" font-size="11.5" fill="'+GREY+'" text-anchor="middle">'+
+     n+' elements, h = 1/'+n+'</text>';
+});
+// 2D row
+S+='<text x="12" y="130" font-size="13" font-weight="600" fill="'+INK+'">two dimensions</text>';
+[2,4,8].forEach(function(n,r){
+  var L=150+r*250, T=110, W=150;
+  for(var i=0;i<=n;i++){ var t=L+W*i/n, v=T+W*i/n;
+    S+='<line x1="'+t+'" y1="'+T+'" x2="'+t+'" y2="'+(T+W)+'" stroke="'+INK+'" stroke-width="'+(i%n===0?1.4:0.7)+'"/>';
+    S+='<line x1="'+L+'" y1="'+v+'" x2="'+(L+W)+'" y2="'+v+'" stroke="'+INK+'" stroke-width="'+(i%n===0?1.4:0.7)+'"/>'; }
+  S+='<text x="'+(L+W/2)+'" y="'+(T+W+20)+'" font-size="11.5" fill="'+GREY+'" text-anchor="middle">'+
+     (n*n)+' elements, h = 1/'+n+'</text>';
+  if(r===0){ S+='<rect x="'+L+'" y="'+T+'" width="'+(W/n)+'" height="'+(W/n)+'" fill="'+BLUE+'" opacity=".18"/>'; }
+  if(r===1){ S+='<rect x="'+L+'" y="'+T+'" width="'+(W/2)+'" height="'+(W/2)+'" fill="'+BLUE+'" opacity=".18"/>'; }
+});
+S+='<text x="150" y="285" font-size="11.5" fill="'+BLUE+'">the shaded element splits into four</text>';
+document.getElementById('dysvg').innerHTML=S;
+})();
+</script>
+<p>Because each level halves <span class="math inline">\(h\)</span>, the slope between two consecutive levels has a very simple form. Starting from</p>
+<p><span class="math display">\[ \boxed{\;\beta \approx \frac{\log\|e_{i+1}\| - \log\|e_{i}\|}{\log h_{i+1} - \log h_{i}}\;} \]</span></p>
+<p>and substituting <span class="math inline">\(h_{i+1} = h_i/2\)</span>, the denominator is just <span class="math inline">\(-\log 2\)</span>, so</p>
+<p><span class="math display">\[ \beta \approx \log_2\!\left(\frac{\|e_i\|}{\|e_{i+1}\|}\right)\]</span></p>
+<p>In words: <strong>halve the mesh, and the rate is the base-2 logarithm of how many times smaller the error got.</strong> If the error drops by a factor of 4, the rate is 2. By 8, the rate is 3.</p>
+</section>
+<section id="what-the-plots-look-like" class="level3" data-number="17.4.2">
+<h3 data-number="17.4.2" class="anchored" data-anchor-id="what-the-plots-look-like"><span class="header-section-number">17.4.2</span> What the plots look like</h3>
+<div class="cv">
+  <div class="bar">
+    <b style="letter-spacing:.05em;font-size:12px">AXES</b>
+    <span class="seg" id="cvax">
+      <button data-v="lin" aria-pressed="true">linear</button>
+      <button data-v="log" aria-pressed="false">log–log</button>
+    </span>
+    <span id="cvnote"></span>
+  </div>
+  <svg id="cvsvg" viewbox="0 0 880 400" role="img" aria-label="Error against element size"></svg>
+  <div class="cap" id="cvcap"></div>
+</div>
+
+<script>
+(function(){
+var MODE='lin';
+var INK='#18202b',GREY='#6b7684',FAINT='#dfe4ea',ACC='#b8322a',BLUE='#2b5fa8',OK='#1d7a4c';
+// measured with the Class 15 solver on u = sin(pi x), dyadic refinement
+var DATA={
+ 1:{c:BLUE,L2:[1.509e-1,3.928e-2,9.921e-3,2.487e-3,6.220e-4,1.555e-4]},
+ 2:{c:OK  ,L2:[1.519e-2,1.952e-3,2.457e-4,3.076e-5,3.847e-6,4.809e-7]},
+ 3:{c:ACC ,L2:[1.388e-3,8.868e-5,5.573e-6,3.488e-7,2.181e-8,1.363e-9]}
+};
+var HS=[0.5,0.25,0.125,0.0625,0.03125,0.015625];
+
+function draw(){
+  var S='',L=78,R=856,T=28,B=352;
+  var log = (MODE==='log');
+  var xmin=log?Math.log10(HS[HS.length-1]):0, xmax=log?Math.log10(HS[0]):HS[0];
+  var allv=[]; [1,2,3].forEach(function(p){ DATA[p].L2.forEach(function(v){allv.push(v);}); });
+  var vmin=Math.min.apply(null,allv), vmax=Math.max.apply(null,allv);
+  var ymin=log?Math.log10(vmin):0, ymax=log?Math.log10(vmax):vmax;
+  function X(h){ var t=log?(Math.log10(h)-xmin)/(xmax-xmin):(h-xmin)/(xmax-xmin); return L+(R-L)*t; }
+  function Y(v){ var t=log?(Math.log10(v)-ymin)/(ymax-ymin):(v-ymin)/(ymax-ymin); return B-(B-T)*t; }
+  S+='<line x1="'+L+'" y1="'+B+'" x2="'+R+'" y2="'+B+'" stroke="'+INK+'" stroke-width="1.2"/>';
+  S+='<line x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+B+'" stroke="'+INK+'" stroke-width="1.2"/>';
+  // ticks
+  HS.forEach(function(h){ var x=X(h);
+    S+='<line x1="'+x+'" y1="'+B+'" x2="'+x+'" y2="'+(B+5)+'" stroke="'+GREY+'"/>';
+    S+='<text x="'+x+'" y="'+(B+18)+'" font-size="10.5" fill="'+GREY+'" text-anchor="middle">'+
+       (log?('1/'+Math.round(1/h)):h.toFixed(3))+'</text>'; });
+  if(log){ for(var e=-9;e<=0;e++){ var v=Math.pow(10,e); if(v<vmin/2||v>vmax*2) continue;
+      var y=Y(v); S+='<line x1="'+L+'" y1="'+y+'" x2="'+R+'" y2="'+y+'" stroke="'+FAINT+'" stroke-dasharray="3 3"/>';
+      S+='<text x="'+(L-7)+'" y="'+(y+4)+'" font-size="10.5" fill="'+GREY+'" text-anchor="end">1e'+e+'</text>'; } }
+  else { [0,0.25,0.5,0.75,1].forEach(function(f){ var v=vmax*f, y=Y(v);
+      S+='<line x1="'+L+'" y1="'+y+'" x2="'+R+'" y2="'+y+'" stroke="'+FAINT+'" stroke-dasharray="3 3"/>';
+      S+='<text x="'+(L-7)+'" y="'+(y+4)+'" font-size="10.5" fill="'+GREY+'" text-anchor="end">'+v.toFixed(2)+'</text>'; }); }
+  [1,2,3].forEach(function(p){
+    var d=DATA[p], path='';
+    d.L2.forEach(function(v,i){ path+=(i?' L':'M')+X(HS[i]).toFixed(1)+' '+Y(v).toFixed(1); });
+    S+='<path d="'+path+'" stroke="'+d.c+'" stroke-width="2.2" fill="none"/>';
+    d.L2.forEach(function(v,i){ S+='<circle cx="'+X(HS[i]).toFixed(1)+'" cy="'+Y(v).toFixed(1)+'" r="3.2" fill="'+d.c+'"/>'; });
+    var lx=X(HS[0])-10, ly=Y(d.L2[0]);
+    S+='<text x="'+lx+'" y="'+(ly-9)+'" font-size="12" font-weight="600" fill="'+d.c+
+       '" text-anchor="end">p = '+p+(log?'  (slope '+(p+1)+')':'')+'</text>';
+  });
+  S+='<text x="'+((L+R)/2)+'" y="388" font-size="12" fill="'+INK+'" text-anchor="middle">element size h'+(log?'   (log scale)':'')+'</text>';
+  S+='<text x="18" y="'+((T+B)/2)+'" font-size="12" fill="'+INK+'" transform="rotate(-90 18 '+((T+B)/2)+')" text-anchor="middle">||e||'+(log?'  (log scale)':'')+'</text>';
+  document.getElementById('cvsvg').innerHTML=S;
+  document.getElementById('cvcap').innerHTML = log
+   ? 'On log&ndash;log axes each degree is a <b>straight line</b>, and the slope is &beta; = k+1 = 2, 3 and 4. '
+     + 'The lines sit at different heights &mdash; that is the constant C, which we do not get to predict. '
+     + 'What we <i>can</i> predict, and check, is that they are straight and that their slopes are the right integers.'
+   : 'On ordinary axes all three curves collapse onto the bottom of the plot almost immediately and '
+     + 'become impossible to tell apart. There is no visible difference between a rate of 2 and a rate of 4. '
+     + '<b>Switch to log&ndash;log</b> and the same numbers separate into three straight lines.';
+  document.getElementById('cvnote').textContent =
+    'measured with our 1D solver on u = sin(πx), L² error, dyadic refinement';
+}
+document.getElementById('cvax').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b) return; MODE=b.dataset.v;
+  [].forEach.call(this.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+  draw(); });
+draw();
+})();
+</script>
+<p>Here are the numbers behind that plot, measured with our own solver. The rate column is <span class="math inline">\(\log_2\)</span> of the ratio of consecutive errors:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+</colgroup>
+<thead>
+<tr class="header">
+<th><span class="math inline">\(h\)</span></th>
+<th><span class="math inline">\(\|e\|_{L^2}\)</span>, <span class="math inline">\(k{=}1\)</span></th>
+<th>rate</th>
+<th><span class="math inline">\(\|e\|_{L^2}\)</span>, <span class="math inline">\(k{=}2\)</span></th>
+<th>rate</th>
+<th><span class="math inline">\(\|e\|_{L^2}\)</span>, <span class="math inline">\(k{=}3\)</span></th>
+<th>rate</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1/2</td>
+<td>1.51e−1</td>
+<td>—</td>
+<td>1.52e−2</td>
+<td>—</td>
+<td>1.39e−3</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td>1/4</td>
+<td>3.93e−2</td>
+<td>1.94</td>
+<td>1.95e−3</td>
+<td>2.96</td>
+<td>8.87e−5</td>
+<td>3.97</td>
+</tr>
+<tr class="odd">
+<td>1/8</td>
+<td>9.92e−3</td>
+<td>1.99</td>
+<td>2.46e−4</td>
+<td>2.99</td>
+<td>5.57e−6</td>
+<td>3.99</td>
+</tr>
+<tr class="even">
+<td>1/16</td>
+<td>2.49e−3</td>
+<td>2.00</td>
+<td>3.08e−5</td>
+<td>3.00</td>
+<td>3.49e−7</td>
+<td>4.00</td>
+</tr>
+<tr class="odd">
+<td>1/32</td>
+<td>6.22e−4</td>
+<td>2.00</td>
+<td>3.85e−6</td>
+<td>3.00</td>
+<td>2.18e−8</td>
+<td>4.00</td>
+</tr>
+<tr class="even">
+<td>1/64</td>
+<td>1.56e−4</td>
+<td>2.00</td>
+<td>4.81e−7</td>
+<td>3.00</td>
+<td>1.36e−9</td>
+<td>4.00</td>
+</tr>
+</tbody>
+</table>
+<p>Two things worth noticing. The rates approach <span class="math inline">\(k+1\)</span> from below rather than hitting it immediately — the coarsest meshes are not yet in the range where the estimate applies. And the measured values are clean integers, which is exactly why this is such a good test of whether your code is right: a bug in assembly usually shows up as a rate of 1.4 or 0.9 rather than as an obviously wrong picture.</p>
+<p>One more caution when using higher degree polynomials: The error cannot fall below what double precision can represent, so once it reaches roughly <span class="math inline">\(10^{-13}\)</span> the curve flattens and the measured rate collapses — not because the method stopped working or is not accurate, but because the error estimate cannot capture it. On this same problem at <span class="math inline">\(k=5\)</span>, the rate holds at 6.00 out to 16 elements and then reads <strong>4.94</strong> at 32, where the error is already <span class="math inline">\(8.6\times10^{-13}\)</span>. If a high-degree run looks like it has stopped converging, check the size of the error before concluding that something is broken.</p>
+</section>
+</section>
+<section id="actually-computing-the-error-norm" class="level2" data-number="17.5">
+<h2 data-number="17.5" class="anchored" data-anchor-id="actually-computing-the-error-norm"><span class="header-section-number">17.5</span> Actually computing the error norm</h2>
+<p>The norms above are integrals over <span class="math inline">\(\Omega\)</span>, and we evaluate them the same way we evaluate every other integral in this course: break the domain into elements, push each element back to the parent domain, and apply Gaussian quadrature.</p>
+<p><strong>Step 1 — split the global integral into element integrals.</strong></p>
+<p><span class="math display">\[ \|e\|_{H^0(\Omega)}^2 = \int_\Omega \left(u - u^h\right)^2 d\Omega
+= \sum_{e} \int_{\Omega^e} \left(u - u^h\right)^2 d\Omega . \]</span></p>
+<p><strong>Step 2 — change variables to the parent domain.</strong> Each element integral becomes an integral over the parent element, with the Jacobian determinant accounting for the change of area (or length):</p>
+<p><span class="math display">\[ \int_{\Omega^e} \left(u - u^h\right)^2 d\Omega
+= \int_{\square} \left(u\!\left(\underline{x}^e(\underline{\xi})\right) - u^h(\underline{\xi})\right)^2
+J^e(\underline{\xi}) \; d\square ,
+\qquad J^e = \det\left(DF^e\right) . \]</span></p>
+<p><strong>Step 3 — apply quadrature.</strong></p>
+<p><span class="math display">\[ \boxed{\;\|e\|_{H^0(\Omega)}^2 \approx \sum_e \sum_q w_q
+\left(u\!\left(\underline{x}^e(\underline{\xi}_q)\right) - u^h(\underline{\xi}_q)\right)^2
+J^e(\underline{\xi}_q)\;} \]</span></p>
+<p>For the <span class="math inline">\(H^1\)</span> norm, add the gradient term, which also uses <span class="math inline">\(DF^{-T}\)</span>.</p>
+<p><span class="math display">\[ \|e\|_{H^1(\Omega)}^2 \approx \sum_e \sum_q w_q \left[
+\left(u - u^h\right)^2 +
+\left(\nabla_{\underline{x}} u - DF^{-T}\nabla_{\underline{\xi}} u^h\right)\cdot
+\left(\nabla_{\underline{x}} u - DF^{-T}\nabla_{\underline{\xi}} u^h\right)
+\right] J^e \; . \]</span></p>
+<section id="the-two-solutions-are-evaluated-differently" class="level3" data-number="17.5.1">
+<h3 data-number="17.5.1" class="anchored" data-anchor-id="the-two-solutions-are-evaluated-differently"><span class="header-section-number">17.5.1</span> The two solutions are evaluated differently</h3>
+<p>Inside that sum there are two things being evaluated at the same quadrature point, and they are reached by different routes.</p>
+<p><strong>The approximate solution is evaluated directly in the reference domain.</strong> It is built from local basis functions, and the IEN array tells us which coefficients to use:</p>
+<p><span class="math display">\[ u^h(\underline{\xi}_q) = \sum_{a=0}^{n_{en}-1} d_{\,\mathrm{IEN}(a,e)} \; N_a(\underline{\xi}_q) . \]</span></p>
+<p>No mapping is needed. The basis functions are <em>defined</em> on the parent element, so <span class="math inline">\(\xi_q\)</span> is already the right input.</p>
+<p><strong>The exact solution must be evaluated at the physical point.</strong> <span class="math inline">\(u\)</span> is a function of <span class="math inline">\(\underline{x}\)</span>, so we first have to find where this quadrature point actually sits in space, using the spatial mapping:</p>
+<p><span class="math display">\[ \underline{x}^e(\underline{\xi}_q) = \sum_{a=0}^{n_{en}-1} \underline{x}_a \, N_a(\underline{\xi}_q),
+\qquad\text{then evaluate } u\!\left(\underline{x}^e(\underline{\xi}_q)\right) . \]</span></p>
+<p>This is the same two-step move you already made when assembling the local force vector, where <span class="math inline">\(f\)</span> had to be evaluated at <span class="math inline">\(\underline{x}(\underline{\xi}_q)\)</span> rather than at <span class="math inline">\(\underline{\xi}_q\)</span>. If you mix the two up — feeding <span class="math inline">\(\xi_q\)</span> straight into <span class="math inline">\(u\)</span> — the code runs, the error comes out finite, and the convergence rate is wrong.</p>
+</section>
+<section id="a-practical-warning-about-quadrature" class="level3" data-number="17.5.2">
+<h3 data-number="17.5.2" class="anchored" data-anchor-id="a-practical-warning-about-quadrature"><span class="header-section-number">17.5.2</span> A practical warning about quadrature</h3>
+<p>The error <span class="math inline">\(e = u - u^h\)</span> is <strong>not</strong> a polynomial, because <span class="math inline">\(u\)</span> generally is not one. So the quadrature rule that was exact for your stiffness matrix is <em>not</em> exact here, and if you use too few points you end up measuring your quadrature error instead of your discretization error. Use more points than you think you need and confirm that adding points does not change the answer.</p>
+</section>
+</section>
+<section id="where-this-is-going" class="level2" data-number="17.6">
+<h2 data-number="17.6" class="anchored" data-anchor-id="where-this-is-going"><span class="header-section-number">17.6</span> Where this is going</h2>
+<ul>
+<li><strong>Class 17</strong> works through the estimate itself, these plots, and how to interpret a measured slope that is not what you expected.</li>
+<li><strong>Class 18</strong> takes up <em>why</em> the estimate is true — Galerkin orthogonality, and the fact that the finite element solution is the best approximation available in its space.</li>
+</ul>
+<p>Two things we are deliberately leaving until later. The estimate assumes the exact solution is smooth enough to live in <span class="math inline">\(H^{k+1}\)</span>; when it is not, the rate is capped by the solution’s own roughness instead, and no amount of polynomial degree fixes it. And we have said nothing yet about where the exact solution <span class="math inline">\(u\)</span> comes from in the first place — on a real problem you do not have one. The answer is to <strong>manufacture</strong> one, and that is the first thing we will do next class.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation column-body">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/16_Class.html" class="pagination-link" aria-label="Class 16: Derivatives of the Solution">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Class 16: Derivatives of the Solution</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/3_Support_FunctionSpaces.html" class="pagination-link" aria-label="Support: Norms and Function Spaces">
+        <span class="nav-page-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
