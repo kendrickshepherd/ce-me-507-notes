@@ -564,7 +564,7 @@
     "href": "chapters/17_Class.html#where-this-is-going",
     "title": "17  Class 17: Convergence Rates",
     "section": "17.6 Where this is going",
-    "text": "17.6 Where this is going\n\nClass 17 works through the estimate itself, these plots, and how to interpret a measured slope that is not what you expected.\nClass 18 takes up why the estimate is true — Galerkin orthogonality, and the fact that the finite element solution is the best approximation available in its space.\n\nTwo things we are deliberately leaving until later. The estimate assumes the exact solution is smooth enough to live in \\(H^{k+1}\\); when it is not, the rate is capped by the solution’s own roughness instead, and no amount of polynomial degree fixes it. And we have said nothing yet about where the exact solution \\(u\\) comes from in the first place — on a real problem you do not have one. The answer is to manufacture one, and that is the first thing we will do next class.",
+    "text": "17.6 Where this is going\n\nClass 17 works through the estimate itself, these plots, and how to interpret a measured slope that is not what you expected.\nClass 18 takes up why the estimate is true — Galerkin orthogonality, and the fact that the finite element solution is the best approximation available in its space.\n\nNote that there has been no statement about where the exact solution \\(u\\) comes from, and on a real problem you don’t know this already. As a result, we typically test convergence rates by manufacturing a contrived solution, which will be discussed next time.",
     "crumbs": [
       "<span class='chapter-number'>17</span>  <span class='chapter-title'>Class 17: Convergence Rates</span>"
     ]
