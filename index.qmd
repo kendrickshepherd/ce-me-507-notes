@@ -35,6 +35,8 @@ computed on the page so that the text and the drawings always agree.
 | [Class 13](chapters/13_Class.qmd) | The Jacobian matrix, its determinant, and when an element folds, with an interactive viewer |
 | [Class 14](chapters/14_Class.qmd) | The ID and IEN arrays on a five-element mesh, with an interactive viewer |
 | [Class 15](chapters/15_Class.qmd) | The one-dimensional solver as a flowchart, from hard-coded assembly to general polynomial degree |
+| [Class 16](chapters/16_Class.qmd) | Derivatives of the solution: basis function derivatives, approximating a slope, and why error in $H^1$ lags $L^2$ |
+| [Class 17](chapters/17_Class.qmd) | Convergence rates: Sobolev norms, a-priori estimates, log–log slopes, and computing an error norm |
 
 ### Support material
 

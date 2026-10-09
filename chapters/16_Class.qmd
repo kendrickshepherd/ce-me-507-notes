@@ -1,0 +1,323 @@
+---
+title: "Class 16: Derivatives of the Solution"
+subtitle: "What we actually compute when we ask for strain, flux, or error"
+format:
+  html:
+    page-layout: full
+    toc: false
+---
+
+The solution $u^h$ is built from basis functions. 
+However, many quantities of interest, such as strain, stress, and flux, are built from the derivatives of $u^h$.
+The derivative of the solution is built from the derivative of the basis functions used to approximate $u^h$.
+This page aims to clarify that difference in one dimension and visually shows why approximation error is larger for these quantities of interest and describes how fast that error can shrink.
+
+## One basis function, and its derivative
+
+Pick a basis function and watch both curves. The function itself is continuous across
+element boundaries. Its derivative is not.
+
+```{=html}
+<style>
+.bw{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;--acc:#b8322a;--blue:#2b5fa8;
+    max-width:900px;margin:0 auto;color:var(--ink)}
+.bw .bar{display:flex;flex-wrap:wrap;gap:9px 20px;align-items:center;padding:11px 14px;
+  background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.bw .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey)}
+.bw .seg{display:inline-flex;border:1px solid var(--faint);border-radius:6px;overflow:hidden;background:#fff}
+.bw .seg button{border:0;background:#fff;padding:5px 12px;font:inherit;font-size:13.5px;cursor:pointer;
+  color:var(--grey);border-right:1px solid var(--faint)}
+.bw .seg button:last-child{border-right:0}
+.bw .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.bw input[type=range]{width:150px;vertical-align:middle}
+.bw .val{font:600 13px ui-monospace,Menlo,monospace;color:var(--ink);min-width:2.2em;display:inline-block}
+.bw svg{display:block;width:100%;height:auto;border:1px solid var(--faint);border-radius:8px;background:#fff}
+.bw .cap{font-size:13px;color:var(--grey);line-height:1.55;margin:9px 2px 22px}
+.bw .cap b{color:var(--ink)}
+.bw .nums{font:12.5px ui-monospace,Menlo,monospace;color:var(--ink)}
+.bw .nums i{font-style:normal;color:var(--acc)}
+</style>
+
+<div class="bw">
+  <div class="bar">
+    <b>DEGREE</b>
+    <span class="seg" id="b1deg">
+      <button data-p="1" aria-pressed="true">p=1</button>
+      <button data-p="2" aria-pressed="false">p=2</button>
+      <button data-p="3" aria-pressed="false">p=3</button>
+    </span>
+    <b>ELEMENTS</b> <input type="range" id="b1ne" min="1" max="8" value="4"><span class="val" id="b1nev">4</span>
+    <b>BASIS FN</b> <input type="range" id="b1a" min="0" max="4" value="2"><span class="val" id="b1av">2</span>
+    <span class="nums" id="b1info"></span>
+  </div>
+  <svg id="b1svg" viewBox="0 0 880 430" role="img" aria-label="A basis function and its derivative"></svg>
+  <div class="cap" id="b1cap"></div>
+</div>
+
+<script>
+(function(){
+var P=1, NE=4, A=2;
+var INK='#18202b', GREY='#6b7684', FAINT='#dfe4ea', ACC='#b8322a', BLUE='#2b5fa8';
+
+function nodes(p){ var v=[]; for(var i=0;i<=p;i++) v.push(-1+2*i/p); return v; }
+function Lag(p,pts,xi,a){ var n=1,d=1;
+  for(var i=0;i<=p;i++){ if(i===a) continue; n*=(xi-pts[i]); d*=(pts[a]-pts[i]); } return n/d; }
+function dLag(p,pts,xi,a){ var s=0;
+  for(var j=0;j<=p;j++){ if(j===a) continue;
+    var t=1/(pts[a]-pts[j]);
+    for(var i=0;i<=p;i++){ if(i===a||i===j) continue; t*=(xi-pts[i])/(pts[a]-pts[i]); }
+    s+=t; } return s; }
+
+// basis fn A restricted to element e, at parent coordinate xi.  Sampling per
+// element (rather than globally in x) is what keeps the derivative curve from
+// being bridged across an element boundary.
+function evalLocal(e, xi, deriv){
+  var h=1/NE, pts=nodes(P);
+  var a=A-P*e;
+  if(a<0||a>P) return 0;
+  return deriv ? dLag(P,pts,xi,a)/(h/2) : Lag(P,pts,xi,a);
+}
+
+function draw(){
+  var W=880, L=58, R=864, S='';
+  var nbf=P*NE+1;
+  if(A>nbf-1){ A=nbf-1; }
+  document.getElementById('b1a').max=nbf-1;
+  document.getElementById('b1a').value=A;
+  document.getElementById('b1av').textContent=A;
+  document.getElementById('b1nev').textContent=NE;
+  document.getElementById('b1info').innerHTML='n_bf = p&middot;n_elem + 1 = <i>'+nbf+'</i>';
+
+  var M=80, segsF=[], segsD=[], dmax=1;
+  for(var e=0;e<NE;e++){
+    var sf=[], sd=[];
+    for(var j=0;j<=M;j++){
+      var xi=-1+2*j/M, x=(e+j/M)/NE;
+      sf.push([x, evalLocal(e,xi,false)]);
+      var dd=evalLocal(e,xi,true); sd.push([x,dd]); dmax=Math.max(dmax,Math.abs(dd));
+    }
+    segsF.push(sf); segsD.push(sd);
+  }
+  dmax=Math.ceil(dmax*10)/10;
+
+  function panel(y0,y1,segs,lim,label,col){
+    var mid=(y0+y1)/2, amp=(y1-y0)/2-14;
+    S+='<line x1="'+L+'" y1="'+mid+'" x2="'+R+'" y2="'+mid+'" stroke="'+FAINT+'" stroke-width="1"/>';
+    for(var e=0;e<=NE;e++){ var xx=L+(R-L)*e/NE;
+      S+='<line x1="'+xx+'" y1="'+y0+'" x2="'+xx+'" y2="'+y1+'" stroke="'+FAINT+'" stroke-width="1" stroke-dasharray="3 3"/>'; }
+    // one path per element: adjacent elements are never joined
+    segs.forEach(function(seg){
+      var d='';
+      seg.forEach(function(pt,i){
+        d+=(i?' L':'M')+(L+(R-L)*pt[0]).toFixed(1)+' '+(mid-amp*pt[1]/lim).toFixed(1); });
+      S+='<path d="'+d+'" stroke="'+col+'" stroke-width="2" fill="none"/>';
+    });
+    S+='<text x="'+(L-8)+'" y="'+(mid-amp-2)+'" font-size="11" fill="'+GREY+'" text-anchor="end">'+(+lim.toFixed(1))+'</text>';
+    S+='<text x="'+(L-8)+'" y="'+(mid+4)+'" font-size="11" fill="'+GREY+'" text-anchor="end">0</text>';
+    S+='<text x="'+(L-8)+'" y="'+(mid+amp+10)+'" font-size="11" fill="'+GREY+'" text-anchor="end">'+(-lim).toFixed(1)+'</text>';
+    S+='<text x="'+L+'" y="'+(y0-6)+'" font-size="12.5" font-weight="600" fill="'+INK+'">'+label+'</text>';
+  }
+
+  panel(30,195,segsF,1,'Nₐ(x) — continuous across elements',BLUE);
+  panel(250,415,segsD,dmax,'dNₐ/dx — jumps at every element boundary',ACC);
+  // node ticks on the lower axis
+  for(var A2=0;A2<nbf;A2++){ var xx=L+(R-L)*A2/(nbf-1);
+    S+='<circle cx="'+xx+'" cy="415" r="'+(A2===A?4:2.4)+'" fill="'+(A2===A?ACC:GREY)+'"/>'; }
+  S+='<text x="'+R+'" y="428" font-size="11" fill="'+GREY+'" text-anchor="end">basis function locations</text>';
+  document.getElementById('b1svg').innerHTML=S;
+
+  document.getElementById('b1cap').innerHTML =
+    'At degree '+P+', N<sub>'+A+'</sub> is a piecewise polynomial of degree '+P+
+    ', so its derivative is piecewise degree '+(P-1)+
+    '. <b>The function is continuous and the derivative is not</b> — the breaks in the lower '+
+    'curve are actual discontinuities. Raising the degree makes the jumps smaller '+
+    'but never removes them, because nothing in a Lagrange basis forces neighbouring elements '+
+    'to agree on a slope.';
+}
+document.getElementById('b1deg').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b) return; P=+b.dataset.p;
+  [].forEach.call(this.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+  draw(); });
+document.getElementById('b1ne').addEventListener('input',function(){ NE=+this.value; draw(); });
+document.getElementById('b1a').addEventListener('input',function(){ A=+this.value; draw(); });
+draw();
+})();
+</script>
+```
+
+## Approximating a function, and approximating its slope
+
+Now build $u^h$ by interpolating a known function at the basis function locations, and
+compare both the function and its derivative against the truth.
+
+```{=html}
+<div class="bw">
+  <div class="bar">
+    <b>DEGREE</b>
+    <span class="seg" id="b2deg">
+      <button data-p="1" aria-pressed="true">p=1</button>
+      <button data-p="2" aria-pressed="false">p=2</button>
+      <button data-p="3" aria-pressed="false">p=3</button>
+    </span>
+    <b>ELEMENTS</b> <input type="range" id="b2ne" min="1" max="12" value="3"><span class="val" id="b2nev">3</span>
+    <label style="font-size:13px;color:#6b7684"><input type="checkbox" id="b2err"> show the error instead</label>
+  </div>
+  <div class="bar" style="margin-top:-4px">
+    <b>FUNCTION</b>
+    <span class="seg" id="b2fn">
+      <button data-f="0" aria-pressed="true">gentle</button>
+      <button data-f="1" aria-pressed="false">wiggly</button>
+      <button data-f="2" aria-pressed="false">sharp bump</button>
+      <button data-f="3" aria-pressed="false">rough at x=0</button>
+    </span>
+    <span style="font-size:12.5px;color:#6b7684" id="b2fnote"></span>
+  </div>
+  <svg id="b2svg" viewBox="0 0 880 430" role="img" aria-label="A function and its derivative, approximated"></svg>
+  <div class="cap" id="b2cap"></div>
+</div>
+
+<script>
+(function(){
+var P=1, NE=3, ERR=false;
+var INK='#18202b', GREY='#6b7684', FAINT='#dfe4ea', ACC='#b8322a', BLUE='#2b5fa8';
+var FNS=[
+ {u:function(x){ return 0.6*Math.sin(2*Math.PI*x)+0.25*Math.sin(Math.PI*x); },
+  d:function(x){ return 1.2*Math.PI*Math.cos(2*Math.PI*x)+0.25*Math.PI*Math.cos(Math.PI*x); },
+  note:'one gentle oscillation \u2014 easy to resolve, so the jumps shrink quickly'},
+ {u:function(x){ return 0.4*Math.sin(7*Math.PI*x)+0.15*Math.sin(2*Math.PI*x); },
+  d:function(x){ return 2.8*Math.PI*Math.cos(7*Math.PI*x)+0.3*Math.PI*Math.cos(2*Math.PI*x); },
+  note:'too wiggly for a coarse mesh \u2014 at p=2 and p=3 the jumps are large, not small'},
+ {u:function(x){ return Math.exp(-70*(x-0.45)*(x-0.45)); },
+  d:function(x){ return -140*(x-0.45)*Math.exp(-70*(x-0.45)*(x-0.45)); },
+  note:'all the action in one place \u2014 elements away from the bump are nearly exact'},
+ {u:function(x){ return Math.pow(Math.max(x,0),1.25); },
+  d:function(x){ return 1.25*Math.pow(Math.max(x,1e-300),0.25); },
+  note:'u = x^(5/4): the curvature blows up at x=0, and no mesh resolves that corner'}
+];
+var F=0;
+function u(x){ return FNS[F].u(x); }
+function du(x){ return FNS[F].d(x); }
+function nodes(p){ var v=[]; for(var i=0;i<=p;i++) v.push(-1+2*i/p); return v; }
+function Lag(p,pts,xi,a){ var n=1,d=1;
+  for(var i=0;i<=p;i++){ if(i===a) continue; n*=(xi-pts[i]); d*=(pts[a]-pts[i]); } return n/d; }
+function dLag(p,pts,xi,a){ var s=0;
+  for(var j=0;j<=p;j++){ if(j===a) continue; var t=1/(pts[a]-pts[j]);
+    for(var i=0;i<=p;i++){ if(i===a||i===j) continue; t*=(xi-pts[i])/(pts[a]-pts[i]); }
+    s+=t; } return s; }
+
+// u^h restricted to element e, at parent coordinate xi.  Evaluated per element
+// so the derivative is never drawn through an element boundary.
+function uhLocal(e,xi,deriv){
+  var h=1/NE, pts=nodes(P), v=0;
+  for(var a=0;a<=P;a++){
+    var xa=(e + a/P)*h;                       // spatial location of local node a
+    v += u(xa) * (deriv ? dLag(P,pts,xi,a)/(h/2) : Lag(P,pts,xi,a));
+  }
+  return v;
+}
+
+function draw(){
+  var W=880,L=58,R=864,S='',N=801;
+  document.getElementById('b2nev').textContent=NE;
+  document.getElementById('b2fnote').textContent=FNS[F].note;
+  // exact curves: one smooth global sampling
+  var xs=[],U=[],DU=[];
+  for(var i=0;i<N;i++){ var x=i/(N-1); xs.push(x); U.push(u(x)); DU.push(du(x)); }
+  // approximations and errors: sampled element by element
+  var M=80, segU=[], segD=[], segE0=[], segE1=[], e0=0, e1=0;
+  for(var e=0;e<NE;e++){
+    var a=[],b=[],c=[],d2=[];
+    for(var j=0;j<=M;j++){
+      var xi=-1+2*j/M, x=(e+j/M)/NE;
+      var vh=uhLocal(e,xi,false), dh=uhLocal(e,xi,true);
+      a.push([x,vh]); b.push([x,dh]);
+      var r0=u(x)-vh, r1=du(x)-dh;
+      c.push([x,r0]); d2.push([x,r1]);
+      e0=Math.max(e0,Math.abs(r0)); e1=Math.max(e1,Math.abs(r1));
+    }
+    segU.push(a); segD.push(b); segE0.push(c); segE1.push(d2);
+  }
+
+  function panel(y0,y1,lim,label,exact,segs,isDeriv){
+    var mid=(y0+y1)/2, amp=(y1-y0)/2-14;
+    S+='<line x1="'+L+'" y1="'+mid+'" x2="'+R+'" y2="'+mid+'" stroke="'+FAINT+'" stroke-width="1"/>';
+    for(var e=0;e<=NE;e++){ var xx=L+(R-L)*e/NE;
+      S+='<line x1="'+xx+'" y1="'+y0+'" x2="'+xx+'" y2="'+y1+'" stroke="'+FAINT+'" stroke-width="1" stroke-dasharray="3 3"/>'; }
+    if(exact){ var d='';
+      for(var i=0;i<N;i++) d+=(i?' L':'M')+(L+(R-L)*xs[i]).toFixed(1)+' '+(mid-amp*exact[i]/lim).toFixed(1);
+      S+='<path d="'+d+'" stroke="'+INK+'" stroke-width="2" fill="none" opacity=".45"/>'; }
+    segs.forEach(function(seg){ var d='';
+      seg.forEach(function(pt,i){
+        d+=(i?' L':'M')+(L+(R-L)*pt[0]).toFixed(1)+' '+(mid-amp*pt[1]/lim).toFixed(1); });
+      S+='<path d="'+d+'" stroke="'+(isDeriv?ACC:BLUE)+'" stroke-width="2" fill="none"/>'; });
+    S+='<text x="'+L+'" y="'+(y0-6)+'" font-size="12.5" font-weight="600" fill="'+INK+'">'+label+'</text>';
+    S+='<text x="'+(L-8)+'" y="'+(mid+4)+'" font-size="11" fill="'+GREY+'" text-anchor="end">0</text>';
+  }
+
+  if(!ERR){
+    var ul=0; for(var q=0;q<N;q++) ul=Math.max(ul,Math.abs(U[q]));
+    segU.forEach(function(sg){ sg.forEach(function(pt){ ul=Math.max(ul,Math.abs(pt[1])); }); });
+    panel(30,195,ul*1.12,'u(x) grey, and uʰ(x) blue',U,segU,false);
+    var dl=Math.max.apply(null,DU.map(Math.abs))*1.15;
+    panel(250,415,dl,'du/dx grey, and duʰ/dx red',DU,segD,true);
+  } else {
+    panel(30,195,Math.max(e0,1e-6)*1.2,'error in u',null,segE0,false);
+    panel(250,415,Math.max(e1,1e-6)*1.2,'error in du/dx',null,segE1,true);
+  }
+  document.getElementById('b2svg').innerHTML=S;
+
+  var ratio=(e1/Math.max(e0,1e-12));
+  document.getElementById('b2cap').innerHTML =
+    '<b>max |u − uʰ| = '+e0.toExponential(2)+'</b> &nbsp;&nbsp; '+
+    '<b>max |du/dx − duʰ/dx| = '+e1.toExponential(2)+'</b> &nbsp;&nbsp; '+
+    'the derivative error is <b>'+ratio.toFixed(0)+'×</b> larger.<br>'+
+    'Halve the element size and the top error falls by about 2<sup>'+(P+1)+'</sup> = '+Math.pow(2,P+1)+
+    ', while the bottom falls by only about 2<sup>'+P+'</sup> = '+Math.pow(2,P)+
+    '. That one-order gap is the whole story of the next two classes.';
+}
+document.getElementById('b2deg').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b) return; P=+b.dataset.p;
+  [].forEach.call(this.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+  draw(); });
+document.getElementById('b2ne').addEventListener('input',function(){ NE=+this.value; draw(); });
+document.getElementById('b2fn').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b) return; F=+b.dataset.f;
+  [].forEach.call(this.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+  draw(); });
+document.getElementById('b2err').addEventListener('change',function(){ ERR=this.checked; draw(); });
+draw();
+})();
+</script>
+```
+
+## Why this matters for error
+
+Pushing the sliders should clarify two things. 
+First, the approximation of $u$ looks good long
+before the approximation of $du/dx$ does, and second the derivative for Lagrange basis functions are never required to be continuous.
+
+To talk how error deteriorates, we need to be able to measure the energy of the error. 
+To do so, we will use **Sobolev norms**.
+In one dimension, these look like
+
+$$
+\|e\|_{H^0(\Omega)}^2 = \int_\Omega e^2 \, d\Omega,
+\qquad
+\|e\|_{H^1(\Omega)}^2 = \int_\Omega e^2 + \left(e_{,x}\right)^2 d\Omega,
+$$
+
+and in general $\|e\|_{H^s}$ includes every derivative up to the $s$-th. $H^0$ is the same
+thing as $L^2$: it only asks whether the *values* are close. $H^1$ also asks whether the
+*slopes* are close — which, as the lower plot shows, is a harder thing to get right.
+
+Approximation of a derivative, as opposed to a solution, reduces the convergence rate by one, meaning that the exponent on $h$ (the size of the mesh, which forces error down as $h$ decreases) decreases by one.
+
+$$
+\|e\|_{H^s(\Omega)} \;\leq\; C \, h^{\beta} \, \|u\|_{H^{k+1}(\Omega)}
+$$
+
+where typically in this class $\beta = k+1-s$.
+Each derivative we want to measure in our error decreases accuracy by a power of $h$. 
+At degree $k$, the solution converges at rate $k+1,$ while the slope of the solution converges at rate $k$.
+This will be made more precise and more concrete in the next class, where error estimates will be discussed more completely.
+We will also discuss how to measure the convergence rate, $\beta$ in a software code to make sure that the finite element solver is working correctly.

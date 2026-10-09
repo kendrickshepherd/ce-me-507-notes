@@ -1,0 +1,604 @@
+---
+title: "Class 17: Convergence Rates"
+subtitle: "How fast the error goes away, and how we measure it"
+format:
+  html:
+    page-layout: full
+    toc: true
+---
+
+We have built a finite element solver and we have looked at its solution and its derivative.
+The obvious next question is whether the answer is any good, and that question has a
+surprisingly precise answer: not *what* the error is, but *how fast it goes away* as we
+refine the mesh.
+
+## What we measure the error in
+
+The error is a function, not a number:
+
+$$ e(x) := u(x) - u^h(x) . $$
+
+To get a number out of it we need a norm, and we need one that can ask about derivatives,
+because we already know the derivative is approximated particularly poorly. 
+The **Sobolev norms** do exactly that. In one dimension:
+
+$$
+\|e\|_{H^0(\Omega)}^2 = \int_\Omega e^2 \, dx, \qquad
+\|e\|_{H^1(\Omega)}^2 = \int_\Omega e^2 + \left(e_{,x}\right)^2 dx, \qquad
+\|e\|_{H^2(\Omega)}^2 = \int_\Omega e^2 + \left(e_{,x}\right)^2 + \left(e_{,xx}\right)^2 dx .
+$$
+
+Each one includes everything the previous one had, plus one more derivative. $H^0$ is the
+same thing as $L^2$ — it only asks whether the *values* are close. $H^1$ also asks whether
+the *slopes* are close. $H^2$ also asks about curvature.
+
+In several dimensions the same thing, written with the gradient:
+
+$$
+\|e\|_{H^0(\Omega)}^2 = \int_\Omega e^2 \, d\Omega, \qquad
+\|e\|_{H^1(\Omega)}^2 = \int_\Omega e^2 + \nabla e \cdot \nabla e \; d\Omega, \qquad
+\|e\|_{H^2(\Omega)}^2 = \int_\Omega e^2 + \nabla e \cdot \nabla e + \nabla^2 e : \nabla^2 e \; d\Omega ,
+$$
+
+or in index notation, which is often easier to implement from:
+
+$$
+\|e\|_{H^0}^2 = \int_\Omega e^2 \, d\Omega, \qquad
+\|e\|_{H^1}^2 = \int_\Omega e^2 + e_{,i}\,e_{,i} \; d\Omega, \qquad
+\|e\|_{H^2}^2 = \int_\Omega e^2 + e_{,i}\,e_{,i} + e_{,ij}\,e_{,ij} \; d\Omega .
+$$
+
+Repeated indices are summed, so $e_{,i}e_{,i}$ in two dimensions is
+$\left(e_{,x}\right)^2 + \left(e_{,y}\right)^2$, which is exactly $\nabla e \cdot \nabla e$.
+
+In practice we almost always report $H^0$ and $H^1$. 
+$H^0$ tells you whether the solution is right, while $H^1$ tells you whether the fluxes and strains you extract from it are right, and those are usually the quantities of interest.
+$H^2$ is not particularly usefule for the Poisson equation, but plays a bigger role in beam and shell problems and in mixing theory.
+
+## What $h$ means
+
+Every element has a size. The one the estimate uses is the **diameter** of the element ---
+the longest distance between any two of its points --- and then $h$ is the largest of those
+over the whole mesh:
+
+$$ h_K = \mathrm{diam}\left(\Omega^K\right) = \max_{\underline{a},\underline{b}\,\in\,\Omega^K} \left|\underline{a}-\underline{b}\right| ,
+\qquad h = \max_K h_K . $$
+
+In one dimension that is just the length of the interval. In two and three dimensions it is
+a diagonal, not an edge --- which matters, because a long thin element has a much larger
+diameter than its short edge suggests.
+
+```{=html}
+<div class="cv"><svg id="hsvg" viewBox="0 0 880 260" role="img"
+  aria-label="The element size h in one, two and three dimensions"></svg>
+<div class="cap"><b>h is the diameter, not an edge length.</b> In 2D and 3D it is the longest
+diagonal across the element.The mesh's <i>h</i> is the largest of them.
+Note the stretched element: its short edge is small, but its diameter &mdash; and
+therefore its <i>h</i> &mdash; is not.</div></div>
+
+<script>
+(function(){
+var S='',INK='#18202b',GREY='#6b7684',ACC='#b8322a',FAINT='#dfe4ea',BLUE='#2b5fa8';
+function lbl(x,y,t,c){ S+='<text x="'+x+'" y="'+y+'" font-size="12.5" font-weight="600" fill="'+(c||INK)+'" text-anchor="middle">'+t+'</text>'; }
+// --- 1D ---
+lbl(110,34,'one dimension');
+S+='<line x1="40" y1="110" x2="180" y2="110" stroke="'+INK+'" stroke-width="2"/>';
+['40','180'].forEach(function(x){ S+='<line x1="'+x+'" y1="100" x2="'+x+'" y2="120" stroke="'+INK+'" stroke-width="2"/>'; });
+S+='<line x1="40" y1="142" x2="180" y2="142" stroke="'+ACC+'" stroke-width="2"/>';
+lbl(110,160,'h<tspan baseline-shift="sub" font-size="9">K</tspan> = length',ACC);
+// --- 2D ---
+lbl(390,34,'two dimensions');
+var q='300,80 470,92 452,186 288,168';
+S+='<polygon points="'+q+'" fill="#f3f6fa" stroke="'+INK+'" stroke-width="1.8"/>';
+S+='<line x1="300" y1="80" x2="452" y2="186" stroke="'+ACC+'" stroke-width="2" stroke-dasharray="5 3"/>';
+lbl(392,215,'h<tspan baseline-shift="sub" font-size="9">K</tspan> = longest diagonal',ACC);
+// --- 3D (hex, oblique) ---
+lbl(700,34,'three dimensions');
+function P(x,y){return x+','+y;}
+var f0=[[600,100],[730,100],[730,190],[600,190]], bk=[[640,72],[770,72],[770,162],[640,162]];
+S+='<polygon points="'+bk.map(function(p){return P(p[0],p[1]);}).join(' ')+'" fill="none" stroke="'+GREY+'" stroke-width="1.2" stroke-dasharray="4 3"/>';
+for(var i=0;i<4;i++) S+='<line x1="'+f0[i][0]+'" y1="'+f0[i][1]+'" x2="'+bk[i][0]+'" y2="'+bk[i][1]+'" stroke="'+GREY+'" stroke-width="1.2"/>';
+S+='<polygon points="'+f0.map(function(p){return P(p[0],p[1]);}).join(' ')+'" fill="#f3f6fa" fill-opacity=".85" stroke="'+INK+'" stroke-width="1.8"/>';
+S+='<line x1="600" y1="190" x2="770" y2="72" stroke="'+ACC+'" stroke-width="2" stroke-dasharray="5 3"/>';
+lbl(700,215,'h<tspan baseline-shift="sub" font-size="9">K</tspan> = body diagonal',ACC);
+// stretched warning element
+S+='<polygon points="40,200 180,205 180,222 40,217" fill="#fdf2f1" stroke="'+ACC+'" stroke-width="1.4"/>';
+S+='<text x="190" y="218" font-size="11.5" fill="'+ACC+'">a stretched element: small edge, large h</text>';
+document.getElementById('hsvg').innerHTML=S;
+})();
+</script>
+```
+
+### Quasi-uniformity is a property of a *family* of meshes
+
+The estimates come with a hidden assumption, and it is easy to state imprecisely. A family
+of meshes $\{\mathcal{T}_h\}$, indexed by $h \to 0$, is **quasi-uniform** if there is a
+constant $\rho > 0$ that does **not depend on $h$** such that
+
+$$ \min_K h_K \;\geq\; \rho \, h \qquad \text{for every mesh in the family.} $$
+
+The whole content is in *does not depend on $h$*. Any single mesh has finitely many
+elements, so $h/h_{\min}$ is automatically some finite number --- you can always find a
+constant that works. **You cannot look at one mesh and say whether it is quasi-uniform.**
+The question is whether that ratio stays bounded as you refine, or grows without limit.
+
+```{=html}
+<div class="cv"><svg id="qusvg" viewBox="0 0 880 230" role="img"
+  aria-label="Two refinement families: uniform and graded"></svg>
+<div class="cap"><b>You have to watch a sequence, not a mesh.</b> Top: uniform refinement, where
+the ratio of largest to smallest element stays at 1 forever. Bottom: graded refinement toward
+the left end, where the ratio grows at every level and is unbounded over the family. The
+bottom family is <i>not</i> quasi-uniform.
+The particular error estimators given here assume a quasi-uniform refinement, but we will see that in some cases not having such a quasi-uniform refinement may be good.
+This goes to show that these a-priori error estimators are just one resource that we have to improve accuracy.
+</div></div>
+
+<script>
+(function(){
+var S='',INK='#18202b',GREY='#6b7684',ACC='#b8322a',OK='#1d7a4c';
+function row(y,label,gen,col){
+  S+='<text x="12" y="'+(y-26)+'" font-size="13" font-weight="600" fill="'+INK+'">'+label+'</text>';
+  [0,1,2].forEach(function(lv){
+    var L=150+lv*245, W=195, edges=gen(lv);
+    S+='<line x1="'+L+'" y1="'+y+'" x2="'+(L+W)+'" y2="'+y+'" stroke="'+INK+'" stroke-width="1.3"/>';
+    var big=0,small=1e9;
+    edges.forEach(function(t,i){ var x=L+W*t;
+      S+='<line x1="'+x+'" y1="'+(y-8)+'" x2="'+x+'" y2="'+(y+8)+'" stroke="'+INK+'" stroke-width="1.2"/>';
+      if(i>0){var w=t-edges[i-1]; if(w>big)big=w; if(w<small)small=w;} });
+    S+='<text x="'+(L+W/2)+'" y="'+(y+26)+'" font-size="11.5" fill="'+col+'" text-anchor="middle">h/h'+
+       '<tspan baseline-shift="sub" font-size="8">min</tspan> = '+(big/small).toFixed(0)+'</text>';
+  });
+}
+row(58,'uniform refinement', function(lv){ var n=4*Math.pow(2,lv),a=[];
+  for(var i=0;i<=n;i++)a.push(i/n); return a; }, OK);
+row(160,'graded toward the left', function(lv){ var n=4*Math.pow(2,lv),a=[];
+  for(var i=0;i<=n;i++)a.push(Math.pow(i/n,2.5)); return a; }, ACC);
+document.getElementById('qusvg').innerHTML=S;
+})();
+</script>
+```
+
+So why does the assumption appear at all? Because it is what lets us write the estimate in
+terms of a *single* number $h$. The underlying approximation results are local --- they hold
+element by element in terms of $h_K$, and need only **shape regularity**, a bound on how
+stretched any individual element may be. Quasi-uniformity is the extra condition that lets
+us replace every $h_K$ by one global $h$ and still have a sharp statement. 
+The error constant $C$ that we will see later
+degrades as $h/h_{\min}$ grows.
+
+### Refining in the right place beats refining everywhere
+
+A non-quasi-uniform family for mesh refinement is not always bad.
+ If the solution is
+hard to resolve in one small region, putting your elements there is far more effective than
+spreading them evenly --- and the a-priori estimate below, written for a single $h$, simply
+does not describe what you get.
+
+Here is the demonstration. Take
+
+$$ u(x) = \tanh\!\big(25(x-\tfrac{1}{2})\big), \qquad f = -u_{,xx} , $$
+
+which is perfectly **smooth** --- it has derivatives of every order --- but swings from
+$-1$ to $1$ across a narrow layer in the middle and is nearly flat everywhere else. Use
+quadratic elements, $k=2$. Refine three ways, always to the same number of elements.
+
+```{=html}
+<div class="cv"><svg id="rfsvg" viewBox="0 0 880 350" role="img"
+  aria-label="The solution, and three refinement strategies on the same domain"></svg>
+<div class="cap"><b>Why that region and not another.</b> The top panel is the exact solution.
+Almost all of its variation happens inside the
+shaded strip &mdash; outside it, <i>u</i> is within a hair of &plusmn;1 and a single element
+would reproduce it almost exactly. The three meshes below put the same sixteen elements in
+different places. Only the second one puts them where the function is actually doing
+something.</div></div>
+
+<script>
+(function(){
+var S='',INK='#18202b',GREY='#6b7684',ACC='#b8322a',OK='#1d7a4c',BLUE='#2b5fa8',FAINT='#dfe4ea';
+var K=25,C=0.5, L=250,R=840;
+function u(x){ return Math.tanh(K*(x-C)); }
+
+// ---- shaded layer strip, spanning the whole figure ----
+var sx0=L+(R-L)*0.40, sx1=L+(R-L)*0.60;
+S+='<rect x="'+sx0+'" y="14" width="'+(sx1-sx0)+'" height="310" fill="'+ACC+'" opacity=".06"/>';
+S+='<text x="'+((sx0+sx1)/2)+'" y="12" font-size="11" fill="'+ACC+'" text-anchor="middle">the layer</text>';
+
+// ---- solution panel ----
+var y0=26,y1=150, mid=(y0+y1)/2, amp=(y1-y0)/2-10;
+S+='<line x1="'+L+'" y1="'+mid+'" x2="'+R+'" y2="'+mid+'" stroke="'+FAINT+'" stroke-width="1"/>';
+var d='';
+for(var i=0;i<=600;i++){ var x=i/600, px=L+(R-L)*x;
+  d+=(i?' L':'M')+px.toFixed(1)+' '+(mid-amp*u(x)).toFixed(1);
+}
+S+='<path d="'+d+'" stroke="'+INK+'" stroke-width="2.2" fill="none"/>';
+S+='<text x="'+(L+6)+'" y="'+(y0+12)+'" font-size="12.5" font-weight="600" fill="'+INK+'">u(x) = tanh(25(x − ½))</text>';
+S+='<text x="'+(L-8)+'" y="'+(mid-amp+4)+'" font-size="11" fill="'+GREY+'" text-anchor="end">+1</text>';
+S+='<text x="'+(L-8)+'" y="'+(mid+amp+4)+'" font-size="11" fill="'+GREY+'" text-anchor="end">−1</text>';
+
+// ---- the three meshes ----
+function row(y,label,f,col,note){
+  var N=16;
+  S+='<text x="12" y="'+(y+4)+'" font-size="12.5" font-weight="600" fill="'+INK+'">'+label+'</text>';
+  S+='<line x1="'+L+'" y1="'+y+'" x2="'+R+'" y2="'+y+'" stroke="'+INK+'" stroke-width="1.3"/>';
+  for(var i=0;i<=N;i++){ var x=L+(R-L)*f(i/N);
+    S+='<line x1="'+x+'" y1="'+(y-9)+'" x2="'+x+'" y2="'+(y+9)+'" stroke="'+INK+'" stroke-width="1.1"/>'; }
+  S+='<text x="'+R+'" y="'+(y+25)+'" font-size="11.5" fill="'+col+'" text-anchor="end">'+note+'</text>';
+}
+function pw(g){ return function(t){ var z=2*t-1; return 0.5+0.5*(z<0?-1:1)*Math.pow(Math.abs(z),g); }; }
+row(192,'uniform',                 function(t){return t;}, BLUE,'L² rate 2.60');
+row(248,'clustered at the layer',  pw(2.5),                OK,  'L² rate 2.91  —  the full degree-2 rate');
+row(304,'clustered at the ends',   pw(1/2.5),              ACC, 'L² rate 0.87  —  far worse than uniform');
+document.getElementById('rfsvg').innerHTML=S;
+})();
+</script>
+```
+
+| elements | uniform $\|e\|_{L^2}$ | at the layer | at the ends |
+|---|---|---|---|
+| 8   | 3.01e−2 | 7.04e−3 | 1.41e−1 |
+| 16  | 1.99e−3 | 1.20e−3 | 9.54e−2 |
+| 32  | 8.37e−4 | 1.49e−4 | 5.80e−2 |
+| 64  | 1.18e−4 | 1.88e−5 | 3.01e−2 |
+| 128 | 1.49e−5 | **2.36e−6** | 1.23e−2 |
+| **observed rate** | **2.60** | **2.91** | **0.87** |
+
+Three things to take from this.
+
+**This has nothing to do with smoothness.** $\tanh$ is infinitely differentiable, so the
+solution is as regular as anyone could ask. The only thing that differs between the three
+rows is *where the elements sit*. Resolution and regularity are separate issues, and this is
+the resolution one.
+
+**Refining where it matters gives the least amount of error.** Clustering at the layer reaches 2.91 --- essentially the
+rate quadratic elements are capable of --- and at 128 elements it is **six times more
+accurate** than uniform for exactly the same cost. That family is deliberately not
+quasi-uniform.
+
+**Refining in the wrong place doesn't help.** Clustering at the ends means that you don't refine in the one region
+that needed elements. Its measured rate is 0.87, and at 128 elements it is still *a thousand
+times* less accurate than clustering at the layer. Putting elements somewhere is not the
+same as putting them somewhere useful.
+
+Note also that the uniform row reads 2.60 rather than 3. The estimate is asymptotic, and on
+these meshes the layer is still only a few elements wide, so we are not yet in the range
+where it applies. That is a different effect again, and we return to it later.
+
+So when we write $\|e\| \leq C h^\beta \|u\|$ in the next section and talk about measuring a
+slope, understand what it describes: **uniform refinement of a quasi-uniform family.** That
+is the setting where a single $h$ means something. Adaptive and graded meshes are common and are frequently better.
+Deciding where to put the elements needs different tools, a-posteriori
+estimators, which we are not covering here.
+
+## A-priori error estimates
+
+**A priori** means *before the fact*: before you solve anything, you can say how the error
+will behave, purely from the polynomial degree, the mesh size, and how smooth the exact
+solution is. You do not need the computed answer to write it down. (The contrast is an
+**a-posteriori** estimate, which is computed *after* you solve, out of the solution you got,
+and which can give you an actual number and tell you which elements to refine. We are not
+doing those here.)
+
+The standard a-priori estimate, for a sufficiently smooth exact solution, is
+
+$$
+\boxed{\;\|e\|_{H^s(\Omega)} \;\leq\; C \, h^{\beta} \, \|u\|_{H^{k+1}(\Omega)},
+\qquad \beta = \min\big(k+1-s,\; 2(k+1-m)\big)\;}
+$$
+
+with $k$ the polynomial degree, $s$ the norm we measure in, and $m$ the number of
+derivatives on a single term of the weak form. 
+For the problems we solve in this class, $m=1$, and the
+second argument is never lower, so in practice
+
+$$ \beta = k + 1 - s . $$
+
+### When the solution is not smooth enough
+
+If you look at the right hand side of the above boxed equation carefully, you will see that it contains $\|u\|_{H^{k+1}}$. 
+The estimate is only meaningful if that quantity is **finite** --- that is, if the exact solution actually
+lives in $H^{k+1}(\Omega)$. If it does not, the bound is vacuous as written, and the correct
+statement replaces $k+1$ by however much regularity the solution really has.
+
+If $u \in H^{r}(\Omega)$ and $r < k+1$, then
+
+$$
+\boxed{\;\|e\|_{H^s(\Omega)} \;\leq\; C \, h^{\min(k+1,\,r)-s} \, \|u\|_{H^{r}(\Omega)}\;}
+$$
+
+so **the rate is governed by the solution, not by the degree**, and the norm bounding it is
+the one the solution actually belongs to. Once $r$ drops below $k+1$, using higher more polynomial
+degree does not improve the a priori error estimate because $\min(k+1,r)$ stops moving.
+
+This is not the $\min$ in the earlier formula doing something. That one compares the
+approximation space against the variational form, and both of its arguments grow with $k$.
+This is a third, separate limiter sitting outside that estimate entirely.
+
+A worked example: suppose the exact solution happens to lie in $H^{2}$, and we
+discretise it with quadratic elements, $k=2$. Then $\min(k+1, r) = \min(3, 2) = 2$, so
+
+$$ \|e\|_{L^2} \leq C\,h^{2}\|u\|_{H^2}, \qquad \|e\|_{H^1} \leq C\,h^{1}\|u\|_{H^2} , $$
+
+rather than the $h^3$ and $h^2$ that quadratic elements deliver on a smooth solution. One
+order has been lost in each norm, and switching to cubic elements would not recover it ---
+$\min(4,2)$ is still 2.
+
+It is worth being clear in
+advance that it is a *different* mechanism from anything in Section&nbsp;2.2: there, the
+solution was perfectly smooth and only the mesh was badly placed. Here the mesh may be
+flawless and the solution itself is the limit.
+
+### What the constant is
+
+The constant in this above error estimate, $C,$ is typically nebulous. 
+While we don't know exactly what it is, we do know that it is **independent of**:
+
+- the mesh size $h$, so we can talk about the rate of error decrease, and
+- the exact solution $u$, because the complexity of the error in from the solution has been factored into $\|u\|_{H^{k+1}}$.
+
+It **depends on**: the domain $\Omega$, the polynomial degree $k$, the shape-regularity and
+quasi-uniformity constants of the mesh family, and the coefficients of the problem (for us,
+$\underline{\underline{\kappa}}$, through how strongly elliptic the operator is).
+
+So the estimate tells you the *slope* of the error curve and not its *height*. You cannot
+use it to predict that your error will be $10^{-4}$. You can use it to predict that halving
+$h$ will divide the error by $2^\beta$, and doing this in code tells you if your software is correct.
+
+## Turning the estimate into a straight line
+
+The estimate is a power law, which is awkward to look at. Take a logarithm of both sides:
+
+$$
+\log \|e\|_{H^s} \;\leq\; \log\left(C\,\|u\|_{H^{k+1}}\right) + \beta \log h .
+$$
+
+Everything in the first term on the right is a constant — it does not change as we refine.
+So if we plot $\log\|e\|$ against $\log h$, we should see a **straight line of slope
+$\beta$**, sitting at a height we do not get to predict:
+
+$$ \underbrace{\log\|e\|}_{y} = \beta \underbrace{\log h}_{x} + \underbrace{\log(C\|u\|)}_{\text{intercept}} . $$
+
+Consequently, convergence results typically always shown on log–log axes. The quantity we care
+about is a slope, and only these axes make it a slope.
+
+### Dyadic refinement
+
+To measure that slope we typically refine the mesh **dyadically**, where each level halves the element
+size, so $h_{i+1} = h_i/2$. In one dimension that means splitting every element in two; in
+two dimensions, splitting every element into four.
+
+```{=html}
+<div class="cv"><svg id="dysvg" viewBox="0 0 880 300" role="img"
+  aria-label="Dyadic refinement in one and two dimensions"></svg>
+<div class="cap"><b>Each level halves <i>h</i>.</b> In 1D the element count doubles; in 2D it
+quadruples, because each element splits in both directions. The element <i>size</i> halves
+either way, which is what the estimate is written in terms of. Note what this costs: in 2D,
+three levels of refinement is 64 times as many elements.</div></div>
+
+<script>
+(function(){
+var S='',INK='#18202b',GREY='#6b7684',FAINT='#dfe4ea',BLUE='#2b5fa8';
+// 1D row
+S+='<text x="12" y="40" font-size="13" font-weight="600" fill="'+INK+'">one dimension</text>';
+[2,4,8].forEach(function(n,r){
+  var L=150+r*250, W=200, y=36;
+  S+='<line x1="'+L+'" y1="'+y+'" x2="'+(L+W)+'" y2="'+y+'" stroke="'+INK+'" stroke-width="1.4"/>';
+  for(var i=0;i<=n;i++){ var x=L+W*i/n;
+    S+='<line x1="'+x+'" y1="'+(y-8)+'" x2="'+x+'" y2="'+(y+8)+'" stroke="'+INK+'" stroke-width="1.3"/>'; }
+  S+='<text x="'+(L+W/2)+'" y="'+(y+28)+'" font-size="11.5" fill="'+GREY+'" text-anchor="middle">'+
+     n+' elements, h = 1/'+n+'</text>';
+});
+// 2D row
+S+='<text x="12" y="130" font-size="13" font-weight="600" fill="'+INK+'">two dimensions</text>';
+[2,4,8].forEach(function(n,r){
+  var L=150+r*250, T=110, W=150;
+  for(var i=0;i<=n;i++){ var t=L+W*i/n, v=T+W*i/n;
+    S+='<line x1="'+t+'" y1="'+T+'" x2="'+t+'" y2="'+(T+W)+'" stroke="'+INK+'" stroke-width="'+(i%n===0?1.4:0.7)+'"/>';
+    S+='<line x1="'+L+'" y1="'+v+'" x2="'+(L+W)+'" y2="'+v+'" stroke="'+INK+'" stroke-width="'+(i%n===0?1.4:0.7)+'"/>'; }
+  S+='<text x="'+(L+W/2)+'" y="'+(T+W+20)+'" font-size="11.5" fill="'+GREY+'" text-anchor="middle">'+
+     (n*n)+' elements, h = 1/'+n+'</text>';
+  if(r===0){ S+='<rect x="'+L+'" y="'+T+'" width="'+(W/n)+'" height="'+(W/n)+'" fill="'+BLUE+'" opacity=".18"/>'; }
+  if(r===1){ S+='<rect x="'+L+'" y="'+T+'" width="'+(W/2)+'" height="'+(W/2)+'" fill="'+BLUE+'" opacity=".18"/>'; }
+});
+S+='<text x="150" y="285" font-size="11.5" fill="'+BLUE+'">the shaded element splits into four</text>';
+document.getElementById('dysvg').innerHTML=S;
+})();
+</script>
+```
+
+Because each level halves $h$, the slope between two consecutive levels has a very simple
+form. Starting from
+
+$$ \boxed{\;\beta \approx \frac{\log\|e_{i+1}\| - \log\|e_{i}\|}{\log h_{i+1} - \log h_{i}}\;} $$
+
+and substituting $h_{i+1} = h_i/2$, the denominator is just $-\log 2$, so
+
+$$ \beta \approx \log_2\!\left(\frac{\|e_i\|}{\|e_{i+1}\|}\right)$$
+
+In words: **halve the mesh, and the rate is the base-2 logarithm of how many times smaller
+the error got.** If the error drops by a factor of 4, the rate is 2. By 8, the rate is 3.
+
+### What the plots look like
+
+```{=html}
+<div class="cv">
+  <div class="bar">
+    <b style="letter-spacing:.05em;font-size:12px">AXES</b>
+    <span class="seg" id="cvax">
+      <button data-v="lin" aria-pressed="true">linear</button>
+      <button data-v="log" aria-pressed="false">log&ndash;log</button>
+    </span>
+    <span id="cvnote"></span>
+  </div>
+  <svg id="cvsvg" viewBox="0 0 880 400" role="img" aria-label="Error against element size"></svg>
+  <div class="cap" id="cvcap"></div>
+</div>
+
+<script>
+(function(){
+var MODE='lin';
+var INK='#18202b',GREY='#6b7684',FAINT='#dfe4ea',ACC='#b8322a',BLUE='#2b5fa8',OK='#1d7a4c';
+// measured with the Class 15 solver on u = sin(pi x), dyadic refinement
+var DATA={
+ 1:{c:BLUE,L2:[1.509e-1,3.928e-2,9.921e-3,2.487e-3,6.220e-4,1.555e-4]},
+ 2:{c:OK  ,L2:[1.519e-2,1.952e-3,2.457e-4,3.076e-5,3.847e-6,4.809e-7]},
+ 3:{c:ACC ,L2:[1.388e-3,8.868e-5,5.573e-6,3.488e-7,2.181e-8,1.363e-9]}
+};
+var HS=[0.5,0.25,0.125,0.0625,0.03125,0.015625];
+
+function draw(){
+  var S='',L=78,R=856,T=28,B=352;
+  var log = (MODE==='log');
+  var xmin=log?Math.log10(HS[HS.length-1]):0, xmax=log?Math.log10(HS[0]):HS[0];
+  var allv=[]; [1,2,3].forEach(function(p){ DATA[p].L2.forEach(function(v){allv.push(v);}); });
+  var vmin=Math.min.apply(null,allv), vmax=Math.max.apply(null,allv);
+  var ymin=log?Math.log10(vmin):0, ymax=log?Math.log10(vmax):vmax;
+  function X(h){ var t=log?(Math.log10(h)-xmin)/(xmax-xmin):(h-xmin)/(xmax-xmin); return L+(R-L)*t; }
+  function Y(v){ var t=log?(Math.log10(v)-ymin)/(ymax-ymin):(v-ymin)/(ymax-ymin); return B-(B-T)*t; }
+  S+='<line x1="'+L+'" y1="'+B+'" x2="'+R+'" y2="'+B+'" stroke="'+INK+'" stroke-width="1.2"/>';
+  S+='<line x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+B+'" stroke="'+INK+'" stroke-width="1.2"/>';
+  // ticks
+  HS.forEach(function(h){ var x=X(h);
+    S+='<line x1="'+x+'" y1="'+B+'" x2="'+x+'" y2="'+(B+5)+'" stroke="'+GREY+'"/>';
+    S+='<text x="'+x+'" y="'+(B+18)+'" font-size="10.5" fill="'+GREY+'" text-anchor="middle">'+
+       (log?('1/'+Math.round(1/h)):h.toFixed(3))+'</text>'; });
+  if(log){ for(var e=-9;e<=0;e++){ var v=Math.pow(10,e); if(v<vmin/2||v>vmax*2) continue;
+      var y=Y(v); S+='<line x1="'+L+'" y1="'+y+'" x2="'+R+'" y2="'+y+'" stroke="'+FAINT+'" stroke-dasharray="3 3"/>';
+      S+='<text x="'+(L-7)+'" y="'+(y+4)+'" font-size="10.5" fill="'+GREY+'" text-anchor="end">1e'+e+'</text>'; } }
+  else { [0,0.25,0.5,0.75,1].forEach(function(f){ var v=vmax*f, y=Y(v);
+      S+='<line x1="'+L+'" y1="'+y+'" x2="'+R+'" y2="'+y+'" stroke="'+FAINT+'" stroke-dasharray="3 3"/>';
+      S+='<text x="'+(L-7)+'" y="'+(y+4)+'" font-size="10.5" fill="'+GREY+'" text-anchor="end">'+v.toFixed(2)+'</text>'; }); }
+  [1,2,3].forEach(function(p){
+    var d=DATA[p], path='';
+    d.L2.forEach(function(v,i){ path+=(i?' L':'M')+X(HS[i]).toFixed(1)+' '+Y(v).toFixed(1); });
+    S+='<path d="'+path+'" stroke="'+d.c+'" stroke-width="2.2" fill="none"/>';
+    d.L2.forEach(function(v,i){ S+='<circle cx="'+X(HS[i]).toFixed(1)+'" cy="'+Y(v).toFixed(1)+'" r="3.2" fill="'+d.c+'"/>'; });
+    var lx=X(HS[0])-10, ly=Y(d.L2[0]);
+    S+='<text x="'+lx+'" y="'+(ly-9)+'" font-size="12" font-weight="600" fill="'+d.c+
+       '" text-anchor="end">p = '+p+(log?'  (slope '+(p+1)+')':'')+'</text>';
+  });
+  S+='<text x="'+((L+R)/2)+'" y="388" font-size="12" fill="'+INK+'" text-anchor="middle">element size h'+(log?'   (log scale)':'')+'</text>';
+  S+='<text x="18" y="'+((T+B)/2)+'" font-size="12" fill="'+INK+'" transform="rotate(-90 18 '+((T+B)/2)+')" text-anchor="middle">||e||'+(log?'  (log scale)':'')+'</text>';
+  document.getElementById('cvsvg').innerHTML=S;
+  document.getElementById('cvcap').innerHTML = log
+   ? 'On log&ndash;log axes each degree is a <b>straight line</b>, and the slope is &beta; = k+1 = 2, 3 and 4. '
+     + 'The lines sit at different heights &mdash; that is the constant C, which we do not get to predict. '
+     + 'What we <i>can</i> predict, and check, is that they are straight and that their slopes are the right integers.'
+   : 'On ordinary axes all three curves collapse onto the bottom of the plot almost immediately and '
+     + 'become impossible to tell apart. There is no visible difference between a rate of 2 and a rate of 4. '
+     + '<b>Switch to log&ndash;log</b> and the same numbers separate into three straight lines.';
+  document.getElementById('cvnote').textContent =
+    'measured with our 1D solver on u = sin(πx), L² error, dyadic refinement';
+}
+document.getElementById('cvax').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b) return; MODE=b.dataset.v;
+  [].forEach.call(this.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+  draw(); });
+draw();
+})();
+</script>
+```
+
+Here are the numbers behind that plot, measured with our own solver. The rate column is
+$\log_2$ of the ratio of consecutive errors:
+
+| $h$ | $\|e\|_{L^2}$, $k{=}1$ | rate | $\|e\|_{L^2}$, $k{=}2$ | rate | $\|e\|_{L^2}$, $k{=}3$ | rate |
+|---|---|---|---|---|---|---|
+| 1/2  | 1.51e−1 | —    | 1.52e−2 | —    | 1.39e−3 | —    |
+| 1/4  | 3.93e−2 | 1.94 | 1.95e−3 | 2.96 | 8.87e−5 | 3.97 |
+| 1/8  | 9.92e−3 | 1.99 | 2.46e−4 | 2.99 | 5.57e−6 | 3.99 |
+| 1/16 | 2.49e−3 | 2.00 | 3.08e−5 | 3.00 | 3.49e−7 | 4.00 |
+| 1/32 | 6.22e−4 | 2.00 | 3.85e−6 | 3.00 | 2.18e−8 | 4.00 |
+| 1/64 | 1.56e−4 | 2.00 | 4.81e−7 | 3.00 | 1.36e−9 | 4.00 |
+
+Two things worth noticing. The rates approach $k+1$ from below rather than hitting it
+immediately — the coarsest meshes are not yet in the range where the estimate applies. And
+the measured values are clean integers, which is exactly why this is such a good test of
+whether your code is right: a bug in assembly usually shows up as a rate of 1.4 or 0.9
+rather than as an obviously wrong picture.
+
+One more caution when using higher degree polynomials: The error cannot fall below what double
+precision can represent, so once it reaches roughly $10^{-13}$ the curve flattens and the
+measured rate collapses — not because the method stopped working or is not accurate, but because the error estimate cannot capture it. On this same problem at $k=5$, the rate holds at 6.00 out to 16
+elements and then reads **4.94** at 32, where the error is already $8.6\times10^{-13}$.
+If a high-degree run looks like it has stopped converging, check the size of the error
+before concluding that something is broken.
+
+## Actually computing the error norm
+
+The norms above are integrals over $\Omega$, and we evaluate them the same way we evaluate
+every other integral in this course: break the domain into elements, push each element back
+to the parent domain, and apply Gaussian quadrature.
+
+**Step 1 — split the global integral into element integrals.**
+
+$$ \|e\|_{H^0(\Omega)}^2 = \int_\Omega \left(u - u^h\right)^2 d\Omega
+= \sum_{e} \int_{\Omega^e} \left(u - u^h\right)^2 d\Omega . $$
+
+**Step 2 — change variables to the parent domain.** Each element integral becomes an
+integral over the parent element, with the Jacobian determinant accounting for the change
+of area (or length):
+
+$$ \int_{\Omega^e} \left(u - u^h\right)^2 d\Omega
+= \int_{\square} \left(u\!\left(\underline{x}^e(\underline{\xi})\right) - u^h(\underline{\xi})\right)^2
+J^e(\underline{\xi}) \; d\square ,
+\qquad J^e = \det\left(DF^e\right) . $$
+
+**Step 3 — apply quadrature.**
+
+$$ \boxed{\;\|e\|_{H^0(\Omega)}^2 \approx \sum_e \sum_q w_q
+\left(u\!\left(\underline{x}^e(\underline{\xi}_q)\right) - u^h(\underline{\xi}_q)\right)^2
+J^e(\underline{\xi}_q)\;} $$
+
+For the $H^1$ norm, add the gradient term, which also uses $DF^{-T}$.
+
+$$ \|e\|_{H^1(\Omega)}^2 \approx \sum_e \sum_q w_q \left[
+\left(u - u^h\right)^2 +
+\left(\nabla_{\underline{x}} u - DF^{-T}\nabla_{\underline{\xi}} u^h\right)\cdot
+\left(\nabla_{\underline{x}} u - DF^{-T}\nabla_{\underline{\xi}} u^h\right)
+\right] J^e \; . $$
+
+### The two solutions are evaluated differently
+
+Inside that sum there are two things being evaluated at the same quadrature point, and they
+are reached by different routes.
+
+**The approximate solution is evaluated directly in the reference domain.** It is built from
+local basis functions, and the IEN array tells us which coefficients to use:
+
+$$ u^h(\underline{\xi}_q) = \sum_{a=0}^{n_{en}-1} d_{\,\mathrm{IEN}(a,e)} \; N_a(\underline{\xi}_q) . $$
+
+No mapping is needed. The basis functions are *defined* on the parent element, so $\xi_q$ is
+already the right input.
+
+**The exact solution must be evaluated at the physical point.** $u$ is a function of
+$\underline{x}$, so we first have to find where this quadrature point actually sits in space,
+using the spatial mapping:
+
+$$ \underline{x}^e(\underline{\xi}_q) = \sum_{a=0}^{n_{en}-1} \underline{x}_a \, N_a(\underline{\xi}_q),
+\qquad\text{then evaluate } u\!\left(\underline{x}^e(\underline{\xi}_q)\right) . $$
+
+This is the same two-step move you already made when assembling the local force vector,
+where $f$ had to be evaluated at $\underline{x}(\underline{\xi}_q)$ rather than at
+$\underline{\xi}_q$. If you mix the two up — feeding $\xi_q$ straight into $u$ — the code
+runs, the error comes out finite, and the convergence rate is wrong.
+
+### A practical warning about quadrature
+
+The error $e = u - u^h$ is **not** a polynomial, because $u$ generally is not one. So the
+quadrature rule that was exact for your stiffness matrix is *not* exact here, and if you use
+too few points you end up measuring your quadrature error instead of your discretization
+error. Use more points than you think you need and confirm that adding points does not change the answer.
+
+## Where this is going
+
+- **Class 17** works through the estimate itself, these plots, and how to interpret a
+  measured slope that is not what you expected.
+- **Class 18** takes up *why* the estimate is true — Galerkin orthogonality, and the fact
+  that the finite element solution is the best approximation available in its space.
+
+Two things we are deliberately leaving until later. The estimate assumes the exact solution
+is smooth enough to live in $H^{k+1}$; when it is not, the rate is capped by the solution's
+own roughness instead, and no amount of polynomial degree fixes it. And we have said nothing
+yet about where the exact solution $u$ comes from in the first place — on a real problem you
+do not have one. The answer is to **manufacture** one, and that is the first thing we will do
+next class.
