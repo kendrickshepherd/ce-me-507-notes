@@ -603,7 +603,7 @@ colors = ["#1f6feb", "#c0392b", "#0d9488", "#e67e22", "#8a5a20", "#7c3aed"]
 
 ```{ojs}
 //| echo: false
-html`<div style="font-size:0.95rem; margin:0.3rem 0 0.6rem 0; padding:0.5rem 0.8rem; background:#fff; border-left:4px solid #4a7ba7;">
+html`<div style="font-size:0.95rem; margin:0.3rem 0 0.6rem 0; padding:0.5rem 0.8rem; background:#fff; border-left:4px solid #1e3a5f;">
   <b>${sol.nel}</b> elements of degree <b>${p}</b> &rarr; <b>${sol.nnp}</b> nodes, <b>${sol.neq}</b> unknowns.
   &nbsp; Error: ‖u − uʰ‖<sub>L²</sub> = ${(err.l2 * 1e3).toExponential(2)} mm·m<sup>½</sup>,
   &nbsp; |u − uʰ|<sub>H¹</sub> (strain) = ${err.h1.toExponential(2)} m<sup>½</sup>/m
@@ -640,13 +640,13 @@ html`<div style="font-size:0.95rem; margin:0.3rem 0 0.6rem 0; padding:0.5rem 0.8
     });
   }
   marks.push(Plot.line(uhPts, {x: "x", y: "u", z: "e", stroke: "#c0392b", strokeWidth: 2.6}));
-  marks.push(Plot.dot(nodes, {x: "x", y: "u", r: 4, fill: d => d.dir ? "#4a7ba7" : "white", stroke: d => d.dir ? "#4a7ba7" : "#c0392b", strokeWidth: 1.6}));
+  marks.push(Plot.dot(nodes, {x: "x", y: "u", r: 4, fill: d => d.dir ? "#1e3a5f" : "white", stroke: d => d.dir ? "#1e3a5f" : "#c0392b", strokeWidth: 1.6}));
   const xn = bc === "a" ? 0 : bc === "b" ? L : null;
   if (xn !== null) {
     const d = (xn === 0 ? 1 : -1) * 2.5;
     const se = samples[xn === 0 ? 0 : samples.length - 1], k = xn === 0 ? 0 : se.x.length - 1;
     marks.push(Plot.line([{x: xn, y: 1e3 * ex.u(xn)}, {x: xn + d, y: 1e3 * (ex.u(xn) + ex.du(xn) * d)}],
-      {x: "x", y: "y", stroke: "#0d9488", strokeWidth: 2.2, strokeDasharray: "6,4"}));
+      {x: "x", y: "y", stroke: "#d97706", strokeWidth: 2.2, strokeDasharray: "6,4"}));
     marks.push(Plot.line([{x: xn, y: 1e3 * se.uh[k]}, {x: xn + d, y: 1e3 * (se.uh[k] + se.duh[k] * d)}],
       {x: "x", y: "y", stroke: "#c0392b", strokeWidth: 1.6, strokeDasharray: "2,3"}));
   }
@@ -675,7 +675,7 @@ html`<div style="font-size:0.95rem; margin:0.3rem 0 0.6rem 0; padding:0.5rem 0.8
   return html`<div>${top}${band}
   <div style="font-size:0.88rem; color:#555">Grey: exact u. Red: uʰ. Open dots are unknown nodal displacements d<sub>A</sub>; blue dots are prescribed.
   ${showBasis ? "Thin lines: each d<sub>A</sub>N<sub>A</sub>. " : ""}
-  ${xn !== null ? "At the Neumann end: teal dashes are the exact strain, red dots the strain of uʰ. " : ""}
+  ${xn !== null ? "At the Neumann end: amber dashes are the exact strain, red dots the strain of uʰ. " : ""}
   In the lower picture, the ticks are the nodes, and every element is coloured by its own Nʰ = EA uʰ,ₓ.</div></div>`;
 }
 ```
@@ -798,7 +798,7 @@ viewof showBasis = Inputs.toggle({label: "Draw each dₐNₐ", value: true})
             Plot.line(lines, {x: "x", y: "y", z: "key", stroke: d => colors[(d.A - 1) % 6],
                               strokeWidth: d => d.hi ? 3 : 1.4, strokeDasharray: d => d.dir ? "5,3" : null}),
             Plot.dot(sol.X.map((x, i) => ({x, y: 0, dir: sol.ID[i] === 0})), {x: "x", y: "y", r: 3.5,
-                     fill: d => d.dir ? "#4a7ba7" : "white", stroke: "#1a1a1a"})]});
+                     fill: d => d.dir ? "#1e3a5f" : "white", stroke: "#1a1a1a"})]});
   const par = [];
   for (let a = 0; a < p + 1; a++) for (let i = 0; i < 61; i++) {
     const xi = -1 + 2 * i / 60;

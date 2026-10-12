@@ -762,7 +762,7 @@ fig_configs_path = save(fig, "H_Fig9_Configurations.png")
 
 ![The four ways to assign the two faces, each with the same wall and the same
 $f$ = 500 W/m³. On the right, blue dots are Dirichlet values the curve must pass through;
-dashed teal lines are the slopes that Neumann data force on it.](`{python} fig_configs_path`){#fig-h-configs width=100%}
+dashed amber lines are the slopes that Neumann data force on it.](`{python} fig_configs_path`){#fig-h-configs width=100%}
 
 ::: {.step .notes}
 - **(a) Hughes' arrangement.** Flux given at $x = 0$, temperature at $x = L$:
@@ -936,7 +936,7 @@ Compare this with the rod, where mirroring the problem flips the sign of $h$.
 ## Explore the strong form
 
 Move the sliders and watch each line of the strong form act on the solution. The black
-curve is the exact $u(x)$. A blue dot marks each Dirichlet face, and the dashed teal
+curve is the exact $u(x)$. A blue dot marks each Dirichlet face, and the dashed amber
 line is the slope that the Neumann condition forces on its face. The band below the
 curve is the wall, shaded by temperature, with arrows showing the heat flux
 $q = -\kappa u_{,x}$.
@@ -985,12 +985,12 @@ heat = {
   const neuX = hBC === "a" ? 0 : hBC === "b" ? L : null;
   const marks = [
     Plot.line(pts, {x: "x", y: "u", stroke: "#1a1a1a", strokeWidth: 2.6}),
-    Plot.dot(dirX.map(x => ({x, u: u(x)})), {x: "x", y: "u", r: 6, fill: "#4a7ba7"})
+    Plot.dot(dirX.map(x => ({x, u: u(x)})), {x: "x", y: "u", r: 6, fill: "#1e3a5f"})
   ];
   if (neuX !== null) {
     const d = (neuX === 0 ? 1 : -1) * 0.08;
     marks.push(Plot.line([{x: neuX, u: u(neuX)}, {x: neuX + d, u: u(neuX) + du(neuX) * d}],
-      {x: "x", y: "u", stroke: "#0d9488", strokeWidth: 2.4, strokeDasharray: "7,4"}));
+      {x: "x", y: "u", stroke: "#d97706", strokeWidth: 2.4, strokeDasharray: "7,4"}));
   }
   const top = Plot.plot({
     width: W, height: 300, marginLeft: 55,

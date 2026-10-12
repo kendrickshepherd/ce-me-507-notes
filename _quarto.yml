@@ -31,6 +31,10 @@ book:
           - chapters/Poisson1D_Heat_FEM.qmd
           - chapters/Poisson1D_Rod.qmd
           - chapters/Poisson1D_Rod_FEM.qmd
+      - section: "The 2D Poisson Problem"
+        contents:
+          - chapters/Poisson2D_Heat.qmd
+          - chapters/Poisson2D_Heat_FEM.qmd
 
   bread-crumbs: true
   back-to-top-navigation: true
@@ -60,6 +64,8 @@ book:
     - chapters/Poisson1D_Heat_FEM.qmd
     - chapters/Poisson1D_Rod.qmd
     - chapters/Poisson1D_Rod_FEM.qmd
+    - chapters/Poisson2D_Heat.qmd
+    - chapters/Poisson2D_Heat_FEM.qmd
 
 format:
   html:

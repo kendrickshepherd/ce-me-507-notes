@@ -773,7 +773,7 @@ colors = ["#1f6feb", "#c0392b", "#0d9488", "#e67e22", "#8a5a20", "#7c3aed"]
 
 ```{ojs}
 //| echo: false
-html`<div style="font-size:0.95rem; margin:0.3rem 0 0.6rem 0; padding:0.5rem 0.8rem; background:#fff; border-left:4px solid #4a7ba7;">
+html`<div style="font-size:0.95rem; margin:0.3rem 0 0.6rem 0; padding:0.5rem 0.8rem; background:#fff; border-left:4px solid #1e3a5f;">
   <b>${sol.nel}</b> elements of degree <b>${p}</b> &rarr; <b>${sol.nnp}</b> nodes, <b>${sol.neq}</b> unknowns.
   &nbsp; Error: ‖u − uʰ‖<sub>L²</sub> = ${err.l2.toExponential(2)} °C·m<sup>½</sup>,
   &nbsp; |u − uʰ|<sub>H¹</sub> = ${err.h1.toExponential(2)} °C/m<sup>½</sup>
@@ -813,7 +813,7 @@ html`<div style="font-size:0.95rem; margin:0.3rem 0 0.6rem 0; padding:0.5rem 0.8
     });
   }
   marks.push(Plot.line(uhPts, {x: "x", y: "u", z: "e", stroke: "#c0392b", strokeWidth: 2.6}));
-  marks.push(Plot.dot(nodes, {x: "x", y: "u", r: 4, fill: d => d.dir ? "#4a7ba7" : "white", stroke: d => d.dir ? "#4a7ba7" : "#c0392b", strokeWidth: 1.6}));
+  marks.push(Plot.dot(nodes, {x: "x", y: "u", r: 4, fill: d => d.dir ? "#1e3a5f" : "white", stroke: d => d.dir ? "#1e3a5f" : "#c0392b", strokeWidth: 1.6}));
   // Neumann end: exact slope vs slope of u^h
   const xn = bc === "a" ? 0 : bc === "b" ? L : null;
   if (xn !== null) {
@@ -821,7 +821,7 @@ html`<div style="font-size:0.95rem; margin:0.3rem 0 0.6rem 0; padding:0.5rem 0.8
     const se = samples[xn === 0 ? 0 : samples.length - 1];
     const k = xn === 0 ? 0 : se.x.length - 1;
     marks.push(Plot.line([{x: xn, y: ex.u(xn)}, {x: xn + d, y: ex.u(xn) + ex.du(xn) * d}],
-      {x: "x", y: "y", stroke: "#0d9488", strokeWidth: 2.2, strokeDasharray: "6,4"}));
+      {x: "x", y: "y", stroke: "#d97706", strokeWidth: 2.2, strokeDasharray: "6,4"}));
     marks.push(Plot.line([{x: xn, y: se.uh[k]}, {x: xn + d, y: se.uh[k] + se.duh[k] * d}],
       {x: "x", y: "y", stroke: "#c0392b", strokeWidth: 1.6, strokeDasharray: "2,3"}));
   }
@@ -851,7 +851,7 @@ html`<div style="font-size:0.95rem; margin:0.3rem 0 0.6rem 0; padding:0.5rem 0.8
   return html`<div>${top}${band}
   <div style="font-size:0.88rem; color:#555">Grey: exact u. Red: uʰ. Open dots are unknowns d<sub>A</sub>; blue dots are Dirichlet values.
   ${showBasis ? "Thin lines: each d<sub>A</sub>N<sub>A</sub> (dashed: g N<sub>A</sub> on Γ<sub>g</sub>). " : ""}
-  ${xn !== null ? "At the Neumann face: teal dashes are the exact slope −h/κ·n, red dots the slope of uʰ." : ""}
+  ${xn !== null ? "At the Neumann face: amber dashes are the exact slope −h/κ·n, red dots the slope of uʰ." : ""}
   The shaded strip is element ${eHi}.</div></div>`;
 }
 ```
@@ -872,7 +872,7 @@ viewof showBasis = Inputs.toggle({label: "Draw each dₐNₐ", value: true})
     Plot.ruleY([0], {stroke: "#bbb"}),
     Plot.ruleX(verts, {stroke: "#8a5a20", strokeOpacity: 0.5, strokeDasharray: "2,3"}),
     Plot.line(exactPts, {x: "x", y: "q", stroke: "#bbb", strokeWidth: 7, strokeLinecap: "round"}),
-    Plot.line(qh, {x: "x", y: "q", z: "e", stroke: "#0d9488", strokeWidth: 2.6})
+    Plot.line(qh, {x: "x", y: "q", z: "e", stroke: "#d97706", strokeWidth: 2.6})
   ];
   let note = "";
   if (bc !== "c") {
@@ -885,7 +885,7 @@ viewof showBasis = Inputs.toggle({label: "Draw each dₐNₐ", value: true})
   }
   return html`<div>${Plot.plot({width: W, height: 340, marginLeft: 60,
     x: {label: "x (m) →", domain: [0, L]}, y: {label: "↑ heat flux q (W/m²)", grid: true}, marks})}
-    <div style="font-size:0.88rem; color:#555">Grey: exact q = −κ u,ₓ. Teal: qʰ = −κ uʰ,ₓ, one polynomial of degree p − 1 per element,
+    <div style="font-size:0.88rem; color:#555">Grey: exact q = −κ u,ₓ. Amber: qʰ = −κ uʰ,ₓ, one polynomial of degree p − 1 per element,
     discontinuous at the nodes. ${note}</div></div>`;
 }
 ```
@@ -909,7 +909,7 @@ viewof showBasis = Inputs.toggle({label: "Draw each dₐNₐ", value: true})
   const p2 = Plot.plot({width: W, height: 220, marginLeft: 70,
     x: {label: "x (m) →", domain: [0, L]}, y: {label: "↑ q − qʰ (W/m²)", grid: true},
     marks: [Plot.ruleY([0], {stroke: "#bbb"}), Plot.ruleX(verts, {stroke: "#8a5a20", strokeOpacity: 0.5, strokeDasharray: "2,3"}),
-            Plot.line(eq, {x: "x", y: "e", z: "el", stroke: "#0d9488", strokeWidth: 2})]});
+            Plot.line(eq, {x: "x", y: "e", z: "el", stroke: "#d97706", strokeWidth: 2})]});
   return html`<div>${p1}${p2}<div style="font-size:0.88rem; color:#555">
     Largest error at the nodes (black dots): ${maxNodal.toExponential(2)} °C.
     ${p === 1 && maxNodal < 1e-9 ? "Linear elements with constant κ are nodally exact in 1D: the error lives entirely between the nodes." : ""}
@@ -963,7 +963,7 @@ viewof showBasis = Inputs.toggle({label: "Draw each dₐNₐ", value: true})
             Plot.line(lines, {x: "x", y: "y", z: "key", stroke: d => colors[(d.A - 1) % 6],
                               strokeWidth: d => d.hi ? 3 : 1.4, strokeDasharray: d => d.dir ? "5,3" : null}),
             Plot.dot(sol.X.map((x, i) => ({x, y: 0, dir: sol.ID[i] === 0})), {x: "x", y: "y", r: 3.5,
-                     fill: d => d.dir ? "#4a7ba7" : "white", stroke: "#1a1a1a"})]});
+                     fill: d => d.dir ? "#1e3a5f" : "white", stroke: "#1a1a1a"})]});
   const par = [];
   for (let a = 0; a < p + 1; a++) for (let i = 0; i < 61; i++) {
     const xi = -1 + 2 * i / 60;

@@ -9,8 +9,8 @@ format:
 
 The discussion in Class 17 did not cover two important parts of convergence analysis.
 First, we spent a whole class measuring how far $u^h$ is from $u$, without ever saying where $u$ is supposed to come from. 
-On a real problem we don't actually have $u$, and that is why we running the solver in the first place. 
-The second is theoretical: the error estimate we wrote down is a statement about *polynomials*, and we never justified using it to describe the answer our solver actually produced.
+On a real problem we don't actually have $u$, and that is why we are running the solver in the first place. 
+The second is more theoretical: the error estimate we wrote down is a statement about *polynomials*, and we never justified using it to describe the answer our solver actually produced.
 Today will cover both of these issues.
 
 ## Manufacturing a solution
@@ -261,7 +261,7 @@ function drawTop(){
   var s=document.getElementById('w18top'); s.innerHTML='';
   var g=el('g',{}); s.appendChild(g);
   panel(g,56,418,56,330, SHOWERR?'error in the solution':'u = sin(πx) and uʰ', false);
-  panel(g,500,862,56,330, SHOWERR?'error in the derivative':'uₒₓ and the derivative of uʰ', true);
+  panel(g,500,862,56,330, SHOWERR?'error in the derivative':'u,ₓ and the derivative of uʰ', true);
   var lg=el('g',{}); s.appendChild(lg);
   if(!SHOWERR){
     lg.appendChild(el('line',{x1:56,y1:368,x2:86,y2:368,stroke:GREY,'stroke-width':1.6,'stroke-dasharray':'5 4'}));
@@ -357,38 +357,40 @@ draw();
 </script>
 ```
 
+For $p=5$, notice that the rate flattens or even slightly regresses for error around $10^{-12}$. 
+This does not indicate that the solver is incorrect here. 
+Instead, it is an artifact of using double-precision arithmetic.
+We cannot typically represent solutions more accurately than machine precision, and so the benefits for refinement in the $L^2$ norm cannot be adequately measured.
+However, this is not to say that the solution does not improve: by looking at the $H^1$ norm you can see that error continues to decrease over the depicted number of elements with refinement even after error bottoms out in the $L^2$ norm.
+
 ### What this does and does not tell you
 
 A manufactured solution is a **verification** tool: it answers *did I implement the method
 correctly?* If your rates come out at the predicted $\beta$, your basis functions, your
-Jacobians, your assembly and your boundary conditions are almost certainly all right. It is
-a remarkably sharp test --- most coding mistakes break the rate, not just the constant,
+Jacobians, your assembly and your boundary conditions are almost certainly all right. 
+Most coding mistakes break the rate, not just the constant,
 because they break the method rather than merely making it less accurate.
 
-What it does **not** tell you is whether you solved the right problem. The physics, the
+What it does **not** tell you is whether you solved the right problem (i.e. used the correct input). The physics, the
 geometry, the material data and the boundary conditions you chose are all still your
 responsibility. Verification asks whether you solved the equations right; it does not ask
 whether you had the right equations.
 
 One more caution. You are free to pick any $u$, which means you are also free to pick one
 that makes the test easier than it should be. If you choose a $u$ that your basis can
-represent exactly --- a straight line with $p = 1$, say --- the error is zero at every
-refinement and you learn nothing at all. Pick something your space genuinely has to work to
-approximate.
+represent exactly (e.g. a straight line with $p = 1$), the error is zero at every
+refinement and you don't see the convergence rates play out. 
+Pick something your space genuinely has to approximate.
 
 ## Why the estimate describes our solution
 
 Here is the gap Class 17 left open. The a-priori estimate
 
-$$ \|e\|_{H^s(\Omega)} \leq C h^{\beta} \|u\|_{H^{k+1}(\Omega)} $$
+$$ \|e\|_{H^s(\Omega)} \leq C h^{\beta} \|u\|_{H^{p+1}(\Omega)} $$
 
 comes from **approximation theory**. It says: given a mesh and a polynomial degree, here is
-how close the *best possible* function in that space gets to $u$. It is a statement about the
-space, and it knows nothing about our solver, our stiffness matrix, or Galerkin's method.
-
-So why are we entitled to use it to describe $u^h$, which is whatever our linear solve
-happened to produce? There is no reason to expect those two things to be related --- unless
-we prove it. That proof is today's second piece, and it comes in two steps.
+how close we can guarantee the *best possible* function in that space gets to your arbitrary choice of $u$. 
+The rest of the material for this class aims to help us understand where this estimate came from.
 
 ### Step one: the error is invisible to the approximation space
 
@@ -396,40 +398,47 @@ Write the left side of the weak form as
 
 $$ a(w, v) := \int_\Omega w_{,x}\, v_{,x} \, dx .$$
 
-This is not new notation for anything new: $a(\cdot,\cdot)$ is exactly what your stiffness
-matrix computes, since $K_{AB} = a(N_A, N_B)$.
+or in multiple dimensions as
+
+$$ a(w, v) := \int_\Omega w_{,i}\, \kappa_{ij} v_{,j} \, d\Omega .$$
+
+This is short notation for exactly what your stiffness matrix computes, since $K_{AB} = a(N_A, N_B)$.
 
 Now put the two problems side by side. The exact solution satisfies the weak form against
-**every** admissible function $w$:
+**every** test function $w\in \mathcal{V}$:
 
 $$ a(u, w) = L(w) \qquad \text{for all } w \in \mathcal{V} ,$$
 
-where $L(w)$ collects the forcing and boundary terms. Our computed solution satisfies the
+where $L(w)$ accounts for the forcing and boundary terms. 
+The computed finite element solution satisfies the
 same equation, but only against the functions we actually built:
 
 $$ a(u^h, w^h) = L(w^h) \qquad \text{for all } w^h \in \mathcal{V}^h .$$
 
-Here is the one observation that makes everything work: **every function in $\mathcal{V}^h$
-is also in $\mathcal{V}$.** Our basis functions are legitimate admissible functions; they are
-just a small subset of them. So the first equation is true for $w = w^h$ as well, and we may
-subtract the second from it:
+Now, recall that $\mathcal{V}^h \subset \mathcal{V}$, meaning that **every function in $\mathcal{V}^h$
+is also in $\mathcal{V}$.** 
+The basis functions we use are legitimate test functions, but happen to be just a small subset of them. 
+So the first equation is true for $w = w^h$ as well, and we may
+subtract the second equation from it:
 
 $$ \boxed{\; a\!\left(u - u^h,\; w^h\right) = 0 \qquad \text{for all } w^h \in \mathcal{V}^h \;}$$
 
-This is **Galerkin orthogonality**. In words: *measured in the energy pairing, the error is
-orthogonal to everything our approximation space can represent.* The space cannot see its own
-error. If it could, the method would have used that information and done better.
+This is **Galerkin orthogonality**. 
+If you look at $a(w,v)$ as an inner product between two functions, it says that $u-u^h$ is orthogonal to $w^h$ under this physics-based inner product.
+In other words: *measured in this energy inner product, the error, $e= u-u^h$, is
+orthogonal to everything our approximation space can represent.* 
+The space cannot see its own error. 
+If it could, the method would have used that information and done better.
 
 ### Step two: so $u^h$ is the best the space can do
 
-Define the **energy norm** by
+Using the above energy inner product, define the **energy norm** by
 
 $$ \|v\|_E := \sqrt{a(v,v)} .$$
 
-For our problem this is just the size of a function's derivative, so it is the $H^1$ part of
-the error you have already been computing.
+For our problem this is just the size of a function's derivative, so it is the $H^1$ part of the error you have already been computing, which in general is weighted by the (positive definite) thermal conductivity matrix.
 
-Now take any $w^h$ in the space --- any competitor at all --- and split the difference
+Now take any $w^h$ in the space and split the difference
 between $u$ and it into two pieces:
 
 $$ u - w^h = \underbrace{\left(u - u^h\right)}_{\text{the error}} + \underbrace{\left(u^h - w^h\right)}_{\text{lives in } \mathcal{V}^h} .$$
@@ -442,19 +451,311 @@ What is left is
 $$ \left\|u - w^h\right\|_E^2 = \left\|u - u^h\right\|_E^2 + \left\|u^h - w^h\right\|_E^2 .$$
 
 That is the Pythagorean theorem, with $a(\cdot,\cdot)$ playing the role of the dot product.
-The last term cannot be negative, so dropping it gives
+The last term cannot be negative, so dropping it and rearranging gives
 
 $$ \boxed{\; \left\|u - u^h\right\|_E \;\leq\; \left\|u - w^h\right\|_E \qquad \text{for every } w^h \in \mathcal{V}^h \;}$$
 
 **The finite element solution is the best approximation in its space, measured in the energy
 norm.** No other combination of your basis functions gets closer. This result is called
-**Céa's lemma**, and it is what licenses Class 17's estimate: a bound on how well the best
-polynomial does is automatically a bound on how well *we* do.
+**Céa's lemma**.
 
-It is also the precise version of something this course has been claiming since Class 5 ---
-that the finite element method is a **projection**, not an interpolation. It does not pass
-through $u$ at the nodes and hope for the best. It finds the closest point in the space,
-in exactly the sense that dropping a perpendicular finds the closest point on a plane.
+It also clarifies what we have indicated repeatedly, that the finite element method is not an interpolation but is instead a best fit or projection.
+Under our physics-informed energy inner product, the finite element method finds the best approximation/solution to the real solution in a similar sense that projecting a 2D point onto the $x$-axis finds the closest point on the 1D line.
+
+### Seeing both of these at once
+
+The widget below runs the same problem as before, at $p=1$ on four elements, and lets you
+move the finite element answer off its correct value. Pick a basis function, slide its
+coefficient away from what the solver produced, and watch three things at once.
+
+```{=html}
+<div class="bw">
+  <div class="bar">
+    <b>PERTURB</b>
+    <span class="seg" id="o18n">
+      <button data-a="0" aria-pressed="false">N&#8320;</button>
+      <button data-a="1" aria-pressed="true">N&#8321;</button>
+      <button data-a="2" aria-pressed="false">N&#8322;</button>
+      <button data-a="3" aria-pressed="false">N&#8323;</button>
+    </span>
+    <b>BY</b> <input type="range" id="o18d" min="-50" max="50" value="20"><span class="val" id="o18dv">0.20</span>
+    <b>MEASURE IN</b>
+    <span class="seg" id="o18m">
+      <button data-m="E" aria-pressed="true">energy norm</button>
+      <button data-m="L" aria-pressed="false">L&#178; norm</button>
+    </span>
+  </div>
+  <svg id="o18a" viewBox="0 0 880 330" role="img" aria-label="The perturbed solution and what each basis function sees of the error"></svg>
+  <svg id="o18b" viewBox="0 0 880 300" role="img" aria-label="Error against size of the perturbation"></svg>
+  <div class="cap" id="o18cap"></div>
+</div>
+
+<script>
+(function(){
+var D0=[0.0,0.707106781187,1.0,0.707106781187,0.0];
+var KM=[[4.0,-4.0,0.0,0.0,0.0],[-4.0,8.0,-4.0,0.0,0.0],[0.0,-4.0,8.0,-4.0,0.0],[0.0,0.0,-4.0,8.0,-4.0],[0.0,0.0,0.0,-4.0,4.0]];
+var MD=[0.083333333333,0.166666666667,0.166666666667,0.166666666667,0.083333333333];
+var BV=[0.002267519509,0.008356636817,0.011818069122,0.008356636817,0.002267519509];
+var E0=0.248510699529, L0=0.00154325997931, NBF=5, NE=4;
+var S2={m2:{x:[0.0, 0.5, 1.0],fem:[0.0, 1.230695, 0.039705],ex:[0.0, 1.0, 0.0]},m4:{x:[0.0, 0.25, 0.5, 0.75, 1.0],fem:[0.0, 0.744825, 1.053408, 0.745315, 0.001679],ex:[0.0, 0.707107, 1.0, 0.707107, 0.0]}};
+var A0=1, DL=0.20, MODE='E';
+var INK='#18202b', GREY='#6b7684', FAINT='#dfe4ea', ACC='#b8322a', BLUE='#2b5fa8', GREEN='#2f7d4f';
+function el(n,at){var e=document.createElementNS('http://www.w3.org/2000/svg',n);
+  for(var k in at)e.setAttribute(k,at[k]);return e;}
+function txt(x,y,s,o){o=o||{};var t=el('text',{x:x,y:y,'font-size':o.fs||12,fill:o.fill||GREY,
+  'text-anchor':o.ta||'start','font-family':'system-ui, sans-serif'});
+  if(o.fw)t.setAttribute('font-weight',o.fw); t.textContent=s; return t;}
+function wvec(){ var w=D0.slice(); w[A0]+=DL; return w; }
+function errE(d){ return E0 + d*d*KM[A0][A0]; }
+function errL(d){ return L0 - 2*d*BV[A0] + d*d*MD[A0]; }
+function err(d){ return MODE==='E'?errE(d):errL(d); }
+function vertex(){ return MODE==='E' ? 0 : BV[A0]/MD[A0]; }
+
+// ---- panel A: the functions ----
+function fnPanel(g,X0,X1,Y0,Y1){
+  var lo=-0.65, hi=1.75;
+  function sx(x){return X0+x*(X1-X0);} function sy(y){return Y1-(y-lo)/(hi-lo)*(Y1-Y0);}
+  g.appendChild(el('rect',{x:X0,y:Y0,width:X1-X0,height:Y1-Y0,fill:'#fff',stroke:FAINT}));
+  g.appendChild(txt((X0+X1)/2,Y0-10,'the exact solution, the finite element answer, and your perturbed one',
+    {ta:'middle',fs:12.5,fill:INK,fw:600}));
+  var i;
+  for(i=0;i<=NE;i++) g.appendChild(el('line',{x1:sx(i/NE),y1:Y0,x2:sx(i/NE),y2:Y1,stroke:FAINT}));
+  g.appendChild(el('line',{x1:X0,y1:sy(0),x2:X1,y2:sy(0),stroke:FAINT,'stroke-dasharray':'3 3'}));
+  // exact
+  var d='',k;
+  for(k=0;k<=200;k++){var xv=k/200; d+=(k?'L':'M')+sx(xv).toFixed(2)+' '+sy(Math.sin(Math.PI*xv)).toFixed(2);}
+  g.appendChild(el('path',{d:d,fill:'none',stroke:GREY,'stroke-width':1.5,'stroke-dasharray':'5 4'}));
+  // the FEM answer (faint) and the perturbed one (bold)
+  function poly(v,col,wd,op){var s='';for(var i=0;i<NBF;i++) s+=(i?'L':'M')+sx(i/NE).toFixed(2)+' '+sy(v[i]).toFixed(2);
+    g.appendChild(el('path',{d:s,fill:'none',stroke:col,'stroke-width':wd,opacity:op}));}
+  poly(D0,BLUE,1.6,0.35);
+  var w=wvec(); poly(w,ACC,2.2,1);
+  for(i=0;i<NBF;i++) g.appendChild(el('circle',{cx:sx(i/NE),cy:sy(w[i]),r:2.8,
+    fill:(i===A0?ACC:'#fff'),stroke:ACC,'stroke-width':1.4}));
+  g.appendChild(txt(X0,Y1+15,'0',{fs:11}));
+  g.appendChild(txt(X1,Y1+15,'1',{ta:'end',fs:11}));
+  g.appendChild(txt((X0+X1)/2,Y1+15,'x',{ta:'middle',fs:11}));
+}
+
+// ---- panel B: what each basis function sees of the error ----
+function barPanel(g,X0,X1,Y0,Y1){
+  var i, nfree=NBF-1, lim=4.3;
+  function sy(v){ return (Y0+Y1)/2 - v/lim*((Y1-Y0)/2); }
+  g.appendChild(el('rect',{x:X0,y:Y0,width:X1-X0,height:Y1-Y0,fill:'#fff',stroke:FAINT}));
+  g.appendChild(txt((X0+X1)/2,Y0-10,'what each basis function sees of the error',
+    {ta:'middle',fs:12.5,fill:INK,fw:600}));
+  g.appendChild(el('line',{x1:X0,y1:sy(0),x2:X1,y2:sy(0),stroke:INK,'stroke-width':1}));
+  var bw=(X1-X0)/nfree;
+  for(i=0;i<nfree;i++){
+    // a(u - w, N_i) = a(u - u^h, N_i) - DL*K[A0][i] = -DL*K[A0][i]
+    var v=-DL*KM[A0][i], cx=X0+bw*(i+0.5), y0=sy(0), y1=sy(v);
+    g.appendChild(el('rect',{x:cx-bw*0.26,y:Math.min(y0,y1),width:bw*0.52,
+      height:Math.max(Math.abs(y1-y0),0.7),fill:(Math.abs(v)<1e-12?GREEN:ACC),opacity:0.82}));
+    g.appendChild(txt(cx,Y1+15,'N'+'₀₁₂₃'.charAt(i),{ta:'middle',fs:11.5}));
+    g.appendChild(txt(cx,(v>=0?y1-5:y1+13),v.toFixed(2),{ta:'middle',fs:10,
+      fill:(Math.abs(v)<1e-12?GREEN:ACC)}));
+  }
+  g.appendChild(txt(X0+4,Y0+14,'a(u − w, Nₐ)',{fs:11}));
+}
+
+function drawA(){
+  var s=document.getElementById('o18a'); s.innerHTML='';
+  var g=el('g',{}); s.appendChild(g);
+  fnPanel(g,56,470,46,280);
+  barPanel(g,545,862,46,280);
+  g.appendChild(el('line',{x1:56,y1:312,x2:86,y2:312,stroke:GREY,'stroke-width':1.5,'stroke-dasharray':'5 4'}));
+  g.appendChild(txt(92,316,'exact u',{fs:11.5}));
+  g.appendChild(el('line',{x1:150,y1:312,x2:180,y2:312,stroke:BLUE,'stroke-width':1.6,opacity:0.35}));
+  g.appendChild(txt(186,316,'finite element answer',{fs:11.5}));
+  g.appendChild(el('line',{x1:320,y1:312,x2:350,y2:312,stroke:ACC,'stroke-width':2.2}));
+  g.appendChild(txt(356,316,'your perturbed w',{fs:11.5}));
+}
+
+// ---- the error curve against the perturbation ----
+function drawB(){
+  var s=document.getElementById('o18b'); s.innerHTML='';
+  var g=el('g',{}); s.appendChild(g);
+  var X0=56,X1=862,Y0=46,Y1=240, i, d;
+  var lo=-0.5, hi=0.5, ymax=0;
+  for(i=0;i<=200;i++){ var v=err(lo+(hi-lo)*i/200); if(v>ymax) ymax=v; }
+  ymax*=1.12;
+  function sx(t){return X0+(t-lo)/(hi-lo)*(X1-X0);} function sy(v){return Y1-v/ymax*(Y1-Y0);}
+  g.appendChild(el('rect',{x:X0,y:Y0,width:X1-X0,height:Y1-Y0,fill:'#fff',stroke:FAINT}));
+  g.appendChild(txt((X0+X1)/2,Y0-10,
+    (MODE==='E'?'squared error in the ENERGY norm':'squared error in the L² norm')+
+    ', as the coefficient moves',{ta:'middle',fs:12.5,fill:INK,fw:600}));
+  // delta = 0 reference
+  g.appendChild(el('line',{x1:sx(0),y1:Y0,x2:sx(0),y2:Y1,stroke:FAINT}));
+  g.appendChild(txt(sx(0),Y1+15,'0',{ta:'middle',fs:11}));
+  g.appendChild(txt(X0,Y1+15,'−0.5',{fs:11}));
+  g.appendChild(txt(X1,Y1+15,'+0.5',{ta:'end',fs:11}));
+  g.appendChild(txt((X0+X1)/2,Y1+31,'perturbation δ added to the coefficient',{ta:'middle',fs:11}));
+  d='';
+  for(i=0;i<=240;i++){ var t=lo+(hi-lo)*i/240; d+=(i?'L':'M')+sx(t).toFixed(2)+' '+sy(err(t)).toFixed(2); }
+  g.appendChild(el('path',{d:d,fill:'none',stroke:(MODE==='E'?BLUE:'#8a5a9e'),'stroke-width':2.2}));
+  // the vertex
+  var vx=vertex();
+  if(vx>=lo&&vx<=hi){
+    g.appendChild(el('line',{x1:sx(vx),y1:sy(err(vx)),x2:sx(vx),y2:Y1,
+      stroke:GREEN,'stroke-width':1.4,'stroke-dasharray':'4 3'}));
+    g.appendChild(el('circle',{cx:sx(vx),cy:sy(err(vx)),r:4,fill:GREEN}));
+    g.appendChild(txt(sx(vx)+7,sy(err(vx))-7,
+      'lowest at δ = '+vx.toFixed(3)+(Math.abs(vx)<1e-9?'  (the finite element answer)':'  (NOT the finite element answer)'),
+      {fs:11.5,fill:GREEN,fw:600}));
+  }
+  // current delta
+  g.appendChild(el('circle',{cx:sx(DL),cy:sy(err(DL)),r:6.5,fill:'none',stroke:INK,'stroke-width':1.8}));
+  g.appendChild(el('circle',{cx:sx(DL),cy:sy(err(DL)),r:2.6,fill:INK}));
+}
+
+function cap(){
+  var sub='₀₁₂₃'.charAt(A0);
+  var s='<b>Perturbing N'+sub+' by δ = '+DL.toFixed(2)+'.</b> ';
+  if(MODE==='E'){
+    s+='Squared energy error is '+errE(DL).toFixed(4)+' against '+E0.toFixed(4)+
+       ' for the finite element answer, so the perturbation introduces '+(errE(DL)-E0).toFixed(4)+
+       ' error compared to FEM under the energy norm. That excess is exactly δ²·a(N'+sub+', N'+sub+') = '+
+       DL.toFixed(2)+'²·'+KM[A0][A0].toFixed(1)+', which is why moving the coefficient '+
+       'up or down by the same amount costs the same. The curve has no tilt because the term that '+
+       'would tilt it is a(u − uʰ, N'+sub+'), and that is zero — the bars on the right '+
+       'are all zero when δ is zero.';
+  } else {
+    var v=BV[A0]/MD[A0];
+    s+='Measured in L² the lowest point sits at δ = '+v.toFixed(3)+
+       ', not at the finite element answer. Sliding there gives '+errL(v).toExponential(3)+
+       ' against '+L0.toExponential(3)+' — a genuinely better approximation than the one your '+
+       'solver produced. Nothing is broken. The method is the best approximation <i>in the energy '+
+       'norm</i>, and that is the only norm it promises anything about.';
+  }
+  document.getElementById('o18cap').innerHTML=s;
+}
+function draw(){ drawA(); drawB(); cap(); }
+
+document.getElementById('o18n').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b)return; A0=+b.dataset.a;
+  var bs=this.querySelectorAll('button');
+  for(var i=0;i<bs.length;i++) bs[i].setAttribute('aria-pressed',bs[i]===b?'true':'false');
+  draw(); });
+document.getElementById('o18m').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b)return; MODE=b.dataset.m;
+  var bs=this.querySelectorAll('button');
+  for(var i=0;i<bs.length;i++) bs[i].setAttribute('aria-pressed',bs[i]===b?'true':'false');
+  draw(); });
+document.getElementById('o18d').addEventListener('input',function(){
+  DL=(+this.value)/100; document.getElementById('o18dv').textContent=DL.toFixed(2); draw(); });
+
+draw();
+})();
+</script>
+```
+
+### Why this is not interpolation
+
+Look again at the widget in Section 18.1.2, at $p=1$ with a few elements. The finite element
+curve passes exactly through the exact solution at every node. It is very tempting to
+conclude that the method works by interpolation --- that it reads off $u$ at the nodes and
+joins the dots.
+
+It does not, and one dimension is misleading. 
+Nodal exactness in 1D for the Poisson equation is a genuine theorem, but it is special to one dimension, and it stops being true in higher dimensions.
+
+Below is the same manufactured problem in two dimensions, $u = \sin(\pi x)\sin(\pi y)$ on the
+unit square, solved with code that will be developed in Project 2.
+Both panels are a slice along $y = \tfrac{1}{2}$, where the exact solution is just $\sin(\pi x)$ again. The grey dashed line
+is $u$, the thin blue line joins the dots through $u$ at the nodes, and the heavy red line is what the solver actually returns.
+
+```{=html}
+<div class="bw">
+  <svg id="s2fig" viewBox="0 0 880 340" role="img" aria-label="A slice through the 2D solution on two meshes, comparing the finite element answer against the interpolant"></svg>
+  <div class="cap">
+  A slice at <i>y</i> = &#189; through the finite element solution of
+  <i>u</i> = sin(&#960;<i>x</i>)&#8239;sin(&#960;<i>y</i>) on [0,&#8201;1]&#178;.
+  On the coarse mesh the finite element answer overshoots the exact solution by
+  <b>23%</b> at the center, and it is still <b>5.3%</b> high after one refinement. An
+  interpolant cannot do that: it is pinned to <i>u</i> at every node by construction.
+  What you are looking at is the method choosing the closest point in its space measured in
+  the energy norm, which is a statement about slopes over the whole domain, not about values
+  at points. In one dimension that choice happens to land on the nodal values. In two it
+  does not, and the projection shows itself.
+  </div>
+</div>
+
+<script>
+(function(){
+var INK='#18202b',GREY='#6b7684',FAINT='#dfe4ea',ACC='#b8322a',BLUE='#2b5fa8';
+var S2DATA={m2:{x:[0.0, 0.5, 1.0],fem:[0.0, 1.230695, 0.039705],ex:[0.0, 1.0, 0.0]},m4:{x:[0.0, 0.25, 0.5, 0.75, 1.0],fem:[0.0, 0.744825, 1.053408, 0.745315, 0.001679],ex:[0.0, 0.707107, 1.0, 0.707107, 0.0]}};
+function el(n,at){var e=document.createElementNS('http://www.w3.org/2000/svg',n);
+  for(var k in at)e.setAttribute(k,at[k]);return e;}
+function txt(x,y,s,o){o=o||{};var t=el('text',{x:x,y:y,'font-size':o.fs||12,fill:o.fill||GREY,
+  'text-anchor':o.ta||'start','font-family':'system-ui, sans-serif'});
+  if(o.fw)t.setAttribute('font-weight',o.fw);t.textContent=s;return t;}
+function panel(g,key,X0,X1,Y0,Y1,title){
+  var dat=S2DATA[key], lo=-0.12, hi=1.38, i;
+  function sx(x){return X0+x*(X1-X0);} function sy(y){return Y1-(y-lo)/(hi-lo)*(Y1-Y0);}
+  g.appendChild(el('rect',{x:X0,y:Y0,width:X1-X0,height:Y1-Y0,fill:'#fff',stroke:FAINT}));
+  g.appendChild(txt((X0+X1)/2,Y0-10,title,{ta:'middle',fs:12.5,fill:INK,fw:600}));
+  for(i=0;i<dat.x.length;i++)
+    g.appendChild(el('line',{x1:sx(dat.x[i]),y1:Y0,x2:sx(dat.x[i]),y2:Y1,stroke:FAINT}));
+  g.appendChild(el('line',{x1:X0,y1:sy(0),x2:X1,y2:sy(0),stroke:FAINT,'stroke-dasharray':'3 3'}));
+  var d='',k;
+  for(k=0;k<=200;k++){var xv=k/200;d+=(k?'L':'M')+sx(xv).toFixed(2)+' '+sy(Math.sin(Math.PI*xv)).toFixed(2);}
+  g.appendChild(el('path',{d:d,fill:'none',stroke:GREY,'stroke-width':1.5,'stroke-dasharray':'5 4'}));
+  function poly(v,col,wd){var s='';for(var i=0;i<v.length;i++)s+=(i?'L':'M')+sx(dat.x[i]).toFixed(2)+' '+sy(v[i]).toFixed(2);
+    g.appendChild(el('path',{d:s,fill:'none',stroke:col,'stroke-width':wd}));}
+  poly(dat.ex,BLUE,1.4); poly(dat.fem,ACC,2.3);
+  for(i=0;i<dat.x.length;i++){
+    g.appendChild(el('circle',{cx:sx(dat.x[i]),cy:sy(dat.ex[i]),r:2.4,fill:BLUE}));
+    g.appendChild(el('circle',{cx:sx(dat.x[i]),cy:sy(dat.fem[i]),r:2.8,fill:ACC}));
+  }
+  var j=dat.x.indexOf(0.5);
+  if(j>=0){
+    g.appendChild(el('line',{x1:sx(0.5)+10,y1:sy(dat.ex[j]),x2:sx(0.5)+10,y2:sy(dat.fem[j]),
+      stroke:INK,'stroke-width':1}));
+    g.appendChild(txt(sx(0.5)+15,(sy(dat.ex[j])+sy(dat.fem[j]))/2+4,
+      '+'+(100*(dat.fem[j]-dat.ex[j])).toFixed(1)+'%',{fs:11,fill:INK,fw:600}));
+  }
+  g.appendChild(txt(X0,Y1+15,'0',{fs:11}));
+  g.appendChild(txt(X1,Y1+15,'1',{ta:'end',fs:11}));
+  g.appendChild(txt((X0+X1)/2,Y1+15,'x   (slice at y = 1/2)',{ta:'middle',fs:11}));
+}
+var s=document.getElementById('s2fig'), g=el('g',{}); s.appendChild(g);
+panel(g,'m2',56,418,46,268,'2 × 2 mesh');
+panel(g,'m4',500,862,46,268,'4 × 4 mesh');
+g.appendChild(el('line',{x1:56,y1:306,x2:86,y2:306,stroke:GREY,'stroke-width':1.5,'stroke-dasharray':'5 4'}));
+g.appendChild(txt(92,310,'exact u',{fs:11.5}));
+g.appendChild(el('line',{x1:160,y1:306,x2:190,y2:306,stroke:BLUE,'stroke-width':1.4}));
+g.appendChild(txt(196,310,'interpolant (joining the dots through u)',{fs:11.5}));
+g.appendChild(el('line',{x1:470,y1:306,x2:500,y2:306,stroke:ACC,'stroke-width':2.3}));
+g.appendChild(txt(506,310,'what the solver returns',{fs:11.5}));
+})();
+</script>
+```
+
+### The whole argument in three lines
+
+The error estimate of Class 17 is the result of Galerkin orthogonality to get Céa's lemma and then composing this with another lemma about polynomial interpolation.
+Here, Galerkin Orthogonality allows us to prove Céa's lemma, and 
+Céa's lemma lets us swap $u^h$ for *any* function we like out of the space.
+The polynomial function that interpolates the actual solution is one such function that could be used.
+The **Bramble--Hilbert lemma** says how well polynomials can interpolate a smooth function, with the interpolant written as $\mathcal{I}_h u$.
+
+$$
+\begin{aligned}
+\left\|u - u^h\right\|_E
+  &= \min_{w^h \in \mathcal{V}^h} \left\|u - w^h\right\|_E
+  && \text{(Céa's lemma)} \\[2pt]
+  &\leq \left\|u - \mathcal{I}_h u\right\|_E
+  && \text{(pick the interpolant)} \\[2pt]
+  &\leq C \, h^{\,p} \, \left\|u\right\|_{H^{p+1}(\Omega)}
+  && \text{(Bramble–Hilbert)}
+\end{aligned}
+$$
+
+The convergence rate $h^p$ and
+the norm $\|u\|_{H^{p+1}}$ both appear only on the last line, and could be altered slightly for less smooth solutions. 
+The constant $C$ also comes as a result of this interpolation theory lemma in the last line.
+Here, $C$ measures how well degree-$p$ polynomials fit a smooth
+function on an element.
 
 ### A reading of this worth carrying forward
 
@@ -467,27 +768,23 @@ Keep that word *minimizes* in mind. There are two different minimization stateme
 course and it is worth not confusing them. This one is about the **approximation**: of all
 the answers we could have built, we got the closest. The other one, in **Class 23**, is about
 the **physics**: the true solution $u$ is the one that minimizes the total potential energy
-of the system. The two are related, and Class 23 will also explain where the constant $C$ in
-the a-priori estimate comes from.
+of the system over *all* admissible (test) functions, not just the ones our mesh can build.
 
 ## When a measured rate is not what you expected
 
-You will run a convergence study and get a number that is not $\beta$. Usually nothing is
-wrong. Three ordinary reasons, worth recognizing so you can tell a bug from a non-bug:
+Sometime you may run a convergence study and get a number that is not $\beta$. 
+This still may mean that nothing is wrong if it is the result of one of the following cases.
 
 **You are not refined enough yet.** The estimate is asymptotic --- it describes behavior as
 $h \to 0$. On coarse meshes the measured rate typically creeps up on $\beta$ from below
-rather than hitting it. Seeing 1.94 where you expected 2.00 is normal; refine once more and
-watch it move.
+rather than hitting it. Seeing 1.94 where you expected 2.00 is normal, and is often resolved after one more level of refinement.
 
 **You have hit machine precision.** This one surprises people. At high polynomial degree the
 error drops so fast that after two or three refinements it reaches roundoff, around
 $10^{-16}$, and it cannot get any smaller. The slope then flattens toward zero, and a plot
-that was beautifully straight suddenly bends. The method has not stopped working; you have
-run out of digits. **HW 12 Problem 3 asks for $p=5$, so you should expect to see this.**
+that was beautifully straight suddenly bends. The method has not stopped working, but double precision arithmetic limits continuing.
 
-**Your quadrature is not good enough for the error integral.** Class 17 warned about this and
-it is worth repeating, because it is the one that actually is your fault. The error
+**Your quadrature is not good enough for the error integral.**  The error
 $e = u - u^h$ is not a polynomial, since $u$ generally is not, so the rule that integrates
 your stiffness matrix exactly will *not* integrate the error norm exactly. Use more points
 than you think you need, and confirm that adding more does not change the answer.
@@ -495,7 +792,7 @@ than you think you need, and confirm that adding more does not change the answer
 ## Where this is going
 
 - **Class 19** moves to multiple dimensions and takes up the surface integrals that Neumann
-  conditions require, which have no one-dimensional counterpart. Project 2 is assigned.
+  conditions require, which have no one-dimensional counterpart. 
 - **Class 23** returns to the energy idea from the other side: the minimization form of the
   problem, symmetric positive definiteness, and the question of whether a solution exists
   at all.

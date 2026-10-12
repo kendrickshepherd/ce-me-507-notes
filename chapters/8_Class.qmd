@@ -40,16 +40,16 @@ $$
 :::
 
 where $(\mathrm{M})$ is: given $f : \Omega \to \mathbb{R}$, $g : \Gamma_g \to \mathbb{R}$,
-$h : \Gamma_h \to \mathbb{R}$, $\underline{\underline{K}} : \Omega \to
+$h : \Gamma_h \to \mathbb{R}$, $\underline{\underline{\kappa}} : \Omega \to
 \mathbb{R}^{n_{sd}\times n_{sd}}$, find $\underline{d}$ such that
-$\underline{\underline{K}}\,\underline{d} = \underline{F}$, where
+$\underline{\underline{\kappa}}\,\underline{d} = \underline{F}$, where
 
 ::: {.derivation}
 $$
 \begin{aligned}
-K_{AB} &= \int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega \\[6pt]
+K_{AB} &= \int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}}\nabla N_B\;d\Omega \\[6pt]
 F_A &= \int_\Omega N_A f\;d\Omega + \int_{\Gamma_h} N_A h\;d\Gamma \\[2pt]
-    &\qquad - \int_\Omega \nabla N_A \cdot \underline{\underline{K}}
+    &\qquad - \int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}}
       \left(\sum_{B \in \Gamma_g} g_B N_B\right) d\Omega
 \end{aligned}
 $$
@@ -213,7 +213,7 @@ no element on the far side of their node.
 
 ::: {.step}
 Two properties to keep hold of: each $N_A$ is **zero outside the one or two elements that
-touch node $A$** (this is what will make $\underline{\underline{K}}$ sparse), and at every
+touch node $A$** (this is what will make $\underline{\underline{\kappa}}$ sparse), and at every
 $x$ the four functions **sum to one**, $\sum_A N_A(x) = 1$.
 :::
 
@@ -282,7 +282,7 @@ length of the element.](`{python} fig_derivs_path`){#fig-c8-derivs width=84%}
   all-node matrix below is singular until a Dirichlet value is imposed.
 :::
 
-## Writing out $\underline{\underline{K}}\,\underline{d} = \underline{F}$
+## Writing out $\underline{\underline{\kappa}}\,\underline{d} = \underline{F}$
 
 ::: {.derivation}
 $$
@@ -382,7 +382,7 @@ assert np.allclose(Kasm, K, atol=tol)
 
 ## Evaluating the entries
 
-Every integrand left in $\underline{\underline{K}}$ is a product of two of the
+Every integrand left in $\underline{\underline{\kappa}}$ is a product of two of the
 piecewise-constant derivatives in @fig-c8-derivs. On any one element that product is
 itself **a constant**, so the integral over that element is just the constant times the
 element's length:
@@ -445,14 +445,14 @@ standing are the ones containing $f$, and those are what quadrature is for.
 :::
 
 ::: {.step}
-Notice that **all the integrals in $\underline{\underline{K}}$ look the same**, in some
+Notice that **all the integrals in $\underline{\underline{\kappa}}$ look the same**, in some
 way:
 :::
 
 ::: {.step .notes}
 - Dirichlet (known) boundary-condition data looks the same as the integrals in
-  $\underline{\underline{K}}$ — it is just $\int \nabla N_A \cdot
-  \underline{\underline{K}} \nabla N_B$ against a *known* coefficient $g_B$.
+  $\underline{\underline{\kappa}}$ — it is just $\int \nabla N_A \cdot
+  \underline{\underline{\kappa}} \nabla N_B$ against a *known* coefficient $g_B$.
 - Neumann (known-flux) boundary-condition data is a **number** in 1D — but a **curve** in
   2D and a **surface** in 3D.
 - Integrals with forcing functions on the right-hand side all look the same as each other.

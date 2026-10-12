@@ -31,7 +31,7 @@ IMGDIR = use_chapter("Class6")
 # Last time
 
 $(\mathrm{S}) \Rightarrow (\mathrm{W})$: given $f$, $g$, $h$, and
-$\underline{\underline{K}}$, let
+$\underline{\underline{\kappa}}$, let
 
 ::: {.derivation}
 $$
@@ -45,7 +45,7 @@ Find $u \in \mathcal{S}$ such that $\forall\, w \in \mathcal{V}$,
 
 ::: {.derivation}
 $$
-\int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega
+\int_\Omega \nabla w \cdot \underline{\underline{\kappa}}\nabla u\;d\Omega
 = \int_\Omega wf\;d\Omega + \int_{\Gamma_h} wh\;d\Gamma
 $$
 :::
@@ -60,7 +60,7 @@ $$
 
 ::: {.step}
 This is just shorthand: $a(\cdot,\cdot)$ is the **bilinear form**
-$a(w,u) = \int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega$,
+$a(w,u) = \int_\Omega \nabla w \cdot \underline{\underline{\kappa}}\nabla u\;d\Omega$,
 $(\cdot,\cdot)$ is the $L^2$ **inner product** $(w,f) = \int_\Omega wf\;d\Omega$, and
 $(\cdot,\cdot)_{\Gamma_h}$ is the same inner product taken over $\Gamma_h$ instead of
 $\Omega$. Bilinearity is what lets us pull the coefficients $c_A$, $d_B$ out of these
@@ -72,13 +72,13 @@ in $H^1(\Omega)$). Pick $\mathcal{S}^h \subset \mathcal{S}$,
 $\mathcal{V}^h \subset \mathcal{V}$ — *discrete*, e.g. sines and cosines, or piecewise
 polynomials.
 
-Given $f$, $g$, $h$, and $\underline{\underline{K}}$, find
+Given $f$, $g$, $h$, and $\underline{\underline{\kappa}}$, find
 $u^h \in \mathcal{S}^h \subset \mathcal{S}$ such that
 $\forall\, w^h \in \mathcal{V}^h$,
 
 ::: {.derivation}
 $$
-\int_\Omega \nabla w^h \cdot \underline{\underline{K}}\nabla u^h\;d\Omega
+\int_\Omega \nabla w^h \cdot \underline{\underline{\kappa}}\nabla u^h\;d\Omega
 = \int_\Omega w^h f\;d\Omega + \int_{\Gamma_h} w^h h\;d\Gamma
 \qquad \text{or} \qquad
 a(w^h, u^h) = (w^h, f) + (w^h, h)_{\Gamma_h}

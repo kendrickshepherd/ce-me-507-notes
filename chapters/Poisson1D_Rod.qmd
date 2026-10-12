@@ -1102,7 +1102,7 @@ rod = {
   const marks = [
     Plot.ruleY([0], {stroke: "#bbb"}),
     Plot.line(pts, {x: "x", y: "u", stroke: "#1a1a1a", strokeWidth: 2.6}),
-    Plot.dot(dirX.map(x => ({x, u: 1e3 * u(x)})), {x: "x", y: "u", r: 6, fill: "#4a7ba7"})
+    Plot.dot(dirX.map(x => ({x, u: 1e3 * u(x)})), {x: "x", y: "u", r: 6, fill: "#1e3a5f"})
   ];
   if (neuX !== null) {
     const d = (neuX === 0 ? 1 : -1) * 3;

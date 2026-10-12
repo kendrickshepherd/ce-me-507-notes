@@ -392,15 +392,15 @@ u &= g && \text{on } \Gamma_g && \leftarrow \text{known values} \\
 $$
 :::
 
-Or, more generally, for anisotropic behavior, assuming $\underline{\underline{K}}$ is also
+Or, more generally, for anisotropic behavior, assuming $\underline{\underline{\kappa}}$ is also
 known, find $u$ such that
 
 ::: {.derivation}
 $$
 \begin{aligned}
--\nabla \cdot \left(\underline{\underline{K}}\nabla u\right) &= f && \text{in } \Omega \\
+-\nabla \cdot \left(\underline{\underline{\kappa}}\nabla u\right) &= f && \text{in } \Omega \\
 u &= g && \text{on } \Gamma_g \\
-\nabla\left(\underline{\underline{K}}u\right)\cdot \underline{n} &= h && \text{on } \Gamma_h
+\nabla\left(\underline{\underline{\kappa}}u\right)\cdot \underline{n} &= h && \text{on } \Gamma_h
 \end{aligned}
 $$
 :::

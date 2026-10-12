@@ -31,12 +31,12 @@ IMGDIR = use_chapter("Class7")
 # Last time
 
 Pick $\mathcal{S}^h \subset \mathcal{S}$, $\mathcal{V}^h \subset \mathcal{V}$. Given
-$f$, $g$, $h$, $\underline{\underline{K}}$ as before, find $u^h \in \mathcal{S}^h \subset \mathcal{S}$
+$f$, $g$, $h$, $\underline{\underline{\kappa}}$ as before, find $u^h \in \mathcal{S}^h \subset \mathcal{S}$
 such that $\forall\, w^h \in \mathcal{V}^h \subset \mathcal{V}$,
 
 ::: {.derivation}
 $$
-\int_\Omega \nabla w^h \cdot \underline{\underline{K}}\nabla u^h\;d\Omega
+\int_\Omega \nabla w^h \cdot \underline{\underline{\kappa}}\nabla u^h\;d\Omega
 = \int_\Omega w f\;d\Omega + \int_{\Gamma_h} w h\;d\Gamma
 \qquad \text{or} \qquad
 a(w, u) = (w, f) + (w, h)_{\Gamma_h}
@@ -143,7 +143,7 @@ fig_examples_path = save(fig, "C7_Fig1_Examples.png")
 
 ::: {.derivation}
 $$
-\int_\Omega \nabla w^h \cdot \underline{\underline{K}} \nabla u^h\;d\Omega
+\int_\Omega \nabla w^h \cdot \underline{\underline{\kappa}} \nabla u^h\;d\Omega
 = \int_\Omega w^h f\;d\Omega + \int_{\Gamma_h} w^h h\;d\Gamma
 $$
 :::
@@ -153,7 +153,7 @@ Substitute the expansions for $w^h$ and $u^h = v^h + g^h$ — note $c_A$, $d_B$,
 
 ::: {.derivation}
 $$
-\int_\Omega \nabla\left(\sum_A c_A N_A\right) \cdot \underline{\underline{K}}
+\int_\Omega \nabla\left(\sum_A c_A N_A\right) \cdot \underline{\underline{\kappa}}
 \nabla\left(\sum_B d_B N_B + \sum_B g_B N_B\right) d\Omega
 = \int_\Omega \left(\sum_A c_A N_A\right) f\;d\Omega
 + \int_{\Gamma_h} \left(\sum_A c_A N_A\right) h\;d\Gamma
@@ -162,10 +162,10 @@ $$
 
 ::: {.derivation}
 $$
-\sum_A \sum_B c_A\left[\int_\Omega \nabla N_A \cdot \underline{\underline{K}} \nabla N_B\;d\Omega\right] d_B
+\sum_A \sum_B c_A\left[\int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}} \nabla N_B\;d\Omega\right] d_B
 = \sum_A c_A\left[\int_\Omega N_A f\;d\Omega\right]
 + \sum_A c_A\left[\int_{\Gamma_h} N_A h\;d\Gamma\right]
-- \sum_A \sum_B c_A\left[\int_\Omega \nabla N_A \cdot \underline{\underline{K}} \nabla N_B\;d\Omega\right] g_B
+- \sum_A \sum_B c_A\left[\int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}} \nabla N_B\;d\Omega\right] g_B
 $$
 :::
 
@@ -176,9 +176,9 @@ Collecting terms so that all of them are multiplied by $c_A$:
 
 ::: {.derivation}
 $$
-0 = \sum_A c_A \left[-\sum_B d_B \int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega
+0 = \sum_A c_A \left[-\sum_B d_B \int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}}\nabla N_B\;d\Omega
     + \int_\Omega N_A f\;d\Omega + \int_{\Gamma_h} N_A h\;d\Gamma
-    - \sum_B g_B \int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega\right]
+    - \sum_B g_B \int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}}\nabla N_B\;d\Omega\right]
 $$
 :::
 
@@ -201,9 +201,9 @@ Consequently, for any $A$ (an index of a basis function in $\mathcal{V}^h$), we 
 
 ::: {.derivation}
 $$
-\sum_B d_B\left[\int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega\right]
+\sum_B d_B\left[\int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}}\nabla N_B\;d\Omega\right]
 = \int_\Omega N_A f\;d\Omega + \int_{\Gamma_h} N_A h\;d\Gamma
-- \sum_B g_B\int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega
+- \sum_B g_B\int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}}\nabla N_B\;d\Omega
 $$
 :::
 
@@ -229,7 +229,7 @@ $$
 
 ::: {.derivation}
 $$
-\boxed{\underline{\underline{K}}\,\underline{d} = \underline{F}}
+\boxed{\underline{\underline{\kappa}}\,\underline{d} = \underline{F}}
 $$
 :::
 
@@ -237,7 +237,7 @@ $$
 To solve this equation, we will need numerical integration methods. The most general and
 effective methods for piecewise-polynomial functions are called **Gaussian quadrature
 methods**, and are the subject of a later class — after we've built up the machinery for
-assembling $\underline{\underline{K}}$ and $\underline{F}$ concretely.
+assembling $\underline{\underline{\kappa}}$ and $\underline{F}$ concretely.
 :::
 
 ```{python check_matrix}

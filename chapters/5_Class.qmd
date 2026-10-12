@@ -28,7 +28,7 @@ from notes_style import (use_chapter, save, tidy,
 IMGDIR = use_chapter("Class5")
 ```
 
-Last time, given $f$, $g$, $h$, and $\underline{\underline{K}}$, we let
+Last time, given $f$, $g$, $h$, and $\underline{\underline{\kappa}}$, we let
 
 ::: {.derivation}
 $$
@@ -44,7 +44,7 @@ such that for every $w \in \mathcal{V}$,
 ::: {.derivation}
 $$
 (\mathrm{W}) \qquad
-\int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega
+\int_\Omega \nabla w \cdot \underline{\underline{\kappa}}\nabla u\;d\Omega
 = \int_\Omega wf\;d\Omega + \int_{\Gamma_h} wh\;d\Gamma
 $$
 :::
@@ -74,7 +74,7 @@ multivariate-calculus form:
 
 ::: {.derivation}
 $$
-\int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega
+\int_\Omega \nabla w \cdot \underline{\underline{\kappa}}\nabla u\;d\Omega
 = \int_\Omega wf\;d\Omega + \int_{\Gamma_h} wh\;d\Gamma
 $$
 :::
@@ -86,21 +86,21 @@ boundary term can be extended to the whole boundary $\Gamma$ without changing an
 
 ::: {.derivation}
 $$
-\int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega
+\int_\Omega \nabla w \cdot \underline{\underline{\kappa}}\nabla u\;d\Omega
 = \int_\Omega wf\;d\Omega + \int_{\Gamma} wh\;d\Gamma
 \qquad\Longrightarrow\qquad
-0 = \int_\Omega \left(wf - \nabla w\cdot\underline{\underline{K}}\nabla u\right) d\Omega
+0 = \int_\Omega \left(wf - \nabla w\cdot\underline{\underline{\kappa}}\nabla u\right) d\Omega
     + \int_\Gamma wh\;d\Gamma
 $$
 :::
 
 Now run the **Divergence Theorem** in reverse — the same identity used last time, applied
-to pull $\nabla w \cdot \underline{\underline{K}}\nabla u$ back into a divergence:
+to pull $\nabla w \cdot \underline{\underline{\kappa}}\nabla u$ back into a divergence:
 
 ::: {.derivation}
 $$
-0 = \int_\Omega \left(wf + w\,\nabla\cdot\left(\underline{\underline{K}}\nabla u\right)\right) d\Omega
-    + \int_\Gamma \left(wh - w\left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n}\right)d\Gamma
+0 = \int_\Omega \left(wf + w\,\nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right)\right) d\Omega
+    + \int_\Gamma \left(wh - w\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\right)d\Gamma
 $$
 :::
 
@@ -113,20 +113,20 @@ $\phi \ge 0$, then $\beta = 0$ everywhere $\phi$ can be positive.
 
 ## Recovering the PDE on $\Omega$
 
-Pick $w = \left[f + \nabla\cdot(\underline{\underline{K}}\nabla u)\right]\phi$ for some
+Pick $w = \left[f + \nabla\cdot(\underline{\underline{\kappa}}\nabla u)\right]\phi$ for some
 smooth $\phi$ with $\phi > 0$ on $\Omega$ and $\phi = 0$ on $\Gamma$ (so that
 $w \in \mathcal{V} \cap H^1(\Omega)$). This choice makes the boundary integral vanish
 identically, leaving
 
 ::: {.derivation}
 $$
-0 = \int_\Omega \left(f + \nabla\cdot\left(\underline{\underline{K}}\nabla u\right)\right)^2 \phi\;d\Omega
+0 = \int_\Omega \left(f + \nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right)\right)^2 \phi\;d\Omega
 $$
 :::
 
 ::: {.step}
 But $\phi > 0$ on $\Omega$ and
-$\left(f + \nabla\cdot(\underline{\underline{K}}\nabla u)\right)^2 \ge 0$ everywhere.
+$\left(f + \nabla\cdot(\underline{\underline{\kappa}}\nabla u)\right)^2 \ge 0$ everywhere.
 An integral of a non-negative quantity that comes out to zero forces the integrand itself
 to be zero:
 :::
@@ -134,23 +134,23 @@ to be zero:
 ::: {.derivation}
 $$
 \Longrightarrow \qquad
-\left(f + \nabla\cdot\left(\underline{\underline{K}}\nabla u\right)\right)^2 = 0
+\left(f + \nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right)\right)^2 = 0
 \qquad\Longrightarrow\qquad
-\boxed{-\nabla\cdot\left(\underline{\underline{K}}\nabla u\right) = f} \qquad \text{on } \Omega
+\boxed{-\nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right) = f} \qquad \text{on } \Omega
 $$
 :::
 
 ## Recovering the flux condition on $\Gamma_h$
 
 Next, pick
-$w = \left[h - \left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n}\right]\psi$
+$w = \left[h - \left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\right]\psi$
 for some smooth $\psi$ with $\psi > 0$ on $\Gamma_h$ and $\psi = 0$ on $\Gamma_g$. Because
 the PDE result above already makes the domain integral vanish for **any** $w$, this choice
 leaves only
 
 ::: {.derivation}
 $$
-0 = \int_{\Gamma_h} \left[h - \left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n}\right]^2 \psi\;d\Gamma
+0 = \int_{\Gamma_h} \left[h - \left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\right]^2 \psi\;d\Gamma
 $$
 :::
 
@@ -161,7 +161,7 @@ By the same argument — $\psi > 0$ on $\Gamma_h$, and the bracketed quantity is
 ::: {.derivation}
 $$
 \Longrightarrow \qquad
-\boxed{\left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n} = h} \qquad \text{on } \Gamma_h
+\boxed{\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = h} \qquad \text{on } \Gamma_h
 $$
 :::
 
@@ -169,12 +169,12 @@ $$
 
 ::: {.derivation}
 $$
--\nabla\cdot\left(\underline{\underline{K}}\nabla u\right) = f \quad \text{on } \Omega
+-\nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right) = f \quad \text{on } \Omega
 \qquad\text{(from the domain argument)}
 $$
 
 $$
-\left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n} = h \quad \text{on } \Gamma_h
+\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = h \quad \text{on } \Gamma_h
 \qquad\text{(from the boundary argument)}
 $$
 
@@ -254,11 +254,11 @@ fig_dense_path = save(fig, "C5_Fig1_PiecewiseApprox.png")
 $$
 (\mathrm{G}) \qquad
 \begin{array}{l}
-\text{Given } f,\, g,\, h,\, \underline{\underline{K}} \text{ as in } (\mathrm{W}),
+\text{Given } f,\, g,\, h,\, \underline{\underline{\kappa}} \text{ as in } (\mathrm{W}),
 \text{ find } u^h = v^h + g^h, \text{ with } v^h \in \mathcal{V}^h \subset \mathcal{V},\;
 g^h \in \mathcal{S}^h \subset \mathcal{S} \\[6pt]
 \text{such that } \forall\, w^h \in \mathcal{V}^h \subset \mathcal{V}, \\[6pt]
-\qquad \displaystyle\int_\Omega w^h_{,i}\,K_{ij}\,u^h_{,j}\;d\Omega
+\qquad \displaystyle\int_\Omega w^h_{,i}\,\kappa_{ij}\,u^h_{,j}\;d\Omega
 = \int_\Omega w^h f\;d\Omega + \int_{\Gamma_h} w^h h\;d\Gamma
 \end{array}
 $$
