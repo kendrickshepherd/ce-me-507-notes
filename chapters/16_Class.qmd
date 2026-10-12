@@ -131,7 +131,7 @@ function draw(){
     ', so its derivative is piecewise degree '+(P-1)+
     '. <b>The function is continuous and the derivative is not</b> — the breaks in the lower '+
     'curve are actual discontinuities. Raising the degree makes the jumps smaller '+
-    'but never removes them, because nothing in a Lagrange basis forces neighbouring elements '+
+    'but never removes them, because nothing in a Lagrange basis forces neighboring elements '+
     'to agree on a slope.';
 }
 document.getElementById('b1deg').addEventListener('click',function(ev){
@@ -257,9 +257,9 @@ function draw(){
   if(!ERR){
     var ul=0; for(var q=0;q<N;q++) ul=Math.max(ul,Math.abs(U[q]));
     segU.forEach(function(sg){ sg.forEach(function(pt){ ul=Math.max(ul,Math.abs(pt[1])); }); });
-    panel(30,195,ul*1.12,'u(x) grey, and uʰ(x) blue',U,segU,false);
+    panel(30,195,ul*1.12,'u(x) gray, and uʰ(x) blue',U,segU,false);
     var dl=Math.max.apply(null,DU.map(Math.abs))*1.15;
-    panel(250,415,dl,'du/dx grey, and duʰ/dx red',DU,segD,true);
+    panel(250,415,dl,'du/dx gray, and duʰ/dx red',DU,segD,true);
   } else {
     panel(30,195,Math.max(e0,1e-6)*1.2,'error in u',null,segE0,false);
     panel(250,415,Math.max(e1,1e-6)*1.2,'error in du/dx',null,segE1,true);

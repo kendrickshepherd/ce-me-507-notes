@@ -314,7 +314,7 @@ approximation space against the variational form, and both of its arguments grow
 This is a third, separate limiter sitting outside that estimate entirely.
 
 A worked example: suppose the exact solution happens to lie in $H^{2}$, and we
-discretise it with quadratic elements, $k=2$. Then $\min(k+1, r) = \min(3, 2) = 2$, so
+discretize it with quadratic elements, $k=2$. Then $\min(k+1, r) = \min(3, 2) = 2$, so
 
 $$ \|e\|_{L^2} \leq C\,h^{2}\|u\|_{H^2}, \qquad \|e\|_{H^1} \leq C\,h^{1}\|u\|_{H^2} , $$
 

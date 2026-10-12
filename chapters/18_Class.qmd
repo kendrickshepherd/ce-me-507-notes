@@ -1,0 +1,501 @@
+---
+title: "Class 18: Manufactured Solutions and Galerkin Orthogonality"
+subtitle: "Where the exact solution comes from, and why the estimate describes our answer"
+format:
+  html:
+    page-layout: full
+    toc: true
+---
+
+The discussion in Class 17 did not cover two important parts of convergence analysis.
+First, we spent a whole class measuring how far $u^h$ is from $u$, without ever saying where $u$ is supposed to come from. 
+On a real problem we don't actually have $u$, and that is why we running the solver in the first place. 
+The second is theoretical: the error estimate we wrote down is a statement about *polynomials*, and we never justified using it to describe the answer our solver actually produced.
+Today will cover both of these issues.
+
+## Manufacturing a solution
+
+### Running the problem backwards
+
+Normally you are handed $f$, $\mathcal{g}$ and $\mathcal{h}$, and you go looking for $u$.
+That is the hard direction, and in general there is no formula at the end of it.
+
+The trick is to run the arrow the other way. **Pick the answer first, then work out which
+problem it solves.** Choosing $u$ is free --- you can write down any function you like --- and
+once you have it, finding the data that produces it is just differentiation, which is easy.
+
+For the problem we have been solving all semester,
+
+$$
+u_{,xx} + f = 0 \ \text{ on } \Omega = (0,L), \qquad
+u(L) = \mathcal{g}, \qquad -u_{,x}(0) = \mathcal{h},
+$$
+
+the recipe is three steps:
+
+1. **Choose** any $u$ you like, as long as it is smooth enough to differentiate twice.
+2. **Differentiate** it twice and set $f = -u_{,xx}$.
+3. **Evaluate** at the two ends: $\mathcal{g} = u(L)$ and $\mathcal{h} = -u_{,x}(0)$.
+
+Now feed $f$, $\mathcal{g}$ and $\mathcal{h}$ to your solver. It has no idea anything unusual
+has happened --- it is solving an ordinary boundary value problem. But *you* know the exact
+answer, so you can subtract it from $u^h$ and measure the error for real.
+
+This is called a **manufactured solution**, and it is how essentially all finite element
+software is verified.
+
+### A worked example
+
+Take
+
+$$ u(x) = \sin(\pi x) \qquad \text{on } \Omega = (0,1) . $$
+
+Differentiate twice:
+
+$$ u_{,x} = \pi \cos(\pi x), \qquad u_{,xx} = -\pi^2 \sin(\pi x), $$
+
+so the forcing that produces this solution is
+
+$$ f = -u_{,xx} = \pi^2 \sin(\pi x) . $$
+
+The boundary data comes straight from evaluating:
+
+$$ \mathcal{g} = u(1) = \sin(\pi) = 0, \qquad \mathcal{h} = -u_{,x}(0) = -\pi . $$
+
+That is the whole derivation. Hand $f = \pi^2\sin(\pi x)$, $\mathcal{g} = 0$ and
+$\mathcal{h} = -\pi$ to the solver, run the convergence study from Class 17, and the
+measured rates come out as
+
+| $p$ | $H^0$ rate | $H^1$ rate | predicted |
+|---|---|---|---|
+| 1 | 2.00 | 1.00 | 2, 1 |
+| 2 | 3.00 | 2.00 | 3, 2 |
+| 3 | 3.98 | 3.00 | 4, 3 |
+
+exactly the $\beta = p + 1 - s$ the estimate promised.
+
+The picture below is that solve. The left panels are the solution and its derivative; the
+convergence plots underneath are the same study run out to 64 elements, with a marker
+showing where the current choice of degree and mesh sits.
+
+```{=html}
+<style>
+.bw{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;--acc:#b8322a;--blue:#2b5fa8;
+    max-width:900px;margin:0 auto;color:var(--ink)}
+.bw .bar{display:flex;flex-wrap:wrap;gap:9px 20px;align-items:center;padding:11px 14px;
+  background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.bw .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey)}
+.bw .seg{display:inline-flex;border:1px solid var(--faint);border-radius:6px;overflow:hidden;background:#fff}
+.bw .seg button{border:0;background:#fff;padding:5px 12px;font:inherit;font-size:13.5px;cursor:pointer;
+  color:var(--grey);border-right:1px solid var(--faint)}
+.bw .seg button:last-child{border-right:0}
+.bw .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.bw input[type=range]{width:150px;vertical-align:middle}
+.bw .val{font:600 13px ui-monospace,Menlo,monospace;color:var(--ink);min-width:2.2em;display:inline-block}
+.bw svg{display:block;width:100%;height:auto;border:1px solid var(--faint);border-radius:8px;background:#fff;margin-bottom:10px}
+.bw .cap{font-size:13px;color:var(--grey);line-height:1.55;margin:9px 2px 22px}
+.bw .cap b{color:var(--ink)}
+.bw .nums{font:12.5px ui-monospace,Menlo,monospace;color:var(--ink)}
+</style>
+
+<div class="bw">
+  <div class="bar">
+    <b>DEGREE</b>
+    <span class="seg" id="w18deg">
+      <button data-p="1" aria-pressed="true">p=1</button>
+      <button data-p="2" aria-pressed="false">p=2</button>
+      <button data-p="3" aria-pressed="false">p=3</button>
+      <button data-p="4" aria-pressed="false">p=4</button>
+      <button data-p="5" aria-pressed="false">p=5</button>
+    </span>
+    <b>ELEMENTS</b> <input type="range" id="w18ne" min="2" max="8" value="3"><span class="val" id="w18nev">3</span>
+    <label style="font-size:13px;color:#6b7684"><input type="checkbox" id="w18err"> show the error instead</label>
+  </div>
+  <svg id="w18top" viewBox="0 0 880 400" role="img" aria-label="The manufactured solution and its derivative, approximated"></svg>
+  <svg id="w18bot" viewBox="0 0 880 400" role="img" aria-label="Convergence of the error in both norms"></svg>
+  <div class="cap" id="w18cap"></div>
+</div>
+
+<script>
+(function(){
+var SHOW=[2, 3, 4, 5, 6, 7, 8];
+var CONV=[2, 3, 4, 5, 6, 7, 8, 12, 16, 24, 32, 48, 64];
+var COEF={"1_2":[-7.1637e-08,1.000000128,0.0],
+ "1_3":[-2.658e-09,0.866025407199,0.866025408085,0.0],
+ "1_4":[-2.62e-10,0.707106781405,1.000000000456,0.707106781536,0.0],
+ "1_5":[-4.4e-11,0.587785252315,0.951056516362,0.95105651637,0.587785252341,0.0],
+ "1_6":[-1e-11,0.500000000003,0.866025403797,1.000000000017,0.866025403801,0.50000000001,0.0],
+ "1_7":[-3e-12,0.433883739118,0.781831482471,0.974927912187,0.974927912187,0.781831482472,0.43388373912,0.0],
+ "1_8":[-1e-12,0.382683432365,0.707106781187,0.923879532513,1.000000000002,0.923879532513,0.707106781188,0.382683432366,0.0],
+ "2_2":[1.24e-10,0.704929660165,0.999999999699,0.704929660102,0.0],
+ "2_3":[2e-12,0.499690892988,0.866025403781,0.999381785973,0.86602540378,0.499690892986,0.0],
+ "2_4":[0.0,0.382608147571,0.707106781186,0.923697778941,1.0,0.923697778941,0.707106781186,0.382608147571,0.0],
+ "2_5":[0.0,0.308992027804,0.587785252292,0.808951631042,0.951056516295,0.999919206478,0.951056516295,0.808951631042,0.587785252292,0.308992027804,0.0],
+ "2_6":[-0.0,0.258808946256,0.5,0.707079190625,0.866025403784,0.965888136881,1.0,0.965888136881,0.866025403784,0.707079190625,0.5,0.258808946256,0.0],
+ "2_7":[-0.0,0.22251624328,0.433883739118,0.623476658876,0.781831482468,0.900949875743,0.974927912182,0.999978920293,0.974927912182,0.900949875743,0.781831482468,0.623476658876,0.433883739118,0.22251624328,0.0],
+ "2_8":[-0.0,0.19508791002,0.382683432365,0.555563364235,0.707106781187,0.83145933244,0.923879532511,0.980773154479,1.0,0.980773154479,0.923879532511,0.83145933244,0.707106781187,0.555563364235,0.382683432365,0.19508791002,0.0],
+ "3_2":[-0.0,0.499308518459,0.865010874516,1.0,0.865010874516,0.499308518459,0.0],
+ "3_3":[-0.0,0.341924890129,0.642639520011,0.866025403784,0.98456441014,0.98456441014,0.866025403784,0.642639520011,0.341924890129,0.0],
+ "3_4":[0.0,0.258796084569,0.499963597911,0.707106781187,0.865956530597,0.965851385427,1.0,0.965851385427,0.865956530597,0.707106781187,0.499963597911,0.258796084569,0.0],
+ "3_5":[0.0,0.207904112563,0.406724520454,0.587785252292,0.743120440981,0.865998210715,0.951056516295,0.99449001868,0.99449001868,0.951056516295,0.865998210715,0.743120440981,0.587785252292,0.406724520454,0.207904112563,0.0],
+ "3_6":[0.0,0.173645120177,0.342015228723,0.5,0.642777399356,0.766032873287,0.866025403784,0.939677993464,0.984792628078,1.0,0.984792628078,0.939677993464,0.866025403784,0.766032873287,0.642777399356,0.5,0.342015228723,0.173645120177,0.0],
+ "3_7":[-0.0,0.14904084824,0.294752888604,0.433883739118,0.563315217225,0.680167200954,0.781831482468,0.86601809883,0.930866057451,0.974927912182,0.997195474947,0.997195474947,0.974927912182,0.930866057451,0.86601809883,0.781831482468,0.680167200954,0.563315217225,0.433883739118,0.294752888604,0.14904084824,0.0],
+ "3_8":[-0.0,0.130525463833,0.258817868687,0.382683432365,0.499997477701,0.60875852689,0.707106781187,0.793349408077,0.866021217783,0.923879532511,0.965921082804,0.991440028771,1.0,0.991440028771,0.965921082804,0.923879532511,0.866021217783,0.793349408077,0.707106781187,0.60875852689,0.499997477701,0.382683432365,0.258817868687,0.130525463833,0.0],
+ "4_2":[-0.0,0.382807526513,0.70709603312,0.923774570851,1.0,0.923774570851,0.70709603312,0.382807526513,0.0],
+ "4_3":[0.0,0.258838420149,0.49999932493,0.707088608263,0.866025403784,0.965927028411,0.999998649859,0.965927028411,0.866025403784,0.707088608263,0.49999932493,0.258838420149,0.0],
+ "4_4":[-0.0,0.195095184063,0.382683340031,0.555565535417,0.707106781187,0.831471790672,0.923879309596,0.980783499036,1.0,0.980783499036,0.923879309596,0.831471790672,0.707106781187,0.555565535417,0.382683340031,0.195095184063,0.0],
+ "4_5":[-0.0,0.156436099042,0.309016974792,0.453988900615,0.587785252292,0.707107825933,0.809016943107,0.891005570753,0.951056516295,0.987688397028,0.99999993663,0.987688397028,0.951056516295,0.891005570753,0.809016943107,0.707107825933,0.587785252292,0.453988900615,0.309016974792,0.156436099042,0.0],
+ "4_6":[-0.0,0.130526857875,0.258819039604,0.382682776503,0.5,0.608761926096,0.707106766164,0.79335286996,0.866025403784,0.923879727836,0.965925805768,0.991444702599,1.0,0.991444702599,0.965925805769,0.923879727836,0.866025403784,0.79335286996,0.707106766164,0.608761926096,0.5,0.382682776503,0.258819039604,0.130526857875,0.0],
+ "4_7":[0.0,0.111964786598,0.22252093208,0.330278754802,0.433883739118,0.532032328854,0.623489796603,0.70710653821,0.781831482468,0.846724343432,0.900968860307,0.943883199633,0.974927912182,0.993712217401,0.99999999157,0.993712217401,0.974927912182,0.943883199633,0.900968860307,0.846724343432,0.781831482468,0.70710653821,0.623489796603,0.532032328854,0.433883739118,0.330278754802,0.22252093208,0.111964786598,0.0],
+ "4_8":[0.0,0.098017300426,0.195090321278,0.290284518473,0.382683432365,0.471396873865,0.555570230917,0.634393150871,0.707106781187,0.77301054648,0.831469609156,0.881921176836,0.923879532511,0.956940370753,0.980785276691,0.995184698264,1.0,0.995184698264,0.980785276691,0.956940370753,0.923879532511,0.881921176836,0.831469609156,0.77301054648,0.707106781187,0.634393150871,0.555570230917,0.471396873865,0.382683432365,0.290284518473,0.195090321278,0.098017300426,0.0],
+ "5_2":[-0.0,0.309025586815,0.587780946022,0.809011549734,0.951066008573,1.0,0.951066008573,0.809011549734,0.587780946022,0.309025586815,0.0],
+ "5_3":[-0.0,0.207912227098,0.406736377683,0.58778490446,0.743145426933,0.866025403784,0.951057654031,0.994521282143,0.994521282143,0.951057654031,0.866025403784,0.743145426933,0.58778490446,0.406736377683,0.207912227098,0.0],
+ "5_4":[-0.0,0.156434538235,0.309016958309,0.453990451892,0.587785334803,0.707106781187,0.809017180399,0.891006425337,0.951056412563,0.987688530477,1.0,0.987688530477,0.951056412563,0.891006425337,0.809017180399,0.707106781187,0.587785334803,0.453990451892,0.309016958309,0.156434538235,0.0],
+ "5_5":[-0.0,0.125333249073,0.248689879539,0.368124542511,0.481753691624,0.587785252292,0.684547148544,0.770513220262,0.844327901414,0.904827096327,0.951056516295,0.982287304174,0.998026699627,0.998026699627,0.982287304174,0.951056516295,0.904827096327,0.844327901414,0.770513220262,0.684547148544,0.587785252292,0.481753691624,0.368124542511,0.248689879539,0.125333249073,0.0],
+ "5_6":[-0.0,0.10452846762,0.20791168868,0.309016991514,0.406736647999,0.5,0.587785264754,0.669130599795,0.743144818385,0.809017007255,0.866025403784,0.913545474875,0.951056507065,0.97814759131,0.994521912754,1.0,0.994521912754,0.97814759131,0.951056507065,0.913545474875,0.866025403784,0.809017007255,0.743144818385,0.669130599795,0.587785264754,0.5,0.406736647999,0.309016991514,0.20791168868,0.10452846762,0.0],
+ "5_7":[0.0,0.089639310388,0.17855689407,0.26603684459,0.351374825762,0.433883739118,0.512899281761,0.587785250003,0.657938723451,0.72279486834,0.781831482468,0.834573260085,0.880595528459,0.919527769044,0.951056522746,0.974927912182,0.990949768879,0.998993062709,0.998993062709,0.990949768879,0.974927912182,0.951056522746,0.919527769044,0.880595528459,0.834573260085,0.781831482468,0.72279486834,0.657938723451,0.587785250003,0.512899281761,0.433883739118,0.351374825762,0.26603684459,0.17855689407,0.089639310388,0.0],
+ "5_8":[-0.0,0.078459096312,0.156434464753,0.233445363471,0.309016995036,0.382683432365,0.453990501481,0.522498563801,0.587785251295,0.649448050137,0.707106781186,0.760405968233,0.809016992972,0.852640162896,0.891006526865,0.923879532511,0.951056519419,0.97236991872,0.987688338898,0.996917336872,1.0,0.996917336872,0.987688338898,0.97236991872,0.951056519419,0.923879532511,0.891006526865,0.852640162896,0.809016992972,0.760405968233,0.707106781186,0.649448050137,0.587785251295,0.522498563802,0.453990501481,0.382683432365,0.309016995037,0.233445363471,0.156434464754,0.078459096312,0.0]};
+var ERR={1:{L2:[1.50877e-01,6.91087e-02,3.92844e-02,2.52644e-02,1.75910e-02,1.29446e-02,9.92092e-03,4.41755e-03,2.48650e-03,1.10563e-03,6.22018e-04,2.76485e-04,1.55529e-04],H1:[9.78553e-01,6.63007e-01,5.00054e-01,4.01080e-01,3.34703e-01,2.87131e-01,2.51378e-01,1.67752e-01,1.25858e-01,8.39260e-02,6.29500e-02,4.19693e-02,3.14776e-02]},
+ 2:{L2:[1.51858e-02,4.59333e-03,1.95183e-03,1.00268e-03,5.81304e-04,3.66469e-04,2.45680e-04,7.28876e-05,3.07633e-05,9.11797e-06,3.84708e-06,1.13997e-06,4.80937e-07],H1:[1.97774e-01,8.94936e-02,5.06574e-02,3.25151e-02,2.26156e-02,1.66314e-02,1.27413e-02,5.66913e-03,3.19014e-03,1.41824e-03,7.97836e-04,3.54619e-04,1.99478e-04]},
+ 3:{L2:[1.38809e-03,2.78683e-04,8.86795e-05,3.64187e-05,1.75881e-05,9.50180e-06,5.57289e-06,1.10193e-06,3.48783e-07,6.89128e-08,2.18064e-08,4.30771e-09,1.36301e-09],H1:[2.63690e-02,7.93570e-03,3.36616e-03,1.72782e-03,1.00127e-03,6.31056e-04,4.22985e-04,1.25451e-04,5.29425e-05,1.56905e-05,6.61998e-06,1.96160e-06,8.27566e-07]},
+ 4:{L2:[1.05517e-04,1.40845e-05,3.35817e-06,1.10282e-06,4.43725e-07,2.05443e-07,1.05423e-07,1.38945e-08,3.29821e-09,4.34424e-10,1.03099e-10,1.35818e-11,3.40404e-12],H1:[2.61939e-03,5.24399e-04,1.66704e-04,6.84302e-05,3.30396e-05,1.78466e-05,1.04662e-05,2.06913e-06,6.54878e-07,1.29386e-07,4.09414e-08,8.08762e-09,2.55903e-09]},
+ 5:{L2:[6.78003e-06,6.02191e-07,1.07614e-07,2.82635e-08,9.47506e-09,3.75984e-09,1.68807e-09,1.48306e-10,2.64038e-11,2.52052e-12,1.03305e-12,1.35703e-12,1.62396e-12],H1:[2.07401e-04,2.76336e-05,6.58449e-06,2.16169e-06,8.69630e-07,4.02597e-07,2.06578e-07,2.72236e-08,6.46195e-09,8.51117e-10,2.01998e-10,2.67569e-11,7.09750e-12]}};
+var P=1, NE=3, SHOWERR=false;
+var INK='#18202b', GREY='#6b7684', FAINT='#dfe4ea', ACC='#b8322a', BLUE='#2b5fa8';
+var PC=['#2b5fa8','#b8322a','#2f7d4f','#8a5a9e','#c27a12'];
+var PI=Math.PI;
+function u(x){ return Math.sin(PI*x); }
+function du(x){ return PI*Math.cos(PI*x); }
+
+function nodes(p){ var v=[]; for(var i=0;i<=p;i++) v.push(-1+2*i/p); return v; }
+function lag(p,a,xi){ var n=nodes(p),v=1;
+  for(var b=0;b<=p;b++) if(b!==a) v*=(xi-n[b])/(n[a]-n[b]);
+  return v; }
+function dlag(p,a,xi){ var n=nodes(p),s=0;
+  for(var c=0;c<=p;c++){ if(c===a) continue;
+    var t=1/(n[a]-n[c]);
+    for(var b=0;b<=p;b++) if(b!==a&&b!==c) t*=(xi-n[b])/(n[a]-n[b]);
+    s+=t; }
+  return s; }
+function D(){ return COEF[P+'_'+NE]; }
+// IEN(p,a,e) = a + p*e, exactly as in the course code
+function uhLocal(e,xi,deriv){
+  var d=D(), v=0, he=1/NE;
+  for(var a=0;a<=P;a++){
+    var c=d[a+P*e];
+    v += deriv ? c*dlag(P,a,xi)*(2/he) : c*lag(P,a,xi);
+  }
+  return v; }
+
+function el(n,at){ var e=document.createElementNS('http://www.w3.org/2000/svg',n);
+  for(var k in at) e.setAttribute(k,at[k]); return e; }
+function txt(x,y,s,o){ o=o||{};
+  var t=el('text',{x:x,y:y,'font-size':o.fs||12,fill:o.fill||GREY,
+    'text-anchor':o.ta||'start','font-family':o.ff||'system-ui, sans-serif'});
+  if(o.fw) t.setAttribute('font-weight',o.fw);
+  t.textContent=s; return t; }
+
+// ---------------- top: solution and derivative ----------------
+function panel(g,X0,X1,Y0,Y1,title,deriv){
+  var exact = deriv?du:u;
+  // sample the exact function and the approximation element by element,
+  // so the discontinuities in the derivative are not bridged
+  var lo=1e30, hi=-1e30, segs=[], i, e, k, xi, x, ve, va, pts;
+  var NS=24;
+  for(e=0;e<NE;e++){
+    pts=[];
+    for(k=0;k<=NS;k++){
+      xi=-1+2*k/NS; x=(e+(xi+1)/2)/NE;
+      ve=exact(x); va=uhLocal(e,xi,deriv);
+      var y = SHOWERR ? (ve-va) : va;
+      pts.push([x,y]);
+      if(y<lo)lo=y; if(y>hi)hi=y;
+      if(!SHOWERR){ if(ve<lo)lo=ve; if(ve>hi)hi=ve; }
+    }
+    segs.push(pts);
+  }
+  if(!SHOWERR){ for(k=0;k<=240;k++){ var xx=k/240, vv=exact(xx);
+    if(vv<lo)lo=vv; if(vv>hi)hi=vv; } }
+  if(hi-lo<1e-14){ hi=lo+1; lo-=0; }
+  var pad=(hi-lo)*0.14; lo-=pad; hi+=pad;
+  function sx(x){ return X0+x*(X1-X0); }
+  function sy(y){ return Y1-(y-lo)/(hi-lo)*(Y1-Y0); }
+
+  g.appendChild(el('rect',{x:X0,y:Y0,width:X1-X0,height:Y1-Y0,fill:'#fff',stroke:FAINT}));
+  g.appendChild(txt((X0+X1)/2,Y0-12,title,{ta:'middle',fs:13,fill:INK,fw:600}));
+  // element boundaries
+  for(e=0;e<=NE;e++){ var xb=sx(e/NE);
+    g.appendChild(el('line',{x1:xb,y1:Y0,x2:xb,y2:Y1,stroke:FAINT,'stroke-width':1})); }
+  // zero line
+  if(lo<0&&hi>0){ g.appendChild(el('line',{x1:X0,y1:sy(0),x2:X1,y2:sy(0),
+    stroke:FAINT,'stroke-width':1,'stroke-dasharray':'3 3'})); }
+  // approximation (or error), one path per element
+  for(i=0;i<segs.length;i++){
+    var dd='';
+    for(k=0;k<segs[i].length;k++) dd+=(k?'L':'M')+sx(segs[i][k][0]).toFixed(2)+' '+sy(segs[i][k][1]).toFixed(2);
+    g.appendChild(el('path',{d:dd,fill:'none',stroke:SHOWERR?ACC:PC[P-1],'stroke-width':2}));
+  }
+  // exact curve (only when showing values)
+  if(!SHOWERR){
+    var d='';
+    for(k=0;k<=240;k++){ var xv=k/240; d+=(k?'L':'M')+sx(xv).toFixed(2)+' '+sy(exact(xv)).toFixed(2); }
+    g.appendChild(el('path',{d:d,fill:'none',stroke:GREY,'stroke-width':1.6,'stroke-dasharray':'5 4'}));
+  }
+  // nodes
+  if(!SHOWERR && !deriv){
+    for(e=0;e<NE;e++) for(var a=0;a<=P;a++){
+      if(e>0&&a===0) continue;
+      var xn=(e+a/P)/NE;
+      g.appendChild(el('circle',{cx:sx(xn),cy:sy(D()[a+P*e]),r:2.6,fill:PC[P-1]}));
+    }
+  }
+  // y labels
+  g.appendChild(txt(X0-6,Y0+4,hi.toExponential(1),{ta:'end',fs:10}));
+  g.appendChild(txt(X0-6,Y1,lo.toExponential(1),{ta:'end',fs:10}));
+  g.appendChild(txt(X0,Y1+15,'0',{fs:11}));
+  g.appendChild(txt(X1,Y1+15,'1',{ta:'end',fs:11}));
+  g.appendChild(txt((X0+X1)/2,Y1+15,'x',{ta:'middle',fs:11}));
+}
+
+function drawTop(){
+  var s=document.getElementById('w18top'); s.innerHTML='';
+  var g=el('g',{}); s.appendChild(g);
+  panel(g,56,418,56,330, SHOWERR?'error in the solution':'u = sin(πx) and uʰ', false);
+  panel(g,500,862,56,330, SHOWERR?'error in the derivative':'uₒₓ and the derivative of uʰ', true);
+  var lg=el('g',{}); s.appendChild(lg);
+  if(!SHOWERR){
+    lg.appendChild(el('line',{x1:56,y1:368,x2:86,y2:368,stroke:GREY,'stroke-width':1.6,'stroke-dasharray':'5 4'}));
+    lg.appendChild(txt(92,372,'exact',{fs:12}));
+    lg.appendChild(el('line',{x1:150,y1:368,x2:180,y2:368,stroke:PC[P-1],'stroke-width':2}));
+    lg.appendChild(txt(186,372,'finite element solution, p='+P+', '+NE+' elements',{fs:12}));
+  } else {
+    lg.appendChild(el('line',{x1:56,y1:368,x2:86,y2:368,stroke:ACC,'stroke-width':2}));
+    lg.appendChild(txt(92,372,'u − uʰ, drawn one element at a time',{fs:12}));
+  }
+}
+
+// ---------------- bottom: convergence ----------------
+var YMIN=1e-13, YMAX=10;
+function cpanel(g,X0,X1,Y0,Y1,key,title){
+  function sx(n){ return X0+(Math.log(n)-Math.log(2))/(Math.log(64)-Math.log(2))*(X1-X0); }
+  function sy(v){ v=Math.max(v,YMIN);
+    return Y1-(Math.log10(v)-Math.log10(YMIN))/(Math.log10(YMAX)-Math.log10(YMIN))*(Y1-Y0); }
+  g.appendChild(el('rect',{x:X0,y:Y0,width:X1-X0,height:Y1-Y0,fill:'#fff',stroke:FAINT}));
+  g.appendChild(txt((X0+X1)/2,Y0-12,title,{ta:'middle',fs:13,fill:INK,fw:600}));
+  var k,p,i;
+  for(k=-13;k<=1;k+=3){
+    var yy=sy(Math.pow(10,k));
+    g.appendChild(el('line',{x1:X0,y1:yy,x2:X1,y2:yy,stroke:FAINT,'stroke-width':1}));
+    g.appendChild(txt(X0-5,yy+3,'1e'+k,{ta:'end',fs:9.5}));
+  }
+  var ticks=[2,4,8,16,32,64];
+  for(i=0;i<ticks.length;i++){
+    var xx=sx(ticks[i]);
+    g.appendChild(el('line',{x1:xx,y1:Y0,x2:xx,y2:Y1,stroke:FAINT,'stroke-width':1}));
+    g.appendChild(txt(xx,Y1+14,''+ticks[i],{ta:'middle',fs:10}));
+  }
+  g.appendChild(txt((X0+X1)/2,Y1+30,'number of elements',{ta:'middle',fs:11}));
+  var endy=[];
+  for(p=1;p<=5;p++){
+    var a=ERR[p][key], d='';
+    for(i=0;i<CONV.length;i++) d+=(i?'L':'M')+sx(CONV[i]).toFixed(2)+' '+sy(a[i]).toFixed(2);
+    g.appendChild(el('path',{d:d,fill:'none',stroke:PC[p-1],
+      'stroke-width':(p===P?2.6:1.2),opacity:(p===P?1:0.42)}));
+    endy.push(sy(a[a.length-1]));
+  }
+  // p=4 and p=5 both bottom out, so their labels would land on top of each other
+  for(i=1;i<endy.length;i++) if(endy[i]-endy[i-1]<11) endy[i]=endy[i-1]+11;
+  for(p=1;p<=5;p++)
+    g.appendChild(txt(sx(64)+4,endy[p-1]+3,'p='+p,{fs:10,fill:PC[p-1]}));
+  var j=CONV.indexOf(NE), cv=ERR[P][key][j];
+  g.appendChild(el('circle',{cx:sx(NE),cy:sy(cv),r:6.5,fill:'none',stroke:INK,'stroke-width':1.8}));
+  g.appendChild(el('circle',{cx:sx(NE),cy:sy(cv),r:2.6,fill:INK}));
+}
+
+function drawBot(){
+  var s=document.getElementById('w18bot'); s.innerHTML='';
+  var g=el('g',{}); s.appendChild(g);
+  cpanel(g,56,400,56,330,'L2','error in H⁰ (the L² norm)');
+  cpanel(g,500,844,56,330,'H1','error in H¹');
+}
+
+function cap(){
+  var j=CONV.indexOf(NE);
+  var e0=ERR[P]['L2'][j], e1=ERR[P]['H1'][j];
+  var k=CONV.indexOf(32), kk=CONV.indexOf(64);
+  var r0=Math.log(ERR[P]['L2'][k]/ERR[P]['L2'][kk])/Math.log(2);
+  var r1=Math.log(ERR[P]['H1'][k]/ERR[P]['H1'][kk])/Math.log(2);
+  var s='<b>p = '+P+', '+NE+' elements.</b> '+
+    'Error here is '+e0.toExponential(2)+' in H⁰ and '+e1.toExponential(2)+' in H¹. '+
+    'Between 32 and 64 elements the curves above have slope '+r0.toFixed(2)+' and '+r1.toFixed(2)+
+    ', against the predicted '+(P+1)+' and '+P+'. ';
+  if(P>=4) s+='<b>Notice the H⁰ curve flattening at the bottom right.</b> '+
+    'At this degree the error reaches roughly 10⁻¹² after a few refinements, which is as '+
+    'small as double precision can represent it. The slope there is telling you about '+
+    'arithmetic, not about the method — at p = 5 it even turns upward.';
+  else s+='The finite element solution also passes through the exact solution at every node, '+
+    'which is special to this one-dimensional problem.';
+  document.getElementById('w18cap').innerHTML=s;
+}
+
+function draw(){ drawTop(); drawBot(); cap(); }
+
+document.getElementById('w18deg').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b) return;
+  P=+b.dataset.p;
+  var bs=this.querySelectorAll('button');
+  for(var i=0;i<bs.length;i++) bs[i].setAttribute('aria-pressed', bs[i]===b?'true':'false');
+  draw();
+});
+document.getElementById('w18ne').addEventListener('input',function(){
+  NE=+this.value; document.getElementById('w18nev').textContent=NE; draw(); });
+document.getElementById('w18err').addEventListener('change',function(){
+  SHOWERR=this.checked; draw(); });
+
+draw();
+})();
+</script>
+```
+
+### What this does and does not tell you
+
+A manufactured solution is a **verification** tool: it answers *did I implement the method
+correctly?* If your rates come out at the predicted $\beta$, your basis functions, your
+Jacobians, your assembly and your boundary conditions are almost certainly all right. It is
+a remarkably sharp test --- most coding mistakes break the rate, not just the constant,
+because they break the method rather than merely making it less accurate.
+
+What it does **not** tell you is whether you solved the right problem. The physics, the
+geometry, the material data and the boundary conditions you chose are all still your
+responsibility. Verification asks whether you solved the equations right; it does not ask
+whether you had the right equations.
+
+One more caution. You are free to pick any $u$, which means you are also free to pick one
+that makes the test easier than it should be. If you choose a $u$ that your basis can
+represent exactly --- a straight line with $p = 1$, say --- the error is zero at every
+refinement and you learn nothing at all. Pick something your space genuinely has to work to
+approximate.
+
+## Why the estimate describes our solution
+
+Here is the gap Class 17 left open. The a-priori estimate
+
+$$ \|e\|_{H^s(\Omega)} \leq C h^{\beta} \|u\|_{H^{k+1}(\Omega)} $$
+
+comes from **approximation theory**. It says: given a mesh and a polynomial degree, here is
+how close the *best possible* function in that space gets to $u$. It is a statement about the
+space, and it knows nothing about our solver, our stiffness matrix, or Galerkin's method.
+
+So why are we entitled to use it to describe $u^h$, which is whatever our linear solve
+happened to produce? There is no reason to expect those two things to be related --- unless
+we prove it. That proof is today's second piece, and it comes in two steps.
+
+### Step one: the error is invisible to the approximation space
+
+Write the left side of the weak form as
+
+$$ a(w, v) := \int_\Omega w_{,x}\, v_{,x} \, dx .$$
+
+This is not new notation for anything new: $a(\cdot,\cdot)$ is exactly what your stiffness
+matrix computes, since $K_{AB} = a(N_A, N_B)$.
+
+Now put the two problems side by side. The exact solution satisfies the weak form against
+**every** admissible function $w$:
+
+$$ a(u, w) = L(w) \qquad \text{for all } w \in \mathcal{V} ,$$
+
+where $L(w)$ collects the forcing and boundary terms. Our computed solution satisfies the
+same equation, but only against the functions we actually built:
+
+$$ a(u^h, w^h) = L(w^h) \qquad \text{for all } w^h \in \mathcal{V}^h .$$
+
+Here is the one observation that makes everything work: **every function in $\mathcal{V}^h$
+is also in $\mathcal{V}$.** Our basis functions are legitimate admissible functions; they are
+just a small subset of them. So the first equation is true for $w = w^h$ as well, and we may
+subtract the second from it:
+
+$$ \boxed{\; a\!\left(u - u^h,\; w^h\right) = 0 \qquad \text{for all } w^h \in \mathcal{V}^h \;}$$
+
+This is **Galerkin orthogonality**. In words: *measured in the energy pairing, the error is
+orthogonal to everything our approximation space can represent.* The space cannot see its own
+error. If it could, the method would have used that information and done better.
+
+### Step two: so $u^h$ is the best the space can do
+
+Define the **energy norm** by
+
+$$ \|v\|_E := \sqrt{a(v,v)} .$$
+
+For our problem this is just the size of a function's derivative, so it is the $H^1$ part of
+the error you have already been computing.
+
+Now take any $w^h$ in the space --- any competitor at all --- and split the difference
+between $u$ and it into two pieces:
+
+$$ u - w^h = \underbrace{\left(u - u^h\right)}_{\text{the error}} + \underbrace{\left(u^h - w^h\right)}_{\text{lives in } \mathcal{V}^h} .$$
+
+Measure the size of both sides in the energy norm. Because $a(\cdot,\cdot)$ is symmetric, this
+expands the way a squared length does, and the cross term is $a(u - u^h,\, u^h - w^h)$ ---
+which is zero, by Galerkin orthogonality, since the second slot lives in $\mathcal{V}^h$.
+What is left is
+
+$$ \left\|u - w^h\right\|_E^2 = \left\|u - u^h\right\|_E^2 + \left\|u^h - w^h\right\|_E^2 .$$
+
+That is the Pythagorean theorem, with $a(\cdot,\cdot)$ playing the role of the dot product.
+The last term cannot be negative, so dropping it gives
+
+$$ \boxed{\; \left\|u - u^h\right\|_E \;\leq\; \left\|u - w^h\right\|_E \qquad \text{for every } w^h \in \mathcal{V}^h \;}$$
+
+**The finite element solution is the best approximation in its space, measured in the energy
+norm.** No other combination of your basis functions gets closer. This result is called
+**Céa's lemma**, and it is what licenses Class 17's estimate: a bound on how well the best
+polynomial does is automatically a bound on how well *we* do.
+
+It is also the precise version of something this course has been claiming since Class 5 ---
+that the finite element method is a **projection**, not an interpolation. It does not pass
+through $u$ at the nodes and hope for the best. It finds the closest point in the space,
+in exactly the sense that dropping a perpendicular finds the closest point on a plane.
+
+### A reading of this worth carrying forward
+
+Saying $u^h$ is the closest point is the same as saying $u^h$ **minimizes** the error over
+everything in the space:
+
+$$ \left\|u - u^h\right\|_E = \min_{w^h \in \mathcal{V}^h} \left\|u - w^h\right\|_E .$$
+
+Keep that word *minimizes* in mind. There are two different minimization statements in this
+course and it is worth not confusing them. This one is about the **approximation**: of all
+the answers we could have built, we got the closest. The other one, in **Class 23**, is about
+the **physics**: the true solution $u$ is the one that minimizes the total potential energy
+of the system. The two are related, and Class 23 will also explain where the constant $C$ in
+the a-priori estimate comes from.
+
+## When a measured rate is not what you expected
+
+You will run a convergence study and get a number that is not $\beta$. Usually nothing is
+wrong. Three ordinary reasons, worth recognizing so you can tell a bug from a non-bug:
+
+**You are not refined enough yet.** The estimate is asymptotic --- it describes behavior as
+$h \to 0$. On coarse meshes the measured rate typically creeps up on $\beta$ from below
+rather than hitting it. Seeing 1.94 where you expected 2.00 is normal; refine once more and
+watch it move.
+
+**You have hit machine precision.** This one surprises people. At high polynomial degree the
+error drops so fast that after two or three refinements it reaches roundoff, around
+$10^{-16}$, and it cannot get any smaller. The slope then flattens toward zero, and a plot
+that was beautifully straight suddenly bends. The method has not stopped working; you have
+run out of digits. **HW 12 Problem 3 asks for $p=5$, so you should expect to see this.**
+
+**Your quadrature is not good enough for the error integral.** Class 17 warned about this and
+it is worth repeating, because it is the one that actually is your fault. The error
+$e = u - u^h$ is not a polynomial, since $u$ generally is not, so the rule that integrates
+your stiffness matrix exactly will *not* integrate the error norm exactly. Use more points
+than you think you need, and confirm that adding more does not change the answer.
+
+## Where this is going
+
+- **Class 19** moves to multiple dimensions and takes up the surface integrals that Neumann
+  conditions require, which have no one-dimensional counterpart. Project 2 is assigned.
+- **Class 23** returns to the energy idea from the other side: the minimization form of the
+  problem, symmetric positive definiteness, and the question of whether a solution exists
+  at all.
