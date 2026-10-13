@@ -256,6 +256,18 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
@@ -293,6 +305,18 @@ window.Quarto = {
   <div class="sidebar-item-container"> 
   <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
   </div>
 </li>
       </ul>
@@ -340,7 +364,7 @@ window.Quarto = {
 </header>
 
 
-<p>Last time, given <span class="math inline">\(f\)</span>, <span class="math inline">\(g\)</span>, <span class="math inline">\(h\)</span>, and <span class="math inline">\(\underline{\underline{K}}\)</span>, we let</p>
+<p>Last time, given <span class="math inline">\(f\)</span>, <span class="math inline">\(g\)</span>, <span class="math inline">\(h\)</span>, and <span class="math inline">\(\underline{\underline{\kappa}}\)</span>, we let</p>
 <div class="derivation">
 <p><span class="math display">\[
 \mathcal{S} = \left\{\, u \in H^1(\Omega) \;\middle|\; u = g \text{ on } \Gamma_g \,\right\}
@@ -352,7 +376,7 @@ window.Quarto = {
 <div class="derivation">
 <p><span class="math display">\[
 (\mathrm{W}) \qquad
-\int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega
+\int_\Omega \nabla w \cdot \underline{\underline{\kappa}}\nabla u\;d\Omega
 = \int_\Omega wf\;d\Omega + \int_{\Gamma_h} wh\;d\Gamma
 \]</span></p>
 </div>
@@ -375,7 +399,7 @@ window.Quarto = {
 <p>Run the previous class’s steps in <strong>reverse</strong>, starting from <span class="math inline">\((\mathrm{W})\)</span> written in multivariate-calculus form:</p>
 <div class="derivation">
 <p><span class="math display">\[
-\int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega
+\int_\Omega \nabla w \cdot \underline{\underline{\kappa}}\nabla u\;d\Omega
 = \int_\Omega wf\;d\Omega + \int_{\Gamma_h} wh\;d\Gamma
 \]</span></p>
 </div>
@@ -384,18 +408,18 @@ window.Quarto = {
 </div>
 <div class="derivation">
 <p><span class="math display">\[
-\int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega
+\int_\Omega \nabla w \cdot \underline{\underline{\kappa}}\nabla u\;d\Omega
 = \int_\Omega wf\;d\Omega + \int_{\Gamma} wh\;d\Gamma
 \qquad\Longrightarrow\qquad
-0 = \int_\Omega \left(wf - \nabla w\cdot\underline{\underline{K}}\nabla u\right) d\Omega
+0 = \int_\Omega \left(wf - \nabla w\cdot\underline{\underline{\kappa}}\nabla u\right) d\Omega
     + \int_\Gamma wh\;d\Gamma
 \]</span></p>
 </div>
-<p>Now run the <strong>Divergence Theorem</strong> in reverse — the same identity used last time, applied to pull <span class="math inline">\(\nabla w \cdot \underline{\underline{K}}\nabla u\)</span> back into a divergence:</p>
+<p>Now run the <strong>Divergence Theorem</strong> in reverse — the same identity used last time, applied to pull <span class="math inline">\(\nabla w \cdot \underline{\underline{\kappa}}\nabla u\)</span> back into a divergence:</p>
 <div class="derivation">
 <p><span class="math display">\[
-0 = \int_\Omega \left(wf + w\,\nabla\cdot\left(\underline{\underline{K}}\nabla u\right)\right) d\Omega
-    + \int_\Gamma \left(wh - w\left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n}\right)d\Gamma
+0 = \int_\Omega \left(wf + w\,\nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right)\right) d\Omega
+    + \int_\Gamma \left(wh - w\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\right)d\Gamma
 \]</span></p>
 </div>
 <div class="step">
@@ -403,30 +427,30 @@ window.Quarto = {
 </div>
 <section id="recovering-the-pde-on-omega" class="level2" data-number="6.1">
 <h2 data-number="6.1" class="anchored" data-anchor-id="recovering-the-pde-on-omega"><span class="header-section-number">6.1</span> Recovering the PDE on <span class="math inline">\(\Omega\)</span></h2>
-<p>Pick <span class="math inline">\(w = \left[f + \nabla\cdot(\underline{\underline{K}}\nabla u)\right]\phi\)</span> for some smooth <span class="math inline">\(\phi\)</span> with <span class="math inline">\(\phi &gt; 0\)</span> on <span class="math inline">\(\Omega\)</span> and <span class="math inline">\(\phi = 0\)</span> on <span class="math inline">\(\Gamma\)</span> (so that <span class="math inline">\(w \in \mathcal{V} \cap H^1(\Omega)\)</span>). This choice makes the boundary integral vanish identically, leaving</p>
+<p>Pick <span class="math inline">\(w = \left[f + \nabla\cdot(\underline{\underline{\kappa}}\nabla u)\right]\phi\)</span> for some smooth <span class="math inline">\(\phi\)</span> with <span class="math inline">\(\phi &gt; 0\)</span> on <span class="math inline">\(\Omega\)</span> and <span class="math inline">\(\phi = 0\)</span> on <span class="math inline">\(\Gamma\)</span> (so that <span class="math inline">\(w \in \mathcal{V} \cap H^1(\Omega)\)</span>). This choice makes the boundary integral vanish identically, leaving</p>
 <div class="derivation">
 <p><span class="math display">\[
-0 = \int_\Omega \left(f + \nabla\cdot\left(\underline{\underline{K}}\nabla u\right)\right)^2 \phi\;d\Omega
+0 = \int_\Omega \left(f + \nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right)\right)^2 \phi\;d\Omega
 \]</span></p>
 </div>
 <div class="step">
-<p>But <span class="math inline">\(\phi &gt; 0\)</span> on <span class="math inline">\(\Omega\)</span> and <span class="math inline">\(\left(f + \nabla\cdot(\underline{\underline{K}}\nabla u)\right)^2 \ge 0\)</span> everywhere. An integral of a non-negative quantity that comes out to zero forces the integrand itself to be zero:</p>
+<p>But <span class="math inline">\(\phi &gt; 0\)</span> on <span class="math inline">\(\Omega\)</span> and <span class="math inline">\(\left(f + \nabla\cdot(\underline{\underline{\kappa}}\nabla u)\right)^2 \ge 0\)</span> everywhere. An integral of a non-negative quantity that comes out to zero forces the integrand itself to be zero:</p>
 </div>
 <div class="derivation">
 <p><span class="math display">\[
 \Longrightarrow \qquad
-\left(f + \nabla\cdot\left(\underline{\underline{K}}\nabla u\right)\right)^2 = 0
+\left(f + \nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right)\right)^2 = 0
 \qquad\Longrightarrow\qquad
-\boxed{-\nabla\cdot\left(\underline{\underline{K}}\nabla u\right) = f} \qquad \text{on } \Omega
+\boxed{-\nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right) = f} \qquad \text{on } \Omega
 \]</span></p>
 </div>
 </section>
 <section id="recovering-the-flux-condition-on-gamma_h" class="level2" data-number="6.2">
 <h2 data-number="6.2" class="anchored" data-anchor-id="recovering-the-flux-condition-on-gamma_h"><span class="header-section-number">6.2</span> Recovering the flux condition on <span class="math inline">\(\Gamma_h\)</span></h2>
-<p>Next, pick <span class="math inline">\(w = \left[h - \left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n}\right]\psi\)</span> for some smooth <span class="math inline">\(\psi\)</span> with <span class="math inline">\(\psi &gt; 0\)</span> on <span class="math inline">\(\Gamma_h\)</span> and <span class="math inline">\(\psi = 0\)</span> on <span class="math inline">\(\Gamma_g\)</span>. Because the PDE result above already makes the domain integral vanish for <strong>any</strong> <span class="math inline">\(w\)</span>, this choice leaves only</p>
+<p>Next, pick <span class="math inline">\(w = \left[h - \left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\right]\psi\)</span> for some smooth <span class="math inline">\(\psi\)</span> with <span class="math inline">\(\psi &gt; 0\)</span> on <span class="math inline">\(\Gamma_h\)</span> and <span class="math inline">\(\psi = 0\)</span> on <span class="math inline">\(\Gamma_g\)</span>. Because the PDE result above already makes the domain integral vanish for <strong>any</strong> <span class="math inline">\(w\)</span>, this choice leaves only</p>
 <div class="derivation">
 <p><span class="math display">\[
-0 = \int_{\Gamma_h} \left[h - \left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n}\right]^2 \psi\;d\Gamma
+0 = \int_{\Gamma_h} \left[h - \left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\right]^2 \psi\;d\Gamma
 \]</span></p>
 </div>
 <div class="step">
@@ -435,7 +459,7 @@ window.Quarto = {
 <div class="derivation">
 <p><span class="math display">\[
 \Longrightarrow \qquad
-\boxed{\left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n} = h} \qquad \text{on } \Gamma_h
+\boxed{\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = h} \qquad \text{on } \Gamma_h
 \]</span></p>
 </div>
 </section>
@@ -443,11 +467,11 @@ window.Quarto = {
 <h2 data-number="6.3" class="anchored" data-anchor-id="summarizing"><span class="header-section-number">6.3</span> Summarizing</h2>
 <div class="derivation">
 <p><span class="math display">\[
--\nabla\cdot\left(\underline{\underline{K}}\nabla u\right) = f \quad \text{on } \Omega
+-\nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right) = f \quad \text{on } \Omega
 \qquad\text{(from the domain argument)}
 \]</span></p>
 <p><span class="math display">\[
-\left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n} = h \quad \text{on } \Gamma_h
+\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = h \quad \text{on } \Gamma_h
 \qquad\text{(from the boundary argument)}
 \]</span></p>
 <p><span class="math display">\[
@@ -496,11 +520,11 @@ Figure&nbsp;7.1: Piecewise-constant approximations of a smooth target: as the nu
 <p><span class="math display">\[
 (\mathrm{G}) \qquad
 \begin{array}{l}
-\text{Given } f,\, g,\, h,\, \underline{\underline{K}} \text{ as in } (\mathrm{W}),
+\text{Given } f,\, g,\, h,\, \underline{\underline{\kappa}} \text{ as in } (\mathrm{W}),
 \text{ find } u^h = v^h + g^h, \text{ with } v^h \in \mathcal{V}^h \subset \mathcal{V},\;
 g^h \in \mathcal{S}^h \subset \mathcal{S} \\[6pt]
 \text{such that } \forall\, w^h \in \mathcal{V}^h \subset \mathcal{V}, \\[6pt]
-\qquad \displaystyle\int_\Omega w^h_{,i}\,K_{ij}\,u^h_{,j}\;d\Omega
+\qquad \displaystyle\int_\Omega w^h_{,i}\,\kappa_{ij}\,u^h_{,j}\;d\Omega
 = \int_\Omega w^h f\;d\Omega + \int_{\Gamma_h} w^h h\;d\Gamma
 \end{array}
 \]</span></p>

@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Finite Element Methods">
+
+<title>18&nbsp; Class 18: Manufactured Solutions and Galerkin Orthogonality – CE/ME 507 — Class Notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/19_Class.html" rel="next">
+<link href="../chapters/17_Class.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-5a6c5cd077c1ead4086784ad1389866e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script>
+window.MathJax = {
+  tex: {
+    tags: 'ams',
+    macros: {
+      RR: '{\\mathbb{R}}',
+      Om: '{\\Omega}'
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/18_Class.html"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">CE/ME 507 — Class Notes</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">CE/ME 507 — Class Notes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/2_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Class 2: Linear FEM</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Class 3: Index Notation, Function Spaces, and the Weak Form</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/4_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Class 4: Strong and Weak Forms of the Boundary Value Problem</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/5_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/6_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Class 6: Basis Functions and Lagrange Polynomials</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/7_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Class 7: From Galerkin to a Matrix Equation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/8_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Class 8: Assembly, Sparsity, and the Road to Quadrature</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/9_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Class 9: The Isoparametric Map and the Jacobian</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Class 10: Assembly with the IEN Array, and Quadrature on an Element</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Class 11: Tensor-Product Basis Functions in 2D</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Class 12: The Spatial Mapping</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Class 13: The Jacobian Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Class 14: The ID and IEN Arrays</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Class 15: Unidimensional Finite Element Code</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Class 16: Derivatives of the Solution</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">1D Poisson I: Heat Conduction Through a Wall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">1D Poisson II: The Wall, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">1D Poisson III: An Axially Loaded Rod</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#manufacturing-a-solution" id="toc-manufacturing-a-solution" class="nav-link active" data-scroll-target="#manufacturing-a-solution"><span class="header-section-number">18.1</span> Manufacturing a solution</a>
+  <ul class="collapse">
+  <li><a href="#running-the-problem-backwards" id="toc-running-the-problem-backwards" class="nav-link" data-scroll-target="#running-the-problem-backwards"><span class="header-section-number">18.1.1</span> Running the problem backwards</a></li>
+  <li><a href="#a-worked-example" id="toc-a-worked-example" class="nav-link" data-scroll-target="#a-worked-example"><span class="header-section-number">18.1.2</span> A worked example</a></li>
+  <li><a href="#what-this-does-and-does-not-tell-you" id="toc-what-this-does-and-does-not-tell-you" class="nav-link" data-scroll-target="#what-this-does-and-does-not-tell-you"><span class="header-section-number">18.1.3</span> What this does and does not tell you</a></li>
+  </ul></li>
+  <li><a href="#why-the-estimate-describes-our-solution" id="toc-why-the-estimate-describes-our-solution" class="nav-link" data-scroll-target="#why-the-estimate-describes-our-solution"><span class="header-section-number">18.2</span> Why the estimate describes our solution</a>
+  <ul class="collapse">
+  <li><a href="#step-one-the-error-is-invisible-to-the-approximation-space" id="toc-step-one-the-error-is-invisible-to-the-approximation-space" class="nav-link" data-scroll-target="#step-one-the-error-is-invisible-to-the-approximation-space"><span class="header-section-number">18.2.1</span> Step one: the error is invisible to the approximation space</a></li>
+  <li><a href="#step-two-so-uh-is-the-best-the-space-can-do" id="toc-step-two-so-uh-is-the-best-the-space-can-do" class="nav-link" data-scroll-target="#step-two-so-uh-is-the-best-the-space-can-do"><span class="header-section-number">18.2.2</span> Step two: so <span class="math inline">\(u^h\)</span> is the best the space can do</a></li>
+  <li><a href="#seeing-both-of-these-at-once" id="toc-seeing-both-of-these-at-once" class="nav-link" data-scroll-target="#seeing-both-of-these-at-once"><span class="header-section-number">18.2.3</span> Seeing both of these at once</a></li>
+  <li><a href="#why-this-is-not-interpolation" id="toc-why-this-is-not-interpolation" class="nav-link" data-scroll-target="#why-this-is-not-interpolation"><span class="header-section-number">18.2.4</span> Why this is not interpolation</a></li>
+  <li><a href="#the-whole-argument-in-three-lines" id="toc-the-whole-argument-in-three-lines" class="nav-link" data-scroll-target="#the-whole-argument-in-three-lines"><span class="header-section-number">18.2.5</span> The whole argument in three lines</a></li>
+  <li><a href="#a-reading-of-this-worth-carrying-forward" id="toc-a-reading-of-this-worth-carrying-forward" class="nav-link" data-scroll-target="#a-reading-of-this-worth-carrying-forward"><span class="header-section-number">18.2.6</span> A reading of this worth carrying forward</a></li>
+  </ul></li>
+  <li><a href="#when-a-measured-rate-is-not-what-you-expected" id="toc-when-a-measured-rate-is-not-what-you-expected" class="nav-link" data-scroll-target="#when-a-measured-rate-is-not-what-you-expected"><span class="header-section-number">18.3</span> When a measured rate is not what you expected</a></li>
+  <li><a href="#where-this-is-going" id="toc-where-this-is-going" class="nav-link" data-scroll-target="#where-this-is-going"><span class="header-section-number">18.4</span> Where this is going</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content column-body" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></h1>
+<p class="subtitle lead">Where the exact solution comes from, and why the estimate describes our answer</p>
+</div>
+
+
+
+<div class="quarto-title-meta column-body">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>The discussion in Class 17 did not cover two important parts of convergence analysis. First, we spent a whole class measuring how far <span class="math inline">\(u^h\)</span> is from <span class="math inline">\(u\)</span>, without ever saying where <span class="math inline">\(u\)</span> is supposed to come from. On a real problem we don’t actually have <span class="math inline">\(u\)</span>, and that is why we are running the solver in the first place. The second is more theoretical: the error estimate we wrote down is a statement about <em>polynomials</em>, and we never justified using it to describe the answer our solver actually produced. Today will cover both of these issues.</p>
+<section id="manufacturing-a-solution" class="level2" data-number="18.1">
+<h2 data-number="18.1" class="anchored" data-anchor-id="manufacturing-a-solution"><span class="header-section-number">18.1</span> Manufacturing a solution</h2>
+<section id="running-the-problem-backwards" class="level3" data-number="18.1.1">
+<h3 data-number="18.1.1" class="anchored" data-anchor-id="running-the-problem-backwards"><span class="header-section-number">18.1.1</span> Running the problem backwards</h3>
+<p>Normally you are handed <span class="math inline">\(f\)</span>, <span class="math inline">\(\mathcal{g}\)</span> and <span class="math inline">\(\mathcal{h}\)</span>, and you go looking for <span class="math inline">\(u\)</span>. That is the hard direction, and in general there is no formula at the end of it.</p>
+<p>The trick is to run the arrow the other way. <strong>Pick the answer first, then work out which problem it solves.</strong> Choosing <span class="math inline">\(u\)</span> is free — you can write down any function you like — and once you have it, finding the data that produces it is just differentiation, which is easy.</p>
+<p>For the problem we have been solving all semester,</p>
+<p><span class="math display">\[
+u_{,xx} + f = 0 \ \text{ on } \Omega = (0,L), \qquad
+u(L) = \mathcal{g}, \qquad -u_{,x}(0) = \mathcal{h},
+\]</span></p>
+<p>the recipe is three steps:</p>
+<ol type="1">
+<li><strong>Choose</strong> any <span class="math inline">\(u\)</span> you like, as long as it is smooth enough to differentiate twice.</li>
+<li><strong>Differentiate</strong> it twice and set <span class="math inline">\(f = -u_{,xx}\)</span>.</li>
+<li><strong>Evaluate</strong> at the two ends: <span class="math inline">\(\mathcal{g} = u(L)\)</span> and <span class="math inline">\(\mathcal{h} = -u_{,x}(0)\)</span>.</li>
+</ol>
+<p>Now feed <span class="math inline">\(f\)</span>, <span class="math inline">\(\mathcal{g}\)</span> and <span class="math inline">\(\mathcal{h}\)</span> to your solver. It has no idea anything unusual has happened — it is solving an ordinary boundary value problem. But <em>you</em> know the exact answer, so you can subtract it from <span class="math inline">\(u^h\)</span> and measure the error for real.</p>
+<p>This is called a <strong>manufactured solution</strong>, and it is how essentially all finite element software is verified.</p>
+</section>
+<section id="a-worked-example" class="level3" data-number="18.1.2">
+<h3 data-number="18.1.2" class="anchored" data-anchor-id="a-worked-example"><span class="header-section-number">18.1.2</span> A worked example</h3>
+<p>Take</p>
+<p><span class="math display">\[ u(x) = \sin(\pi x) \qquad \text{on } \Omega = (0,1) . \]</span></p>
+<p>Differentiate twice:</p>
+<p><span class="math display">\[ u_{,x} = \pi \cos(\pi x), \qquad u_{,xx} = -\pi^2 \sin(\pi x), \]</span></p>
+<p>so the forcing that produces this solution is</p>
+<p><span class="math display">\[ f = -u_{,xx} = \pi^2 \sin(\pi x) . \]</span></p>
+<p>The boundary data comes straight from evaluating:</p>
+<p><span class="math display">\[ \mathcal{g} = u(1) = \sin(\pi) = 0, \qquad \mathcal{h} = -u_{,x}(0) = -\pi . \]</span></p>
+<p>That is the whole derivation. Hand <span class="math inline">\(f = \pi^2\sin(\pi x)\)</span>, <span class="math inline">\(\mathcal{g} = 0\)</span> and <span class="math inline">\(\mathcal{h} = -\pi\)</span> to the solver, run the convergence study from Class 17, and the measured rates come out as</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th><span class="math inline">\(p\)</span></th>
+<th><span class="math inline">\(H^0\)</span> rate</th>
+<th><span class="math inline">\(H^1\)</span> rate</th>
+<th>predicted</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>2.00</td>
+<td>1.00</td>
+<td>2, 1</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>3.00</td>
+<td>2.00</td>
+<td>3, 2</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>3.98</td>
+<td>3.00</td>
+<td>4, 3</td>
+</tr>
+</tbody>
+</table>
+<p>exactly the <span class="math inline">\(\beta = p + 1 - s\)</span> the estimate promised.</p>
+<p>The picture below is that solve. The left panels are the solution and its derivative; the convergence plots underneath are the same study run out to 64 elements, with a marker showing where the current choice of degree and mesh sits.</p>
+<style>
+.bw{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;--acc:#b8322a;--blue:#2b5fa8;
+    max-width:900px;margin:0 auto;color:var(--ink)}
+.bw .bar{display:flex;flex-wrap:wrap;gap:9px 20px;align-items:center;padding:11px 14px;
+  background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.bw .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey)}
+.bw .seg{display:inline-flex;border:1px solid var(--faint);border-radius:6px;overflow:hidden;background:#fff}
+.bw .seg button{border:0;background:#fff;padding:5px 12px;font:inherit;font-size:13.5px;cursor:pointer;
+  color:var(--grey);border-right:1px solid var(--faint)}
+.bw .seg button:last-child{border-right:0}
+.bw .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.bw input[type=range]{width:150px;vertical-align:middle}
+.bw .val{font:600 13px ui-monospace,Menlo,monospace;color:var(--ink);min-width:2.2em;display:inline-block}
+.bw svg{display:block;width:100%;height:auto;border:1px solid var(--faint);border-radius:8px;background:#fff;margin-bottom:10px}
+.bw .cap{font-size:13px;color:var(--grey);line-height:1.55;margin:9px 2px 22px}
+.bw .cap b{color:var(--ink)}
+.bw .nums{font:12.5px ui-monospace,Menlo,monospace;color:var(--ink)}
+</style>
+
+<div class="bw">
+  <div class="bar">
+    <b>DEGREE</b>
+    <span class="seg" id="w18deg">
+      <button data-p="1" aria-pressed="true">p=1</button>
+      <button data-p="2" aria-pressed="false">p=2</button>
+      <button data-p="3" aria-pressed="false">p=3</button>
+      <button data-p="4" aria-pressed="false">p=4</button>
+      <button data-p="5" aria-pressed="false">p=5</button>
+    </span>
+    <b>ELEMENTS</b> <input type="range" id="w18ne" min="2" max="8" value="3"><span class="val" id="w18nev">3</span>
+    <label style="font-size:13px;color:#6b7684"><input type="checkbox" id="w18err"> show the error instead</label>
+  </div>
+  <svg id="w18top" viewbox="0 0 880 400" role="img" aria-label="The manufactured solution and its derivative, approximated"></svg>
+  <svg id="w18bot" viewbox="0 0 880 400" role="img" aria-label="Convergence of the error in both norms"></svg>
+  <div class="cap" id="w18cap"></div>
+</div>
+
+<script>
+(function(){
+var SHOW=[2, 3, 4, 5, 6, 7, 8];
+var CONV=[2, 3, 4, 5, 6, 7, 8, 12, 16, 24, 32, 48, 64];
+var COEF={"1_2":[-7.1637e-08,1.000000128,0.0],
+ "1_3":[-2.658e-09,0.866025407199,0.866025408085,0.0],
+ "1_4":[-2.62e-10,0.707106781405,1.000000000456,0.707106781536,0.0],
+ "1_5":[-4.4e-11,0.587785252315,0.951056516362,0.95105651637,0.587785252341,0.0],
+ "1_6":[-1e-11,0.500000000003,0.866025403797,1.000000000017,0.866025403801,0.50000000001,0.0],
+ "1_7":[-3e-12,0.433883739118,0.781831482471,0.974927912187,0.974927912187,0.781831482472,0.43388373912,0.0],
+ "1_8":[-1e-12,0.382683432365,0.707106781187,0.923879532513,1.000000000002,0.923879532513,0.707106781188,0.382683432366,0.0],
+ "2_2":[1.24e-10,0.704929660165,0.999999999699,0.704929660102,0.0],
+ "2_3":[2e-12,0.499690892988,0.866025403781,0.999381785973,0.86602540378,0.499690892986,0.0],
+ "2_4":[0.0,0.382608147571,0.707106781186,0.923697778941,1.0,0.923697778941,0.707106781186,0.382608147571,0.0],
+ "2_5":[0.0,0.308992027804,0.587785252292,0.808951631042,0.951056516295,0.999919206478,0.951056516295,0.808951631042,0.587785252292,0.308992027804,0.0],
+ "2_6":[-0.0,0.258808946256,0.5,0.707079190625,0.866025403784,0.965888136881,1.0,0.965888136881,0.866025403784,0.707079190625,0.5,0.258808946256,0.0],
+ "2_7":[-0.0,0.22251624328,0.433883739118,0.623476658876,0.781831482468,0.900949875743,0.974927912182,0.999978920293,0.974927912182,0.900949875743,0.781831482468,0.623476658876,0.433883739118,0.22251624328,0.0],
+ "2_8":[-0.0,0.19508791002,0.382683432365,0.555563364235,0.707106781187,0.83145933244,0.923879532511,0.980773154479,1.0,0.980773154479,0.923879532511,0.83145933244,0.707106781187,0.555563364235,0.382683432365,0.19508791002,0.0],
+ "3_2":[-0.0,0.499308518459,0.865010874516,1.0,0.865010874516,0.499308518459,0.0],
+ "3_3":[-0.0,0.341924890129,0.642639520011,0.866025403784,0.98456441014,0.98456441014,0.866025403784,0.642639520011,0.341924890129,0.0],
+ "3_4":[0.0,0.258796084569,0.499963597911,0.707106781187,0.865956530597,0.965851385427,1.0,0.965851385427,0.865956530597,0.707106781187,0.499963597911,0.258796084569,0.0],
+ "3_5":[0.0,0.207904112563,0.406724520454,0.587785252292,0.743120440981,0.865998210715,0.951056516295,0.99449001868,0.99449001868,0.951056516295,0.865998210715,0.743120440981,0.587785252292,0.406724520454,0.207904112563,0.0],
+ "3_6":[0.0,0.173645120177,0.342015228723,0.5,0.642777399356,0.766032873287,0.866025403784,0.939677993464,0.984792628078,1.0,0.984792628078,0.939677993464,0.866025403784,0.766032873287,0.642777399356,0.5,0.342015228723,0.173645120177,0.0],
+ "3_7":[-0.0,0.14904084824,0.294752888604,0.433883739118,0.563315217225,0.680167200954,0.781831482468,0.86601809883,0.930866057451,0.974927912182,0.997195474947,0.997195474947,0.974927912182,0.930866057451,0.86601809883,0.781831482468,0.680167200954,0.563315217225,0.433883739118,0.294752888604,0.14904084824,0.0],
+ "3_8":[-0.0,0.130525463833,0.258817868687,0.382683432365,0.499997477701,0.60875852689,0.707106781187,0.793349408077,0.866021217783,0.923879532511,0.965921082804,0.991440028771,1.0,0.991440028771,0.965921082804,0.923879532511,0.866021217783,0.793349408077,0.707106781187,0.60875852689,0.499997477701,0.382683432365,0.258817868687,0.130525463833,0.0],
+ "4_2":[-0.0,0.382807526513,0.70709603312,0.923774570851,1.0,0.923774570851,0.70709603312,0.382807526513,0.0],
+ "4_3":[0.0,0.258838420149,0.49999932493,0.707088608263,0.866025403784,0.965927028411,0.999998649859,0.965927028411,0.866025403784,0.707088608263,0.49999932493,0.258838420149,0.0],
+ "4_4":[-0.0,0.195095184063,0.382683340031,0.555565535417,0.707106781187,0.831471790672,0.923879309596,0.980783499036,1.0,0.980783499036,0.923879309596,0.831471790672,0.707106781187,0.555565535417,0.382683340031,0.195095184063,0.0],
+ "4_5":[-0.0,0.156436099042,0.309016974792,0.453988900615,0.587785252292,0.707107825933,0.809016943107,0.891005570753,0.951056516295,0.987688397028,0.99999993663,0.987688397028,0.951056516295,0.891005570753,0.809016943107,0.707107825933,0.587785252292,0.453988900615,0.309016974792,0.156436099042,0.0],
+ "4_6":[-0.0,0.130526857875,0.258819039604,0.382682776503,0.5,0.608761926096,0.707106766164,0.79335286996,0.866025403784,0.923879727836,0.965925805768,0.991444702599,1.0,0.991444702599,0.965925805769,0.923879727836,0.866025403784,0.79335286996,0.707106766164,0.608761926096,0.5,0.382682776503,0.258819039604,0.130526857875,0.0],
+ "4_7":[0.0,0.111964786598,0.22252093208,0.330278754802,0.433883739118,0.532032328854,0.623489796603,0.70710653821,0.781831482468,0.846724343432,0.900968860307,0.943883199633,0.974927912182,0.993712217401,0.99999999157,0.993712217401,0.974927912182,0.943883199633,0.900968860307,0.846724343432,0.781831482468,0.70710653821,0.623489796603,0.532032328854,0.433883739118,0.330278754802,0.22252093208,0.111964786598,0.0],
+ "4_8":[0.0,0.098017300426,0.195090321278,0.290284518473,0.382683432365,0.471396873865,0.555570230917,0.634393150871,0.707106781187,0.77301054648,0.831469609156,0.881921176836,0.923879532511,0.956940370753,0.980785276691,0.995184698264,1.0,0.995184698264,0.980785276691,0.956940370753,0.923879532511,0.881921176836,0.831469609156,0.77301054648,0.707106781187,0.634393150871,0.555570230917,0.471396873865,0.382683432365,0.290284518473,0.195090321278,0.098017300426,0.0],
+ "5_2":[-0.0,0.309025586815,0.587780946022,0.809011549734,0.951066008573,1.0,0.951066008573,0.809011549734,0.587780946022,0.309025586815,0.0],
+ "5_3":[-0.0,0.207912227098,0.406736377683,0.58778490446,0.743145426933,0.866025403784,0.951057654031,0.994521282143,0.994521282143,0.951057654031,0.866025403784,0.743145426933,0.58778490446,0.406736377683,0.207912227098,0.0],
+ "5_4":[-0.0,0.156434538235,0.309016958309,0.453990451892,0.587785334803,0.707106781187,0.809017180399,0.891006425337,0.951056412563,0.987688530477,1.0,0.987688530477,0.951056412563,0.891006425337,0.809017180399,0.707106781187,0.587785334803,0.453990451892,0.309016958309,0.156434538235,0.0],
+ "5_5":[-0.0,0.125333249073,0.248689879539,0.368124542511,0.481753691624,0.587785252292,0.684547148544,0.770513220262,0.844327901414,0.904827096327,0.951056516295,0.982287304174,0.998026699627,0.998026699627,0.982287304174,0.951056516295,0.904827096327,0.844327901414,0.770513220262,0.684547148544,0.587785252292,0.481753691624,0.368124542511,0.248689879539,0.125333249073,0.0],
+ "5_6":[-0.0,0.10452846762,0.20791168868,0.309016991514,0.406736647999,0.5,0.587785264754,0.669130599795,0.743144818385,0.809017007255,0.866025403784,0.913545474875,0.951056507065,0.97814759131,0.994521912754,1.0,0.994521912754,0.97814759131,0.951056507065,0.913545474875,0.866025403784,0.809017007255,0.743144818385,0.669130599795,0.587785264754,0.5,0.406736647999,0.309016991514,0.20791168868,0.10452846762,0.0],
+ "5_7":[0.0,0.089639310388,0.17855689407,0.26603684459,0.351374825762,0.433883739118,0.512899281761,0.587785250003,0.657938723451,0.72279486834,0.781831482468,0.834573260085,0.880595528459,0.919527769044,0.951056522746,0.974927912182,0.990949768879,0.998993062709,0.998993062709,0.990949768879,0.974927912182,0.951056522746,0.919527769044,0.880595528459,0.834573260085,0.781831482468,0.72279486834,0.657938723451,0.587785250003,0.512899281761,0.433883739118,0.351374825762,0.26603684459,0.17855689407,0.089639310388,0.0],
+ "5_8":[-0.0,0.078459096312,0.156434464753,0.233445363471,0.309016995036,0.382683432365,0.453990501481,0.522498563801,0.587785251295,0.649448050137,0.707106781186,0.760405968233,0.809016992972,0.852640162896,0.891006526865,0.923879532511,0.951056519419,0.97236991872,0.987688338898,0.996917336872,1.0,0.996917336872,0.987688338898,0.97236991872,0.951056519419,0.923879532511,0.891006526865,0.852640162896,0.809016992972,0.760405968233,0.707106781186,0.649448050137,0.587785251295,0.522498563802,0.453990501481,0.382683432365,0.309016995037,0.233445363471,0.156434464754,0.078459096312,0.0]};
+var ERR={1:{L2:[1.50877e-01,6.91087e-02,3.92844e-02,2.52644e-02,1.75910e-02,1.29446e-02,9.92092e-03,4.41755e-03,2.48650e-03,1.10563e-03,6.22018e-04,2.76485e-04,1.55529e-04],H1:[9.78553e-01,6.63007e-01,5.00054e-01,4.01080e-01,3.34703e-01,2.87131e-01,2.51378e-01,1.67752e-01,1.25858e-01,8.39260e-02,6.29500e-02,4.19693e-02,3.14776e-02]},
+ 2:{L2:[1.51858e-02,4.59333e-03,1.95183e-03,1.00268e-03,5.81304e-04,3.66469e-04,2.45680e-04,7.28876e-05,3.07633e-05,9.11797e-06,3.84708e-06,1.13997e-06,4.80937e-07],H1:[1.97774e-01,8.94936e-02,5.06574e-02,3.25151e-02,2.26156e-02,1.66314e-02,1.27413e-02,5.66913e-03,3.19014e-03,1.41824e-03,7.97836e-04,3.54619e-04,1.99478e-04]},
+ 3:{L2:[1.38809e-03,2.78683e-04,8.86795e-05,3.64187e-05,1.75881e-05,9.50180e-06,5.57289e-06,1.10193e-06,3.48783e-07,6.89128e-08,2.18064e-08,4.30771e-09,1.36301e-09],H1:[2.63690e-02,7.93570e-03,3.36616e-03,1.72782e-03,1.00127e-03,6.31056e-04,4.22985e-04,1.25451e-04,5.29425e-05,1.56905e-05,6.61998e-06,1.96160e-06,8.27566e-07]},
+ 4:{L2:[1.05517e-04,1.40845e-05,3.35817e-06,1.10282e-06,4.43725e-07,2.05443e-07,1.05423e-07,1.38945e-08,3.29821e-09,4.34424e-10,1.03099e-10,1.35818e-11,3.40404e-12],H1:[2.61939e-03,5.24399e-04,1.66704e-04,6.84302e-05,3.30396e-05,1.78466e-05,1.04662e-05,2.06913e-06,6.54878e-07,1.29386e-07,4.09414e-08,8.08762e-09,2.55903e-09]},
+ 5:{L2:[6.78003e-06,6.02191e-07,1.07614e-07,2.82635e-08,9.47506e-09,3.75984e-09,1.68807e-09,1.48306e-10,2.64038e-11,2.52052e-12,1.03305e-12,1.35703e-12,1.62396e-12],H1:[2.07401e-04,2.76336e-05,6.58449e-06,2.16169e-06,8.69630e-07,4.02597e-07,2.06578e-07,2.72236e-08,6.46195e-09,8.51117e-10,2.01998e-10,2.67569e-11,7.09750e-12]}};
+var P=1, NE=3, SHOWERR=false;
+var INK='#18202b', GREY='#6b7684', FAINT='#dfe4ea', ACC='#b8322a', BLUE='#2b5fa8';
+var PC=['#2b5fa8','#b8322a','#2f7d4f','#8a5a9e','#c27a12'];
+var PI=Math.PI;
+function u(x){ return Math.sin(PI*x); }
+function du(x){ return PI*Math.cos(PI*x); }
+
+function nodes(p){ var v=[]; for(var i=0;i<=p;i++) v.push(-1+2*i/p); return v; }
+function lag(p,a,xi){ var n=nodes(p),v=1;
+  for(var b=0;b<=p;b++) if(b!==a) v*=(xi-n[b])/(n[a]-n[b]);
+  return v; }
+function dlag(p,a,xi){ var n=nodes(p),s=0;
+  for(var c=0;c<=p;c++){ if(c===a) continue;
+    var t=1/(n[a]-n[c]);
+    for(var b=0;b<=p;b++) if(b!==a&&b!==c) t*=(xi-n[b])/(n[a]-n[b]);
+    s+=t; }
+  return s; }
+function D(){ return COEF[P+'_'+NE]; }
+// IEN(p,a,e) = a + p*e, exactly as in the course code
+function uhLocal(e,xi,deriv){
+  var d=D(), v=0, he=1/NE;
+  for(var a=0;a<=P;a++){
+    var c=d[a+P*e];
+    v += deriv ? c*dlag(P,a,xi)*(2/he) : c*lag(P,a,xi);
+  }
+  return v; }
+
+function el(n,at){ var e=document.createElementNS('http://www.w3.org/2000/svg',n);
+  for(var k in at) e.setAttribute(k,at[k]); return e; }
+function txt(x,y,s,o){ o=o||{};
+  var t=el('text',{x:x,y:y,'font-size':o.fs||12,fill:o.fill||GREY,
+    'text-anchor':o.ta||'start','font-family':o.ff||'system-ui, sans-serif'});
+  if(o.fw) t.setAttribute('font-weight',o.fw);
+  t.textContent=s; return t; }
+
+// ---------------- top: solution and derivative ----------------
+function panel(g,X0,X1,Y0,Y1,title,deriv){
+  var exact = deriv?du:u;
+  // sample the exact function and the approximation element by element,
+  // so the discontinuities in the derivative are not bridged
+  var lo=1e30, hi=-1e30, segs=[], i, e, k, xi, x, ve, va, pts;
+  var NS=24;
+  for(e=0;e<NE;e++){
+    pts=[];
+    for(k=0;k<=NS;k++){
+      xi=-1+2*k/NS; x=(e+(xi+1)/2)/NE;
+      ve=exact(x); va=uhLocal(e,xi,deriv);
+      var y = SHOWERR ? (ve-va) : va;
+      pts.push([x,y]);
+      if(y<lo)lo=y; if(y>hi)hi=y;
+      if(!SHOWERR){ if(ve<lo)lo=ve; if(ve>hi)hi=ve; }
+    }
+    segs.push(pts);
+  }
+  if(!SHOWERR){ for(k=0;k<=240;k++){ var xx=k/240, vv=exact(xx);
+    if(vv<lo)lo=vv; if(vv>hi)hi=vv; } }
+  if(hi-lo<1e-14){ hi=lo+1; lo-=0; }
+  var pad=(hi-lo)*0.14; lo-=pad; hi+=pad;
+  function sx(x){ return X0+x*(X1-X0); }
+  function sy(y){ return Y1-(y-lo)/(hi-lo)*(Y1-Y0); }
+
+  g.appendChild(el('rect',{x:X0,y:Y0,width:X1-X0,height:Y1-Y0,fill:'#fff',stroke:FAINT}));
+  g.appendChild(txt((X0+X1)/2,Y0-12,title,{ta:'middle',fs:13,fill:INK,fw:600}));
+  // element boundaries
+  for(e=0;e<=NE;e++){ var xb=sx(e/NE);
+    g.appendChild(el('line',{x1:xb,y1:Y0,x2:xb,y2:Y1,stroke:FAINT,'stroke-width':1})); }
+  // zero line
+  if(lo<0&&hi>0){ g.appendChild(el('line',{x1:X0,y1:sy(0),x2:X1,y2:sy(0),
+    stroke:FAINT,'stroke-width':1,'stroke-dasharray':'3 3'})); }
+  // approximation (or error), one path per element
+  for(i=0;i<segs.length;i++){
+    var dd='';
+    for(k=0;k<segs[i].length;k++) dd+=(k?'L':'M')+sx(segs[i][k][0]).toFixed(2)+' '+sy(segs[i][k][1]).toFixed(2);
+    g.appendChild(el('path',{d:dd,fill:'none',stroke:SHOWERR?ACC:PC[P-1],'stroke-width':2}));
+  }
+  // exact curve (only when showing values)
+  if(!SHOWERR){
+    var d='';
+    for(k=0;k<=240;k++){ var xv=k/240; d+=(k?'L':'M')+sx(xv).toFixed(2)+' '+sy(exact(xv)).toFixed(2); }
+    g.appendChild(el('path',{d:d,fill:'none',stroke:GREY,'stroke-width':1.6,'stroke-dasharray':'5 4'}));
+  }
+  // nodes
+  if(!SHOWERR && !deriv){
+    for(e=0;e<NE;e++) for(var a=0;a<=P;a++){
+      if(e>0&&a===0) continue;
+      var xn=(e+a/P)/NE;
+      g.appendChild(el('circle',{cx:sx(xn),cy:sy(D()[a+P*e]),r:2.6,fill:PC[P-1]}));
+    }
+  }
+  // y labels
+  g.appendChild(txt(X0-6,Y0+4,hi.toExponential(1),{ta:'end',fs:10}));
+  g.appendChild(txt(X0-6,Y1,lo.toExponential(1),{ta:'end',fs:10}));
+  g.appendChild(txt(X0,Y1+15,'0',{fs:11}));
+  g.appendChild(txt(X1,Y1+15,'1',{ta:'end',fs:11}));
+  g.appendChild(txt((X0+X1)/2,Y1+15,'x',{ta:'middle',fs:11}));
+}
+
+function drawTop(){
+  var s=document.getElementById('w18top'); s.innerHTML='';
+  var g=el('g',{}); s.appendChild(g);
+  panel(g,56,418,56,330, SHOWERR?'error in the solution':'u = sin(πx) and uʰ', false);
+  panel(g,500,862,56,330, SHOWERR?'error in the derivative':'u,ₓ and the derivative of uʰ', true);
+  var lg=el('g',{}); s.appendChild(lg);
+  if(!SHOWERR){
+    lg.appendChild(el('line',{x1:56,y1:368,x2:86,y2:368,stroke:GREY,'stroke-width':1.6,'stroke-dasharray':'5 4'}));
+    lg.appendChild(txt(92,372,'exact',{fs:12}));
+    lg.appendChild(el('line',{x1:150,y1:368,x2:180,y2:368,stroke:PC[P-1],'stroke-width':2}));
+    lg.appendChild(txt(186,372,'finite element solution, p='+P+', '+NE+' elements',{fs:12}));
+  } else {
+    lg.appendChild(el('line',{x1:56,y1:368,x2:86,y2:368,stroke:ACC,'stroke-width':2}));
+    lg.appendChild(txt(92,372,'u − uʰ, drawn one element at a time',{fs:12}));
+  }
+}
+
+// ---------------- bottom: convergence ----------------
+var YMIN=1e-13, YMAX=10;
+function cpanel(g,X0,X1,Y0,Y1,key,title){
+  function sx(n){ return X0+(Math.log(n)-Math.log(2))/(Math.log(64)-Math.log(2))*(X1-X0); }
+  function sy(v){ v=Math.max(v,YMIN);
+    return Y1-(Math.log10(v)-Math.log10(YMIN))/(Math.log10(YMAX)-Math.log10(YMIN))*(Y1-Y0); }
+  g.appendChild(el('rect',{x:X0,y:Y0,width:X1-X0,height:Y1-Y0,fill:'#fff',stroke:FAINT}));
+  g.appendChild(txt((X0+X1)/2,Y0-12,title,{ta:'middle',fs:13,fill:INK,fw:600}));
+  var k,p,i;
+  for(k=-13;k<=1;k+=3){
+    var yy=sy(Math.pow(10,k));
+    g.appendChild(el('line',{x1:X0,y1:yy,x2:X1,y2:yy,stroke:FAINT,'stroke-width':1}));
+    g.appendChild(txt(X0-5,yy+3,'1e'+k,{ta:'end',fs:9.5}));
+  }
+  var ticks=[2,4,8,16,32,64];
+  for(i=0;i<ticks.length;i++){
+    var xx=sx(ticks[i]);
+    g.appendChild(el('line',{x1:xx,y1:Y0,x2:xx,y2:Y1,stroke:FAINT,'stroke-width':1}));
+    g.appendChild(txt(xx,Y1+14,''+ticks[i],{ta:'middle',fs:10}));
+  }
+  g.appendChild(txt((X0+X1)/2,Y1+30,'number of elements',{ta:'middle',fs:11}));
+  var endy=[];
+  for(p=1;p<=5;p++){
+    var a=ERR[p][key], d='';
+    for(i=0;i<CONV.length;i++) d+=(i?'L':'M')+sx(CONV[i]).toFixed(2)+' '+sy(a[i]).toFixed(2);
+    g.appendChild(el('path',{d:d,fill:'none',stroke:PC[p-1],
+      'stroke-width':(p===P?2.6:1.2),opacity:(p===P?1:0.42)}));
+    endy.push(sy(a[a.length-1]));
+  }
+  // p=4 and p=5 both bottom out, so their labels would land on top of each other
+  for(i=1;i<endy.length;i++) if(endy[i]-endy[i-1]<11) endy[i]=endy[i-1]+11;
+  for(p=1;p<=5;p++)
+    g.appendChild(txt(sx(64)+4,endy[p-1]+3,'p='+p,{fs:10,fill:PC[p-1]}));
+  var j=CONV.indexOf(NE), cv=ERR[P][key][j];
+  g.appendChild(el('circle',{cx:sx(NE),cy:sy(cv),r:6.5,fill:'none',stroke:INK,'stroke-width':1.8}));
+  g.appendChild(el('circle',{cx:sx(NE),cy:sy(cv),r:2.6,fill:INK}));
+}
+
+function drawBot(){
+  var s=document.getElementById('w18bot'); s.innerHTML='';
+  var g=el('g',{}); s.appendChild(g);
+  cpanel(g,56,400,56,330,'L2','error in H⁰ (the L² norm)');
+  cpanel(g,500,844,56,330,'H1','error in H¹');
+}
+
+function cap(){
+  var j=CONV.indexOf(NE);
+  var e0=ERR[P]['L2'][j], e1=ERR[P]['H1'][j];
+  var k=CONV.indexOf(32), kk=CONV.indexOf(64);
+  var r0=Math.log(ERR[P]['L2'][k]/ERR[P]['L2'][kk])/Math.log(2);
+  var r1=Math.log(ERR[P]['H1'][k]/ERR[P]['H1'][kk])/Math.log(2);
+  var s='<b>p = '+P+', '+NE+' elements.</b> '+
+    'Error here is '+e0.toExponential(2)+' in H⁰ and '+e1.toExponential(2)+' in H¹. '+
+    'Between 32 and 64 elements the curves above have slope '+r0.toFixed(2)+' and '+r1.toFixed(2)+
+    ', against the predicted '+(P+1)+' and '+P+'. ';
+  if(P>=4) s+='<b>Notice the H⁰ curve flattening at the bottom right.</b> '+
+    'At this degree the error reaches roughly 10⁻¹² after a few refinements, which is as '+
+    'small as double precision can represent it. The slope there is telling you about '+
+    'arithmetic, not about the method — at p = 5 it even turns upward.';
+  else s+='The finite element solution also passes through the exact solution at every node, '+
+    'which is special to this one-dimensional problem.';
+  document.getElementById('w18cap').innerHTML=s;
+}
+
+function draw(){ drawTop(); drawBot(); cap(); }
+
+document.getElementById('w18deg').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b) return;
+  P=+b.dataset.p;
+  var bs=this.querySelectorAll('button');
+  for(var i=0;i<bs.length;i++) bs[i].setAttribute('aria-pressed', bs[i]===b?'true':'false');
+  draw();
+});
+document.getElementById('w18ne').addEventListener('input',function(){
+  NE=+this.value; document.getElementById('w18nev').textContent=NE; draw(); });
+document.getElementById('w18err').addEventListener('change',function(){
+  SHOWERR=this.checked; draw(); });
+
+draw();
+})();
+</script>
+<p>For <span class="math inline">\(p=5\)</span>, notice that the rate flattens or even slightly regresses for error around <span class="math inline">\(10^{-12}\)</span>. This does not indicate that the solver is incorrect here. Instead, it is an artifact of using double-precision arithmetic. We cannot typically represent solutions more accurately than machine precision, and so the benefits for refinement in the <span class="math inline">\(L^2\)</span> norm cannot be adequately measured. However, this is not to say that the solution does not improve: by looking at the <span class="math inline">\(H^1\)</span> norm you can see that error continues to decrease over the depicted number of elements with refinement even after error bottoms out in the <span class="math inline">\(L^2\)</span> norm.</p>
+</section>
+<section id="what-this-does-and-does-not-tell-you" class="level3" data-number="18.1.3">
+<h3 data-number="18.1.3" class="anchored" data-anchor-id="what-this-does-and-does-not-tell-you"><span class="header-section-number">18.1.3</span> What this does and does not tell you</h3>
+<p>A manufactured solution is a <strong>verification</strong> tool: it answers <em>did I implement the method correctly?</em> If your rates come out at the predicted <span class="math inline">\(\beta\)</span>, your basis functions, your Jacobians, your assembly and your boundary conditions are almost certainly all right. Most coding mistakes break the rate, not just the constant, because they break the method rather than merely making it less accurate.</p>
+<p>What it does <strong>not</strong> tell you is whether you solved the right problem (i.e.&nbsp;used the correct input). The physics, the geometry, the material data and the boundary conditions you chose are all still your responsibility. Verification asks whether you solved the equations right; it does not ask whether you had the right equations.</p>
+<p>One more caution. You are free to pick any <span class="math inline">\(u\)</span>, which means you are also free to pick one that makes the test easier than it should be. If you choose a <span class="math inline">\(u\)</span> that your basis can represent exactly (e.g.&nbsp;a straight line with <span class="math inline">\(p = 1\)</span>), the error is zero at every refinement and you don’t see the convergence rates play out. Pick something your space genuinely has to approximate.</p>
+</section>
+</section>
+<section id="why-the-estimate-describes-our-solution" class="level2" data-number="18.2">
+<h2 data-number="18.2" class="anchored" data-anchor-id="why-the-estimate-describes-our-solution"><span class="header-section-number">18.2</span> Why the estimate describes our solution</h2>
+<p>Here is the gap Class 17 left open. The a-priori estimate</p>
+<p><span class="math display">\[ \|e\|_{H^s(\Omega)} \leq C h^{\beta} \|u\|_{H^{p+1}(\Omega)} \]</span></p>
+<p>comes from <strong>approximation theory</strong>. It says: given a mesh and a polynomial degree, here is how close we can guarantee the <em>best possible</em> function in that space gets to your arbitrary choice of <span class="math inline">\(u\)</span>. The rest of the material for this class aims to help us understand where this estimate came from.</p>
+<section id="step-one-the-error-is-invisible-to-the-approximation-space" class="level3" data-number="18.2.1">
+<h3 data-number="18.2.1" class="anchored" data-anchor-id="step-one-the-error-is-invisible-to-the-approximation-space"><span class="header-section-number">18.2.1</span> Step one: the error is invisible to the approximation space</h3>
+<p>Write the left side of the weak form as</p>
+<p><span class="math display">\[ a(w, v) := \int_\Omega w_{,x}\, v_{,x} \, dx .\]</span></p>
+<p>or in multiple dimensions as</p>
+<p><span class="math display">\[ a(w, v) := \int_\Omega w_{,i}\, \kappa_{ij} v_{,j} \, d\Omega .\]</span></p>
+<p>This is short notation for exactly what your stiffness matrix computes, since <span class="math inline">\(K_{AB} = a(N_A, N_B)\)</span>.</p>
+<p>Now put the two problems side by side. The exact solution satisfies the weak form against <strong>every</strong> test function <span class="math inline">\(w\in \mathcal{V}\)</span>:</p>
+<p><span class="math display">\[ a(u, w) = L(w) \qquad \text{for all } w \in \mathcal{V} ,\]</span></p>
+<p>where <span class="math inline">\(L(w)\)</span> accounts for the forcing and boundary terms. The computed finite element solution satisfies the same equation, but only against the functions we actually built:</p>
+<p><span class="math display">\[ a(u^h, w^h) = L(w^h) \qquad \text{for all } w^h \in \mathcal{V}^h .\]</span></p>
+<p>Now, recall that <span class="math inline">\(\mathcal{V}^h \subset \mathcal{V}\)</span>, meaning that <strong>every function in <span class="math inline">\(\mathcal{V}^h\)</span> is also in <span class="math inline">\(\mathcal{V}\)</span>.</strong> The basis functions we use are legitimate test functions, but happen to be just a small subset of them. So the first equation is true for <span class="math inline">\(w = w^h\)</span> as well, and we may subtract the second equation from it:</p>
+<p><span class="math display">\[ \boxed{\; a\!\left(u - u^h,\; w^h\right) = 0 \qquad \text{for all } w^h \in \mathcal{V}^h \;}\]</span></p>
+<p>This is <strong>Galerkin orthogonality</strong>. If you look at <span class="math inline">\(a(w,v)\)</span> as an inner product between two functions, it says that <span class="math inline">\(u-u^h\)</span> is orthogonal to <span class="math inline">\(w^h\)</span> under this physics-based inner product. In other words: <em>measured in this energy inner product, the error, <span class="math inline">\(e= u-u^h\)</span>, is orthogonal to everything our approximation space can represent.</em> The space cannot see its own error. If it could, the method would have used that information and done better.</p>
+</section>
+<section id="step-two-so-uh-is-the-best-the-space-can-do" class="level3" data-number="18.2.2">
+<h3 data-number="18.2.2" class="anchored" data-anchor-id="step-two-so-uh-is-the-best-the-space-can-do"><span class="header-section-number">18.2.2</span> Step two: so <span class="math inline">\(u^h\)</span> is the best the space can do</h3>
+<p>Using the above energy inner product, define the <strong>energy norm</strong> by</p>
+<p><span class="math display">\[ \|v\|_E := \sqrt{a(v,v)} .\]</span></p>
+<p>For our problem this is just the size of a function’s derivative, so it is the <span class="math inline">\(H^1\)</span> part of the error you have already been computing, which in general is weighted by the (positive definite) thermal conductivity matrix.</p>
+<p>Now take any <span class="math inline">\(w^h\)</span> in the space and split the difference between <span class="math inline">\(u\)</span> and it into two pieces:</p>
+<p><span class="math display">\[ u - w^h = \underbrace{\left(u - u^h\right)}_{\text{the error}} + \underbrace{\left(u^h - w^h\right)}_{\text{lives in } \mathcal{V}^h} .\]</span></p>
+<p>Measure the size of both sides in the energy norm. Because <span class="math inline">\(a(\cdot,\cdot)\)</span> is symmetric, this expands the way a squared length does, and the cross term is <span class="math inline">\(a(u - u^h,\, u^h - w^h)\)</span> — which is zero, by Galerkin orthogonality, since the second slot lives in <span class="math inline">\(\mathcal{V}^h\)</span>. What is left is</p>
+<p><span class="math display">\[ \left\|u - w^h\right\|_E^2 = \left\|u - u^h\right\|_E^2 + \left\|u^h - w^h\right\|_E^2 .\]</span></p>
+<p>That is the Pythagorean theorem, with <span class="math inline">\(a(\cdot,\cdot)\)</span> playing the role of the dot product. The last term cannot be negative, so dropping it and rearranging gives</p>
+<p><span class="math display">\[ \boxed{\; \left\|u - u^h\right\|_E \;\leq\; \left\|u - w^h\right\|_E \qquad \text{for every } w^h \in \mathcal{V}^h \;}\]</span></p>
+<p><strong>The finite element solution is the best approximation in its space, measured in the energy norm.</strong> No other combination of your basis functions gets closer. This result is called <strong>Céa’s lemma</strong>.</p>
+<p>It also clarifies what we have indicated repeatedly, that the finite element method is not an interpolation but is instead a best fit or projection. Under our physics-informed energy inner product, the finite element method finds the best approximation/solution to the real solution in a similar sense that projecting a 2D point onto the <span class="math inline">\(x\)</span>-axis finds the closest point on the 1D line.</p>
+</section>
+<section id="seeing-both-of-these-at-once" class="level3" data-number="18.2.3">
+<h3 data-number="18.2.3" class="anchored" data-anchor-id="seeing-both-of-these-at-once"><span class="header-section-number">18.2.3</span> Seeing both of these at once</h3>
+<p>The widget below runs the same problem as before, at <span class="math inline">\(p=1\)</span> on four elements, and lets you move the finite element answer off its correct value. Pick a basis function, slide its coefficient away from what the solver produced, and watch three things at once.</p>
+<div class="bw">
+  <div class="bar">
+    <b>PERTURB</b>
+    <span class="seg" id="o18n">
+      <button data-a="0" aria-pressed="false">N₀</button>
+      <button data-a="1" aria-pressed="true">N₁</button>
+      <button data-a="2" aria-pressed="false">N₂</button>
+      <button data-a="3" aria-pressed="false">N₃</button>
+    </span>
+    <b>BY</b> <input type="range" id="o18d" min="-50" max="50" value="20"><span class="val" id="o18dv">0.20</span>
+    <b>MEASURE IN</b>
+    <span class="seg" id="o18m">
+      <button data-m="E" aria-pressed="true">energy norm</button>
+      <button data-m="L" aria-pressed="false">L² norm</button>
+    </span>
+  </div>
+  <svg id="o18a" viewbox="0 0 880 330" role="img" aria-label="The perturbed solution and what each basis function sees of the error"></svg>
+  <svg id="o18b" viewbox="0 0 880 300" role="img" aria-label="Error against size of the perturbation"></svg>
+  <div class="cap" id="o18cap"></div>
+</div>
+
+<script>
+(function(){
+var D0=[0.0,0.707106781187,1.0,0.707106781187,0.0];
+var KM=[[4.0,-4.0,0.0,0.0,0.0],[-4.0,8.0,-4.0,0.0,0.0],[0.0,-4.0,8.0,-4.0,0.0],[0.0,0.0,-4.0,8.0,-4.0],[0.0,0.0,0.0,-4.0,4.0]];
+var MD=[0.083333333333,0.166666666667,0.166666666667,0.166666666667,0.083333333333];
+var BV=[0.002267519509,0.008356636817,0.011818069122,0.008356636817,0.002267519509];
+var E0=0.248510699529, L0=0.00154325997931, NBF=5, NE=4;
+var S2={m2:{x:[0.0, 0.5, 1.0],fem:[0.0, 1.230695, 0.039705],ex:[0.0, 1.0, 0.0]},m4:{x:[0.0, 0.25, 0.5, 0.75, 1.0],fem:[0.0, 0.744825, 1.053408, 0.745315, 0.001679],ex:[0.0, 0.707107, 1.0, 0.707107, 0.0]}};
+var A0=1, DL=0.20, MODE='E';
+var INK='#18202b', GREY='#6b7684', FAINT='#dfe4ea', ACC='#b8322a', BLUE='#2b5fa8', GREEN='#2f7d4f';
+function el(n,at){var e=document.createElementNS('http://www.w3.org/2000/svg',n);
+  for(var k in at)e.setAttribute(k,at[k]);return e;}
+function txt(x,y,s,o){o=o||{};var t=el('text',{x:x,y:y,'font-size':o.fs||12,fill:o.fill||GREY,
+  'text-anchor':o.ta||'start','font-family':'system-ui, sans-serif'});
+  if(o.fw)t.setAttribute('font-weight',o.fw); t.textContent=s; return t;}
+function wvec(){ var w=D0.slice(); w[A0]+=DL; return w; }
+function errE(d){ return E0 + d*d*KM[A0][A0]; }
+function errL(d){ return L0 - 2*d*BV[A0] + d*d*MD[A0]; }
+function err(d){ return MODE==='E'?errE(d):errL(d); }
+function vertex(){ return MODE==='E' ? 0 : BV[A0]/MD[A0]; }
+
+// ---- panel A: the functions ----
+function fnPanel(g,X0,X1,Y0,Y1){
+  var lo=-0.65, hi=1.75;
+  function sx(x){return X0+x*(X1-X0);} function sy(y){return Y1-(y-lo)/(hi-lo)*(Y1-Y0);}
+  g.appendChild(el('rect',{x:X0,y:Y0,width:X1-X0,height:Y1-Y0,fill:'#fff',stroke:FAINT}));
+  g.appendChild(txt((X0+X1)/2,Y0-10,'the exact solution, the finite element answer, and your perturbed one',
+    {ta:'middle',fs:12.5,fill:INK,fw:600}));
+  var i;
+  for(i=0;i<=NE;i++) g.appendChild(el('line',{x1:sx(i/NE),y1:Y0,x2:sx(i/NE),y2:Y1,stroke:FAINT}));
+  g.appendChild(el('line',{x1:X0,y1:sy(0),x2:X1,y2:sy(0),stroke:FAINT,'stroke-dasharray':'3 3'}));
+  // exact
+  var d='',k;
+  for(k=0;k<=200;k++){var xv=k/200; d+=(k?'L':'M')+sx(xv).toFixed(2)+' '+sy(Math.sin(Math.PI*xv)).toFixed(2);}
+  g.appendChild(el('path',{d:d,fill:'none',stroke:GREY,'stroke-width':1.5,'stroke-dasharray':'5 4'}));
+  // the FEM answer (faint) and the perturbed one (bold)
+  function poly(v,col,wd,op){var s='';for(var i=0;i<NBF;i++) s+=(i?'L':'M')+sx(i/NE).toFixed(2)+' '+sy(v[i]).toFixed(2);
+    g.appendChild(el('path',{d:s,fill:'none',stroke:col,'stroke-width':wd,opacity:op}));}
+  poly(D0,BLUE,1.6,0.35);
+  var w=wvec(); poly(w,ACC,2.2,1);
+  for(i=0;i<NBF;i++) g.appendChild(el('circle',{cx:sx(i/NE),cy:sy(w[i]),r:2.8,
+    fill:(i===A0?ACC:'#fff'),stroke:ACC,'stroke-width':1.4}));
+  g.appendChild(txt(X0,Y1+15,'0',{fs:11}));
+  g.appendChild(txt(X1,Y1+15,'1',{ta:'end',fs:11}));
+  g.appendChild(txt((X0+X1)/2,Y1+15,'x',{ta:'middle',fs:11}));
+}
+
+// ---- panel B: what each basis function sees of the error ----
+function barPanel(g,X0,X1,Y0,Y1){
+  var i, nfree=NBF-1, lim=4.3;
+  function sy(v){ return (Y0+Y1)/2 - v/lim*((Y1-Y0)/2); }
+  g.appendChild(el('rect',{x:X0,y:Y0,width:X1-X0,height:Y1-Y0,fill:'#fff',stroke:FAINT}));
+  g.appendChild(txt((X0+X1)/2,Y0-10,'what each basis function sees of the error',
+    {ta:'middle',fs:12.5,fill:INK,fw:600}));
+  g.appendChild(el('line',{x1:X0,y1:sy(0),x2:X1,y2:sy(0),stroke:INK,'stroke-width':1}));
+  var bw=(X1-X0)/nfree;
+  for(i=0;i<nfree;i++){
+    // a(u - w, N_i) = a(u - u^h, N_i) - DL*K[A0][i] = -DL*K[A0][i]
+    var v=-DL*KM[A0][i], cx=X0+bw*(i+0.5), y0=sy(0), y1=sy(v);
+    g.appendChild(el('rect',{x:cx-bw*0.26,y:Math.min(y0,y1),width:bw*0.52,
+      height:Math.max(Math.abs(y1-y0),0.7),fill:(Math.abs(v)<1e-12?GREEN:ACC),opacity:0.82}));
+    g.appendChild(txt(cx,Y1+15,'N'+'₀₁₂₃'.charAt(i),{ta:'middle',fs:11.5}));
+    g.appendChild(txt(cx,(v>=0?y1-5:y1+13),v.toFixed(2),{ta:'middle',fs:10,
+      fill:(Math.abs(v)<1e-12?GREEN:ACC)}));
+  }
+  g.appendChild(txt(X0+4,Y0+14,'a(u − w, Nₐ)',{fs:11}));
+}
+
+function drawA(){
+  var s=document.getElementById('o18a'); s.innerHTML='';
+  var g=el('g',{}); s.appendChild(g);
+  fnPanel(g,56,470,46,280);
+  barPanel(g,545,862,46,280);
+  g.appendChild(el('line',{x1:56,y1:312,x2:86,y2:312,stroke:GREY,'stroke-width':1.5,'stroke-dasharray':'5 4'}));
+  g.appendChild(txt(92,316,'exact u',{fs:11.5}));
+  g.appendChild(el('line',{x1:150,y1:312,x2:180,y2:312,stroke:BLUE,'stroke-width':1.6,opacity:0.35}));
+  g.appendChild(txt(186,316,'finite element answer',{fs:11.5}));
+  g.appendChild(el('line',{x1:320,y1:312,x2:350,y2:312,stroke:ACC,'stroke-width':2.2}));
+  g.appendChild(txt(356,316,'your perturbed w',{fs:11.5}));
+}
+
+// ---- the error curve against the perturbation ----
+function drawB(){
+  var s=document.getElementById('o18b'); s.innerHTML='';
+  var g=el('g',{}); s.appendChild(g);
+  var X0=56,X1=862,Y0=46,Y1=240, i, d;
+  var lo=-0.5, hi=0.5, ymax=0;
+  for(i=0;i<=200;i++){ var v=err(lo+(hi-lo)*i/200); if(v>ymax) ymax=v; }
+  ymax*=1.12;
+  function sx(t){return X0+(t-lo)/(hi-lo)*(X1-X0);} function sy(v){return Y1-v/ymax*(Y1-Y0);}
+  g.appendChild(el('rect',{x:X0,y:Y0,width:X1-X0,height:Y1-Y0,fill:'#fff',stroke:FAINT}));
+  g.appendChild(txt((X0+X1)/2,Y0-10,
+    (MODE==='E'?'squared error in the ENERGY norm':'squared error in the L² norm')+
+    ', as the coefficient moves',{ta:'middle',fs:12.5,fill:INK,fw:600}));
+  // delta = 0 reference
+  g.appendChild(el('line',{x1:sx(0),y1:Y0,x2:sx(0),y2:Y1,stroke:FAINT}));
+  g.appendChild(txt(sx(0),Y1+15,'0',{ta:'middle',fs:11}));
+  g.appendChild(txt(X0,Y1+15,'−0.5',{fs:11}));
+  g.appendChild(txt(X1,Y1+15,'+0.5',{ta:'end',fs:11}));
+  g.appendChild(txt((X0+X1)/2,Y1+31,'perturbation δ added to the coefficient',{ta:'middle',fs:11}));
+  d='';
+  for(i=0;i<=240;i++){ var t=lo+(hi-lo)*i/240; d+=(i?'L':'M')+sx(t).toFixed(2)+' '+sy(err(t)).toFixed(2); }
+  g.appendChild(el('path',{d:d,fill:'none',stroke:(MODE==='E'?BLUE:'#8a5a9e'),'stroke-width':2.2}));
+  // the vertex
+  var vx=vertex();
+  if(vx>=lo&&vx<=hi){
+    g.appendChild(el('line',{x1:sx(vx),y1:sy(err(vx)),x2:sx(vx),y2:Y1,
+      stroke:GREEN,'stroke-width':1.4,'stroke-dasharray':'4 3'}));
+    g.appendChild(el('circle',{cx:sx(vx),cy:sy(err(vx)),r:4,fill:GREEN}));
+    g.appendChild(txt(sx(vx)+7,sy(err(vx))-7,
+      'lowest at δ = '+vx.toFixed(3)+(Math.abs(vx)<1e-9?'  (the finite element answer)':'  (NOT the finite element answer)'),
+      {fs:11.5,fill:GREEN,fw:600}));
+  }
+  // current delta
+  g.appendChild(el('circle',{cx:sx(DL),cy:sy(err(DL)),r:6.5,fill:'none',stroke:INK,'stroke-width':1.8}));
+  g.appendChild(el('circle',{cx:sx(DL),cy:sy(err(DL)),r:2.6,fill:INK}));
+}
+
+function cap(){
+  var sub='₀₁₂₃'.charAt(A0);
+  var s='<b>Perturbing N'+sub+' by δ = '+DL.toFixed(2)+'.</b> ';
+  if(MODE==='E'){
+    s+='Squared energy error is '+errE(DL).toFixed(4)+' against '+E0.toFixed(4)+
+       ' for the finite element answer, so the perturbation introduces '+(errE(DL)-E0).toFixed(4)+
+       ' error compared to FEM under the energy norm. That excess is exactly δ²·a(N'+sub+', N'+sub+') = '+
+       DL.toFixed(2)+'²·'+KM[A0][A0].toFixed(1)+', which is why moving the coefficient '+
+       'up or down by the same amount costs the same. The curve has no tilt because the term that '+
+       'would tilt it is a(u − uʰ, N'+sub+'), and that is zero — the bars on the right '+
+       'are all zero when δ is zero.';
+  } else {
+    var v=BV[A0]/MD[A0];
+    s+='Measured in L² the lowest point sits at δ = '+v.toFixed(3)+
+       ', not at the finite element answer. Sliding there gives '+errL(v).toExponential(3)+
+       ' against '+L0.toExponential(3)+' — a genuinely better approximation than the one your '+
+       'solver produced. Nothing is broken. The method is the best approximation <i>in the energy '+
+       'norm</i>, and that is the only norm it promises anything about.';
+  }
+  document.getElementById('o18cap').innerHTML=s;
+}
+function draw(){ drawA(); drawB(); cap(); }
+
+document.getElementById('o18n').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b)return; A0=+b.dataset.a;
+  var bs=this.querySelectorAll('button');
+  for(var i=0;i<bs.length;i++) bs[i].setAttribute('aria-pressed',bs[i]===b?'true':'false');
+  draw(); });
+document.getElementById('o18m').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b)return; MODE=b.dataset.m;
+  var bs=this.querySelectorAll('button');
+  for(var i=0;i<bs.length;i++) bs[i].setAttribute('aria-pressed',bs[i]===b?'true':'false');
+  draw(); });
+document.getElementById('o18d').addEventListener('input',function(){
+  DL=(+this.value)/100; document.getElementById('o18dv').textContent=DL.toFixed(2); draw(); });
+
+draw();
+})();
+</script>
+</section>
+<section id="why-this-is-not-interpolation" class="level3" data-number="18.2.4">
+<h3 data-number="18.2.4" class="anchored" data-anchor-id="why-this-is-not-interpolation"><span class="header-section-number">18.2.4</span> Why this is not interpolation</h3>
+<p>Look again at the widget in Section 18.1.2, at <span class="math inline">\(p=1\)</span> with a few elements. The finite element curve passes exactly through the exact solution at every node. It is very tempting to conclude that the method works by interpolation — that it reads off <span class="math inline">\(u\)</span> at the nodes and joins the dots.</p>
+<p>It does not, and one dimension is misleading. Nodal exactness in 1D for the Poisson equation is a genuine theorem, but it is special to one dimension, and it stops being true in higher dimensions.</p>
+<p>Below is the same manufactured problem in two dimensions, <span class="math inline">\(u = \sin(\pi x)\sin(\pi y)\)</span> on the unit square, solved with code that will be developed in Project 2. Both panels are a slice along <span class="math inline">\(y = \tfrac{1}{2}\)</span>, where the exact solution is just <span class="math inline">\(\sin(\pi x)\)</span> again. The grey dashed line is <span class="math inline">\(u\)</span>, the thin blue line joins the dots through <span class="math inline">\(u\)</span> at the nodes, and the heavy red line is what the solver actually returns.</p>
+<div class="bw">
+  <svg id="s2fig" viewbox="0 0 880 340" role="img" aria-label="A slice through the 2D solution on two meshes, comparing the finite element answer against the interpolant"></svg>
+  <div class="cap">
+  A slice at <i>y</i> = ½ through the finite element solution of
+  <i>u</i> = sin(π<i>x</i>) sin(π<i>y</i>) on [0, 1]².
+  On the coarse mesh the finite element answer overshoots the exact solution by
+  <b>23%</b> at the center, and it is still <b>5.3%</b> high after one refinement. An
+  interpolant cannot do that: it is pinned to <i>u</i> at every node by construction.
+  What you are looking at is the method choosing the closest point in its space measured in
+  the energy norm, which is a statement about slopes over the whole domain, not about values
+  at points. In one dimension that choice happens to land on the nodal values. In two it
+  does not, and the projection shows itself.
+  </div>
+</div>
+
+<script>
+(function(){
+var INK='#18202b',GREY='#6b7684',FAINT='#dfe4ea',ACC='#b8322a',BLUE='#2b5fa8';
+var S2DATA={m2:{x:[0.0, 0.5, 1.0],fem:[0.0, 1.230695, 0.039705],ex:[0.0, 1.0, 0.0]},m4:{x:[0.0, 0.25, 0.5, 0.75, 1.0],fem:[0.0, 0.744825, 1.053408, 0.745315, 0.001679],ex:[0.0, 0.707107, 1.0, 0.707107, 0.0]}};
+function el(n,at){var e=document.createElementNS('http://www.w3.org/2000/svg',n);
+  for(var k in at)e.setAttribute(k,at[k]);return e;}
+function txt(x,y,s,o){o=o||{};var t=el('text',{x:x,y:y,'font-size':o.fs||12,fill:o.fill||GREY,
+  'text-anchor':o.ta||'start','font-family':'system-ui, sans-serif'});
+  if(o.fw)t.setAttribute('font-weight',o.fw);t.textContent=s;return t;}
+function panel(g,key,X0,X1,Y0,Y1,title){
+  var dat=S2DATA[key], lo=-0.12, hi=1.38, i;
+  function sx(x){return X0+x*(X1-X0);} function sy(y){return Y1-(y-lo)/(hi-lo)*(Y1-Y0);}
+  g.appendChild(el('rect',{x:X0,y:Y0,width:X1-X0,height:Y1-Y0,fill:'#fff',stroke:FAINT}));
+  g.appendChild(txt((X0+X1)/2,Y0-10,title,{ta:'middle',fs:12.5,fill:INK,fw:600}));
+  for(i=0;i<dat.x.length;i++)
+    g.appendChild(el('line',{x1:sx(dat.x[i]),y1:Y0,x2:sx(dat.x[i]),y2:Y1,stroke:FAINT}));
+  g.appendChild(el('line',{x1:X0,y1:sy(0),x2:X1,y2:sy(0),stroke:FAINT,'stroke-dasharray':'3 3'}));
+  var d='',k;
+  for(k=0;k<=200;k++){var xv=k/200;d+=(k?'L':'M')+sx(xv).toFixed(2)+' '+sy(Math.sin(Math.PI*xv)).toFixed(2);}
+  g.appendChild(el('path',{d:d,fill:'none',stroke:GREY,'stroke-width':1.5,'stroke-dasharray':'5 4'}));
+  function poly(v,col,wd){var s='';for(var i=0;i<v.length;i++)s+=(i?'L':'M')+sx(dat.x[i]).toFixed(2)+' '+sy(v[i]).toFixed(2);
+    g.appendChild(el('path',{d:s,fill:'none',stroke:col,'stroke-width':wd}));}
+  poly(dat.ex,BLUE,1.4); poly(dat.fem,ACC,2.3);
+  for(i=0;i<dat.x.length;i++){
+    g.appendChild(el('circle',{cx:sx(dat.x[i]),cy:sy(dat.ex[i]),r:2.4,fill:BLUE}));
+    g.appendChild(el('circle',{cx:sx(dat.x[i]),cy:sy(dat.fem[i]),r:2.8,fill:ACC}));
+  }
+  var j=dat.x.indexOf(0.5);
+  if(j>=0){
+    g.appendChild(el('line',{x1:sx(0.5)+10,y1:sy(dat.ex[j]),x2:sx(0.5)+10,y2:sy(dat.fem[j]),
+      stroke:INK,'stroke-width':1}));
+    g.appendChild(txt(sx(0.5)+15,(sy(dat.ex[j])+sy(dat.fem[j]))/2+4,
+      '+'+(100*(dat.fem[j]-dat.ex[j])).toFixed(1)+'%',{fs:11,fill:INK,fw:600}));
+  }
+  g.appendChild(txt(X0,Y1+15,'0',{fs:11}));
+  g.appendChild(txt(X1,Y1+15,'1',{ta:'end',fs:11}));
+  g.appendChild(txt((X0+X1)/2,Y1+15,'x   (slice at y = 1/2)',{ta:'middle',fs:11}));
+}
+var s=document.getElementById('s2fig'), g=el('g',{}); s.appendChild(g);
+panel(g,'m2',56,418,46,268,'2 × 2 mesh');
+panel(g,'m4',500,862,46,268,'4 × 4 mesh');
+g.appendChild(el('line',{x1:56,y1:306,x2:86,y2:306,stroke:GREY,'stroke-width':1.5,'stroke-dasharray':'5 4'}));
+g.appendChild(txt(92,310,'exact u',{fs:11.5}));
+g.appendChild(el('line',{x1:160,y1:306,x2:190,y2:306,stroke:BLUE,'stroke-width':1.4}));
+g.appendChild(txt(196,310,'interpolant (joining the dots through u)',{fs:11.5}));
+g.appendChild(el('line',{x1:470,y1:306,x2:500,y2:306,stroke:ACC,'stroke-width':2.3}));
+g.appendChild(txt(506,310,'what the solver returns',{fs:11.5}));
+})();
+</script>
+</section>
+<section id="the-whole-argument-in-three-lines" class="level3" data-number="18.2.5">
+<h3 data-number="18.2.5" class="anchored" data-anchor-id="the-whole-argument-in-three-lines"><span class="header-section-number">18.2.5</span> The whole argument in three lines</h3>
+<p>The error estimate of Class 17 is the result of Galerkin orthogonality to get Céa’s lemma and then composing this with another lemma about polynomial interpolation. Here, Galerkin Orthogonality allows us to prove Céa’s lemma, and Céa’s lemma lets us swap <span class="math inline">\(u^h\)</span> for <em>any</em> function we like out of the space. The polynomial function that interpolates the actual solution is one such function that could be used. The <strong>Bramble–Hilbert lemma</strong> says how well polynomials can interpolate a smooth function, with the interpolant written as <span class="math inline">\(\mathcal{I}_h u\)</span>.</p>
+<p><span class="math display">\[
+\begin{aligned}
+\left\|u - u^h\right\|_E
+  &amp;= \min_{w^h \in \mathcal{V}^h} \left\|u - w^h\right\|_E
+  &amp;&amp; \text{(Céa's lemma)} \\[2pt]
+  &amp;\leq \left\|u - \mathcal{I}_h u\right\|_E
+  &amp;&amp; \text{(pick the interpolant)} \\[2pt]
+  &amp;\leq C \, h^{\,p} \, \left\|u\right\|_{H^{p+1}(\Omega)}
+  &amp;&amp; \text{(Bramble–Hilbert)}
+\end{aligned}
+\]</span></p>
+<p>The convergence rate <span class="math inline">\(h^p\)</span> and the norm <span class="math inline">\(\|u\|_{H^{p+1}}\)</span> both appear only on the last line, and could be altered slightly for less smooth solutions. The constant <span class="math inline">\(C\)</span> also comes as a result of this interpolation theory lemma in the last line. Here, <span class="math inline">\(C\)</span> measures how well degree-<span class="math inline">\(p\)</span> polynomials fit a smooth function on an element.</p>
+</section>
+<section id="a-reading-of-this-worth-carrying-forward" class="level3" data-number="18.2.6">
+<h3 data-number="18.2.6" class="anchored" data-anchor-id="a-reading-of-this-worth-carrying-forward"><span class="header-section-number">18.2.6</span> A reading of this worth carrying forward</h3>
+<p>Saying <span class="math inline">\(u^h\)</span> is the closest point is the same as saying <span class="math inline">\(u^h\)</span> <strong>minimizes</strong> the error over everything in the space:</p>
+<p><span class="math display">\[ \left\|u - u^h\right\|_E = \min_{w^h \in \mathcal{V}^h} \left\|u - w^h\right\|_E .\]</span></p>
+<p>Keep that word <em>minimizes</em> in mind. There are two different minimization statements in this course and it is worth not confusing them. This one is about the <strong>approximation</strong>: of all the answers we could have built, we got the closest. The other one, in <strong>Class 23</strong>, is about the <strong>physics</strong>: the true solution <span class="math inline">\(u\)</span> is the one that minimizes the total potential energy of the system over <em>all</em> admissible (test) functions, not just the ones our mesh can build.</p>
+</section>
+</section>
+<section id="when-a-measured-rate-is-not-what-you-expected" class="level2" data-number="18.3">
+<h2 data-number="18.3" class="anchored" data-anchor-id="when-a-measured-rate-is-not-what-you-expected"><span class="header-section-number">18.3</span> When a measured rate is not what you expected</h2>
+<p>Sometime you may run a convergence study and get a number that is not <span class="math inline">\(\beta\)</span>. This still may mean that nothing is wrong if it is the result of one of the following cases.</p>
+<p><strong>You are not refined enough yet.</strong> The estimate is asymptotic — it describes behavior as <span class="math inline">\(h \to 0\)</span>. On coarse meshes the measured rate typically creeps up on <span class="math inline">\(\beta\)</span> from below rather than hitting it. Seeing 1.94 where you expected 2.00 is normal, and is often resolved after one more level of refinement.</p>
+<p><strong>You have hit machine precision.</strong> This one surprises people. At high polynomial degree the error drops so fast that after two or three refinements it reaches roundoff, around <span class="math inline">\(10^{-16}\)</span>, and it cannot get any smaller. The slope then flattens toward zero, and a plot that was beautifully straight suddenly bends. The method has not stopped working, but double precision arithmetic limits continuing.</p>
+<p><strong>Your quadrature is not good enough for the error integral.</strong> The error <span class="math inline">\(e = u - u^h\)</span> is not a polynomial, since <span class="math inline">\(u\)</span> generally is not, so the rule that integrates your stiffness matrix exactly will <em>not</em> integrate the error norm exactly. Use more points than you think you need, and confirm that adding more does not change the answer.</p>
+</section>
+<section id="where-this-is-going" class="level2" data-number="18.4">
+<h2 data-number="18.4" class="anchored" data-anchor-id="where-this-is-going"><span class="header-section-number">18.4</span> Where this is going</h2>
+<ul>
+<li><strong>Class 19</strong> moves to multiple dimensions and takes up the surface integrals that Neumann conditions require, which have no one-dimensional counterpart.</li>
+<li><strong>Class 23</strong> returns to the energy idea from the other side: the minimization form of the problem, symmetric positive definiteness, and the question of whether a solution exists at all.</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation column-body">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/17_Class.html" class="pagination-link" aria-label="Class 17: Convergence Rates">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/19_Class.html" class="pagination-link" aria-label="Class 19: The Same Code in Any Dimension">
+        <span class="nav-page-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

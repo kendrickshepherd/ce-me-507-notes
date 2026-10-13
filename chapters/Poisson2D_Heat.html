@@ -1,0 +1,2068 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Finite Element Methods">
+
+<title>Appendix F — 2D Poisson I: Heat Flow in a Battery Cell – CE/ME 507 — Class Notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/Poisson2D_Heat_FEM.html" rel="next">
+<link href="../chapters/Poisson1D_Rod_FEM.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-5a6c5cd077c1ead4086784ad1389866e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+<script>
+window.MathJax = {
+  tex: {
+    tags: 'ams',
+    macros: {
+      RR: '{\\mathbb{R}}',
+      Om: '{\\Omega}'
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/Poisson2D_Heat.html"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">CE/ME 507 — Class Notes</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">CE/ME 507 — Class Notes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/2_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Class 2: Linear FEM</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Class 3: Index Notation, Function Spaces, and the Weak Form</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/4_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Class 4: Strong and Weak Forms of the Boundary Value Problem</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/5_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/6_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Class 6: Basis Functions and Lagrange Polynomials</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/7_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Class 7: From Galerkin to a Matrix Equation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/8_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Class 8: Assembly, Sparsity, and the Road to Quadrature</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/9_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Class 9: The Isoparametric Map and the Jacobian</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Class 10: Assembly with the IEN Array, and Quadrature on an Element</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Class 11: Tensor-Product Basis Functions in 2D</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Class 12: The Spatial Mapping</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Class 13: The Jacobian Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Class 14: The ID and IEN Arrays</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Class 15: Unidimensional Finite Element Code</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Class 16: Derivatives of the Solution</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">1D Poisson I: Heat Conduction Through a Wall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">1D Poisson II: The Wall, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">1D Poisson III: An Axially Loaded Rod</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#the-physical-problem" id="toc-the-physical-problem" class="nav-link active" data-scroll-target="#the-physical-problem"><span class="header-section-number">F.1</span> The physical problem</a></li>
+  <li><a href="#the-two-dimensional-domain" id="toc-the-two-dimensional-domain" class="nav-link" data-scroll-target="#the-two-dimensional-domain"><span class="header-section-number">F.2</span> The two-dimensional domain</a></li>
+  <li><a href="#the-quantities-and-their-units" id="toc-the-quantities-and-their-units" class="nav-link" data-scroll-target="#the-quantities-and-their-units"><span class="header-section-number">F.3</span> The quantities and their units</a></li>
+  <li><a href="#index-notation-in-two-dimensions" id="toc-index-notation-in-two-dimensions" class="nav-link" data-scroll-target="#index-notation-in-two-dimensions"><span class="header-section-number">F.4</span> Index notation in two dimensions</a></li>
+  <li><a href="#the-temperature-gradient-nabla-u-u_i" id="toc-the-temperature-gradient-nabla-u-u_i" class="nav-link" data-scroll-target="#the-temperature-gradient-nabla-u-u_i"><span class="header-section-number">F.5</span> The temperature gradient: <span class="math inline">\(\nabla u = u_{,i}\)</span></a></li>
+  <li><a href="#fouriers-law-heat-flows-straight-downhill" id="toc-fouriers-law-heat-flows-straight-downhill" class="nav-link" data-scroll-target="#fouriers-law-heat-flows-straight-downhill"><span class="header-section-number">F.6</span> Fourier’s law: heat flows straight downhill</a>
+  <ul class="collapse">
+  <li><a href="#when-the-material-has-a-grain-q_i--kappa_iju_j" id="toc-when-the-material-has-a-grain-q_i--kappa_iju_j" class="nav-link" data-scroll-target="#when-the-material-has-a-grain-q_i--kappa_iju_j"><span class="header-section-number">F.6.1</span> When the material has a grain: <span class="math inline">\(q_i = -\kappa_{ij}\,u_{,j}\)</span></a></li>
+  </ul></li>
+  <li><a href="#where-the-differential-equation-comes-from" id="toc-where-the-differential-equation-comes-from" class="nav-link" data-scroll-target="#where-the-differential-equation-comes-from"><span class="header-section-number">F.7</span> Where the differential equation comes from</a>
+  <ul class="collapse">
+  <li><a href="#conservation-of-energy-on-a-small-rectangle" id="toc-conservation-of-energy-on-a-small-rectangle" class="nav-link" data-scroll-target="#conservation-of-energy-on-a-small-rectangle"><span class="header-section-number">F.7.1</span> Conservation of energy on a small rectangle</a></li>
+  <li><a href="#the-divergence-theorem-the-same-balance-for-any-region" id="toc-the-divergence-theorem-the-same-balance-for-any-region" class="nav-link" data-scroll-target="#the-divergence-theorem-the-same-balance-for-any-region"><span class="header-section-number">F.7.2</span> The divergence theorem: the same balance for any region</a></li>
+  </ul></li>
+  <li><a href="#the-laplacian-divergence-of-the-gradient" id="toc-the-laplacian-divergence-of-the-gradient" class="nav-link" data-scroll-target="#the-laplacian-divergence-of-the-gradient"><span class="header-section-number">F.8</span> The Laplacian: divergence of the gradient</a>
+  <ul class="collapse">
+  <li><a href="#sec-h2-shape" id="toc-sec-h2-shape" class="nav-link" data-scroll-target="#sec-h2-shape"><span class="header-section-number">F.8.1</span> What the Laplacian says about the shape of <span class="math inline">\(u\)</span></a></li>
+  </ul></li>
+  <li><a href="#the-forcing-function-f" id="toc-the-forcing-function-f" class="nav-link" data-scroll-target="#the-forcing-function-f"><span class="header-section-number">F.9</span> The forcing function <span class="math inline">\(f\)</span></a></li>
+  <li><a href="#boundary-conditions" id="toc-boundary-conditions" class="nav-link" data-scroll-target="#boundary-conditions"><span class="header-section-number">F.10</span> Boundary conditions</a>
+  <ul class="collapse">
+  <li><a href="#dirichlet-u-g-on-gamma_g-the-temperature-is-known" id="toc-dirichlet-u-g-on-gamma_g-the-temperature-is-known" class="nav-link" data-scroll-target="#dirichlet-u-g-on-gamma_g-the-temperature-is-known"><span class="header-section-number">F.10.1</span> Dirichlet: <span class="math inline">\(u = g\)</span> on <span class="math inline">\(\Gamma_g\)</span> — the temperature is known</a></li>
+  <li><a href="#sec-h2-neumann" id="toc-sec-h2-neumann" class="nav-link" data-scroll-target="#sec-h2-neumann"><span class="header-section-number">F.10.2</span> Neumann: <span class="math inline">\((\kappa\nabla u)\cdot\underline{n} = h\)</span> on <span class="math inline">\(\Gamma_h\)</span> — the heat flux is known</a></li>
+  <li><a href="#sec-h2-partition" id="toc-sec-h2-partition" class="nav-link" data-scroll-target="#sec-h2-partition"><span class="header-section-number">F.10.3</span> <span class="math inline">\(\Gamma_g\)</span> and <span class="math inline">\(\Gamma_h\)</span> partition the boundary</a></li>
+  <li><a href="#which-edges-get-which-condition" id="toc-which-edges-get-which-condition" class="nav-link" data-scroll-target="#which-edges-get-which-condition"><span class="header-section-number">F.10.4</span> Which edges get which condition</a></li>
+  </ul></li>
+  <li><a href="#how-the-1d-wall-sits-inside-the-2d-cell" id="toc-how-the-1d-wall-sits-inside-the-2d-cell" class="nav-link" data-scroll-target="#how-the-1d-wall-sits-inside-the-2d-cell"><span class="header-section-number">F.11</span> How the 1D wall sits inside the 2D cell</a></li>
+  <li><a href="#the-strong-form-complete" id="toc-the-strong-form-complete" class="nav-link" data-scroll-target="#the-strong-form-complete"><span class="header-section-number">F.12</span> The strong form, complete</a></li>
+  <li><a href="#worked-example" id="toc-worked-example" class="nav-link" data-scroll-target="#worked-example"><span class="header-section-number">F.13</span> Worked example</a></li>
+  <li><a href="#explore-the-strong-form" id="toc-explore-the-strong-form" class="nav-link" data-scroll-target="#explore-the-strong-form"><span class="header-section-number">F.14</span> Explore the strong form</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/Poisson2D_Heat.html"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Appendix F — 2D Poisson I: Heat Flow in a Battery Cell</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>This page is the two-dimensional sequel to <a href="../chapters/Poisson1D_Heat.html">1D Poisson I: Heat Conduction Through a Wall</a>. The wall was a problem in one coordinate: temperature changed only through its thickness. Here heat flows through the cross-section of a lithium-ion battery cell, and temperature changes in two directions at once. The physics is the same two ideas — <strong>energy is conserved</strong>, and <strong>heat flows from hot to cold</strong>. What changes is the calculus. Each derivative in the 1D strong form becomes a <strong>gradient</strong>, a <strong>divergence</strong>, or a <strong>Laplacian</strong>, and the wall’s two boundary points become a boundary <em>curve</em>. The goal of this page is to make each of those objects something you can see.</p>
+<p>Hughes states the model problem for any number of space dimensions <span class="math inline">\(n_{sd}\)</span> (Chapter 2), in index notation:</p>
+<div class="derivation">
+<p><span class="math display">\[
+(\mathrm{S}) \qquad
+\begin{aligned}
+&amp;\text{Given } f : \Omega \to \RR,\; g : \Gamma_g \to \RR, \text{ and } h : \Gamma_h \to \RR, \\
+&amp;\text{find } u : \bar\Omega \to \RR \text{ such that} \\[2pt]
+&amp;\qquad q_{i,i} = f \quad \text{in } \Omega \\
+&amp;\qquad u = g \quad \text{on } \Gamma_g \\
+&amp;\qquad -q_i\,n_i = h \quad \text{on } \Gamma_h \\[2pt]
+&amp;\text{where } q_i = -\kappa_{ij}\,u_{,j}
+\end{aligned}
+\]</span></p>
+</div>
+<p>Substituting the last relation into the others gives the form used in <a href="../chapters/4_Class.html">Class 4</a>, shown here in both notations:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\begin{aligned}
+-\nabla\cdot\left(\underline{\underline{\kappa}}\,\nabla u\right) = f
+\quad&amp;\Longleftrightarrow\quad -\left(\kappa_{ij}\,u_{,j}\right)_{,i} = f
+&amp;&amp; \text{in } \Omega \\
+u = g \quad&amp; &amp;&amp; \text{on } \Gamma_g \\
+\left(\underline{\underline{\kappa}}\,\nabla u\right)\cdot\underline{n} = h
+\quad&amp;\Longleftrightarrow\quad \kappa_{ij}\,u_{,j}\,n_i = h
+&amp;&amp; \text{on } \Gamma_h
+\end{aligned}
+\]</span></p>
+</div>
+<p>For most of this page the material conducts equally well in every direction — it is <strong>isotropic</strong> — so <span class="math inline">\(\kappa_{ij} = \kappa\,\delta_{ij}\)</span> and the differential equation becomes</p>
+<div class="derivation">
+<p><span class="math display">\[
+\begin{aligned}
+-\nabla\cdot\left(\kappa\nabla u\right) = f
+\quad&amp;\Longleftrightarrow\quad
+-\left(\kappa\,u_{,i}\right)_{,i} = f \\
+\xrightarrow{\;\kappa \text{ constant}\;}\quad
+-\kappa\,\Delta u = f
+\quad&amp;\Longleftrightarrow\quad
+-\kappa\,u_{,ii} = f
+\end{aligned}
+\]</span></p>
+</div>
+<p>In one dimension the index has a single value, <span class="math inline">\(i = 1\)</span>, and every sum above has one term: <span class="math inline">\(q_{i,i}\)</span> is <span class="math inline">\(q_{,x}\)</span>, and <span class="math inline">\(\kappa_{ij}u_{,j}n_i\)</span> is <span class="math inline">\(\kappa u_{,x}\,n\)</span>. That is the wall. On this page <span class="math inline">\(i\)</span> runs over 1 and 2, <span class="math inline">\(u\)</span> is a <strong>temperature</strong>, <span class="math inline">\(q_i\)</span> is the <strong>heat flux vector</strong>, and everything is in SI units.</p>
+<section id="the-physical-problem" class="level2" data-number="F.1">
+<h2 data-number="F.1" class="anchored" data-anchor-id="the-physical-problem"><span class="header-section-number">F.1</span> The physical problem</h2>
+<div id="fig-h2-module" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h2-module-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson2D_Heat/H2_Fig1_Module.png" class="img-fluid figure-img" style="width:86.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h2-module-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;F.1: One end of a battery module: prismatic cells stacked face to face, a liquid-cooled plate along one side, copper busbars across the tabs, and foam everywhere else. The violet face of the front cell is the two-dimensional domain.
+</figcaption>
+</figure>
+</div>
+<p>A battery module in an electric vehicle packs prismatic lithium-ion cells side by side, large face to large face. Here each cell is 100 mm wide, 200 mm tall, and 27 mm thick. A liquid-cooled aluminum plate is bonded along one narrow side of the whole row, copper busbars are welded across the terminal tabs on top, and foam fills the rest of the enclosure. During a fast charge, the current flowing through the electrodes and electrolyte generates heat throughout every cell, and the resistance of the tab welds adds heat that flows down into the cells through their tabs.</p>
+<p><strong>Why two dimensions.</strong> Every cell in the row is identical and heated identically, so by symmetry no heat crosses the large face between one cell and the next. Nothing then varies through the thickness, and the temperature depends only on the position <span class="math inline">\((x_1, x_2)\)</span> in the plane of the large face. This is the argument that made the wall one-dimensional, applied to one direction instead of two. There, nothing varied along the wall or up it. Here, nothing varies along the row. So take a slice parallel to the large face and follow the temperature across it. Every quantity on this page is <strong>per meter of depth</strong> in the stacking direction, which is why the total heat made comes out in W/m. To get watts for one 27 mm cell, multiply by <span class="math inline">\(T = 0.027\)</span> m.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>What happens physically</th>
+<th>Where</th>
+<th>Becomes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Current through the electrodes generates heat</td>
+<td>throughout <span class="math inline">\(\Omega\)</span></td>
+<td>the forcing <span class="math inline">\(f\)</span></td>
+</tr>
+<tr class="even">
+<td>The cooling plate holds the cell’s side at the coolant temperature</td>
+<td>the edge <span class="math inline">\(x_1 = 0\)</span></td>
+<td>a Dirichlet condition <span class="math inline">\(u = g\)</span></td>
+</tr>
+<tr class="odd">
+<td>Heat from the tab welds flows in through the tabs</td>
+<td>two stretches of the top edge</td>
+<td>a Neumann condition, <span class="math inline">\(h &gt; 0\)</span></td>
+</tr>
+<tr class="even">
+<td>Foam insulates the far side, the bottom, and the top between the tabs</td>
+<td>the rest of the boundary</td>
+<td>a Neumann condition, <span class="math inline">\(h = 0\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Two things are new compared with the wall. Each “face” is now an <strong>edge</strong> with a length, and the data can change from point to point along it: <span class="math inline">\(h\)</span> is 5000 W/m² on the tabs and zero on the rest of the top edge. And the insulated edges, which the wall example did not have, still carry a boundary condition. “Insulated” means <span class="math inline">\(h = 0\)</span>. It does not mean “no condition”.</p>
+</section>
+<section id="the-two-dimensional-domain" class="level2" data-number="F.2">
+<h2 data-number="F.2" class="anchored" data-anchor-id="the-two-dimensional-domain"><span class="header-section-number">F.2</span> The two-dimensional domain</h2>
+<div id="fig-h2-domain" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h2-domain-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson2D_Heat/H2_Fig2_Domain.png" class="img-fluid figure-img" style="width:96.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h2-domain-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;F.2: Left: the cell’s cross-section. <span class="math inline">\(\Gamma_g\)</span> (blue) is the cooled edge; <span class="math inline">\(\Gamma_h\)</span> (amber) is everything else, including the two tabs (violet). Each arrow is the outward unit normal on its edge. Right: on a general domain the normal turns as the boundary curves, and a hole adds a second piece of boundary.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><span class="math inline">\(\Omega = \,]0, W[\, \times \,]0, H[\)</span> is the <strong>open</strong> rectangle: the cross-section without its edges. A point in it is <span class="math inline">\(\underline{x} = (x_1, x_2)\)</span>, or <span class="math inline">\(x_i\)</span> in index notation. Many books write <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> instead of <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span>.</li>
+<li><span class="math inline">\(\bar\Omega = [0, W] \times [0, H]\)</span> is its <strong>closure</strong>, edges included. The solution <span class="math inline">\(u\)</span> is defined on <span class="math inline">\(\bar\Omega\)</span> because we need its values <em>on</em> the edges.</li>
+<li><span class="math inline">\(\Gamma\)</span> is the <strong>boundary</strong>. In 1D it was two points. Now it is a closed curve — here the four edges, <span class="math inline">\(2(W + H) = 0.6\)</span> m long in total. Integrals over <span class="math inline">\(\Omega\)</span> are area integrals, <span class="math inline">\(d\Omega = dx_1\,dx_2\)</span> (m²). Integrals over <span class="math inline">\(\Gamma\)</span> are line integrals, with <span class="math inline">\(d\Gamma\)</span> (m) measured along the curve.</li>
+<li>The <strong>outward unit normal</strong> <span class="math inline">\(\underline{n} = (n_1, n_2)\)</span> has length one, <span class="math inline">\(n_i n_i = 1\)</span>, and points out of <span class="math inline">\(\Omega\)</span>. In 1D it was a sign, <span class="math inline">\(\pm 1\)</span>. Now it is a vector: constant along each straight edge, but turning from point to point along a curved boundary. At a corner it is not defined. Corners have zero length, so the boundary integrals never notice them.</li>
+<li>A boundary can come in several pieces. The wall of a channel through the body is part of <span class="math inline">\(\Gamma\)</span>, and its outward normal points <em>into the channel</em> — out of <span class="math inline">\(\Omega\)</span>.</li>
+<li><span class="math inline">\(\Gamma_g\)</span> (blue) and <span class="math inline">\(\Gamma_h\)</span> (amber) split <span class="math inline">\(\Gamma\)</span> so that every point gets exactly one boundary condition. See <a href="#sec-h2-partition">the partition</a> below.</li>
+</ul>
+</div>
+</section>
+<section id="the-quantities-and-their-units" class="level2" data-number="F.3">
+<h2 data-number="F.3" class="anchored" data-anchor-id="the-quantities-and-their-units"><span class="header-section-number">F.3</span> The quantities and their units</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Symbol</th>
+<th>Meaning</th>
+<th>SI units</th>
+<th>This example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(x_i = (x_1, x_2)\)</span></td>
+<td>position in the cross-section</td>
+<td>m</td>
+<td><span class="math inline">\(0 \le x_1 \le W\)</span>, <span class="math inline">\(0 \le x_2 \le H\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(W,\ H\)</span></td>
+<td>cell width, cell height</td>
+<td>m</td>
+<td>0.10 m, 0.20 m</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(T\)</span></td>
+<td>cell thickness, out of the plane</td>
+<td>m</td>
+<td>0.027 m</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(u(\underline{x})\)</span></td>
+<td>temperature</td>
+<td>°C (or K)</td>
+<td>unknown</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(u_{,i} = \nabla u\)</span></td>
+<td>temperature gradient</td>
+<td>°C/m</td>
+<td>unknown</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(q_i = \underline{q}\)</span></td>
+<td>heat flux vector</td>
+<td>W/m²</td>
+<td>unknown</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\kappa\)</span></td>
+<td>thermal conductivity (in the plane)</td>
+<td>W/(m·K)</td>
+<td>25 W/(m·K)</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\kappa_{ij} = \underline{\underline{\kappa}}\)</span></td>
+<td>conductivity tensor</td>
+<td>W/(m·K)</td>
+<td><span class="math inline">\(\kappa\,\delta_{ij}\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(f(\underline{x})\)</span></td>
+<td>heat generated per unit volume</td>
+<td>W/m³</td>
+<td>25,000 W/m³</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(g(\underline{x})\)</span></td>
+<td>prescribed temperature on <span class="math inline">\(\Gamma_g\)</span></td>
+<td>°C</td>
+<td>25 °C</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(h(\underline{x})\)</span></td>
+<td>prescribed heat flux <strong>into</strong> the body on <span class="math inline">\(\Gamma_h\)</span></td>
+<td>W/m²</td>
+<td>5000 W/m² on the tabs, 0 elsewhere</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(n_i = \underline{n}\)</span></td>
+<td>outward unit normal</td>
+<td>—</td>
+<td>e.g.&nbsp;<span class="math inline">\((-1, 0)\)</span> on <span class="math inline">\(\Gamma_g\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(d\Omega\)</span>, <span class="math inline">\(d\Gamma\)</span></td>
+<td>area element, length element</td>
+<td>m², m</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>A cell is a stack of thin copper and aluminum foils, porous electrodes, and separator. Heat flows easily along those layers, which here lie in the plane of the slice, and poorly across them, at about 1 W/(m·K). We come back to this when we meet <span class="math inline">\(\kappa_{ij}\)</span>. As before, temperature <em>differences</em> are the same in °C and K.</p>
+</section>
+<section id="index-notation-in-two-dimensions" class="level2" data-number="F.4">
+<h2 data-number="F.4" class="anchored" data-anchor-id="index-notation-in-two-dimensions"><span class="header-section-number">F.4</span> Index notation in two dimensions</h2>
+<p>The strong form will be written two ways from here on: in vector notation (<span class="math inline">\(\nabla u\)</span>, <span class="math inline">\(\nabla\cdot\underline{q}\)</span>, <span class="math inline">\(\underline{q}\cdot\underline{n}\)</span>) and in index notation (<span class="math inline">\(u_{,i}\)</span>, <span class="math inline">\(q_{i,i}\)</span>, <span class="math inline">\(q_i n_i\)</span>), as introduced in <a href="../chapters/3_Class.html">Class 3</a>. The rules you need:</p>
+<div class="step notes">
+<ul>
+<li>An index runs over the space dimensions: <span class="math inline">\(i = 1, 2\)</span> here (<span class="math inline">\(i = 1, 2, 3\)</span> in 3D, and only <span class="math inline">\(i = 1\)</span> in 1D).</li>
+<li>A <strong>comma</strong> means a partial derivative with respect to the coordinate named by the index after it: <span class="math inline">\(u_{,i} = \partial u / \partial x_i\)</span>, so <span class="math inline">\(u_{,1} = \partial u/\partial x_1\)</span> and <span class="math inline">\(u_{,12} = \partial^2 u / \partial x_1 \partial x_2\)</span>. Indices <em>before</em> the comma label components: <span class="math inline">\(q_{2,1} = \partial q_2 / \partial x_1\)</span>.</li>
+<li>A <strong>free</strong> index appears once in a term, and the expression stands for one equation for each of its values: <span class="math inline">\(q_i = -\kappa u_{,i}\)</span> is two equations, <span class="math inline">\(q_1 = -\kappa u_{,1}\)</span> and <span class="math inline">\(q_2 = -\kappa u_{,2}\)</span>.</li>
+<li>A <strong>repeated</strong> (dummy) index is summed over all its values: <span class="math inline">\(q_{i,i} = q_{1,1} + q_{2,2}\)</span>. Its letter does not matter: <span class="math inline">\(q_{i,i} = q_{k,k}\)</span>.</li>
+<li>No index may appear more than twice in one term, and every term of an equation must carry the same free indices. <span class="math inline">\(q_i = f\)</span> is meaningless (a vector cannot equal a scalar), and so is <span class="math inline">\(u_{,i} n_i n_i\)</span>.</li>
+<li>Count the free indices to know what you are holding: none is a <strong>scalar</strong> (<span class="math inline">\(u\)</span>, <span class="math inline">\(f\)</span>, <span class="math inline">\(q_{i,i}\)</span>, <span class="math inline">\(u_{,i}n_i\)</span>), one is a <strong>vector</strong> (<span class="math inline">\(x_i\)</span>, <span class="math inline">\(u_{,i}\)</span>, <span class="math inline">\(q_i\)</span>, <span class="math inline">\(n_i\)</span>), two is a <strong>matrix</strong> (<span class="math inline">\(\kappa_{ij}\)</span>, <span class="math inline">\(u_{,ij}\)</span>).</li>
+<li>The <strong>Kronecker delta</strong> <span class="math inline">\(\delta_{ij}\)</span> is 1 when <span class="math inline">\(i = j\)</span> and 0 otherwise, the identity matrix. Summing against it renames an index: <span class="math inline">\(\delta_{ij}\,u_{,j} = u_{,i}\)</span>.</li>
+</ul>
+</div>
+<p>Every object in the strong form, in every notation:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>1D (the wall)</th>
+<th>2D, vector</th>
+<th>2D, index</th>
+<th>2D, written out</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>position</td>
+<td><span class="math inline">\(x\)</span></td>
+<td><span class="math inline">\(\underline{x}\)</span></td>
+<td><span class="math inline">\(x_i\)</span></td>
+<td><span class="math inline">\((x_1,\ x_2)\)</span></td>
+</tr>
+<tr class="even">
+<td>temperature gradient</td>
+<td><span class="math inline">\(u_{,x}\)</span></td>
+<td><span class="math inline">\(\nabla u\)</span></td>
+<td><span class="math inline">\(u_{,i}\)</span></td>
+<td><span class="math inline">\(\left(\dfrac{\partial u}{\partial x_1},\ \dfrac{\partial u}{\partial x_2}\right)\)</span></td>
+</tr>
+<tr class="odd">
+<td>heat flux (Fourier)</td>
+<td><span class="math inline">\(q = -\kappa u_{,x}\)</span></td>
+<td><span class="math inline">\(\underline{q} = -\kappa\nabla u\)</span></td>
+<td><span class="math inline">\(q_i = -\kappa u_{,i}\)</span></td>
+<td><span class="math inline">\(\left(-\kappa\dfrac{\partial u}{\partial x_1},\ -\kappa\dfrac{\partial u}{\partial x_2}\right)\)</span></td>
+</tr>
+<tr class="even">
+<td>net outflow</td>
+<td><span class="math inline">\(q_{,x}\)</span></td>
+<td><span class="math inline">\(\nabla\cdot\underline{q}\)</span></td>
+<td><span class="math inline">\(q_{i,i}\)</span></td>
+<td><span class="math inline">\(\dfrac{\partial q_1}{\partial x_1} + \dfrac{\partial q_2}{\partial x_2}\)</span></td>
+</tr>
+<tr class="odd">
+<td>diffusion term</td>
+<td><span class="math inline">\(\left(\kappa u_{,x}\right)_{,x}\)</span></td>
+<td><span class="math inline">\(\nabla\cdot\left(\kappa\nabla u\right)\)</span></td>
+<td><span class="math inline">\(\left(\kappa u_{,i}\right)_{,i}\)</span></td>
+<td><span class="math inline">\(\dfrac{\partial}{\partial x_1}\!\left(\kappa\dfrac{\partial u}{\partial x_1}\right) + \dfrac{\partial}{\partial x_2}\!\left(\kappa\dfrac{\partial u}{\partial x_2}\right)\)</span></td>
+</tr>
+<tr class="even">
+<td>Laplacian</td>
+<td><span class="math inline">\(u_{,xx}\)</span></td>
+<td><span class="math inline">\(\Delta u = \nabla\cdot\nabla u = \nabla^2 u\)</span></td>
+<td><span class="math inline">\(u_{,ii}\)</span></td>
+<td><span class="math inline">\(\dfrac{\partial^2 u}{\partial x_1^2} + \dfrac{\partial^2 u}{\partial x_2^2}\)</span></td>
+</tr>
+<tr class="odd">
+<td>outward normal</td>
+<td><span class="math inline">\(n = \pm 1\)</span></td>
+<td><span class="math inline">\(\underline{n}\)</span></td>
+<td><span class="math inline">\(n_i\)</span></td>
+<td><span class="math inline">\((n_1,\ n_2)\)</span></td>
+</tr>
+<tr class="even">
+<td>flux leaving through <span class="math inline">\(\Gamma\)</span></td>
+<td><span class="math inline">\(q\,n\)</span></td>
+<td><span class="math inline">\(\underline{q}\cdot\underline{n}\)</span></td>
+<td><span class="math inline">\(q_i n_i\)</span></td>
+<td><span class="math inline">\(q_1 n_1 + q_2 n_2\)</span></td>
+</tr>
+<tr class="odd">
+<td>normal derivative</td>
+<td><span class="math inline">\(u_{,x}\,n\)</span></td>
+<td><span class="math inline">\(\nabla u\cdot\underline{n} = \dfrac{\partial u}{\partial n}\)</span></td>
+<td><span class="math inline">\(u_{,i}n_i\)</span></td>
+<td><span class="math inline">\(\dfrac{\partial u}{\partial x_1}n_1 + \dfrac{\partial u}{\partial x_2}n_2\)</span></td>
+</tr>
+<tr class="even">
+<td>conductivity</td>
+<td><span class="math inline">\(\kappa\)</span></td>
+<td><span class="math inline">\(\underline{\underline{\kappa}}\)</span></td>
+<td><span class="math inline">\(\kappa_{ij}\)</span></td>
+<td><span class="math inline">\(\begin{bmatrix} \kappa_{11} &amp; \kappa_{12} \\ \kappa_{21} &amp; \kappa_{22}\end{bmatrix}\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Read across a row to see what a 1D symbol becomes in 2D. Every line of the 2D strong form is assembled from these rows, and each gets its own section below.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Index Notation Review: unpack these in 2D
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<ol type="1">
+<li><span class="math inline">\(\kappa_{ij}\,u_{,j}\,n_i\)</span> — two dummy indices, so a double sum with four terms: <span class="math inline">\(\kappa_{11}u_{,1}n_1 + \kappa_{12}u_{,2}n_1 + \kappa_{21}u_{,1}n_2 + \kappa_{22}u_{,2}n_2\)</span>. It is a scalar: no free index is left.</li>
+<li><span class="math inline">\(\delta_{ii} = \delta_{11} + \delta_{22} = 2\)</span>, the number of space dimensions.</li>
+<li><span class="math inline">\(u_{,i}\,u_{,i} = \left(u_{,1}\right)^2 + \left(u_{,2}\right)^2 = |\nabla u|^2\)</span>.</li>
+<li>With <span class="math inline">\(\kappa_{ij} = \kappa\,\delta_{ij}\)</span>: <span class="math inline">\(\kappa_{ij}u_{,j} = \kappa\,\delta_{ij}u_{,j} =
+\kappa\,u_{,i}\)</span>. The isotropic flux is the general one with the identity matrix.</li>
+<li><span class="math inline">\(\left(\kappa\,u_{,i}\right)_{,i} = \kappa_{,i}\,u_{,i} + \kappa\,u_{,ii}\)</span> by the product rule. The first term vanishes when <span class="math inline">\(\kappa\)</span> does not vary in space, leaving <span class="math inline">\(\kappa\)</span> times the Laplacian.</li>
+<li><span class="math inline">\(u_{,12} = u_{,21}\)</span> for a smooth <span class="math inline">\(u\)</span> (mixed partial derivatives commute), so the matrix <span class="math inline">\(u_{,ij}\)</span> is symmetric.</li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+<section id="the-temperature-gradient-nabla-u-u_i" class="level2" data-number="F.5">
+<h2 data-number="F.5" class="anchored" data-anchor-id="the-temperature-gradient-nabla-u-u_i"><span class="header-section-number">F.5</span> The temperature gradient: <span class="math inline">\(\nabla u = u_{,i}\)</span></h2>
+<div id="fig-h2-gradient" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h2-gradient-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson2D_Heat/H2_Fig3_Gradient.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h2-gradient-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;F.3: The temperature in the cell during the fast charge (the worked example at the end of this page). (a) <span class="math inline">\(u\)</span> drawn as a height above the cross-section, with its contour lines — the isotherms — projected onto the floor. The red arrow on the floor, below <span class="math inline">\(P\)</span>, is <span class="math inline">\(\nabla u\)</span>: the direction in which the surface above climbs fastest. (b) The same field seen from above, with <span class="math inline">\(\nabla u\)</span> at a grid of points. (c) The gradient at <span class="math inline">\(P\)</span> and its components: the slopes you would measure walking parallel to each axis.
+</figcaption>
+</figure>
+</div>
+<p>In 1D the slope <span class="math inline">\(u_{,x}\)</span> was a single number. Its sign said which way was uphill (toward <span class="math inline">\(+x\)</span> or <span class="math inline">\(-x\)</span>) and its size said how steep. In 2D, uphill can be any direction in the plane, so the slope becomes a <strong>vector</strong>:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\nabla u \;=\; u_{,i} \;=\;
+\begin{bmatrix} u_{,1} \\ u_{,2} \end{bmatrix}
+\;=\;
+\begin{bmatrix} \partial u / \partial x_1 \\ \partial u / \partial x_2 \end{bmatrix}
+\qquad [{}^\circ\text{C/m}]
+\]</span></p>
+</div>
+<p>Its components are the ordinary slopes along the two axes. To get the slope in any other direction, take the component of <span class="math inline">\(\nabla u\)</span> along it. Moving in the direction of a unit vector <span class="math inline">\(\underline{e}\)</span>, the temperature changes at the rate</p>
+<div class="derivation">
+<p><span class="math display">\[
+\frac{du}{ds} \;=\; \nabla u\cdot\underline{e} \;=\; u_{,i}\,e_i
+\;=\; u_{,1}e_1 + u_{,2}e_2 \;=\; |\nabla u|\cos\theta
+\]</span></p>
+</div>
+<p>where <span class="math inline">\(\theta\)</span> is the angle between <span class="math inline">\(\underline{e}\)</span> and <span class="math inline">\(\nabla u\)</span>. Three facts follow, and all three are visible in <a href="#fig-h2-gradient" class="quarto-xref">Figure&nbsp;<span>F.3</span></a>:</p>
+<div class="step notes">
+<ul>
+<li>The rate is largest, <span class="math inline">\(|\nabla u|\)</span>, when <span class="math inline">\(\underline{e}\)</span> points along <span class="math inline">\(\nabla u\)</span>. <strong>The gradient points in the direction of steepest ascent, and its length is that steepest slope.</strong></li>
+<li>The rate is zero when <span class="math inline">\(\underline{e}\)</span> is perpendicular to <span class="math inline">\(\nabla u\)</span>. Moving that way, <span class="math inline">\(u\)</span> does not change — that is the direction of the <strong>isotherm</strong>, the curve of constant temperature, through the point. <strong>So <span class="math inline">\(\nabla u\)</span> is perpendicular to the isotherms.</strong></li>
+<li>Where the isotherms crowd together, the temperature changes a lot over a short distance: <span class="math inline">\(|\nabla u|\)</span> is large.</li>
+</ul>
+</div>
+<div class="step">
+<p>At the point <span class="math inline">\(P = (0.06,\ 0.15)\)</span> m, <span class="math inline">\(\nabla u = (64.8,\ 38.6)\)</span> °C/m. Walking in the <span class="math inline">\(+x_1\)</span> direction, the temperature rises 0.65 °C per centimeter; walking in <span class="math inline">\(+x_2\)</span>, it rises 0.39 °C per centimeter. The steepest rise, 0.75 °C per centimeter, is in the direction 31° above the <span class="math inline">\(x_1\)</span>-axis, and along the isotherm through <span class="math inline">\(P\)</span> it does not rise at all.</p>
+</div>
+</section>
+<section id="fouriers-law-heat-flows-straight-downhill" class="level2" data-number="F.6">
+<h2 data-number="F.6" class="anchored" data-anchor-id="fouriers-law-heat-flows-straight-downhill"><span class="header-section-number">F.6</span> Fourier’s law: heat flows straight downhill</h2>
+<p>The material relation is the same as in 1D, now applied to each component:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\underline{q} = -\kappa\,\nabla u
+\quad\Longleftrightarrow\quad
+q_i = -\kappa\,u_{,i}
+\quad\Longleftrightarrow\quad
+\begin{cases}
+q_1 = -\kappa\,u_{,1} \\
+q_2 = -\kappa\,u_{,2}
+\end{cases}
+\]</span></p>
+</div>
+<div id="fig-h2-fourier" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h2-fourier-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson2D_Heat/H2_Fig4_Fourier.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h2-fourier-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;F.4: Fourier’s law. (a) The heat-flux lines of the worked example, drawn thicker where <span class="math inline">\(|\underline{q}|\)</span> is larger: heat made everywhere in the cell, and heat entering through the tabs, all runs downhill to the cooling plate, crossing the isotherms at right angles. (b) In an isotropic material, <span class="math inline">\(\underline{q}\)</span> points straight down the temperature gradient. (c) In a layered material with the same gradient, the flux is steered along the layers.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li>The minus sign does what it did in 1D, but now it reverses a <strong>direction</strong>: <span class="math inline">\(\underline{q}\)</span> points exactly opposite <span class="math inline">\(\nabla u\)</span> — straight downhill, from hot to cold, crossing the isotherms at right angles.</li>
+<li>Its size is <span class="math inline">\(|\underline{q}| = \kappa\,|\nabla u|\)</span>, in W/m². A poorer conductor needs a steeper gradient to carry the same flux.</li>
+<li>For a unit vector <span class="math inline">\(\underline{m}\)</span>, the product <span class="math inline">\(\underline{q}\cdot\underline{m} =
+q_i m_i\)</span> is the heat flux across a line whose unit normal is <span class="math inline">\(\underline{m}\)</span>. It is largest across the isotherm and zero across a heat-flux line. Taking <span class="math inline">\(\underline{m} = \underline{n}\)</span> on the boundary gives the heat <em>leaving</em> <span class="math inline">\(\Omega\)</span>, which is exactly what the Neumann condition will fix.</li>
+</ul>
+</div>
+<div class="step">
+<p>At <span class="math inline">\(P\)</span>: <span class="math inline">\(\underline{q} = -25\,(64.8,\ 38.6) = (-1620,\ -966)\)</span> W/m², with <span class="math inline">\(|\underline{q}| = 1886\)</span> W/m². Heat at <span class="math inline">\(P\)</span> is moving down and to the left — toward the cooling plate.</p>
+</div>
+<section id="when-the-material-has-a-grain-q_i--kappa_iju_j" class="level3" data-number="F.6.1">
+<h3 data-number="F.6.1" class="anchored" data-anchor-id="when-the-material-has-a-grain-q_i--kappa_iju_j"><span class="header-section-number">F.6.1</span> When the material has a grain: <span class="math inline">\(q_i = -\kappa_{ij}\,u_{,j}\)</span></h3>
+<p>Isotropy is an assumption about the material, and a battery cell is not isotropic. It is a stack of layers, and it conducts about 25 times better along them than across them. Our slice happens to lie parallel to the layers, so <em>within the slice</em> the cell is isotropic. Had we sliced across the thickness, the layers would show, and Fourier’s law would need a matrix:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\underline{q} = -\underline{\underline{\kappa}}\,\nabla u
+\quad\Longleftrightarrow\quad
+q_i = -\kappa_{ij}\,u_{,j}
+\quad\Longleftrightarrow\quad
+\begin{bmatrix} q_1 \\ q_2 \end{bmatrix}
+= -\begin{bmatrix} \kappa_{11} &amp; \kappa_{12} \\ \kappa_{21} &amp; \kappa_{22} \end{bmatrix}
+\begin{bmatrix} u_{,1} \\ u_{,2} \end{bmatrix}
+\]</span></p>
+</div>
+<div class="step notes">
+<ul>
+<li>Now <span class="math inline">\(\underline{q}\)</span> is generally <strong>not</strong> parallel to <span class="math inline">\(-\nabla u\)</span>. Heat is steered toward the direction that conducts best (<a href="#fig-h2-fourier" class="quarto-xref">Figure&nbsp;<span>F.4</span></a> c).</li>
+<li><span class="math inline">\(\kappa_{ij}\)</span> is <strong>symmetric</strong>, <span class="math inline">\(\kappa_{12} = \kappa_{21}\)</span>, and <strong>positive definite</strong>: <span class="math inline">\(\kappa_{ij}v_iv_j &gt; 0\)</span> for every nonzero vector <span class="math inline">\(v_i\)</span>. The second property guarantees <span class="math inline">\(\underline{q}\cdot\nabla u = -\kappa_{ij}u_{,i}u_{,j} &lt; 0\)</span>. Heat can be steered sideways, but it never flows uphill.</li>
+<li>The isotropic case is <span class="math inline">\(\kappa_{ij} = \kappa\,\delta_{ij}\)</span>, and then <span class="math inline">\(\kappa_{ij}u_{,j} = \kappa\,u_{,i}\)</span>. The rest of this page uses it, while <a href="../chapters/4_Class.html">Class 4</a> and Hughes keep the general <span class="math inline">\(\kappa_{ij}\)</span>. Every statement still works for the anisotropic case if <span class="math inline">\(\kappa\nabla u\)</span> is replaced by <span class="math inline">\(\underline{\underline{\kappa}}\nabla u\)</span>.</li>
+</ul>
+</div>
+</section>
+</section>
+<section id="where-the-differential-equation-comes-from" class="level2" data-number="F.7">
+<h2 data-number="F.7" class="anchored" data-anchor-id="where-the-differential-equation-comes-from"><span class="header-section-number">F.7</span> Where the differential equation comes from</h2>
+<section id="conservation-of-energy-on-a-small-rectangle" class="level3" data-number="F.7.1">
+<h3 data-number="F.7.1" class="anchored" data-anchor-id="conservation-of-energy-on-a-small-rectangle"><span class="header-section-number">F.7.1</span> Conservation of energy on a small rectangle</h3>
+<div id="fig-h2-balance" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h2-balance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson2D_Heat/H2_Fig5_Balance.png" class="img-fluid figure-img" style="width:88.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h2-balance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;F.5: A small rectangle of the slice, <span class="math inline">\(\Delta x_1\)</span> wide and <span class="math inline">\(\Delta x_2\)</span> tall (and one meter deep). At steady state, heat in through its four sides plus heat made inside equals heat out. Each side passes only the flux component normal to it: <span class="math inline">\(q_1\)</span> through the left and right sides, <span class="math inline">\(q_2\)</span> through the bottom and top.
+</figcaption>
+</figure>
+</div>
+<p>Cut a small rectangle out of the slice (<a href="#fig-h2-balance" class="quarto-xref">Figure&nbsp;<span>F.5</span></a>). At steady state its temperature is not changing, so every watt that enters or is made inside must leave. The fluxes are counted positive in the <span class="math inline">\(+x_1\)</span> and <span class="math inline">\(+x_2\)</span> directions, exactly as <span class="math inline">\(q\)</span> was counted positive toward <span class="math inline">\(+x\)</span> in the wall:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\begin{aligned}
+&amp;\underbrace{q_1(x_1, x_2)\,\Delta x_2 - q_1(x_1 + \Delta x_1, x_2)\,\Delta x_2}
+_{\text{net in, left and right}} \\
+&amp;\quad+\;
+\underbrace{q_2(x_1, x_2)\,\Delta x_1 - q_2(x_1, x_2 + \Delta x_2)\,\Delta x_1}
+_{\text{net in, bottom and top}} \\
+&amp;\quad+\;
+\underbrace{f\,\Delta x_1\,\Delta x_2}_{\text{made}}
+\;=\; 0
+\end{aligned}
+\]</span></p>
+</div>
+<p>Divide by <span class="math inline">\(\Delta x_1\,\Delta x_2\)</span> and let both shrink to zero. Each difference quotient becomes a partial derivative:</p>
+<div class="derivation">
+<p><span class="math display">\[
+-\frac{\partial q_1}{\partial x_1} - \frac{\partial q_2}{\partial x_2} + f = 0
+\quad\Longleftrightarrow\quad
+-\nabla\cdot\underline{q} + f = 0
+\quad\Longleftrightarrow\quad
+-q_{i,i} + f = 0
+\]</span></p>
+</div>
+<p>The combination <span class="math inline">\(q_{1,1} + q_{2,2}\)</span> is the <strong>divergence</strong> of <span class="math inline">\(\underline{q}\)</span>:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\nabla\cdot\underline{q} \;=\; q_{i,i} \;=\;
+\frac{\partial q_1}{\partial x_1} + \frac{\partial q_2}{\partial x_2}
+\qquad [\text{W/m}^3]
+\]</span></p>
+</div>
+<div class="step">
+<p>Each term of the balance is in watts per meter of depth: W/m² × m for the fluxes, and W/m³ × m² for the generation. Read the result as <strong>“at every point, the net rate at which heat flows away equals the rate at which it is made”</strong>: <span class="math inline">\(\nabla\cdot\underline{q} = f\)</span>, Hughes’ <span class="math inline">\(q_{i,i} = f\)</span>. The 1D balance <span class="math inline">\(q_{,x} = f\)</span> is the same statement with one pair of faces instead of two.</p>
+</div>
+</section>
+<section id="the-divergence-theorem-the-same-balance-for-any-region" class="level3" data-number="F.7.2">
+<h3 data-number="F.7.2" class="anchored" data-anchor-id="the-divergence-theorem-the-same-balance-for-any-region"><span class="header-section-number">F.7.2</span> The divergence theorem: the same balance for any region</h3>
+<p>Add up this balance over all the small rectangles that make up a region <span class="math inline">\(\omega\)</span>. On every internal side, what leaves one rectangle enters its neighbor, so those terms cancel in pairs. Only the flux through the outer boundary <span class="math inline">\(\partial\omega\)</span> survives:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\int_\omega \nabla\cdot\underline{q}\;d\Omega
+= \int_{\partial\omega} \underline{q}\cdot\underline{n}\;d\Gamma
+\quad\Longleftrightarrow\quad
+\int_\omega q_{i,i}\;d\Omega = \int_{\partial\omega} q_i\,n_i\;d\Gamma
+\]</span></p>
+</div>
+<p>This is the <strong>divergence theorem</strong>. Combined with <span class="math inline">\(\nabla\cdot\underline{q} = f\)</span>, it says that <em>the heat leaving any region through its boundary equals the heat made inside it</em>. The differential equation is the pointwise version of that statement. In 1D the region is an interval <span class="math inline">\([a, b]\)</span>, its boundary is the two end points, and the theorem is the fundamental theorem of calculus, with <span class="math inline">\(n(a) = -1\)</span> and <span class="math inline">\(n(b) = +1\)</span> doing the bookkeeping:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\int_a^b q_{,x}\;dx \;=\; q(b) - q(a) \;=\; q(b)\,n(b) + q(a)\,n(a)
+\]</span></p>
+</div>
+<div class="step">
+<p>The divergence theorem is also what turns the strong form into the weak form: it is how integration by parts works in more than one dimension (<a href="../chapters/4_Class.html">Class 4</a>).</p>
+</div>
+</section>
+</section>
+<section id="the-laplacian-divergence-of-the-gradient" class="level2" data-number="F.8">
+<h2 data-number="F.8" class="anchored" data-anchor-id="the-laplacian-divergence-of-the-gradient"><span class="header-section-number">F.8</span> The Laplacian: divergence of the gradient</h2>
+<p>Substituting Fourier’s law into the balance gives the differential equation of the strong form:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\begin{aligned}
+-\nabla\cdot\left(\kappa\nabla u\right) = f
+\quad&amp;\Longleftrightarrow\quad
+-\left(\kappa\,u_{,i}\right)_{,i} = f \\
+\xrightarrow{\;\kappa\text{ constant}\;}\quad
+-\kappa\,\Delta u = f
+\quad&amp;\Longleftrightarrow\quad
+-\kappa\,u_{,ii} = f \\
+&amp;\Longleftrightarrow\quad
+-\kappa\left(\frac{\partial^2 u}{\partial x_1^2} + \frac{\partial^2 u}{\partial x_2^2}\right) = f \\
+\xrightarrow{\;\kappa = 1\;}\quad
+u_{,ii} + f = 0 \quad&amp;\phantom{\Longleftrightarrow}\quad \text{(Hughes)}
+\end{aligned}
+\]</span></p>
+</div>
+<p>The operator <span class="math inline">\(\Delta u = \nabla\cdot\nabla u = u_{,ii}\)</span> is the <strong>Laplacian</strong>, also written <span class="math inline">\(\nabla^2 u\)</span>. The notation <span class="math inline">\(\nabla\cdot\nabla u\)</span> says what it does: take the gradient (a vector), then its divergence (back to a scalar). In 1D it is simply <span class="math inline">\(u_{,xx}\)</span>.</p>
+<section id="sec-h2-shape" class="level3" data-number="F.8.1">
+<h3 data-number="F.8.1" class="anchored" data-anchor-id="sec-h2-shape"><span class="header-section-number">F.8.1</span> What the Laplacian says about the shape of <span class="math inline">\(u\)</span></h3>
+<p>In 1D, <span class="math inline">\(u_{,xx} = -f/\kappa\)</span> fixed the curvature of the temperature profile at every point. In 2D the equation fixes only the <strong>sum</strong> of the two curvatures:</p>
+<div class="derivation">
+<p><span class="math display">\[
+u_{,11} + u_{,22} = -\frac{f}{\kappa}
+\]</span></p>
+</div>
+<p>The temperature may bend down sharply in one direction and up in the other, as long as the sum comes out right. <a href="#fig-h2-laplacian" class="quarto-xref">Figure&nbsp;<span>F.6</span></a> shows the three basic shapes and, below each, the heat-flux field that goes with it.</p>
+<div id="fig-h2-laplacian" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h2-laplacian-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson2D_Heat/H2_Fig6_Laplacian.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h2-laplacian-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;F.6: The three shapes a temperature can take near a point, with <span class="math inline">\(\kappa = 1\)</span>. Top: <span class="math inline">\(u\)</span>, with a ring of radius <span class="math inline">\(r\)</span> around the center and, dashed, the ring’s average height. Bottom: the heat flux <span class="math inline">\(\underline{q} = -\nabla u\)</span> and the same ring. A peak sheds heat through the ring (a source), a valley gathers it (a sink), and a saddle passes as much in as out, being neither a source nor a sink.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><strong>Peak</strong> (<span class="math inline">\(f &gt; 0\)</span>). Both curvatures are negative. Heat flows away from the top in every direction, so more leaves any small circle than enters it: <span class="math inline">\(\nabla\cdot\underline{q} &gt; 0\)</span>, a <strong>source</strong>.</li>
+<li><strong>Valley</strong> (<span class="math inline">\(f &lt; 0\)</span>). Both curvatures are positive. Heat flows in from every direction: <span class="math inline">\(\nabla\cdot\underline{q} &lt; 0\)</span>, a <strong>sink</strong>.</li>
+<li><strong>Saddle</strong> (<span class="math inline">\(f = 0\)</span>). The curvatures cancel. Heat spreads out along <span class="math inline">\(x_1\)</span> exactly as fast as it converges along <span class="math inline">\(x_2\)</span>, so as much enters any small circle as leaves it: <span class="math inline">\(\nabla\cdot\underline{q} = 0\)</span>. With no source, this is the only kind of point there is. The temperature cannot have a peak or a valley inside <span class="math inline">\(\Omega\)</span>, so its hottest and coldest points lie on the boundary (the <strong>maximum principle</strong>). With <span class="math inline">\(f &gt; 0\)</span>, as in the cell, valleys are ruled out, so the coldest point is on the boundary — here, on the cooling plate.</li>
+</ul>
+</div>
+<p>The circles in <a href="#fig-h2-laplacian" class="quarto-xref">Figure&nbsp;<span>F.6</span></a> give a second reading of the Laplacian: it compares a point with its neighbors. Averaging <span class="math inline">\(u\)</span> around a small circle of radius <span class="math inline">\(r\)</span> centered at <span class="math inline">\(\underline{x}\)</span> gives</p>
+<div class="derivation">
+<p><span class="math display">\[
+\bar u_r \;=\; u(\underline{x}) + \frac{r^2}{4}\,\Delta u(\underline{x}) + \cdots
+\qquad\Longrightarrow\qquad
+u(\underline{x}) - \bar u_r \;\approx\; \frac{r^2}{4\kappa}\,f(\underline{x})
+\]</span></p>
+</div>
+<div class="step">
+<p>so <strong>wherever heat is made, a point is hotter than the average of the ring around it</strong>, and where <span class="math inline">\(f = 0\)</span> it is exactly that average. The same idea on a square grid with spacing <span class="math inline">\(s\)</span> is the five-point stencil <span class="math inline">\(\tfrac14\left(u_E + u_W + u_N + u_S\right) - u_C \approx \tfrac{s^2}{4}\,\Delta u\)</span> — the 2D version of <span class="math inline">\(\tfrac12\left(u(x - s) + u(x + s)\right) - u(x) \approx
+\tfrac{s^2}{2}\,u_{,xx}\)</span>.</p>
+</div>
+<p>In the cell, <span class="math inline">\(-f/\kappa = -25{,}000/25 = -1000\)</span> °C/m² everywhere. The two curvatures change from point to point, sometimes wildly, but their sum never does:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 22%">
+<col style="width: 22%">
+<col style="width: 22%">
+</colgroup>
+<thead>
+<tr class="header">
+<th><span class="math inline">\((x_1,\ x_2)\)</span> (m)</th>
+<th>where</th>
+<th style="text-align: right;"><span class="math inline">\(u_{,11}\)</span> (°C/m²)</th>
+<th style="text-align: right;"><span class="math inline">\(u_{,22}\)</span> (°C/m²)</th>
+<th style="text-align: right;"><span class="math inline">\(u_{,11} + u_{,22}\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\((0.05,\ 0.1)\)</span></td>
+<td>middle of the cell</td>
+<td style="text-align: right;">−1263</td>
+<td style="text-align: right;">263</td>
+<td style="text-align: right;">−1000</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\((0.06,\ 0.15)\)</span></td>
+<td>the point <span class="math inline">\(P\)</span></td>
+<td style="text-align: right;">−1612</td>
+<td style="text-align: right;">612</td>
+<td style="text-align: right;">−1000</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\((0.075,\ 0.19)\)</span></td>
+<td>just below the far tab</td>
+<td style="text-align: right;">−6622</td>
+<td style="text-align: right;">5622</td>
+<td style="text-align: right;">−1000</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\((0.09,\ 0.195)\)</span></td>
+<td>beside the far tab, near the corner</td>
+<td style="text-align: right;">4156</td>
+<td style="text-align: right;">−5156</td>
+<td style="text-align: right;">−1000</td>
+</tr>
+</tbody>
+</table>
+<div class="step">
+<p>Beside the far tab, <span class="math inline">\(u_{,11}\)</span> is even <em>positive</em>: along <span class="math inline">\(x_1\)</span> the profile bends upward, and a steeper downward bend along <span class="math inline">\(x_2\)</span> makes up the difference. In 1D there is only one curvature, so it had no choice.</p>
+</div>
+</section>
+</section>
+<section id="the-forcing-function-f" class="level2" data-number="F.9">
+<h2 data-number="F.9" class="anchored" data-anchor-id="the-forcing-function-f"><span class="header-section-number">F.9</span> The forcing function <span class="math inline">\(f\)</span></h2>
+<p><span class="math inline">\(f(\underline{x})\)</span> is the heat generated <strong>per unit volume</strong>, in W/m³. It is the only piece of data that acts in the <em>interior</em> of <span class="math inline">\(\Omega\)</span> — <span class="math inline">\(g\)</span> and <span class="math inline">\(h\)</span> act only on the boundary — and in 2D it can vary in both directions. Integrated over the slice, it gives the heat made per meter of depth:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\begin{aligned}
+&amp;\int_\Omega f\;d\Omega \quad \left[\tfrac{\text{W}}{\text{m}^3}\cdot\text{m}^2
+= \tfrac{\text{W}}{\text{m}}\right] \\[4pt]
+&amp;\text{e.g.}\quad 25{,}000 \times (0.10 \times 0.20) = 500\ \text{W/m} \\
+&amp;\text{and for one 27 mm cell,}\quad 500 \times 0.027 = 13.5\ \text{W}
+\end{aligned}
+\]</span></p>
+</div>
+<div id="fig-h2-forcing" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h2-forcing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson2D_Heat/H2_Fig7_Forcing.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h2-forcing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;F.7: Four forcing functions in the same cell, red where heat is made and blue where it is absorbed. The number above each panel is the heat made per meter of depth. Each panel has its own color scale; in (d) the peak is about a thousand times the background.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><strong>Uniform generation</strong> — current through the electrodes and electrolyte during a steady fast charge heats the whole cell nearly evenly. This is the <span class="math inline">\(f\)</span> of the worked example.</li>
+<li><strong>Current crowding</strong> — all the current funnels through the thin current-collector foils toward the tabs, so resistive heating is concentrated near them.</li>
+<li><strong>Gentle charging</strong> — the electrochemical reaction itself can absorb heat (the “reversible” or entropic heat). At a low charging current this can outweigh the resistive heating, and <span class="math inline">\(f &lt; 0\)</span>: the cell is a heat sink.</li>
+<li><strong>An internal short circuit</strong> — a defect lets current flow straight through a spot a few millimeters across. That spot alone makes as much heat as the whole cell normally does, and the temperature there spikes. This is how thermal runaway starts.</li>
+<li><span class="math inline">\(f = 0\)</span> is a cell at rest.</li>
+</ul>
+</div>
+</section>
+<section id="boundary-conditions" class="level2" data-number="F.10">
+<h2 data-number="F.10" class="anchored" data-anchor-id="boundary-conditions"><span class="header-section-number">F.10</span> Boundary conditions</h2>
+<p>As in 1D, every point of the boundary gets exactly one condition: either its <strong>temperature</strong> is known, or the <strong>heat flux through it</strong> is known. Three things are new in 2D. The boundary is a curve, the data can vary along it, and the flux condition speaks to only one direction.</p>
+<section id="dirichlet-u-g-on-gamma_g-the-temperature-is-known" class="level3" data-number="F.10.1">
+<h3 data-number="F.10.1" class="anchored" data-anchor-id="dirichlet-u-g-on-gamma_g-the-temperature-is-known"><span class="header-section-number">F.10.1</span> Dirichlet: <span class="math inline">\(u = g\)</span> on <span class="math inline">\(\Gamma_g\)</span> — the temperature is known</h3>
+<div id="fig-h2-dirichlet" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h2-dirichlet-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson2D_Heat/H2_Fig8_Dirichlet.png" class="img-fluid figure-img" style="width:84.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h2-dirichlet-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;F.8: The Dirichlet condition pins the value of <span class="math inline">\(u\)</span> all along <span class="math inline">\(\Gamma_g\)</span>; the strip beside the cooled edge shows <span class="math inline">\(g\)</span> in the same colors as the map. Black lines are heat-flux lines. (a) With <span class="math inline">\(g\)</span> constant, the edge is an isotherm, so heat meets the plate at right angles. (b) If the coolant enters at the bottom and warms by 3 °C on its way up, <span class="math inline">\(g\)</span> varies along the edge, the isotherms end on it, and heat arrives at an angle.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><span class="math inline">\(g\)</span> is a temperature, in °C — but in 2D it is a <strong>function on <span class="math inline">\(\Gamma_g\)</span></strong>, <span class="math inline">\(g : \Gamma_g \to \RR\)</span>, with one value for each point of the cooled edge. In 1D it was a single number at a single point.</li>
+<li>The condition fixes the <em>value</em> of <span class="math inline">\(u\)</span> along the edge: the temperature landscape is nailed to the curve <span class="math inline">\(g\)</span> there. It says nothing about the heat flowing through the edge. How much heat the plate removes, and where, is an <strong>output</strong> of the problem — like a reaction force in statics.</li>
+<li>When <span class="math inline">\(g\)</span> is constant, the edge is an isotherm, so <span class="math inline">\(\nabla u\)</span> is perpendicular to it and heat flows straight into the plate. When <span class="math inline">\(g\)</span> varies, the isotherms end on the edge.</li>
+<li>It is an <strong>essential</strong> boundary condition, imposed directly on <span class="math inline">\(u\)</span>. In the weak form it is built into the trial space <span class="math inline">\(\mathcal{S}\)</span> rather than appearing in any integral.</li>
+<li>Strictly, a thin layer of thermal interface material sits between cell and plate, and the heat through it is proportional to the temperature drop across it — a Robin condition. Letting that layer’s resistance go to zero gives the Dirichlet condition.</li>
+</ul>
+</div>
+</section>
+<section id="sec-h2-neumann" class="level3" data-number="F.10.2">
+<h3 data-number="F.10.2" class="anchored" data-anchor-id="sec-h2-neumann"><span class="header-section-number">F.10.2</span> Neumann: <span class="math inline">\((\kappa\nabla u)\cdot\underline{n} = h\)</span> on <span class="math inline">\(\Gamma_h\)</span> — the heat flux is known</h3>
+<p>As in 1D, the Neumann condition is Fourier’s law evaluated on the boundary. The flux <em>leaving</em> through the boundary is <span class="math inline">\(\underline{q}\cdot\underline{n}\)</span>, since <span class="math inline">\(\underline{n}\)</span> points outward, so the flux <em>entering</em> is <span class="math inline">\(-\underline{q}\cdot\underline{n}\)</span>. The Neumann condition fixes the flux entering:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\begin{aligned}
+h \;&amp;=\; -\underline{q}\cdot\underline{n}
+\;=\; -\left(-\kappa\nabla u\right)\cdot\underline{n}
+\;=\; \left(\kappa\nabla u\right)\cdot\underline{n} \\
+\Longleftrightarrow\qquad
+h \;&amp;=\; -q_i\,n_i \;=\; \kappa\,u_{,i}\,n_i
+\end{aligned}
+\]</span></p>
+</div>
+<p>With a conductivity tensor it reads <span class="math inline">\(h = \kappa_{ij}u_{,j}n_i\)</span>. The dot product <span class="math inline">\(\nabla u\cdot\underline{n} = u_{,i}n_i\)</span> is the slope of <span class="math inline">\(u\)</span> in the outward direction, the <strong>normal derivative</strong> <span class="math inline">\(\partial u/\partial n\)</span>, so the condition says <span class="math inline">\(\kappa\,\partial u/\partial n = h\)</span>: <em>the temperature’s outward slope is <span class="math inline">\(h/\kappa\)</span></em>. On each edge of the rectangle the normal picks out one component of the gradient:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\begin{aligned}
+&amp;\text{left } (x_1 = 0)\colon &amp;&amp; \underline{n} = (-1, 0) &amp;&amp; \Longrightarrow\quad -\kappa\,u_{,1} = h \\
+&amp;\text{right } (x_1 = W)\colon &amp;&amp; \underline{n} = (1, 0) &amp;&amp; \Longrightarrow\quad +\kappa\,u_{,1} = h \\
+&amp;\text{bottom } (x_2 = 0)\colon &amp;&amp; \underline{n} = (0, -1) &amp;&amp; \Longrightarrow\quad -\kappa\,u_{,2} = h \\
+&amp;\text{top } (x_2 = H)\colon &amp;&amp; \underline{n} = (0, 1) &amp;&amp; \Longrightarrow\quad +\kappa\,u_{,2} = h
+\end{aligned}
+\]</span></p>
+</div>
+<p>The left and right lines are the wall’s two conditions, <span class="math inline">\(-\kappa u_{,x}(0) = h\)</span> and <span class="math inline">\(+\kappa u_{,x}(L) = h\)</span>, word for word.</p>
+<div id="fig-h2-neumann" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h2-neumann-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson2D_Heat/H2_Fig9_Neumann.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h2-neumann-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;F.9: (a) The top 4.5 cm of the cell. At each marked boundary point, the red arrow is <span class="math inline">\(\nabla u\)</span>, split into its normal part (amber) and its tangential part (gray). The Neumann condition fixes only the normal part: 200 °C/m under each tab, zero between them. The tangential part is whatever the rest of the problem makes it. (b)–(d) An edge with the same tangential slope and three values of <span class="math inline">\(h\)</span>. The amber arrows are heat flux, and the gray lines are isotherms.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><span class="math inline">\(h\)</span> is a heat flux in W/m², positive when heat flows <strong>in</strong>, on any edge, whichever way the edge faces — just as for the wall.</li>
+<li><strong>Only the normal part of <span class="math inline">\(\nabla u\)</span> is fixed.</strong> The tangential part, the slope <em>along</em> the boundary, is left for the rest of the problem to decide. In 1D there is no “along the boundary”, so the Neumann condition fixed the whole derivative. In 2D it fixes one component of two.</li>
+<li><strong><span class="math inline">\(h = 0\)</span> is an insulated (adiabatic) boundary.</strong> <span class="math inline">\(\nabla u\)</span> lies along the edge, so the isotherms meet it at right angles and heat slides along it without crossing. A plane of <strong>symmetry</strong> carries the same condition, and that is exactly why the large faces between identical cells could be dropped from the problem.</li>
+<li>The size of the normal slope is <span class="math inline">\(|h|/\kappa\)</span>. Under the tabs, <span class="math inline">\(u_{,2} = 5000/25 = 200\)</span> °C/m, which is 0.2 °C per millimeter, rising toward the tab.</li>
+<li>It is a <strong>natural</strong> boundary condition. In the weak form it appears on its own, as the boundary integral <span class="math inline">\(\int_{\Gamma_h} w\,h\;d\Gamma\)</span>.</li>
+<li>A surface cooled by air obeys <span class="math inline">\(h = h_c\,(u_\infty - u)\)</span>, which mixes the value and the slope. That is a Robin condition, and it is not part of Hughes’ model problem.</li>
+</ul>
+</div>
+<div class="step">
+<p>In numbers: at the middle of the near tab, <span class="math inline">\(\nabla u = (153,\ 200)\)</span> °C/m; at the middle of the far tab, <span class="math inline">\((45,\ 200)\)</span> °C/m; halfway between them, <span class="math inline">\((94,\ 0)\)</span> °C/m. The second component is set by <span class="math inline">\(h\)</span> in every case. The first is not: it is large near the cooling plate and small far from it, and no boundary condition on the top edge could have predicted it.</p>
+</div>
+</section>
+<section id="sec-h2-partition" class="level3" data-number="F.10.3">
+<h3 data-number="F.10.3" class="anchored" data-anchor-id="sec-h2-partition"><span class="header-section-number">F.10.3</span> <span class="math inline">\(\Gamma_g\)</span> and <span class="math inline">\(\Gamma_h\)</span> partition the boundary</h3>
+<p>The two parts of the boundary must satisfy</p>
+<div class="derivation">
+<p><span class="math display">\[
+\Gamma = \overline{\Gamma_g \cup \Gamma_h}
+\qquad\qquad
+\Gamma_g \cap \Gamma_h = \emptyset
+\]</span></p>
+</div>
+<p>Together <span class="math inline">\(\Gamma_g\)</span> and <span class="math inline">\(\Gamma_h\)</span> cover the whole boundary, and they do not overlap, so each point of <span class="math inline">\(\Gamma\)</span> belongs to exactly one of them: they <strong>partition</strong> <span class="math inline">\(\Gamma\)</span>. The bar (the closure) only restores the handful of points where the two parts meet, such as the two corners of the cooled edge, and those have no length. The two requirements guard against two different failures, shown in <a href="#fig-h2-partition" class="quarto-xref">Figure&nbsp;<span>F.10</span></a>.</p>
+<div id="fig-h2-partition" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h2-partition-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson2D_Heat/H2_Fig10_Partition.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h2-partition-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;F.10: Four ways to assign conditions to the cell’s boundary: blue is <span class="math inline">\(\Gamma_g\)</span>, amber is <span class="math inline">\(\Gamma_h\)</span> (violet on the tabs). Only (a) is a partition of <span class="math inline">\(\Gamma\)</span> into a Dirichlet part and a Neumann part.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><strong>Covering, <span class="math inline">\(\overline{\Gamma_g \cup \Gamma_h} = \Gamma\)</span>: no gaps.</strong> On a stretch of boundary with no condition, the problem does not say what happens there: it could be insulated, or pressed against a hot plate. Infinitely many temperature fields then satisfy everything else. Remember that “insulated” is a condition, <span class="math inline">\(h = 0\)</span>, and not a missing one.</li>
+<li><strong>Disjoint, <span class="math inline">\(\Gamma_g \cap \Gamma_h = \emptyset\)</span>: no overlaps.</strong> Prescribing both the temperature <em>and</em> the flux on the same stretch asks too much. For arbitrary data no solution exists, and for the rare data that allow one, the solution is wildly sensitive to them.</li>
+<li><strong><span class="math inline">\(\Gamma_g\)</span> must not be empty.</strong> With only flux data, (i) <span class="math inline">\(u\)</span> is determined at best up to an added constant, because flux data only ever see <span class="math inline">\(\nabla u\)</span>. And (ii) a steady solution exists only if the heat going in balances, which follows from the divergence theorem applied to all of <span class="math inline">\(\Omega\)</span>:</li>
+</ul>
+</div>
+<div class="derivation">
+<p><span class="math display">\[
+\int_\Omega f\;d\Omega + \int_\Gamma h\;d\Gamma = 0
+\]</span></p>
+</div>
+<div class="step notes">
+<ul>
+<li>For the cell, <span class="math inline">\(500 + 200 \ne 0\)</span>. Without the cooling plate there is no steady state: the cell heats up forever. This is the 2D version of the wall’s two-Neumann-faces case.</li>
+<li><strong>In 2D, <span class="math inline">\(\Gamma_g\)</span> also needs length.</strong> Holding a single point at a fixed temperature is not enough, because a point has no length for heat to leave through. A point that absorbed a finite heat flow <span class="math inline">\(Q\)</span> (W per meter of depth) would sit at the bottom of a logarithmic well, <span class="math inline">\(u \approx \frac{Q}{2\pi\kappa}\ln r\)</span>, which is infinitely deep.</li>
+<li>The partition is <strong>point by point</strong>, not edge by edge. <span class="math inline">\(\Gamma_g\)</span> could be the middle half of one edge, with <span class="math inline">\(\Gamma_h\)</span> everywhere else. And different stretches of <span class="math inline">\(\Gamma_h\)</span> may carry different <span class="math inline">\(h\)</span>: the tabs and the insulated edges are all part of <span class="math inline">\(\Gamma_h\)</span>.</li>
+</ul>
+</div>
+</section>
+<section id="which-edges-get-which-condition" class="level3" data-number="F.10.4">
+<h3 data-number="F.10.4" class="anchored" data-anchor-id="which-edges-get-which-condition"><span class="header-section-number">F.10.4</span> Which edges get which condition</h3>
+<p>The model problem does not care which part of the boundary is <span class="math inline">\(\Gamma_g\)</span>, but the solution does. Here is the same cell, with the same <span class="math inline">\(f\)</span> and the same tabs, under four partitions:</p>
+<div id="fig-h2-configs" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h2-configs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson2D_Heat/H2_Fig11_Configurations.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h2-configs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;F.11: One cell, one <span class="math inline">\(f\)</span>, the same tabs, four partitions of <span class="math inline">\(\Gamma\)</span>. Blue edges are <span class="math inline">\(\Gamma_g\)</span> (held at 25 °C); everything else is <span class="math inline">\(\Gamma_h\)</span>. The isotherms are 2 °C apart, all four panels share one color scale, and a white dot marks the hottest point. In (d) the whole insulated side is equally hot.
+</figcaption>
+</figure>
+</div>
+<div class="step notes">
+<ul>
+<li><strong>(a) Side-cooled</strong>, the worked example: 36.6 °C at the hottest point, on the top edge under the far tab.</li>
+<li><strong>(b) Bottom-cooled.</strong> Same cell, same heat, but now it has to travel the 200 mm height instead of the 100 mm width, and the tabs are as far from the plate as they can be. The hottest point reaches 62.0 °C. The bulk temperature rise grows with the square of the conduction length, so doubling the length quadruples it. Where the cooling plate goes matters as much as how cold it is.</li>
+<li><strong>(c) Cooled on both sides.</strong> Each plate takes 350 W/m and the hottest point drops to 29.7 °C.</li>
+<li><strong>(d) Side-cooled with the tabs off.</strong> Nothing in the data depends on <span class="math inline">\(x_2\)</span> any more, so neither does the solution. The isotherms are vertical, and the problem is the wall (next section). Hottest point: 30.0 °C, along the whole insulated side.</li>
+</ul>
+</div>
+</section>
+</section>
+<section id="how-the-1d-wall-sits-inside-the-2d-cell" class="level2" data-number="F.11">
+<h2 data-number="F.11" class="anchored" data-anchor-id="how-the-1d-wall-sits-inside-the-2d-cell"><span class="header-section-number">F.11</span> How the 1D wall sits inside the 2D cell</h2>
+<p>Switch the tabs off, so that <span class="math inline">\(h = 0\)</span> on all of <span class="math inline">\(\Gamma_h\)</span>. Now nothing in the problem — <span class="math inline">\(f\)</span>, <span class="math inline">\(g\)</span>, <span class="math inline">\(h\)</span>, or the shape of <span class="math inline">\(\Omega\)</span> — changes with <span class="math inline">\(x_2\)</span>, so neither can <span class="math inline">\(u\)</span>: <span class="math inline">\(u = u(x_1)\)</span> and <span class="math inline">\(u_{,2} = 0\)</span> everywhere. Each line of the 2D strong form then collapses to a line of the 1D one:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>2D, cell</th>
+<th>with <span class="math inline">\(u_{,2} = 0\)</span></th>
+<th>1D, wall</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(-\kappa\left(u_{,11} + u_{,22}\right) = f\)</span> in <span class="math inline">\(\Omega\)</span></td>
+<td><span class="math inline">\(-\kappa\,u_{,11} = f\)</span></td>
+<td>the differential equation</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(u(0, x_2) = g\)</span></td>
+<td><span class="math inline">\(u(0) = g\)</span></td>
+<td>Dirichlet face at <span class="math inline">\(x = 0\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(+\kappa\,u_{,1}(W, x_2) = 0\)</span></td>
+<td><span class="math inline">\(+\kappa\,u_{,1}(W) = 0\)</span></td>
+<td>Neumann face at <span class="math inline">\(x = L\)</span>, <span class="math inline">\(n = +1\)</span>, <span class="math inline">\(h = 0\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\mp\kappa\,u_{,2} = 0\)</span> on the bottom and top</td>
+<td><span class="math inline">\(0 = 0\)</span></td>
+<td>nothing: satisfied automatically</td>
+</tr>
+</tbody>
+</table>
+<p>This is arrangement (b) of the wall — temperature given at <span class="math inline">\(x = 0\)</span>, flux at <span class="math inline">\(x = L\)</span> — with <span class="math inline">\(L = W\)</span> and <span class="math inline">\(h = 0\)</span>, and its solution is the wall’s:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\begin{aligned}
+u(x_1) &amp;= g + \frac{f}{\kappa}\left(W x_1 - \frac{x_1^2}{2}\right) \\
+u_{\max} = u(W) &amp;= g + \frac{f\,W^2}{2\kappa} = 25 + \frac{25{,}000 \times 0.01}{2 \times 25}
+= 30\ {}^\circ\text{C}
+\end{aligned}
+\]</span></p>
+</div>
+<div id="fig-h2-oned" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h2-oned-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson2D_Heat/H2_Fig12_OneD.png" class="img-fluid figure-img" style="width:82.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h2-oned-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;F.12: Temperature across the cell at five heights (inset), with the tabs on, compared with the 1D wall solution (dashed). Near the bottom the 2D profile is the wall’s parabola, lifted by the little tab heat that reaches that far. Near the top the tabs take over and the problem is genuinely two-dimensional. The kinks in the top curve sit at the ends of the tabs, where <span class="math inline">\(h\)</span> jumps.
+</figcaption>
+</figure>
+</div>
+<div class="step">
+<p>With the tabs on, the 1D solution is still the right answer far from them. At <span class="math inline">\(x_2 = 0.02\)</span> m the 2D profile is the 1D parabola lifted by 0.6 °C, the share of the tab heat that reaches that far down. Near the top, the tabs dominate. This is the general pattern: <strong>a 1D model is accurate where the data do not vary in the other direction, and fails near the features that make them vary.</strong> The wall on the first page was exactly such a model: one strip, far from the wall’s edges.</p>
+</div>
+</section>
+<section id="the-strong-form-complete" class="level2" data-number="F.12">
+<h2 data-number="F.12" class="anchored" data-anchor-id="the-strong-form-complete"><span class="header-section-number">F.12</span> The strong form, complete</h2>
+<p>Collecting the pieces, in both notations:</p>
+<div class="derivation">
+<p><span class="math display">\[
+(\mathrm{S}) \quad
+\begin{aligned}
+&amp;\text{Given } f : \Omega \to \RR \;[\text{W/m}^3],\;\; \kappa &gt; 0 \;[\text{W/(m·K)}], \\
+&amp;g : \Gamma_g \to \RR \;[{}^\circ\text{C}], \text{ and }
+  h : \Gamma_h \to \RR \;[\text{W/m}^2], \\
+&amp;\text{where } \Gamma = \overline{\Gamma_g \cup \Gamma_h} \text{ and }
+  \Gamma_g \cap \Gamma_h = \emptyset, \\
+&amp;\text{find } u : \bar\Omega \to \RR \;[{}^\circ\text{C}] \text{ such that} \\[4pt]
+&amp;\quad -\nabla\cdot\left(\kappa\nabla u\right) = f
+  \;\;\Longleftrightarrow\;\; -\left(\kappa\,u_{,i}\right)_{,i} = f
+  &amp;&amp; \text{in } \Omega \\
+&amp;\quad u = g &amp;&amp; \text{on } \Gamma_g \\
+&amp;\quad \left(\kappa\nabla u\right)\cdot\underline{n} = h
+  \;\;\Longleftrightarrow\;\; \kappa\,u_{,i}\,n_i = h
+  &amp;&amp; \text{on } \Gamma_h
+\end{aligned}
+\]</span></p>
+</div>
+<p>The three lines are the energy balance with Fourier’s law substituted in, the known temperatures, and the known inflows.</p>
+<p>For the cell, with <span class="math inline">\(\Omega = \,]0, W[\, \times \,]0, H[\)</span>, written out piece by piece:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Where</th>
+<th>Condition</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>in <span class="math inline">\(\Omega\)</span></td>
+<td><span class="math inline">\(-\kappa\left(u_{,11} + u_{,22}\right) = f\)</span></td>
+<td>the differential equation</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(x_1 = 0\)</span></td>
+<td><span class="math inline">\(u(0, x_2) = g\)</span></td>
+<td>the cooling plate (<span class="math inline">\(\Gamma_g\)</span>)</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(x_1 = W\)</span></td>
+<td><span class="math inline">\(+\kappa\,u_{,1}(W, x_2) = 0\)</span></td>
+<td>the insulated side</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(x_2 = 0\)</span></td>
+<td><span class="math inline">\(-\kappa\,u_{,2}(x_1, 0) = 0\)</span></td>
+<td>the insulated bottom</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(x_2 = H\)</span></td>
+<td><span class="math inline">\(+\kappa\,u_{,2}(x_1, H) = h(x_1)\)</span></td>
+<td>5000 W/m² on the tabs, 0 between and beside them</td>
+</tr>
+</tbody>
+</table>
+<div class="step notes">
+<ul>
+<li>It is called the <strong>strong</strong> form because the differential equation must hold <strong>at every point</strong> of <span class="math inline">\(\Omega\)</span>, which demands that <span class="math inline">\(u\)</span> have two derivatives everywhere. Our data already strain this. At the four ends of the tabs, <span class="math inline">\(h\)</span> jumps from 0 to 5000 W/m², and there <span class="math inline">\(\nabla u\)</span> is unbounded: it grows like <span class="math inline">\(\ln r\)</span> as you approach the end of a tab. The growth is mild, but it has no limit. (Look for the kinks in the top curve of <a href="#fig-h2-oned" class="quarto-xref">Figure&nbsp;<span>F.12</span></a>.) The weak form, which only integrates, does not mind.</li>
+<li>Every figure on this page is a picture of one line of the strong form.</li>
+</ul>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>The exact solution, for the curious
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Split the solution into a piece that carries <span class="math inline">\(f\)</span> and a piece that carries the tab flux:</p>
+<p><span class="math display">\[
+\begin{aligned}
+u(x_1, x_2) &amp;= g + \frac{f}{\kappa}\left(W x_1 - \frac{x_1^2}{2}\right) \\
+&amp;\quad + \sum_{m=1}^{\infty} \frac{h_m}{\kappa}\,
+  \frac{\sin(\mu_m x_1)\,\cosh(\mu_m x_2)}{\mu_m \sinh(\mu_m H)}
+\end{aligned}
+\]</span></p>
+<p><span class="math display">\[
+\mu_m = \frac{(m - \frac12)\pi}{W},
+\qquad h_m = \frac{2}{W}\int_0^W h(x_1)\sin(\mu_m x_1)\,dx_1
+\]</span></p>
+<p>The first two terms are the wall’s solution: they satisfy the differential equation, the Dirichlet condition, and <span class="math inline">\(h = 0\)</span> on the other three edges. Each term of the sum satisfies <span class="math inline">\(\Delta u = 0\)</span> (the <span class="math inline">\(\sin\)</span> curves one way and the <span class="math inline">\(\cosh\)</span> the other, by equal amounts), vanishes on <span class="math inline">\(x_1 = 0\)</span>, has zero slope on <span class="math inline">\(x_1 = W\)</span> and <span class="math inline">\(x_2 = 0\)</span>, and together they add up to <span class="math inline">\(\kappa u_{,2} = h(x_1)\)</span> on the top edge. This is separation of variables. Most of the figures and numbers on this page come from this formula, summed to hundreds of terms. The bottom-cooled and two-sided cells of <a href="#fig-h2-configs" class="quarto-xref">Figure&nbsp;<span>F.11</span></a>, and the explorer below, are computed numerically instead, because most problems have no such formula. That is the reason for the finite element method.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="worked-example" class="level2" data-number="F.13">
+<h2 data-number="F.13" class="anchored" data-anchor-id="worked-example"><span class="header-section-number">F.13</span> Worked example</h2>
+<p>The cell of <a href="#fig-h2-module" class="quarto-xref">Figure&nbsp;<span>F.1</span></a> during a fast charge: <span class="math inline">\(W\)</span> = 0.10 m, <span class="math inline">\(H\)</span> = 0.20 m, <span class="math inline">\(\kappa\)</span> = 25 W/(m·K), <span class="math inline">\(f\)</span> = 25,000 W/m³, and <span class="math inline">\(g\)</span> = 25 °C on the cooled side. On the two tabs, <span class="math inline">\(x_1 \in [0.015, 0.035]\)</span> m and <span class="math inline">\([0.065, 0.085]\)</span> m, <span class="math inline">\(h\)</span> = 5000 W/m², and <span class="math inline">\(h = 0\)</span> on the rest of <span class="math inline">\(\Gamma_h\)</span>.</p>
+<div id="fig-h2-example" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-h2-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Poisson2D_Heat/H2_Fig13_Example.png" class="img-fluid figure-img" style="width:92.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-h2-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;F.13: The solution of the worked example. (a) The temperature, with heat-flux lines drawn thicker where more heat flows. All of them end on the cooling plate. (b) The heat crossing the cooled edge, per square meter of plate, at each height. The heat made inside the cell would leave uniformly (red). The tab heat leaves mostly near the top (violet), close to where it came in.
+</figcaption>
+</figure>
+</div>
+<p>Every line of the strong form can be checked on the solution:</p>
+<div class="step notes">
+<ul>
+<li><strong>The differential equation.</strong> At every point, <span class="math inline">\(u_{,11} + u_{,22} = -f/\kappa =
+-1000\)</span> °C/m² (the table in <a href="#sec-h2-shape">the Laplacian section</a>), even where the two curvatures individually swing between −6600 and +5600 °C/m². Equivalently, <span class="math inline">\(\nabla\cdot\underline{q} = f\)</span>: each small piece of the slice exports exactly the 25,000 W/m³ it makes.</li>
+<li><strong>The Dirichlet condition.</strong> <span class="math inline">\(u(0, x_2)\)</span> lies between 25.00 and 25.00 °C all along the cooled edge — that is, <span class="math inline">\(u = g\)</span>. Since <span class="math inline">\(f &gt; 0\)</span>, the coldest points of the cell must lie on the boundary, and here they are exactly this edge.</li>
+<li><strong>The Neumann conditions.</strong> At the middle of the far tab, <span class="math inline">\(\kappa\,u_{,2}(0.075, H) = 5000\)</span> W/m² <span class="math inline">\(= h\)</span>. Halfway between the tabs, <span class="math inline">\(\kappa\,u_{,2}(0.05, H) = 0\)</span> W/m². On the insulated side and bottom, <span class="math inline">\(|u_{,1}(W, x_2)|\)</span> and <span class="math inline">\(|u_{,2}(x_1, 0)|\)</span> never exceed <span class="math inline">\(10^{-12}\)</span> °C/m, so the isotherms meet those edges at right angles.</li>
+<li><strong>The energy balance</strong> (per meter of depth). The cell makes 500 W/m and takes in 200 W/m through the tabs, and 700.0 W/m leaves through the cooling plate. For one 27 mm cell that is 18.9 W delivered to the coolant. The plate’s share is not uniform: 2726 W/m² at the bottom of the cooled edge, rising to 6362 W/m² at the top, where the tab heat arrives.</li>
+<li><strong>The hot spot.</strong> 36.6 °C, on the top edge under the far tab, at <span class="math inline">\(x_1 \approx 0.079\)</span> m. That is 6.6 °C hotter than the same cell with the tabs off: the tabs, which bring in 29% of the heat, cause more than half of the worst-case temperature rise.</li>
+</ul>
+</div>
+</section>
+<section id="explore-the-strong-form" class="level2" data-number="F.14">
+<h2 data-number="F.14" class="anchored" data-anchor-id="explore-the-strong-form"><span class="header-section-number">F.14</span> Explore the strong form</h2>
+<p>Choose which edges touch a cooling plate. Those edges are <span class="math inline">\(\Gamma_g\)</span>, and every other edge is <span class="math inline">\(\Gamma_h\)</span>. Then set the data. The map shows the temperature, computed in your browser on a 2.5 mm grid, with isotherms and heat-flux arrows. Blue edges are <span class="math inline">\(\Gamma_g\)</span>, amber edges are <span class="math inline">\(\Gamma_h\)</span>, and the violet stretches are the tabs; the white dot is the hottest point. The checkboxes cannot create a gap or an overlap, because every edge is either checked or not — but they can leave <span class="math inline">\(\Gamma_g\)</span> empty.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb1" data-startfrom="2082" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 2081;"><span id="cb1-2082"><a href="#cb1-2082" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> {solveGrid<span class="op">,</span> tabFlux<span class="op">,</span> niceLevels} <span class="im">from</span> <span class="st">"./heat2d.js"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-1" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb2" data-startfrom="2088" data-source-offset="-0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 2087;"><span id="cb2-2088"><a href="#cb2-2088" aria-hidden="true" tabindex="-1"></a>viewof xCool <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">checkbox</span>(<span class="kw">new</span> <span class="bu">Map</span>([</span>
+<span id="cb2-2089"><a href="#cb2-2089" aria-hidden="true" tabindex="-1"></a>  [<span class="st">"left, x₁ = 0"</span><span class="op">,</span> <span class="st">"left"</span>]<span class="op">,</span> [<span class="st">"right, x₁ = W"</span><span class="op">,</span> <span class="st">"right"</span>]<span class="op">,</span></span>
+<span id="cb2-2090"><a href="#cb2-2090" aria-hidden="true" tabindex="-1"></a>  [<span class="st">"bottom, x₂ = 0"</span><span class="op">,</span> <span class="st">"bottom"</span>]<span class="op">,</span> [<span class="st">"top, x₂ = H (covers the tabs)"</span><span class="op">,</span> <span class="st">"top"</span>]</span>
+<span id="cb2-2091"><a href="#cb2-2091" aria-hidden="true" tabindex="-1"></a>])<span class="op">,</span> {<span class="dt">value</span><span class="op">:</span> [<span class="st">"left"</span>]<span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"Cooled edges (Γg)"</span>})</span>
+<span id="cb2-2092"><a href="#cb2-2092" aria-hidden="true" tabindex="-1"></a>viewof xF   <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="op">-</span><span class="dv">10000</span><span class="op">,</span> <span class="dv">100000</span>]<span class="op">,</span> {<span class="dt">value</span><span class="op">:</span> <span class="dv">25000</span><span class="op">,</span> <span class="dt">step</span><span class="op">:</span> <span class="dv">1000</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"f (W/m³)"</span>})</span>
+<span id="cb2-2093"><a href="#cb2-2093" aria-hidden="true" tabindex="-1"></a>viewof xHt  <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="op">-</span><span class="dv">10000</span><span class="op">,</span> <span class="dv">20000</span>]<span class="op">,</span>  {<span class="dt">value</span><span class="op">:</span> <span class="dv">5000</span><span class="op">,</span>  <span class="dt">step</span><span class="op">:</span> <span class="dv">500</span><span class="op">,</span>  <span class="dt">label</span><span class="op">:</span> <span class="st">"h on the tabs (W/m²)"</span>})</span>
+<span id="cb2-2094"><a href="#cb2-2094" aria-hidden="true" tabindex="-1"></a>viewof xHo  <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="op">-</span><span class="dv">2000</span><span class="op">,</span> <span class="dv">2000</span>]<span class="op">,</span>    {<span class="dt">value</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span>     <span class="dt">step</span><span class="op">:</span> <span class="dv">100</span><span class="op">,</span>  <span class="dt">label</span><span class="op">:</span> <span class="st">"h on the rest of Γh (W/m²)"</span>})</span>
+<span id="cb2-2095"><a href="#cb2-2095" aria-hidden="true" tabindex="-1"></a>viewof xK   <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="dv">1</span><span class="op">,</span> <span class="dv">50</span>]<span class="op">,</span>          {<span class="dt">value</span><span class="op">:</span> <span class="dv">25</span><span class="op">,</span>    <span class="dt">step</span><span class="op">:</span> <span class="dv">1</span><span class="op">,</span>    <span class="dt">label</span><span class="op">:</span> <span class="st">"κ (W/(m·K))"</span>})</span>
+<span id="cb2-2096"><a href="#cb2-2096" aria-hidden="true" tabindex="-1"></a>viewof xG   <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="dv">0</span><span class="op">,</span> <span class="dv">40</span>]<span class="op">,</span>          {<span class="dt">value</span><span class="op">:</span> <span class="dv">25</span><span class="op">,</span>    <span class="dt">step</span><span class="op">:</span> <span class="dv">1</span><span class="op">,</span>    <span class="dt">label</span><span class="op">:</span> <span class="st">"g at x₂ = 0 (°C)"</span>})</span>
+<span id="cb2-2097"><a href="#cb2-2097" aria-hidden="true" tabindex="-1"></a>viewof xDg  <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="op">-</span><span class="dv">5</span><span class="op">,</span> <span class="dv">5</span>]<span class="op">,</span>          {<span class="dt">value</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span>     <span class="dt">step</span><span class="op">:</span> <span class="fl">0.5</span><span class="op">,</span>  <span class="dt">label</span><span class="op">:</span> <span class="st">"rise in g up to x₂ = H (°C)"</span>})</span>
+<span id="cb2-2098"><a href="#cb2-2098" aria-hidden="true" tabindex="-1"></a>viewof xShow <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">checkbox</span>([<span class="st">"isotherms"</span><span class="op">,</span> <span class="st">"heat-flux arrows"</span>]<span class="op">,</span></span>
+<span id="cb2-2099"><a href="#cb2-2099" aria-hidden="true" tabindex="-1"></a>  {<span class="dt">value</span><span class="op">:</span> [<span class="st">"isotherms"</span><span class="op">,</span> <span class="st">"heat-flux arrows"</span>]<span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"Show"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-2-1" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-2-2" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-2-3" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-2-4" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-2-5" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-2-6" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-2-7" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<div id="ojs-cell-2-8" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb3" data-startfrom="2103" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 2102;"><span id="cb3-2103"><a href="#cb3-2103" aria-hidden="true" tabindex="-1"></a>cell2d <span class="op">=</span> {</span>
+<span id="cb3-2104"><a href="#cb3-2104" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> W <span class="op">=</span> <span class="fl">0.10</span><span class="op">,</span> H <span class="op">=</span> <span class="fl">0.20</span><span class="op">,</span> tabs <span class="op">=</span> [[<span class="fl">0.015</span><span class="op">,</span> <span class="fl">0.035</span>]<span class="op">,</span> [<span class="fl">0.065</span><span class="op">,</span> <span class="fl">0.085</span>]]<span class="op">;</span></span>
+<span id="cb3-2105"><a href="#cb3-2105" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> res <span class="op">=</span> <span class="fu">solveGrid</span>({W<span class="op">,</span> H<span class="op">,</span> <span class="dt">nx</span><span class="op">:</span> <span class="dv">40</span><span class="op">,</span> <span class="dt">ny</span><span class="op">:</span> <span class="dv">80</span><span class="op">,</span> <span class="dt">kappa</span><span class="op">:</span> xK<span class="op">,</span> <span class="dt">f</span><span class="op">:</span> xF<span class="op">,</span></span>
+<span id="cb3-2106"><a href="#cb3-2106" aria-hidden="true" tabindex="-1"></a>    <span class="dt">g</span><span class="op">:</span> (x<span class="op">,</span> y) <span class="kw">=&gt;</span> xG <span class="op">+</span> xDg <span class="op">*</span> y <span class="op">/</span> H<span class="op">,</span> <span class="dt">dirichlet</span><span class="op">:</span> xCool<span class="op">,</span></span>
+<span id="cb3-2107"><a href="#cb3-2107" aria-hidden="true" tabindex="-1"></a>    <span class="dt">h</span><span class="op">:</span> (edge<span class="op">,</span> s) <span class="kw">=&gt;</span> (edge <span class="op">===</span> <span class="st">"top"</span> <span class="op">&amp;&amp;</span> <span class="fu">tabFlux</span>(s<span class="op">,</span> <span class="dv">1</span><span class="op">,</span> tabs)) <span class="op">?</span> xHt <span class="op">:</span> xHo})<span class="op">;</span></span>
+<span id="cb3-2108"><a href="#cb3-2108" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="bu">Object</span><span class="op">.</span><span class="fu">assign</span>(res<span class="op">,</span> {tabs})<span class="op">;</span></span>
+<span id="cb3-2109"><a href="#cb3-2109" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-3" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb4" data-startfrom="2114" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 2113;"><span id="cb4-2114"><a href="#cb4-2114" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb4-2115"><a href="#cb4-2115" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> r <span class="op">=</span> cell2d<span class="op">,</span> W <span class="op">=</span> r<span class="op">.</span><span class="at">W</span><span class="op">,</span> H <span class="op">=</span> r<span class="op">.</span><span class="at">H</span><span class="op">;</span></span>
+<span id="cb4-2116"><a href="#cb4-2116" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> NAVY <span class="op">=</span> <span class="st">"#1e3a5f"</span><span class="op">,</span> AMBER <span class="op">=</span> <span class="st">"#d97706"</span><span class="op">,</span> VIOLET <span class="op">=</span> <span class="st">"#6d28d9"</span><span class="op">,</span> INK <span class="op">=</span> <span class="st">"#1a1a1a"</span><span class="op">;</span></span>
+<span id="cb4-2117"><a href="#cb4-2117" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> fmt <span class="op">=</span> (v<span class="op">,</span> d <span class="op">=</span> <span class="dv">0</span>) <span class="kw">=&gt;</span> (v <span class="op">&lt;</span> <span class="dv">0</span> <span class="op">?</span> <span class="st">"−"</span> <span class="op">:</span> <span class="st">""</span>) <span class="op">+</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">abs</span>(v)<span class="op">.</span><span class="fu">toFixed</span>(d)<span class="op">;</span></span>
+<span id="cb4-2118"><a href="#cb4-2118" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> names <span class="op">=</span> {<span class="dt">left</span><span class="op">:</span> <span class="st">"left"</span><span class="op">,</span> <span class="dt">right</span><span class="op">:</span> <span class="st">"right"</span><span class="op">,</span> <span class="dt">bottom</span><span class="op">:</span> <span class="st">"bottom"</span><span class="op">,</span> <span class="dt">top</span><span class="op">:</span> <span class="st">"top"</span>}<span class="op">;</span></span>
+<span id="cb4-2119"><a href="#cb4-2119" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> lenOf <span class="op">=</span> e <span class="kw">=&gt;</span> (e <span class="op">===</span> <span class="st">"left"</span> <span class="op">||</span> e <span class="op">===</span> <span class="st">"right"</span>) <span class="op">?</span> H <span class="op">:</span> W<span class="op">;</span></span>
+<span id="cb4-2120"><a href="#cb4-2120" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> gEdges <span class="op">=</span> [<span class="st">"left"</span><span class="op">,</span> <span class="st">"right"</span><span class="op">,</span> <span class="st">"bottom"</span><span class="op">,</span> <span class="st">"top"</span>]<span class="op">.</span><span class="fu">filter</span>(e <span class="kw">=&gt;</span> xCool<span class="op">.</span><span class="fu">includes</span>(e))<span class="op">;</span></span>
+<span id="cb4-2121"><a href="#cb4-2121" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> hEdges <span class="op">=</span> [<span class="st">"left"</span><span class="op">,</span> <span class="st">"right"</span><span class="op">,</span> <span class="st">"bottom"</span><span class="op">,</span> <span class="st">"top"</span>]<span class="op">.</span><span class="fu">filter</span>(e <span class="kw">=&gt;</span> <span class="op">!</span>xCool<span class="op">.</span><span class="fu">includes</span>(e))<span class="op">;</span></span>
+<span id="cb4-2122"><a href="#cb4-2122" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> lenG <span class="op">=</span> d3<span class="op">.</span><span class="fu">sum</span>(gEdges<span class="op">,</span> lenOf)<span class="op">,</span> lenH <span class="op">=</span> d3<span class="op">.</span><span class="fu">sum</span>(hEdges<span class="op">,</span> lenOf)<span class="op">;</span></span>
+<span id="cb4-2123"><a href="#cb4-2123" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> asSet <span class="op">=</span> es <span class="kw">=&gt;</span> es<span class="op">.</span><span class="at">length</span> <span class="op">?</span> <span class="vs">`{</span><span class="sc">${</span>es<span class="op">.</span><span class="fu">join</span>(<span class="st">", "</span>)<span class="sc">}</span><span class="vs">}`</span> <span class="op">:</span> <span class="st">"∅"</span><span class="op">;</span></span>
+<span id="cb4-2124"><a href="#cb4-2124" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> partition <span class="op">=</span> <span class="fu">html</span><span class="vs">`&lt;b&gt;Partition.&lt;/b&gt; Γ&lt;sub&gt;g&lt;/sub&gt; = </span><span class="sc">${</span><span class="fu">asSet</span>(gEdges)<span class="sc">}</span></span>
+<span id="cb4-2125"><a href="#cb4-2125" aria-hidden="true" tabindex="-1"></a><span class="vs">    (</span><span class="sc">${</span>lenG<span class="op">.</span><span class="fu">toFixed</span>(<span class="dv">2</span>)<span class="sc">}</span><span class="vs"> m), Γ&lt;sub&gt;h&lt;/sub&gt; = </span><span class="sc">${</span><span class="fu">asSet</span>(hEdges)<span class="sc">}</span><span class="vs"> (</span><span class="sc">${</span>lenH<span class="op">.</span><span class="fu">toFixed</span>(<span class="dv">2</span>)<span class="sc">}</span><span class="vs"> m):</span></span>
+<span id="cb4-2126"><a href="#cb4-2126" aria-hidden="true" tabindex="-1"></a><span class="vs">    together </span><span class="sc">${</span>(lenG <span class="op">+</span> lenH)<span class="op">.</span><span class="fu">toFixed</span>(<span class="dv">2</span>)<span class="sc">}</span><span class="vs"> m, all of Γ.`</span><span class="op">;</span></span>
+<span id="cb4-2127"><a href="#cb4-2127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-2128"><a href="#cb4-2128" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="op">!</span>r<span class="op">.</span><span class="at">hasDirichlet</span>) {</span>
+<span id="cb4-2129"><a href="#cb4-2129" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> net <span class="op">=</span> r<span class="op">.</span><span class="at">made</span> <span class="op">+</span> r<span class="op">.</span><span class="at">heatIn</span><span class="op">;</span></span>
+<span id="cb4-2130"><a href="#cb4-2130" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">html</span><span class="vs">`&lt;div style="border-left: 4px solid </span><span class="sc">${</span>VIOLET<span class="sc">}</span><span class="vs">; padding: 0.7rem 1rem;</span></span>
+<span id="cb4-2131"><a href="#cb4-2131" aria-hidden="true" tabindex="-1"></a><span class="vs">      background: #fff7ed; max-width: 46rem; line-height: 1.6;"&gt;</span></span>
+<span id="cb4-2132"><a href="#cb4-2132" aria-hidden="true" tabindex="-1"></a><span class="vs">      </span><span class="sc">${</span>partition<span class="sc">}</span><span class="vs">&lt;br&gt;</span></span>
+<span id="cb4-2133"><a href="#cb4-2133" aria-hidden="true" tabindex="-1"></a><span class="vs">      &lt;b&gt;Γ&lt;sub&gt;g&lt;/sub&gt; = ∅: every edge carries a flux condition.&lt;/b&gt;</span></span>
+<span id="cb4-2134"><a href="#cb4-2134" aria-hidden="true" tabindex="-1"></a><span class="vs">      Heat made inside, ∫f dΩ = </span><span class="sc">${</span><span class="fu">fmt</span>(r<span class="op">.</span><span class="at">made</span>)<span class="sc">}</span><span class="vs"> W/m, plus heat in through the boundary,</span></span>
+<span id="cb4-2135"><a href="#cb4-2135" aria-hidden="true" tabindex="-1"></a><span class="vs">      ∫h dΓ = </span><span class="sc">${</span><span class="fu">fmt</span>(r<span class="op">.</span><span class="at">heatIn</span>)<span class="sc">}</span><span class="vs"> W/m, gives </span><span class="sc">${</span><span class="fu">fmt</span>(net)<span class="sc">}</span><span class="vs"> W/m.&lt;br&gt;</span></span>
+<span id="cb4-2136"><a href="#cb4-2136" aria-hidden="true" tabindex="-1"></a><span class="vs">      </span><span class="sc">${</span><span class="bu">Math</span><span class="op">.</span><span class="fu">abs</span>(net) <span class="op">&lt;</span> <span class="fl">0.5</span></span>
+<span id="cb4-2137"><a href="#cb4-2137" aria-hidden="true" tabindex="-1"></a>        <span class="op">?</span> <span class="st">"The data balance, so a steady state exists — but only up to an added constant: if u solves the problem, so does u + C for every C. The temperature level is never pinned down."</span></span>
+<span id="cb4-2138"><a href="#cb4-2138" aria-hidden="true" tabindex="-1"></a>        <span class="op">:</span> net <span class="op">&gt;</span> <span class="dv">0</span></span>
+<span id="cb4-2139"><a href="#cb4-2139" aria-hidden="true" tabindex="-1"></a>          <span class="op">?</span> <span class="st">"More heat comes in than can leave, so there is no steady state: the cell's temperature rises forever. Check an edge to give the heat a way out."</span></span>
+<span id="cb4-2140"><a href="#cb4-2140" aria-hidden="true" tabindex="-1"></a>          <span class="op">:</span> <span class="st">"More heat leaves than is supplied, so there is no steady state: the cell cools forever. Check an edge to hold its temperature."</span><span class="sc">}</span></span>
+<span id="cb4-2141"><a href="#cb4-2141" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb4-2142"><a href="#cb4-2142" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb4-2143"><a href="#cb4-2143" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-2144"><a href="#cb4-2144" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> {levels} <span class="op">=</span> <span class="fu">niceLevels</span>(r<span class="op">.</span><span class="at">umin</span><span class="op">,</span> r<span class="op">.</span><span class="at">umax</span><span class="op">,</span> <span class="dv">12</span>)<span class="op">;</span></span>
+<span id="cb4-2145"><a href="#cb4-2145" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> marks <span class="op">=</span> [</span>
+<span id="cb4-2146"><a href="#cb4-2146" aria-hidden="true" tabindex="-1"></a>    Plot<span class="op">.</span><span class="fu">raster</span>({<span class="dt">x1</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span> <span class="dt">y1</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span> <span class="dt">x2</span><span class="op">:</span> W<span class="op">,</span> <span class="dt">y2</span><span class="op">:</span> H<span class="op">,</span> <span class="dt">fill</span><span class="op">:</span> (x<span class="op">,</span> y) <span class="kw">=&gt;</span> r<span class="op">.</span><span class="fu">at</span>(x<span class="op">,</span> y)<span class="op">,</span></span>
+<span id="cb4-2147"><a href="#cb4-2147" aria-hidden="true" tabindex="-1"></a>                 <span class="dt">pixelSize</span><span class="op">:</span> <span class="dv">2</span>})</span>
+<span id="cb4-2148"><a href="#cb4-2148" aria-hidden="true" tabindex="-1"></a>  ]<span class="op">;</span></span>
+<span id="cb4-2149"><a href="#cb4-2149" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (xShow<span class="op">.</span><span class="fu">includes</span>(<span class="st">"isotherms"</span>) <span class="op">&amp;&amp;</span> levels<span class="op">.</span><span class="at">length</span> <span class="op">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb4-2150"><a href="#cb4-2150" aria-hidden="true" tabindex="-1"></a>    marks<span class="op">.</span><span class="fu">push</span>(Plot<span class="op">.</span><span class="fu">contour</span>({<span class="dt">x1</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span> <span class="dt">y1</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span> <span class="dt">x2</span><span class="op">:</span> W<span class="op">,</span> <span class="dt">y2</span><span class="op">:</span> H<span class="op">,</span></span>
+<span id="cb4-2151"><a href="#cb4-2151" aria-hidden="true" tabindex="-1"></a>      <span class="dt">value</span><span class="op">:</span> (x<span class="op">,</span> y) <span class="kw">=&gt;</span> r<span class="op">.</span><span class="fu">at</span>(x<span class="op">,</span> y)<span class="op">,</span> <span class="dt">thresholds</span><span class="op">:</span> levels<span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> INK<span class="op">,</span></span>
+<span id="cb4-2152"><a href="#cb4-2152" aria-hidden="true" tabindex="-1"></a>      <span class="dt">strokeOpacity</span><span class="op">:</span> <span class="fl">0.6</span><span class="op">,</span> <span class="dt">strokeWidth</span><span class="op">:</span> <span class="fl">0.8</span><span class="op">,</span> <span class="dt">pixelSize</span><span class="op">:</span> <span class="dv">2</span>}))<span class="op">;</span></span>
+<span id="cb4-2153"><a href="#cb4-2153" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb4-2154"><a href="#cb4-2154" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (xShow<span class="op">.</span><span class="fu">includes</span>(<span class="st">"heat-flux arrows"</span>)) {</span>
+<span id="cb4-2155"><a href="#cb4-2155" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> pts <span class="op">=</span> []<span class="op">;</span></span>
+<span id="cb4-2156"><a href="#cb4-2156" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> <span class="dv">6</span><span class="op">;</span> i<span class="op">++</span>) <span class="cf">for</span> (<span class="kw">let</span> j <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> j <span class="op">&lt;</span> <span class="dv">12</span><span class="op">;</span> j<span class="op">++</span>) {</span>
+<span id="cb4-2157"><a href="#cb4-2157" aria-hidden="true" tabindex="-1"></a>      <span class="kw">const</span> x <span class="op">=</span> W <span class="op">*</span> (i <span class="op">+</span> <span class="fl">0.5</span>) <span class="op">/</span> <span class="dv">6</span><span class="op">,</span> y <span class="op">=</span> H <span class="op">*</span> (j <span class="op">+</span> <span class="fl">0.5</span>) <span class="op">/</span> <span class="dv">12</span><span class="op">;</span></span>
+<span id="cb4-2158"><a href="#cb4-2158" aria-hidden="true" tabindex="-1"></a>      <span class="kw">const</span> [g1<span class="op">,</span> g2] <span class="op">=</span> r<span class="op">.</span><span class="fu">grad</span>(x<span class="op">,</span> y)<span class="op">;</span></span>
+<span id="cb4-2159"><a href="#cb4-2159" aria-hidden="true" tabindex="-1"></a>      pts<span class="op">.</span><span class="fu">push</span>({x<span class="op">,</span> y<span class="op">,</span> <span class="dt">q1</span><span class="op">:</span> <span class="op">-</span>xK <span class="op">*</span> g1<span class="op">,</span> <span class="dt">q2</span><span class="op">:</span> <span class="op">-</span>xK <span class="op">*</span> g2})<span class="op">;</span></span>
+<span id="cb4-2160"><a href="#cb4-2160" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb4-2161"><a href="#cb4-2161" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> qmax <span class="op">=</span> d3<span class="op">.</span><span class="fu">max</span>(pts<span class="op">,</span> p <span class="kw">=&gt;</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">hypot</span>(p<span class="op">.</span><span class="at">q1</span><span class="op">,</span> p<span class="op">.</span><span class="at">q2</span>)) <span class="op">||</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb4-2162"><a href="#cb4-2162" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> Lmax <span class="op">=</span> <span class="fl">0.85</span> <span class="op">*</span> W <span class="op">/</span> <span class="dv">6</span><span class="op">;</span></span>
+<span id="cb4-2163"><a href="#cb4-2163" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> arr <span class="op">=</span> pts<span class="op">.</span><span class="fu">map</span>(p <span class="kw">=&gt;</span> {</span>
+<span id="cb4-2164"><a href="#cb4-2164" aria-hidden="true" tabindex="-1"></a>      <span class="kw">const</span> m <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">hypot</span>(p<span class="op">.</span><span class="at">q1</span><span class="op">,</span> p<span class="op">.</span><span class="at">q2</span>) <span class="op">/</span> qmax <span class="op">*</span> Lmax<span class="op">,</span> a <span class="op">=</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">atan2</span>(p<span class="op">.</span><span class="at">q2</span><span class="op">,</span> p<span class="op">.</span><span class="at">q1</span>)<span class="op">;</span></span>
+<span id="cb4-2165"><a href="#cb4-2165" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> {<span class="dt">x1</span><span class="op">:</span> p<span class="op">.</span><span class="at">x</span> <span class="op">-</span> <span class="fl">0.5</span> <span class="op">*</span> m <span class="op">*</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">cos</span>(a)<span class="op">,</span> <span class="dt">y1</span><span class="op">:</span> p<span class="op">.</span><span class="at">y</span> <span class="op">-</span> <span class="fl">0.5</span> <span class="op">*</span> m <span class="op">*</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sin</span>(a)<span class="op">,</span></span>
+<span id="cb4-2166"><a href="#cb4-2166" aria-hidden="true" tabindex="-1"></a>              <span class="dt">x2</span><span class="op">:</span> p<span class="op">.</span><span class="at">x</span> <span class="op">+</span> <span class="fl">0.5</span> <span class="op">*</span> m <span class="op">*</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">cos</span>(a)<span class="op">,</span> <span class="dt">y2</span><span class="op">:</span> p<span class="op">.</span><span class="at">y</span> <span class="op">+</span> <span class="fl">0.5</span> <span class="op">*</span> m <span class="op">*</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">sin</span>(a)<span class="op">,</span> m}<span class="op">;</span></span>
+<span id="cb4-2167"><a href="#cb4-2167" aria-hidden="true" tabindex="-1"></a>    })<span class="op">.</span><span class="fu">filter</span>(a <span class="kw">=&gt;</span> a<span class="op">.</span><span class="at">m</span> <span class="op">&gt;</span> <span class="fl">0.15</span> <span class="op">*</span> Lmax)<span class="op">;</span></span>
+<span id="cb4-2168"><a href="#cb4-2168" aria-hidden="true" tabindex="-1"></a>    marks<span class="op">.</span><span class="fu">push</span>(Plot<span class="op">.</span><span class="fu">arrow</span>(arr<span class="op">,</span> {<span class="dt">x1</span><span class="op">:</span> <span class="st">"x1"</span><span class="op">,</span> <span class="dt">y1</span><span class="op">:</span> <span class="st">"y1"</span><span class="op">,</span> <span class="dt">x2</span><span class="op">:</span> <span class="st">"x2"</span><span class="op">,</span> <span class="dt">y2</span><span class="op">:</span> <span class="st">"y2"</span><span class="op">,</span></span>
+<span id="cb4-2169"><a href="#cb4-2169" aria-hidden="true" tabindex="-1"></a>      <span class="dt">stroke</span><span class="op">:</span> INK<span class="op">,</span> <span class="dt">strokeWidth</span><span class="op">:</span> <span class="fl">1.5</span><span class="op">,</span> <span class="dt">headLength</span><span class="op">:</span> <span class="dv">6</span>}))<span class="op">;</span></span>
+<span id="cb4-2170"><a href="#cb4-2170" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb4-2171"><a href="#cb4-2171" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> seg <span class="op">=</span> {<span class="dt">left</span><span class="op">:</span> [<span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> H]<span class="op">,</span> <span class="dt">right</span><span class="op">:</span> [W<span class="op">,</span> <span class="dv">0</span><span class="op">,</span> W<span class="op">,</span> H]<span class="op">,</span> <span class="dt">bottom</span><span class="op">:</span> [<span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> W<span class="op">,</span> <span class="dv">0</span>]<span class="op">,</span> <span class="dt">top</span><span class="op">:</span> [<span class="dv">0</span><span class="op">,</span> H<span class="op">,</span> W<span class="op">,</span> H]}<span class="op">;</span></span>
+<span id="cb4-2172"><a href="#cb4-2172" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> asLink <span class="op">=</span> e <span class="kw">=&gt;</span> { <span class="kw">const</span> [x1<span class="op">,</span> y1<span class="op">,</span> x2<span class="op">,</span> y2] <span class="op">=</span> seg[e]<span class="op">;</span> <span class="cf">return</span> {x1<span class="op">,</span> y1<span class="op">,</span> x2<span class="op">,</span> y2}<span class="op">;</span> }<span class="op">;</span></span>
+<span id="cb4-2173"><a href="#cb4-2173" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> lk <span class="op">=</span> {<span class="dt">x1</span><span class="op">:</span> <span class="st">"x1"</span><span class="op">,</span> <span class="dt">y1</span><span class="op">:</span> <span class="st">"y1"</span><span class="op">,</span> <span class="dt">x2</span><span class="op">:</span> <span class="st">"x2"</span><span class="op">,</span> <span class="dt">y2</span><span class="op">:</span> <span class="st">"y2"</span>}<span class="op">;</span></span>
+<span id="cb4-2174"><a href="#cb4-2174" aria-hidden="true" tabindex="-1"></a>  marks<span class="op">.</span><span class="fu">push</span>(Plot<span class="op">.</span><span class="fu">link</span>([<span class="st">"left"</span><span class="op">,</span> <span class="st">"right"</span><span class="op">,</span> <span class="st">"bottom"</span><span class="op">,</span> <span class="st">"top"</span>]<span class="op">.</span><span class="fu">map</span>(asLink)<span class="op">,</span></span>
+<span id="cb4-2175"><a href="#cb4-2175" aria-hidden="true" tabindex="-1"></a>                       {<span class="op">...</span>lk<span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> <span class="st">"white"</span><span class="op">,</span> <span class="dt">strokeWidth</span><span class="op">:</span> <span class="dv">10</span>}))<span class="op">;</span></span>
+<span id="cb4-2176"><a href="#cb4-2176" aria-hidden="true" tabindex="-1"></a>  marks<span class="op">.</span><span class="fu">push</span>(Plot<span class="op">.</span><span class="fu">link</span>(hEdges<span class="op">.</span><span class="fu">map</span>(asLink)<span class="op">,</span> {<span class="op">...</span>lk<span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> AMBER<span class="op">,</span> <span class="dt">strokeWidth</span><span class="op">:</span> <span class="dv">4</span>}))<span class="op">;</span></span>
+<span id="cb4-2177"><a href="#cb4-2177" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="op">!</span>xCool<span class="op">.</span><span class="fu">includes</span>(<span class="st">"top"</span>)) {</span>
+<span id="cb4-2178"><a href="#cb4-2178" aria-hidden="true" tabindex="-1"></a>    marks<span class="op">.</span><span class="fu">push</span>(Plot<span class="op">.</span><span class="fu">link</span>(r<span class="op">.</span><span class="at">tabs</span><span class="op">.</span><span class="fu">map</span>(([a<span class="op">,</span> b]) <span class="kw">=&gt;</span> ({<span class="dt">x1</span><span class="op">:</span> a<span class="op">,</span> <span class="dt">y1</span><span class="op">:</span> H<span class="op">,</span> <span class="dt">x2</span><span class="op">:</span> b<span class="op">,</span> <span class="dt">y2</span><span class="op">:</span> H}))<span class="op">,</span></span>
+<span id="cb4-2179"><a href="#cb4-2179" aria-hidden="true" tabindex="-1"></a>                         {<span class="op">...</span>lk<span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> VIOLET<span class="op">,</span> <span class="dt">strokeWidth</span><span class="op">:</span> <span class="dv">7</span>}))<span class="op">;</span></span>
+<span id="cb4-2180"><a href="#cb4-2180" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb4-2181"><a href="#cb4-2181" aria-hidden="true" tabindex="-1"></a>  marks<span class="op">.</span><span class="fu">push</span>(Plot<span class="op">.</span><span class="fu">link</span>(gEdges<span class="op">.</span><span class="fu">map</span>(asLink)<span class="op">,</span> {<span class="op">...</span>lk<span class="op">,</span> <span class="dt">stroke</span><span class="op">:</span> NAVY<span class="op">,</span> <span class="dt">strokeWidth</span><span class="op">:</span> <span class="dv">6</span>}))<span class="op">;</span></span>
+<span id="cb4-2182"><a href="#cb4-2182" aria-hidden="true" tabindex="-1"></a>  marks<span class="op">.</span><span class="fu">push</span>(Plot<span class="op">.</span><span class="fu">dot</span>([{<span class="dt">x</span><span class="op">:</span> r<span class="op">.</span><span class="at">xmax</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> r<span class="op">.</span><span class="at">ymax</span>}]<span class="op">,</span> {<span class="dt">x</span><span class="op">:</span> <span class="st">"x"</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="st">"y"</span><span class="op">,</span> <span class="dt">r</span><span class="op">:</span> <span class="dv">5</span><span class="op">,</span> <span class="dt">fill</span><span class="op">:</span> <span class="st">"white"</span><span class="op">,</span></span>
+<span id="cb4-2183"><a href="#cb4-2183" aria-hidden="true" tabindex="-1"></a>                                                  <span class="dt">stroke</span><span class="op">:</span> INK<span class="op">,</span> <span class="dt">strokeWidth</span><span class="op">:</span> <span class="fl">1.5</span>}))<span class="op">;</span></span>
+<span id="cb4-2184"><a href="#cb4-2184" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> plot <span class="op">=</span> Plot<span class="op">.</span><span class="fu">plot</span>({</span>
+<span id="cb4-2185"><a href="#cb4-2185" aria-hidden="true" tabindex="-1"></a>    <span class="dt">width</span><span class="op">:</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">min</span>(width<span class="op">,</span> <span class="dv">330</span>)<span class="op">,</span> <span class="dt">aspectRatio</span><span class="op">:</span> <span class="dv">1</span><span class="op">,</span></span>
+<span id="cb4-2186"><a href="#cb4-2186" aria-hidden="true" tabindex="-1"></a>    <span class="dt">marginLeft</span><span class="op">:</span> <span class="dv">50</span><span class="op">,</span> <span class="dt">marginRight</span><span class="op">:</span> <span class="dv">14</span><span class="op">,</span> <span class="dt">marginTop</span><span class="op">:</span> <span class="dv">16</span><span class="op">,</span> <span class="dt">marginBottom</span><span class="op">:</span> <span class="dv">40</span><span class="op">,</span></span>
+<span id="cb4-2187"><a href="#cb4-2187" aria-hidden="true" tabindex="-1"></a>    <span class="dt">x</span><span class="op">:</span> {<span class="dt">domain</span><span class="op">:</span> [<span class="dv">0</span><span class="op">,</span> W]<span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"x₁ (m) →"</span><span class="op">,</span> <span class="dt">ticks</span><span class="op">:</span> [<span class="dv">0</span><span class="op">,</span> <span class="fl">0.05</span><span class="op">,</span> <span class="fl">0.1</span>]}<span class="op">,</span></span>
+<span id="cb4-2188"><a href="#cb4-2188" aria-hidden="true" tabindex="-1"></a>    <span class="dt">y</span><span class="op">:</span> {<span class="dt">domain</span><span class="op">:</span> [<span class="dv">0</span><span class="op">,</span> H]<span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"↑ x₂ (m)"</span><span class="op">,</span> <span class="dt">ticks</span><span class="op">:</span> [<span class="dv">0</span><span class="op">,</span> <span class="fl">0.05</span><span class="op">,</span> <span class="fl">0.1</span><span class="op">,</span> <span class="fl">0.15</span><span class="op">,</span> <span class="fl">0.2</span>]}<span class="op">,</span></span>
+<span id="cb4-2189"><a href="#cb4-2189" aria-hidden="true" tabindex="-1"></a>    <span class="dt">color</span><span class="op">:</span> {<span class="dt">type</span><span class="op">:</span> <span class="st">"linear"</span><span class="op">,</span> <span class="dt">scheme</span><span class="op">:</span> <span class="st">"RdYlBu"</span><span class="op">,</span> <span class="dt">reverse</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">legend</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span></span>
+<span id="cb4-2190"><a href="#cb4-2190" aria-hidden="true" tabindex="-1"></a>            <span class="dt">label</span><span class="op">:</span> <span class="st">"u (°C)"</span>}<span class="op">,</span></span>
+<span id="cb4-2191"><a href="#cb4-2191" aria-hidden="true" tabindex="-1"></a>    marks</span>
+<span id="cb4-2192"><a href="#cb4-2192" aria-hidden="true" tabindex="-1"></a>  })<span class="op">;</span></span>
+<span id="cb4-2193"><a href="#cb4-2193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-2194"><a href="#cb4-2194" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> outs <span class="op">=</span> <span class="bu">Object</span><span class="op">.</span><span class="fu">entries</span>(r<span class="op">.</span><span class="at">heatOut</span>)<span class="op">;</span></span>
+<span id="cb4-2195"><a href="#cb4-2195" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> totalOut <span class="op">=</span> d3<span class="op">.</span><span class="fu">sum</span>(outs<span class="op">,</span> d <span class="kw">=&gt;</span> d[<span class="dv">1</span>])<span class="op">;</span></span>
+<span id="cb4-2196"><a href="#cb4-2196" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> readout <span class="op">=</span> <span class="fu">html</span><span class="vs">`&lt;div style="font-size: 0.95rem; line-height: 1.65;"&gt;</span></span>
+<span id="cb4-2197"><a href="#cb4-2197" aria-hidden="true" tabindex="-1"></a><span class="vs">    </span><span class="sc">${</span>partition<span class="sc">}</span><span class="vs">&lt;br&gt;</span></span>
+<span id="cb4-2198"><a href="#cb4-2198" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;b&gt;Energy balance&lt;/b&gt; (per meter of depth):&lt;br&gt;</span></span>
+<span id="cb4-2199"><a href="#cb4-2199" aria-hidden="true" tabindex="-1"></a><span class="vs">    &amp;nbsp;&amp;nbsp;made inside, ∫f dΩ = </span><span class="sc">${</span><span class="fu">fmt</span>(r<span class="op">.</span><span class="at">made</span>)<span class="sc">}</span><span class="vs"> W/m&lt;br&gt;</span></span>
+<span id="cb4-2200"><a href="#cb4-2200" aria-hidden="true" tabindex="-1"></a><span class="vs">    &amp;nbsp;&amp;nbsp;in through Γ&lt;sub&gt;h&lt;/sub&gt;, ∫h dΓ = </span><span class="sc">${</span><span class="fu">fmt</span>(r<span class="op">.</span><span class="at">heatIn</span>)<span class="sc">}</span><span class="vs"> W/m&lt;br&gt;</span></span>
+<span id="cb4-2201"><a href="#cb4-2201" aria-hidden="true" tabindex="-1"></a><span class="vs">    &amp;nbsp;&amp;nbsp;out through Γ&lt;sub&gt;g&lt;/sub&gt; = </span><span class="sc">${</span><span class="fu">fmt</span>(totalOut)<span class="sc">}</span><span class="vs"> W/m</span></span>
+<span id="cb4-2202"><a href="#cb4-2202" aria-hidden="true" tabindex="-1"></a><span class="vs">      (</span><span class="sc">${</span>outs<span class="op">.</span><span class="fu">map</span>(([e<span class="op">,</span> v]) <span class="kw">=&gt;</span> <span class="vs">`</span><span class="sc">${</span>names[e]<span class="sc">}</span><span class="vs">: </span><span class="sc">${</span><span class="fu">fmt</span>(v)<span class="sc">}</span><span class="vs">`</span>)<span class="op">.</span><span class="fu">join</span>(<span class="st">", "</span>)<span class="sc">}</span><span class="vs">)&lt;br&gt;</span></span>
+<span id="cb4-2203"><a href="#cb4-2203" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;b&gt;Hottest point:&lt;/b&gt; </span><span class="sc">${</span><span class="fu">fmt</span>(r<span class="op">.</span><span class="at">umax</span><span class="op">,</span> <span class="dv">1</span>)<span class="sc">}</span><span class="vs"> °C at</span></span>
+<span id="cb4-2204"><a href="#cb4-2204" aria-hidden="true" tabindex="-1"></a><span class="vs">      (</span><span class="sc">${</span>r<span class="op">.</span><span class="at">xmax</span><span class="op">.</span><span class="fu">toFixed</span>(<span class="dv">3</span>)<span class="sc">}</span><span class="vs">, </span><span class="sc">${</span>r<span class="op">.</span><span class="at">ymax</span><span class="op">.</span><span class="fu">toFixed</span>(<span class="dv">3</span>)<span class="sc">}</span><span class="vs">) m&lt;br&gt;</span></span>
+<span id="cb4-2205"><a href="#cb4-2205" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;b&gt;Coldest point:&lt;/b&gt; </span><span class="sc">${</span><span class="fu">fmt</span>(r<span class="op">.</span><span class="at">umin</span><span class="op">,</span> <span class="dv">1</span>)<span class="sc">}</span><span class="vs"> °C&lt;br&gt;</span></span>
+<span id="cb4-2206"><a href="#cb4-2206" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;b&gt;One 27 mm cell&lt;/b&gt; </span><span class="sc">${</span>totalOut <span class="op">&gt;=</span> <span class="dv">0</span></span>
+<span id="cb4-2207"><a href="#cb4-2207" aria-hidden="true" tabindex="-1"></a>      <span class="op">?</span> <span class="vs">`sends </span><span class="sc">${</span><span class="fu">fmt</span>(totalOut <span class="op">*</span> <span class="fl">0.027</span><span class="op">,</span> <span class="dv">1</span>)<span class="sc">}</span><span class="vs"> W into the coolant.`</span></span>
+<span id="cb4-2208"><a href="#cb4-2208" aria-hidden="true" tabindex="-1"></a>      <span class="op">:</span> <span class="vs">`draws </span><span class="sc">${</span><span class="fu">fmt</span>(<span class="op">-</span>totalOut <span class="op">*</span> <span class="fl">0.027</span><span class="op">,</span> <span class="dv">1</span>)<span class="sc">}</span><span class="vs"> W from the coolant.`</span><span class="sc">}</span></span>
+<span id="cb4-2209"><a href="#cb4-2209" aria-hidden="true" tabindex="-1"></a><span class="vs">  &lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb4-2210"><a href="#cb4-2210" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="fu">html</span><span class="vs">`&lt;div style="display: flex; flex-wrap: wrap; gap: 1.5rem;</span></span>
+<span id="cb4-2211"><a href="#cb4-2211" aria-hidden="true" tabindex="-1"></a><span class="vs">    align-items: flex-start;"&gt;</span><span class="sc">${</span>plot<span class="sc">}</span><span class="vs">&lt;div style="flex: 1; min-width: 14rem;"&gt;</span><span class="sc">${</span>readout<span class="sc">}</span><span class="vs">&lt;/div&gt;&lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb4-2212"><a href="#cb4-2212" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-4" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+<div class="step notes">
+<ul>
+<li>Uncheck every edge: <span class="math inline">\(\Gamma_g = \emptyset\)</span>, and the heat has nowhere to go.</li>
+<li>Set the tab flux to 0 with only the left edge cooled: the isotherms become vertical lines, and the cell is the wall.</li>
+<li>Cool the bottom instead of the side, and watch the hottest point.</li>
+<li>Cool the top edge: the tabs disappear, because a point cannot be in <span class="math inline">\(\Gamma_g\)</span> and <span class="math inline">\(\Gamma_h\)</span> at once.</li>
+<li>Give the coolant a rise in <span class="math inline">\(g\)</span>, and watch the isotherms detach from the cooled edge.</li>
+<li>Make <span class="math inline">\(f\)</span> negative with the tabs off: the cell now absorbs heat, so the “cooling” plate <em>supplies</em> it. The flux arrows reverse, and the coldest point is on the far side.</li>
+<li>Halve <span class="math inline">\(\kappa\)</span>: every temperature rise above <span class="math inline">\(g\)</span> doubles. The same heat needs twice the gradient.</li>
+</ul>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6ImltcG9ydCB7c29sdmVHcmlkLCB0YWJGbHV4LCBuaWNlTGV2ZWxzfSBmcm9tIFwiLi9oZWF0MmQuanNcIlxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC0yIiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoidmlld29mIHhDb29sID0gSW5wdXRzLmNoZWNrYm94KG5ldyBNYXAoW1xuICBbXCJsZWZ0LCB44oKBID0gMFwiLCBcImxlZnRcIl0sIFtcInJpZ2h0LCB44oKBID0gV1wiLCBcInJpZ2h0XCJdLFxuICBbXCJib3R0b20sIHjigoIgPSAwXCIsIFwiYm90dG9tXCJdLCBbXCJ0b3AsIHjigoIgPSBIIChjb3ZlcnMgdGhlIHRhYnMpXCIsIFwidG9wXCJdXG5dKSwge3ZhbHVlOiBbXCJsZWZ0XCJdLCBsYWJlbDogXCJDb29sZWQgZWRnZXMgKM6TZylcIn0pXG52aWV3b2YgeEYgICA9IElucHV0cy5yYW5nZShbLTEwMDAwLCAxMDAwMDBdLCB7dmFsdWU6IDI1MDAwLCBzdGVwOiAxMDAwLCBsYWJlbDogXCJmIChXL23CsylcIn0pXG52aWV3b2YgeEh0ICA9IElucHV0cy5yYW5nZShbLTEwMDAwLCAyMDAwMF0sICB7dmFsdWU6IDUwMDAsICBzdGVwOiA1MDAsICBsYWJlbDogXCJoIG9uIHRoZSB0YWJzIChXL23CsilcIn0pXG52aWV3b2YgeEhvICA9IElucHV0cy5yYW5nZShbLTIwMDAsIDIwMDBdLCAgICB7dmFsdWU6IDAsICAgICBzdGVwOiAxMDAsICBsYWJlbDogXCJoIG9uIHRoZSByZXN0IG9mIM6TaCAoVy9twrIpXCJ9KVxudmlld29mIHhLICAgPSBJbnB1dHMucmFuZ2UoWzEsIDUwXSwgICAgICAgICAge3ZhbHVlOiAyNSwgICAgc3RlcDogMSwgICAgbGFiZWw6IFwizrogKFcvKG3Ct0spKVwifSlcbnZpZXdvZiB4RyAgID0gSW5wdXRzLnJhbmdlKFswLCA0MF0sICAgICAgICAgIHt2YWx1ZTogMjUsICAgIHN0ZXA6IDEsICAgIGxhYmVsOiBcImcgYXQgeOKCgiA9IDAgKMKwQylcIn0pXG52aWV3b2YgeERnICA9IElucHV0cy5yYW5nZShbLTUsIDVdLCAgICAgICAgICB7dmFsdWU6IDAsICAgICBzdGVwOiAwLjUsICBsYWJlbDogXCJyaXNlIGluIGcgdXAgdG8geOKCgiA9IEggKMKwQylcIn0pXG52aWV3b2YgeFNob3cgPSBJbnB1dHMuY2hlY2tib3goW1wiaXNvdGhlcm1zXCIsIFwiaGVhdC1mbHV4IGFycm93c1wiXSxcbiAge3ZhbHVlOiBbXCJpc290aGVybXNcIiwgXCJoZWF0LWZsdXggYXJyb3dzXCJdLCBsYWJlbDogXCJTaG93XCJ9KVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC0zIiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoiY2VsbDJkID0ge1xuICBjb25zdCBXID0gMC4xMCwgSCA9IDAuMjAsIHRhYnMgPSBbWzAuMDE1LCAwLjAzNV0sIFswLjA2NSwgMC4wODVdXTtcbiAgY29uc3QgcmVzID0gc29sdmVHcmlkKHtXLCBILCBueDogNDAsIG55OiA4MCwga2FwcGE6IHhLLCBmOiB4RixcbiAgICBnOiAoeCwgeSkgPT4geEcgKyB4RGcgKiB5IC8gSCwgZGlyaWNobGV0OiB4Q29vbCxcbiAgICBoOiAoZWRnZSwgcykgPT4gKGVkZ2UgPT09IFwidG9wXCIgJiYgdGFiRmx1eChzLCAxLCB0YWJzKSkgPyB4SHQgOiB4SG99KTtcbiAgcmV0dXJuIE9iamVjdC5hc3NpZ24ocmVzLCB7dGFic30pO1xufVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC00IiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoie1xuICBjb25zdCByID0gY2VsbDJkLCBXID0gci5XLCBIID0gci5IO1xuICBjb25zdCBOQVZZID0gXCIjMWUzYTVmXCIsIEFNQkVSID0gXCIjZDk3NzA2XCIsIFZJT0xFVCA9IFwiIzZkMjhkOVwiLCBJTksgPSBcIiMxYTFhMWFcIjtcbiAgY29uc3QgZm10ID0gKHYsIGQgPSAwKSA9PiAodiA8IDAgPyBcIuKIklwiIDogXCJcIikgKyBNYXRoLmFicyh2KS50b0ZpeGVkKGQpO1xuICBjb25zdCBuYW1lcyA9IHtsZWZ0OiBcImxlZnRcIiwgcmlnaHQ6IFwicmlnaHRcIiwgYm90dG9tOiBcImJvdHRvbVwiLCB0b3A6IFwidG9wXCJ9O1xuICBjb25zdCBsZW5PZiA9IGUgPT4gKGUgPT09IFwibGVmdFwiIHx8IGUgPT09IFwicmlnaHRcIikgPyBIIDogVztcbiAgY29uc3QgZ0VkZ2VzID0gW1wibGVmdFwiLCBcInJpZ2h0XCIsIFwiYm90dG9tXCIsIFwidG9wXCJdLmZpbHRlcihlID0+IHhDb29sLmluY2x1ZGVzKGUpKTtcbiAgY29uc3QgaEVkZ2VzID0gW1wibGVmdFwiLCBcInJpZ2h0XCIsIFwiYm90dG9tXCIsIFwidG9wXCJdLmZpbHRlcihlID0+ICF4Q29vbC5pbmNsdWRlcyhlKSk7XG4gIGNvbnN0IGxlbkcgPSBkMy5zdW0oZ0VkZ2VzLCBsZW5PZiksIGxlbkggPSBkMy5zdW0oaEVkZ2VzLCBsZW5PZik7XG4gIGNvbnN0IGFzU2V0ID0gZXMgPT4gZXMubGVuZ3RoID8gYHske2VzLmpvaW4oXCIsIFwiKX19YCA6IFwi4oiFXCI7XG4gIGNvbnN0IHBhcnRpdGlvbiA9IGh0bWxgPGI+UGFydGl0aW9uLjwvYj4gzpM8c3ViPmc8L3N1Yj4gPSAke2FzU2V0KGdFZGdlcyl9XG4gICAgKCR7bGVuRy50b0ZpeGVkKDIpfSBtKSwgzpM8c3ViPmg8L3N1Yj4gPSAke2FzU2V0KGhFZGdlcyl9ICgke2xlbkgudG9GaXhlZCgyKX0gbSk6XG4gICAgdG9nZXRoZXIgJHsobGVuRyArIGxlbkgpLnRvRml4ZWQoMil9IG0sIGFsbCBvZiDOky5gO1xuXG4gIGlmICghci5oYXNEaXJpY2hsZXQpIHtcbiAgICBjb25zdCBuZXQgPSByLm1hZGUgKyByLmhlYXRJbjtcbiAgICByZXR1cm4gaHRtbGA8ZGl2IHN0eWxlPVwiYm9yZGVyLWxlZnQ6IDRweCBzb2xpZCAke1ZJT0xFVH07IHBhZGRpbmc6IDAuN3JlbSAxcmVtO1xuICAgICAgYmFja2dyb3VuZDogI2ZmZjdlZDsgbWF4LXdpZHRoOiA0NnJlbTsgbGluZS1oZWlnaHQ6IDEuNjtcIj5cbiAgICAgICR7cGFydGl0aW9ufTxicj5cbiAgICAgIDxiPs6TPHN1Yj5nPC9zdWI+ID0g4oiFOiBldmVyeSBlZGdlIGNhcnJpZXMgYSBmbHV4IGNvbmRpdGlvbi48L2I+XG4gICAgICBIZWF0IG1hZGUgaW5zaWRlLCDiiKtmIGTOqSA9ICR7Zm10KHIubWFkZSl9IFcvbSwgcGx1cyBoZWF0IGluIHRocm91Z2ggdGhlIGJvdW5kYXJ5LFxuICAgICAg4oiraCBkzpMgPSAke2ZtdChyLmhlYXRJbil9IFcvbSwgZ2l2ZXMgJHtmbXQobmV0KX0gVy9tLjxicj5cbiAgICAgICR7TWF0aC5hYnMobmV0KSA8IDAuNVxuICAgICAgICA/IFwiVGhlIGRhdGEgYmFsYW5jZSwgc28gYSBzdGVhZHkgc3RhdGUgZXhpc3RzIOKAlCBidXQgb25seSB1cCB0byBhbiBhZGRlZCBjb25zdGFudDogaWYgdSBzb2x2ZXMgdGhlIHByb2JsZW0sIHNvIGRvZXMgdSArIEMgZm9yIGV2ZXJ5IEMuIFRoZSB0ZW1wZXJhdHVyZSBsZXZlbCBpcyBuZXZlciBwaW5uZWQgZG93bi5cIlxuICAgICAgICA6IG5ldCA+IDBcbiAgICAgICAgICA/IFwiTW9yZSBoZWF0IGNvbWVzIGluIHRoYW4gY2FuIGxlYXZlLCBzbyB0aGVyZSBpcyBubyBzdGVhZHkgc3RhdGU6IHRoZSBjZWxsJ3MgdGVtcGVyYXR1cmUgcmlzZXMgZm9yZXZlci4gQ2hlY2sgYW4gZWRnZSB0byBnaXZlIHRoZSBoZWF0IGEgd2F5IG91dC5cIlxuICAgICAgICAgIDogXCJNb3JlIGhlYXQgbGVhdmVzIHRoYW4gaXMgc3VwcGxpZWQsIHNvIHRoZXJlIGlzIG5vIHN0ZWFkeSBzdGF0ZTogdGhlIGNlbGwgY29vbHMgZm9yZXZlci4gQ2hlY2sgYW4gZWRnZSB0byBob2xkIGl0cyB0ZW1wZXJhdHVyZS5cIn1cbiAgICA8L2Rpdj5gO1xuICB9XG5cbiAgY29uc3Qge2xldmVsc30gPSBuaWNlTGV2ZWxzKHIudW1pbiwgci51bWF4LCAxMik7XG4gIGNvbnN0IG1hcmtzID0gW1xuICAgIFBsb3QucmFzdGVyKHt4MTogMCwgeTE6IDAsIHgyOiBXLCB5MjogSCwgZmlsbDogKHgsIHkpID0+IHIuYXQoeCwgeSksXG4gICAgICAgICAgICAgICAgIHBpeGVsU2l6ZTogMn0pXG4gIF07XG4gIGlmICh4U2hvdy5pbmNsdWRlcyhcImlzb3RoZXJtc1wiKSAmJiBsZXZlbHMubGVuZ3RoID4gMCkge1xuICAgIG1hcmtzLnB1c2goUGxvdC5jb250b3VyKHt4MTogMCwgeTE6IDAsIHgyOiBXLCB5MjogSCxcbiAgICAgIHZhbHVlOiAoeCwgeSkgPT4gci5hdCh4LCB5KSwgdGhyZXNob2xkczogbGV2ZWxzLCBzdHJva2U6IElOSyxcbiAgICAgIHN0cm9rZU9wYWNpdHk6IDAuNiwgc3Ryb2tlV2lkdGg6IDAuOCwgcGl4ZWxTaXplOiAyfSkpO1xuICB9XG4gIGlmICh4U2hvdy5pbmNsdWRlcyhcImhlYXQtZmx1eCBhcnJvd3NcIikpIHtcbiAgICBjb25zdCBwdHMgPSBbXTtcbiAgICBmb3IgKGxldCBpID0gMDsgaSA8IDY7IGkrKykgZm9yIChsZXQgaiA9IDA7IGogPCAxMjsgaisrKSB7XG4gICAgICBjb25zdCB4ID0gVyAqIChpICsgMC41KSAvIDYsIHkgPSBIICogKGogKyAwLjUpIC8gMTI7XG4gICAgICBjb25zdCBbZzEsIGcyXSA9IHIuZ3JhZCh4LCB5KTtcbiAgICAgIHB0cy5wdXNoKHt4LCB5LCBxMTogLXhLICogZzEsIHEyOiAteEsgKiBnMn0pO1xuICAgIH1cbiAgICBjb25zdCBxbWF4ID0gZDMubWF4KHB0cywgcCA9PiBNYXRoLmh5cG90KHAucTEsIHAucTIpKSB8fCAxO1xuICAgIGNvbnN0IExtYXggPSAwLjg1ICogVyAvIDY7XG4gICAgY29uc3QgYXJyID0gcHRzLm1hcChwID0+IHtcbiAgICAgIGNvbnN0IG0gPSBNYXRoLmh5cG90KHAucTEsIHAucTIpIC8gcW1heCAqIExtYXgsIGEgPSBNYXRoLmF0YW4yKHAucTIsIHAucTEpO1xuICAgICAgcmV0dXJuIHt4MTogcC54IC0gMC41ICogbSAqIE1hdGguY29zKGEpLCB5MTogcC55IC0gMC41ICogbSAqIE1hdGguc2luKGEpLFxuICAgICAgICAgICAgICB4MjogcC54ICsgMC41ICogbSAqIE1hdGguY29zKGEpLCB5MjogcC55ICsgMC41ICogbSAqIE1hdGguc2luKGEpLCBtfTtcbiAgICB9KS5maWx0ZXIoYSA9PiBhLm0gPiAwLjE1ICogTG1heCk7XG4gICAgbWFya3MucHVzaChQbG90LmFycm93KGFyciwge3gxOiBcIngxXCIsIHkxOiBcInkxXCIsIHgyOiBcIngyXCIsIHkyOiBcInkyXCIsXG4gICAgICBzdHJva2U6IElOSywgc3Ryb2tlV2lkdGg6IDEuNSwgaGVhZExlbmd0aDogNn0pKTtcbiAgfVxuICBjb25zdCBzZWcgPSB7bGVmdDogWzAsIDAsIDAsIEhdLCByaWdodDogW1csIDAsIFcsIEhdLCBib3R0b206IFswLCAwLCBXLCAwXSwgdG9wOiBbMCwgSCwgVywgSF19O1xuICBjb25zdCBhc0xpbmsgPSBlID0+IHsgY29uc3QgW3gxLCB5MSwgeDIsIHkyXSA9IHNlZ1tlXTsgcmV0dXJuIHt4MSwgeTEsIHgyLCB5Mn07IH07XG4gIGNvbnN0IGxrID0ge3gxOiBcIngxXCIsIHkxOiBcInkxXCIsIHgyOiBcIngyXCIsIHkyOiBcInkyXCJ9O1xuICBtYXJrcy5wdXNoKFBsb3QubGluayhbXCJsZWZ0XCIsIFwicmlnaHRcIiwgXCJib3R0b21cIiwgXCJ0b3BcIl0ubWFwKGFzTGluayksXG4gICAgICAgICAgICAgICAgICAgICAgIHsuLi5saywgc3Ryb2tlOiBcIndoaXRlXCIsIHN0cm9rZVdpZHRoOiAxMH0pKTtcbiAgbWFya3MucHVzaChQbG90LmxpbmsoaEVkZ2VzLm1hcChhc0xpbmspLCB7Li4ubGssIHN0cm9rZTogQU1CRVIsIHN0cm9rZVdpZHRoOiA0fSkpO1xuICBpZiAoIXhDb29sLmluY2x1ZGVzKFwidG9wXCIpKSB7XG4gICAgbWFya3MucHVzaChQbG90Lmxpbmsoci50YWJzLm1hcCgoW2EsIGJdKSA9PiAoe3gxOiBhLCB5MTogSCwgeDI6IGIsIHkyOiBIfSkpLFxuICAgICAgICAgICAgICAgICAgICAgICAgIHsuLi5saywgc3Ryb2tlOiBWSU9MRVQsIHN0cm9rZVdpZHRoOiA3fSkpO1xuICB9XG4gIG1hcmtzLnB1c2goUGxvdC5saW5rKGdFZGdlcy5tYXAoYXNMaW5rKSwgey4uLmxrLCBzdHJva2U6IE5BVlksIHN0cm9rZVdpZHRoOiA2fSkpO1xuICBtYXJrcy5wdXNoKFBsb3QuZG90KFt7eDogci54bWF4LCB5OiByLnltYXh9XSwge3g6IFwieFwiLCB5OiBcInlcIiwgcjogNSwgZmlsbDogXCJ3aGl0ZVwiLFxuICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBzdHJva2U6IElOSywgc3Ryb2tlV2lkdGg6IDEuNX0pKTtcbiAgY29uc3QgcGxvdCA9IFBsb3QucGxvdCh7XG4gICAgd2lkdGg6IE1hdGgubWluKHdpZHRoLCAzMzApLCBhc3BlY3RSYXRpbzogMSxcbiAgICBtYXJnaW5MZWZ0OiA1MCwgbWFyZ2luUmlnaHQ6IDE0LCBtYXJnaW5Ub3A6IDE2LCBtYXJnaW5Cb3R0b206IDQwLFxuICAgIHg6IHtkb21haW46IFswLCBXXSwgbGFiZWw6IFwieOKCgSAobSkg4oaSXCIsIHRpY2tzOiBbMCwgMC4wNSwgMC4xXX0sXG4gICAgeToge2RvbWFpbjogWzAsIEhdLCBsYWJlbDogXCLihpEgeOKCgiAobSlcIiwgdGlja3M6IFswLCAwLjA1LCAwLjEsIDAuMTUsIDAuMl19LFxuICAgIGNvbG9yOiB7dHlwZTogXCJsaW5lYXJcIiwgc2NoZW1lOiBcIlJkWWxCdVwiLCByZXZlcnNlOiB0cnVlLCBsZWdlbmQ6IHRydWUsXG4gICAgICAgICAgICBsYWJlbDogXCJ1ICjCsEMpXCJ9LFxuICAgIG1hcmtzXG4gIH0pO1xuXG4gIGNvbnN0IG91dHMgPSBPYmplY3QuZW50cmllcyhyLmhlYXRPdXQpO1xuICBjb25zdCB0b3RhbE91dCA9IGQzLnN1bShvdXRzLCBkID0+IGRbMV0pO1xuICBjb25zdCByZWFkb3V0ID0gaHRtbGA8ZGl2IHN0eWxlPVwiZm9udC1zaXplOiAwLjk1cmVtOyBsaW5lLWhlaWdodDogMS42NTtcIj5cbiAgICAke3BhcnRpdGlvbn08YnI+XG4gICAgPGI+RW5lcmd5IGJhbGFuY2U8L2I+IChwZXIgbWV0ZXIgb2YgZGVwdGgpOjxicj5cbiAgICAmbmJzcDsmbmJzcDttYWRlIGluc2lkZSwg4oirZiBkzqkgPSAke2ZtdChyLm1hZGUpfSBXL208YnI+XG4gICAgJm5ic3A7Jm5ic3A7aW4gdGhyb3VnaCDOkzxzdWI+aDwvc3ViPiwg4oiraCBkzpMgPSAke2ZtdChyLmhlYXRJbil9IFcvbTxicj5cbiAgICAmbmJzcDsmbmJzcDtvdXQgdGhyb3VnaCDOkzxzdWI+Zzwvc3ViPiA9ICR7Zm10KHRvdGFsT3V0KX0gVy9tXG4gICAgICAoJHtvdXRzLm1hcCgoW2UsIHZdKSA9PiBgJHtuYW1lc1tlXX06ICR7Zm10KHYpfWApLmpvaW4oXCIsIFwiKX0pPGJyPlxuICAgIDxiPkhvdHRlc3QgcG9pbnQ6PC9iPiAke2ZtdChyLnVtYXgsIDEpfSDCsEMgYXRcbiAgICAgICgke3IueG1heC50b0ZpeGVkKDMpfSwgJHtyLnltYXgudG9GaXhlZCgzKX0pIG08YnI+XG4gICAgPGI+Q29sZGVzdCBwb2ludDo8L2I+ICR7Zm10KHIudW1pbiwgMSl9IMKwQzxicj5cbiAgICA8Yj5PbmUgMjcgbW0gY2VsbDwvYj4gJHt0b3RhbE91dCA+PSAwXG4gICAgICA/IGBzZW5kcyAke2ZtdCh0b3RhbE91dCAqIDAuMDI3LCAxKX0gVyBpbnRvIHRoZSBjb29sYW50LmBcbiAgICAgIDogYGRyYXdzICR7Zm10KC10b3RhbE91dCAqIDAuMDI3LCAxKX0gVyBmcm9tIHRoZSBjb29sYW50LmB9XG4gIDwvZGl2PmA7XG4gIHJldHVybiBodG1sYDxkaXYgc3R5bGU9XCJkaXNwbGF5OiBmbGV4OyBmbGV4LXdyYXA6IHdyYXA7IGdhcDogMS41cmVtO1xuICAgIGFsaWduLWl0ZW1zOiBmbGV4LXN0YXJ0O1wiPiR7cGxvdH08ZGl2IHN0eWxlPVwiZmxleDogMTsgbWluLXdpZHRoOiAxNHJlbTtcIj4ke3JlYWRvdXR9PC9kaXY+PC9kaXY+YDtcbn1cbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgneENvb2wnKSJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgneEYnKSJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgneEh0JykifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InNoaW55SW5wdXQoJ3hIbycpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCd4SycpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCd4RycpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCd4RGcnKSJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgneFNob3cnKSJ9XX0=
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../chapters";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/Poisson1D_Rod_FEM.html" class="pagination-link" aria-label="1D Poisson IV: The Rod, by Galerkin's Method">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/Poisson2D_Heat_FEM.html" class="pagination-link" aria-label="2D Poisson II: The Battery Cell, by Galerkin's Method">
+        <span class="nav-page-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

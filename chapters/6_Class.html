@@ -256,6 +256,18 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
@@ -293,6 +305,18 @@ window.Quarto = {
   <div class="sidebar-item-container"> 
   <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
   </div>
 </li>
       </ul>
@@ -343,7 +367,7 @@ window.Quarto = {
 
 <section id="last-time" class="level1" data-number="7">
 <h1 data-number="7"><span class="header-section-number">7</span> Last time</h1>
-<p><span class="math inline">\((\mathrm{S}) \Rightarrow (\mathrm{W})\)</span>: given <span class="math inline">\(f\)</span>, <span class="math inline">\(g\)</span>, <span class="math inline">\(h\)</span>, and <span class="math inline">\(\underline{\underline{K}}\)</span>, let</p>
+<p><span class="math inline">\((\mathrm{S}) \Rightarrow (\mathrm{W})\)</span>: given <span class="math inline">\(f\)</span>, <span class="math inline">\(g\)</span>, <span class="math inline">\(h\)</span>, and <span class="math inline">\(\underline{\underline{\kappa}}\)</span>, let</p>
 <div class="derivation">
 <p><span class="math display">\[
 \mathcal{S} = \left\{\, u \in H^1(\Omega) \;\middle|\; u = g \text{ on } \Gamma_g \,\right\}
@@ -354,7 +378,7 @@ window.Quarto = {
 <p>Find <span class="math inline">\(u \in \mathcal{S}\)</span> such that <span class="math inline">\(\forall\, w \in \mathcal{V}\)</span>,</p>
 <div class="derivation">
 <p><span class="math display">\[
-\int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega
+\int_\Omega \nabla w \cdot \underline{\underline{\kappa}}\nabla u\;d\Omega
 = \int_\Omega wf\;d\Omega + \int_{\Gamma_h} wh\;d\Gamma
 \]</span></p>
 </div>
@@ -365,13 +389,13 @@ a(w, u) = (w, f) + (w, h)_{\Gamma_h}
 \]</span></p>
 </div>
 <div class="step">
-<p>This is just shorthand: <span class="math inline">\(a(\cdot,\cdot)\)</span> is the <strong>bilinear form</strong> <span class="math inline">\(a(w,u) = \int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u\;d\Omega\)</span>, <span class="math inline">\((\cdot,\cdot)\)</span> is the <span class="math inline">\(L^2\)</span> <strong>inner product</strong> <span class="math inline">\((w,f) = \int_\Omega wf\;d\Omega\)</span>, and <span class="math inline">\((\cdot,\cdot)_{\Gamma_h}\)</span> is the same inner product taken over <span class="math inline">\(\Gamma_h\)</span> instead of <span class="math inline">\(\Omega\)</span>. Bilinearity is what lets us pull the coefficients <span class="math inline">\(c_A\)</span>, <span class="math inline">\(d_B\)</span> out of these expressions later — see the <a href="../chapters/3_Class.html">bilinearity note in Class 3</a>.</p>
+<p>This is just shorthand: <span class="math inline">\(a(\cdot,\cdot)\)</span> is the <strong>bilinear form</strong> <span class="math inline">\(a(w,u) = \int_\Omega \nabla w \cdot \underline{\underline{\kappa}}\nabla u\;d\Omega\)</span>, <span class="math inline">\((\cdot,\cdot)\)</span> is the <span class="math inline">\(L^2\)</span> <strong>inner product</strong> <span class="math inline">\((w,f) = \int_\Omega wf\;d\Omega\)</span>, and <span class="math inline">\((\cdot,\cdot)_{\Gamma_h}\)</span> is the same inner product taken over <span class="math inline">\(\Gamma_h\)</span> instead of <span class="math inline">\(\Omega\)</span>. Bilinearity is what lets us pull the coefficients <span class="math inline">\(c_A\)</span>, <span class="math inline">\(d_B\)</span> out of these expressions later — see the <a href="../chapters/3_Class.html">bilinearity note in Class 3</a>.</p>
 </div>
 <p><strong>Galerkin Form:</strong> choose a tractable set of functions with good properties (i.e.&nbsp;density in <span class="math inline">\(H^1(\Omega)\)</span>). Pick <span class="math inline">\(\mathcal{S}^h \subset \mathcal{S}\)</span>, <span class="math inline">\(\mathcal{V}^h \subset \mathcal{V}\)</span> — <em>discrete</em>, e.g.&nbsp;sines and cosines, or piecewise polynomials.</p>
-<p>Given <span class="math inline">\(f\)</span>, <span class="math inline">\(g\)</span>, <span class="math inline">\(h\)</span>, and <span class="math inline">\(\underline{\underline{K}}\)</span>, find <span class="math inline">\(u^h \in \mathcal{S}^h \subset \mathcal{S}\)</span> such that <span class="math inline">\(\forall\, w^h \in \mathcal{V}^h\)</span>,</p>
+<p>Given <span class="math inline">\(f\)</span>, <span class="math inline">\(g\)</span>, <span class="math inline">\(h\)</span>, and <span class="math inline">\(\underline{\underline{\kappa}}\)</span>, find <span class="math inline">\(u^h \in \mathcal{S}^h \subset \mathcal{S}\)</span> such that <span class="math inline">\(\forall\, w^h \in \mathcal{V}^h\)</span>,</p>
 <div class="derivation">
 <p><span class="math display">\[
-\int_\Omega \nabla w^h \cdot \underline{\underline{K}}\nabla u^h\;d\Omega
+\int_\Omega \nabla w^h \cdot \underline{\underline{\kappa}}\nabla u^h\;d\Omega
 = \int_\Omega w^h f\;d\Omega + \int_{\Gamma_h} w^h h\;d\Gamma
 \qquad \text{or} \qquad
 a(w^h, u^h) = (w^h, f) + (w^h, h)_{\Gamma_h}

@@ -256,6 +256,18 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
@@ -293,6 +305,18 @@ window.Quarto = {
   <div class="sidebar-item-container"> 
   <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
   </div>
 </li>
       </ul>
@@ -443,7 +467,7 @@ function draw(){
     ', so its derivative is piecewise degree '+(P-1)+
     '. <b>The function is continuous and the derivative is not</b> — the breaks in the lower '+
     'curve are actual discontinuities. Raising the degree makes the jumps smaller '+
-    'but never removes them, because nothing in a Lagrange basis forces neighbouring elements '+
+    'but never removes them, because nothing in a Lagrange basis forces neighboring elements '+
     'to agree on a slope.';
 }
 document.getElementById('b1deg').addEventListener('click',function(ev){
@@ -565,9 +589,9 @@ function draw(){
   if(!ERR){
     var ul=0; for(var q=0;q<N;q++) ul=Math.max(ul,Math.abs(U[q]));
     segU.forEach(function(sg){ sg.forEach(function(pt){ ul=Math.max(ul,Math.abs(pt[1])); }); });
-    panel(30,195,ul*1.12,'u(x) grey, and uʰ(x) blue',U,segU,false);
+    panel(30,195,ul*1.12,'u(x) gray, and uʰ(x) blue',U,segU,false);
     var dl=Math.max.apply(null,DU.map(Math.abs))*1.15;
-    panel(250,415,dl,'du/dx grey, and duʰ/dx red',DU,segD,true);
+    panel(250,415,dl,'du/dx gray, and duʰ/dx red',DU,segD,true);
   } else {
     panel(30,195,Math.max(e0,1e-6)*1.2,'error in u',null,segE0,false);
     panel(250,415,Math.max(e1,1e-6)*1.2,'error in du/dx',null,segE1,true);

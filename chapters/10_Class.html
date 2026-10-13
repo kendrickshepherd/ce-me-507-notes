@@ -256,6 +256,18 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
@@ -293,6 +305,18 @@ window.Quarto = {
   <div class="sidebar-item-container"> 
   <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
   </div>
 </li>
       </ul>
@@ -350,11 +374,11 @@ window.Quarto = {
 <p>And <span class="math inline">\((\mathrm{S})\)</span> — the strong form itself — is already an <strong>(approximate) physics problem</strong>: the modelling assumptions were made before any of this machinery started.</p>
 <div class="derivation">
 <p><span class="math display">\[
--\nabla\cdot\left(\underline{\underline{K}}\nabla u\right) = f \quad \text{in } \Omega
+-\nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right) = f \quad \text{in } \Omega
 \qquad\qquad
 u = g \quad \text{in } \Gamma_g
 \qquad\qquad
-\left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n} = h \quad \text{in } \Gamma_h
+\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = h \quad \text{in } \Gamma_h
 \]</span></p>
 </div>
 <div id="fig-c10-domain" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -404,8 +428,8 @@ Figure&nbsp;10.2
 <p><strong>To solve the big problem, approximately, we must first be able to solve on one element.</strong></p>
 <div class="derivation">
 <p><span class="math display">\[
-\sum_B \left(\int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega\right) d_B
-= \int_\Omega N_A f\;d\Omega + \int_{\Gamma_h} N_A h\;d\Gamma - \sum_B g_B \int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega
+\sum_B \left(\int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}}\nabla N_B\;d\Omega\right) d_B
+= \int_\Omega N_A f\;d\Omega + \int_{\Gamma_h} N_A h\;d\Gamma - \sum_B g_B \int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}}\nabla N_B\;d\Omega
 \]</span></p>
 </div>
 <div class="step">
@@ -413,7 +437,7 @@ Figure&nbsp;10.2
 </div>
 <div class="derivation">
 <p><span class="math display">\[
-\int_{\Omega^e} \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega
+\int_{\Omega^e} \nabla N_A \cdot \underline{\underline{\kappa}}\nabla N_B\;d\Omega
 \qquad\qquad
 \int_{\Omega^e} N_A f\;d\Omega
 \qquad\qquad
@@ -495,8 +519,8 @@ Figure&nbsp;12.1: A central element <span class="math inline">\(e_0\)</span> sha
 <h1 data-number="13"><span class="header-section-number">13</span> Global stiffness from local (element) stiffness</h1>
 <div class="derivation">
 <p><span class="math display">\[
-K_{AB} = \int_{\Omega} \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega
-= \sum_e \int_{\Omega^e} \nabla_x N_A \cdot \underline{\underline{K}}\nabla_x N_B\;d\Omega
+K_{AB} = \int_{\Omega} \nabla N_A \cdot \underline{\underline{\kappa}}\nabla N_B\;d\Omega
+= \sum_e \int_{\Omega^e} \nabla_x N_A \cdot \underline{\underline{\kappa}}\nabla_x N_B\;d\Omega
 \qquad \leftarrow \textbf{global stiffness}
 \]</span></p>
 </div>
@@ -505,14 +529,14 @@ K_{AB} = \int_{\Omega} \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\O
 </div>
 <div class="derivation">
 <p><span class="math display">\[
-K_{ab}^e = \int_{\Omega^e} \nabla_x N_A^{(x)}\,\underline{\underline{K}}(x)\,\nabla_x N_B^{(x)}\;d\Omega
+K_{ab}^e = \int_{\Omega^e} \nabla_x N_A^{(x)}\,\underline{\underline{\kappa}}(x)\,\nabla_x N_B^{(x)}\;d\Omega
 \qquad \leftarrow \textbf{local stiffness, spatial domain}
 \]</span></p>
 </div>
 <p>Pulling this back to the reference domain, as in the last class:</p>
 <div class="derivation">
 <p><span class="math display">\[
-K_{ab}^e = \int_{\hat\Omega} \nabla_x N_a(\xi)\,\underline{\underline{K}}(x(\xi))\,
+K_{ab}^e = \int_{\hat\Omega} \nabla_x N_a(\xi)\,\underline{\underline{\kappa}}(x(\xi))\,
            \nabla_x N_b(\xi)\;J(\xi)\;d\hat\Omega
 \]</span></p>
 </div>
@@ -523,15 +547,15 @@ K_{ab}^e = \int_{\hat\Omega} \nabla_x N_a(\xi)\,\underline{\underline{K}}(x(\xi)
 <div class="derivation">
 <p><span class="math display">\[
 K_{ab}^e = \int_{\hat\Omega} \left[(DF)^{-T}\nabla_\xi N_a\right]
-           \underline{\underline{K}}\left[(DF)^{-T}\nabla_\xi N_b\right] J\;d\hat\Omega
+           \underline{\underline{\kappa}}\left[(DF)^{-T}\nabla_\xi N_b\right] J\;d\hat\Omega
 \qquad\Longrightarrow\qquad
 K_{ab}^e = \sum_{g=0}^{n_{quad}} w_g \left[(DF)^{-T}(\xi_g)\nabla_\xi N_a(\xi_g)\right]
-           \underline{\underline{K}}(x^e(\xi_g))
+           \underline{\underline{\kappa}}(x^e(\xi_g))
            \left[(DF)^{-T}(\xi_g)\nabla_\xi N_b(\xi_g)\right] J(\xi_g)
 \]</span></p>
 </div>
 <div class="step">
-<p>This sum over quadrature points <span class="math inline">\(g\)</span> is what a finite element code evaluates for every element, every time it assembles <span class="math inline">\(\underline{\underline{K}}\)</span>.</p>
+<p>This sum over quadrature points <span class="math inline">\(g\)</span> is what a finite element code evaluates for every element, every time it assembles <span class="math inline">\(\underline{\underline{\kappa}}\)</span>.</p>
 </div>
 
 

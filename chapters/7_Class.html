@@ -256,6 +256,18 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
@@ -293,6 +305,18 @@ window.Quarto = {
   <div class="sidebar-item-container"> 
   <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
   </div>
 </li>
       </ul>
@@ -336,10 +360,10 @@ window.Quarto = {
 
 <section id="last-time" class="level1" data-number="8">
 <h1 data-number="8"><span class="header-section-number">8</span> Last time</h1>
-<p>Pick <span class="math inline">\(\mathcal{S}^h \subset \mathcal{S}\)</span>, <span class="math inline">\(\mathcal{V}^h \subset \mathcal{V}\)</span>. Given <span class="math inline">\(f\)</span>, <span class="math inline">\(g\)</span>, <span class="math inline">\(h\)</span>, <span class="math inline">\(\underline{\underline{K}}\)</span> as before, find <span class="math inline">\(u^h \in \mathcal{S}^h \subset \mathcal{S}\)</span> such that <span class="math inline">\(\forall\, w^h \in \mathcal{V}^h \subset \mathcal{V}\)</span>,</p>
+<p>Pick <span class="math inline">\(\mathcal{S}^h \subset \mathcal{S}\)</span>, <span class="math inline">\(\mathcal{V}^h \subset \mathcal{V}\)</span>. Given <span class="math inline">\(f\)</span>, <span class="math inline">\(g\)</span>, <span class="math inline">\(h\)</span>, <span class="math inline">\(\underline{\underline{\kappa}}\)</span> as before, find <span class="math inline">\(u^h \in \mathcal{S}^h \subset \mathcal{S}\)</span> such that <span class="math inline">\(\forall\, w^h \in \mathcal{V}^h \subset \mathcal{V}\)</span>,</p>
 <div class="derivation">
 <p><span class="math display">\[
-\int_\Omega \nabla w^h \cdot \underline{\underline{K}}\nabla u^h\;d\Omega
+\int_\Omega \nabla w^h \cdot \underline{\underline{\kappa}}\nabla u^h\;d\Omega
 = \int_\Omega w f\;d\Omega + \int_{\Gamma_h} w h\;d\Gamma
 \qquad \text{or} \qquad
 a(w, u) = (w, f) + (w, h)_{\Gamma_h}
@@ -373,14 +397,14 @@ Figure&nbsp;8.1: One- and two-dimensional meshes: open circles are basis functio
 <h1 data-number="9"><span class="header-section-number">9</span> Deriving the matrix system</h1>
 <div class="derivation">
 <p><span class="math display">\[
-\int_\Omega \nabla w^h \cdot \underline{\underline{K}} \nabla u^h\;d\Omega
+\int_\Omega \nabla w^h \cdot \underline{\underline{\kappa}} \nabla u^h\;d\Omega
 = \int_\Omega w^h f\;d\Omega + \int_{\Gamma_h} w^h h\;d\Gamma
 \]</span></p>
 </div>
 <p>Substitute the expansions for <span class="math inline">\(w^h\)</span> and <span class="math inline">\(u^h = v^h + g^h\)</span> — note <span class="math inline">\(c_A\)</span>, <span class="math inline">\(d_B\)</span>, <span class="math inline">\(g_B\)</span> are all <strong>constants</strong>, so they come out of the integrals:</p>
 <div class="derivation">
 <p><span class="math display">\[
-\int_\Omega \nabla\left(\sum_A c_A N_A\right) \cdot \underline{\underline{K}}
+\int_\Omega \nabla\left(\sum_A c_A N_A\right) \cdot \underline{\underline{\kappa}}
 \nabla\left(\sum_B d_B N_B + \sum_B g_B N_B\right) d\Omega
 = \int_\Omega \left(\sum_A c_A N_A\right) f\;d\Omega
 + \int_{\Gamma_h} \left(\sum_A c_A N_A\right) h\;d\Gamma
@@ -388,10 +412,10 @@ Figure&nbsp;8.1: One- and two-dimensional meshes: open circles are basis functio
 </div>
 <div class="derivation">
 <p><span class="math display">\[
-\sum_A \sum_B c_A\left[\int_\Omega \nabla N_A \cdot \underline{\underline{K}} \nabla N_B\;d\Omega\right] d_B
+\sum_A \sum_B c_A\left[\int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}} \nabla N_B\;d\Omega\right] d_B
 = \sum_A c_A\left[\int_\Omega N_A f\;d\Omega\right]
 + \sum_A c_A\left[\int_{\Gamma_h} N_A h\;d\Gamma\right]
-- \sum_A \sum_B c_A\left[\int_\Omega \nabla N_A \cdot \underline{\underline{K}} \nabla N_B\;d\Omega\right] g_B
+- \sum_A \sum_B c_A\left[\int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}} \nabla N_B\;d\Omega\right] g_B
 \]</span></p>
 </div>
 <div class="step">
@@ -399,9 +423,9 @@ Figure&nbsp;8.1: One- and two-dimensional meshes: open circles are basis functio
 </div>
 <div class="derivation">
 <p><span class="math display">\[
-0 = \sum_A c_A \left[-\sum_B d_B \int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega
+0 = \sum_A c_A \left[-\sum_B d_B \int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}}\nabla N_B\;d\Omega
     + \int_\Omega N_A f\;d\Omega + \int_{\Gamma_h} N_A h\;d\Gamma
-    - \sum_B g_B \int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega\right]
+    - \sum_B g_B \int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}}\nabla N_B\;d\Omega\right]
 \]</span></p>
 </div>
 <div class="derivation">
@@ -415,9 +439,9 @@ Figure&nbsp;8.1: One- and two-dimensional meshes: open circles are basis functio
 <p>Consequently, for any <span class="math inline">\(A\)</span> (an index of a basis function in <span class="math inline">\(\mathcal{V}^h\)</span>), we have</p>
 <div class="derivation">
 <p><span class="math display">\[
-\sum_B d_B\left[\int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega\right]
+\sum_B d_B\left[\int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}}\nabla N_B\;d\Omega\right]
 = \int_\Omega N_A f\;d\Omega + \int_{\Gamma_h} N_A h\;d\Gamma
-- \sum_B g_B\int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega
+- \sum_B g_B\int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}}\nabla N_B\;d\Omega
 \]</span></p>
 </div>
 <p>or, naming the two integral shapes,</p>
@@ -438,11 +462,11 @@ K_{AB}\,d_B = F_A
 </div>
 <div class="derivation">
 <p><span class="math display">\[
-\boxed{\underline{\underline{K}}\,\underline{d} = \underline{F}}
+\boxed{\underline{\underline{\kappa}}\,\underline{d} = \underline{F}}
 \]</span></p>
 </div>
 <div class="step">
-<p>To solve this equation, we will need numerical integration methods. The most general and effective methods for piecewise-polynomial functions are called <strong>Gaussian quadrature methods</strong>, and are the subject of a later class — after we’ve built up the machinery for assembling <span class="math inline">\(\underline{\underline{K}}\)</span> and <span class="math inline">\(\underline{F}\)</span> concretely.</p>
+<p>To solve this equation, we will need numerical integration methods. The most general and effective methods for piecewise-polynomial functions are called <strong>Gaussian quadrature methods</strong>, and are the subject of a later class — after we’ve built up the machinery for assembling <span class="math inline">\(\underline{\underline{\kappa}}\)</span> and <span class="math inline">\(\underline{F}\)</span> concretely.</p>
 </div>
 
 

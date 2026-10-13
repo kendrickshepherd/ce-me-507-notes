@@ -256,6 +256,18 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
@@ -293,6 +305,18 @@ window.Quarto = {
   <div class="sidebar-item-container"> 
   <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
   </div>
 </li>
       </ul>
@@ -556,13 +580,13 @@ u &amp;= g &amp;&amp; \text{on } \Gamma_g &amp;&amp; \leftarrow \text{known valu
 \end{aligned}
 \]</span></p>
 </div>
-<p>Or, more generally, for anisotropic behavior, assuming <span class="math inline">\(\underline{\underline{K}}\)</span> is also known, find <span class="math inline">\(u\)</span> such that</p>
+<p>Or, more generally, for anisotropic behavior, assuming <span class="math inline">\(\underline{\underline{\kappa}}\)</span> is also known, find <span class="math inline">\(u\)</span> such that</p>
 <div class="derivation">
 <p><span class="math display">\[
 \begin{aligned}
--\nabla \cdot \left(\underline{\underline{K}}\nabla u\right) &amp;= f &amp;&amp; \text{in } \Omega \\
+-\nabla \cdot \left(\underline{\underline{\kappa}}\nabla u\right) &amp;= f &amp;&amp; \text{in } \Omega \\
 u &amp;= g &amp;&amp; \text{on } \Gamma_g \\
-\nabla\left(\underline{\underline{K}}u\right)\cdot \underline{n} &amp;= h &amp;&amp; \text{on } \Gamma_h
+\nabla\left(\underline{\underline{\kappa}}u\right)\cdot \underline{n} &amp;= h &amp;&amp; \text{on } \Gamma_h
 \end{aligned}
 \]</span></p>
 </div>

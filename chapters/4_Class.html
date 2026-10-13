@@ -256,6 +256,18 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
@@ -293,6 +305,18 @@ window.Quarto = {
   <div class="sidebar-item-container"> 
   <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
   </div>
 </li>
       </ul>
@@ -343,16 +367,16 @@ window.Quarto = {
 <div class="derivation">
 <p>Given <span class="math inline">\(f : \Omega \to \mathbb{R}\)</span>, <span class="math inline">\(g : \Gamma_g \to \mathbb{R}\)</span>, and <span class="math inline">\(h : \Gamma_h \to \mathbb{R}\)</span>, find <span class="math inline">\(u : \bar\Omega \to \mathbb{R}\)</span> such that</p>
 <p><span class="math display">\[
--\nabla\cdot\left(\underline{\underline{K}}\nabla u\right)
-= -\left(K_{ij}u_{,j}\right)_{,i} = f
+-\nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right)
+= -\left(\kappa_{ij}u_{,j}\right)_{,i} = f
 \qquad \text{in } \Omega
 \]</span></p>
 <p><span class="math display">\[
 u = g \qquad \text{on } \Gamma_g
 \]</span></p>
 <p><span class="math display">\[
-\left(\underline{\underline{K}}\nabla u\right)\cdot\underline{n}
-= K_{ij}u_{,j}\,n_i = h
+\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}
+= \kappa_{ij}u_{,j}\,n_i = h
 \qquad \text{on } \Gamma_h
 \]</span></p>
 </div>
@@ -429,10 +453,10 @@ u(x) = g + (1-x)h + \int_x^1\left(\int_0^y f(z)\,dz\right)dy
 <section id="weak-form-of-the-boundary-value-problem" class="level1" data-number="8">
 <h1 data-number="8"><span class="header-section-number">8</span> Weak form of the boundary value problem</h1>
 <div class="derivation">
-<p>Given <span class="math inline">\(f : \Omega \to \mathbb{R}\)</span>, <span class="math inline">\(g : \Gamma_g \to \mathbb{R}\)</span>, <span class="math inline">\(h : \Gamma_h \to \mathbb{R}\)</span>, and <span class="math inline">\(\underline{\underline{K}} : \Omega \to \mathbb{R}^{n_{sd} \times n_{sd}}\)</span> symmetric positive definite, find <span class="math inline">\(u \in \mathcal{S}\)</span> such that for every <span class="math inline">\(w \in \mathcal{V}\)</span>,</p>
+<p>Given <span class="math inline">\(f : \Omega \to \mathbb{R}\)</span>, <span class="math inline">\(g : \Gamma_g \to \mathbb{R}\)</span>, <span class="math inline">\(h : \Gamma_h \to \mathbb{R}\)</span>, and <span class="math inline">\(\underline{\underline{\kappa}} : \Omega \to \mathbb{R}^{n_{sd} \times n_{sd}}\)</span> symmetric positive definite, find <span class="math inline">\(u \in \mathcal{S}\)</span> such that for every <span class="math inline">\(w \in \mathcal{V}\)</span>,</p>
 <p><span class="math display">\[
 (\mathrm{W}) \qquad
-\int_\Omega \nabla w \cdot \underline{\underline{K}} \nabla u \; d\Omega
+\int_\Omega \nabla w \cdot \underline{\underline{\kappa}} \nabla u \; d\Omega
 = \int_\Omega wf\;d\Omega + \int_{\Gamma_h} wh\;d\Gamma
 \]</span></p>
 </div>
@@ -477,56 +501,56 @@ u(x) = g + (1-x)h + \int_x^1\left(\int_0^y f(z)\,dz\right)dy
 <p>Start from the strong form and multiply by an arbitrary <span class="math inline">\(w\)</span>, then integrate over <span class="math inline">\(\Omega\)</span>:</p>
 <div class="derivation">
 <p><span class="math display">\[
--\nabla\cdot\left(\underline{\underline{K}}\nabla u\right) = f
+-\nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right) = f
 \qquad\Longrightarrow\qquad
--\int_\Omega w\,\nabla\cdot\left(\underline{\underline{K}}\nabla u\right)\,d\Omega
+-\int_\Omega w\,\nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right)\,d\Omega
 = \int_\Omega wf\,d\Omega
 \qquad (w \text{ arbitrary})
 \]</span></p>
 </div>
-<p>The left side needs the <strong>product rule</strong>, applied to <span class="math inline">\(\nabla\cdot(w\underline{\underline{K}}\nabla u)\)</span>:</p>
+<p>The left side needs the <strong>product rule</strong>, applied to <span class="math inline">\(\nabla\cdot(w\underline{\underline{\kappa}}\nabla u)\)</span>:</p>
 <div class="derivation">
 <p><span class="math display">\[
-\nabla\cdot\left(w\,\underline{\underline{K}}\nabla u\right)
-= \nabla w\cdot\underline{\underline{K}}\nabla u
-+ w\,\nabla\cdot\left(\underline{\underline{K}}\nabla u\right)
+\nabla\cdot\left(w\,\underline{\underline{\kappa}}\nabla u\right)
+= \nabla w\cdot\underline{\underline{\kappa}}\nabla u
++ w\,\nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right)
 \]</span></p>
 </div>
 <p>so that, integrating the left side and applying the <strong>Divergence Theorem</strong>,</p>
 <div class="derivation">
 <p><span class="math display">\[
-\int_\Omega \nabla\cdot\left(w\,\underline{\underline{K}}\nabla u\right) d\Omega
-= \int_\Gamma \left(w\,\underline{\underline{K}}\nabla u\right)\cdot \underline{n}\;d\Gamma
+\int_\Omega \nabla\cdot\left(w\,\underline{\underline{\kappa}}\nabla u\right) d\Omega
+= \int_\Gamma \left(w\,\underline{\underline{\kappa}}\nabla u\right)\cdot \underline{n}\;d\Gamma
 \]</span></p>
 </div>
 <p>Combining these two facts, the term we wanted rearranges into</p>
 <div class="derivation">
 <p><span class="math display">\[
--\left(\int_\Gamma \left(w\,\underline{\underline{K}}\nabla u\right)\cdot\underline{n}\;d\Gamma
-- \int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u \;d\Omega\right)
+-\left(\int_\Gamma \left(w\,\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\;d\Gamma
+- \int_\Omega \nabla w \cdot \underline{\underline{\kappa}}\nabla u \;d\Omega\right)
 = \int_\Omega wf\,d\Omega
 \]</span></p>
 </div>
 <div class="derivation">
 <p><span class="math display">\[
 \Longrightarrow \qquad
-\int_\Omega \nabla w \cdot \underline{\underline{K}}\nabla u \; d\Omega
-= \int_\Omega wf\,d\Omega + \int_\Gamma \left(w\,\underline{\underline{K}}\nabla u\right)\cdot\underline{n}\;d\Gamma
+\int_\Omega \nabla w \cdot \underline{\underline{\kappa}}\nabla u \; d\Omega
+= \int_\Omega wf\,d\Omega + \int_\Gamma \left(w\,\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\;d\Gamma
 \]</span></p>
 </div>
 <div class="derivation">
 <p><span class="math display">\[
 \Longrightarrow \qquad
-\int_\Omega w_{,i}K_{ij}u_{,j}\;d\Omega
-= \int_\Omega wf\,d\Omega + \int_\Gamma w K_{ij}u_{,j}\,n_i\;d\Gamma
+\int_\Omega w_{,i}\kappa_{ij}u_{,j}\;d\Omega
+= \int_\Omega wf\,d\Omega + \int_\Gamma w \kappa_{ij}u_{,j}\,n_i\;d\Gamma
 \]</span></p>
 </div>
 <div class="step">
-<p>But <span class="math inline">\(w(x) = 0\)</span> on <span class="math inline">\(\Gamma_g\)</span>, and <span class="math inline">\(\Gamma = \Gamma_g \cup \Gamma_h\)</span>, so the boundary integral only survives over <span class="math inline">\(\Gamma_h\)</span> — where the strong form tells us <span class="math inline">\(K_{ij}u_{,j}n_i = h\)</span>:</p>
+<p>But <span class="math inline">\(w(x) = 0\)</span> on <span class="math inline">\(\Gamma_g\)</span>, and <span class="math inline">\(\Gamma = \Gamma_g \cup \Gamma_h\)</span>, so the boundary integral only survives over <span class="math inline">\(\Gamma_h\)</span> — where the strong form tells us <span class="math inline">\(\kappa_{ij}u_{,j}n_i = h\)</span>:</p>
 </div>
 <div class="derivation">
 <p><span class="math display">\[
-\boxed{\int_\Omega w_{,i}K_{ij}u_{,j}\;d\Omega
+\boxed{\int_\Omega w_{,i}\kappa_{ij}u_{,j}\;d\Omega
 = \int_\Omega wf\,d\Omega + \int_{\Gamma_h} wh\;d\Gamma}
 \]</span></p>
 </div>

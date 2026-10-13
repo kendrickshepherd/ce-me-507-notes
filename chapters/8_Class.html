@@ -256,6 +256,18 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
@@ -295,6 +307,18 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
       </ul>
   </li>
     </ul>
@@ -311,7 +335,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#the-basis-functions-on-this-mesh" id="toc-the-basis-functions-on-this-mesh" class="nav-link" data-scroll-target="#the-basis-functions-on-this-mesh"><span class="header-section-number">9.1</span> The basis functions on this mesh</a></li>
   <li><a href="#the-derivatives-of-the-basis-functions" id="toc-the-derivatives-of-the-basis-functions" class="nav-link" data-scroll-target="#the-derivatives-of-the-basis-functions"><span class="header-section-number">9.2</span> The derivatives of the basis functions</a></li>
-  <li><a href="#writing-out-underlineunderlinekunderlined-underlinef" id="toc-writing-out-underlineunderlinekunderlined-underlinef" class="nav-link" data-scroll-target="#writing-out-underlineunderlinekunderlined-underlinef"><span class="header-section-number">9.3</span> Writing out <span class="math inline">\(\underline{\underline{K}}\,\underline{d} = \underline{F}\)</span></a></li>
+  <li><a href="#writing-out-underlineunderlinekappaunderlined-underlinef" id="toc-writing-out-underlineunderlinekappaunderlined-underlinef" class="nav-link" data-scroll-target="#writing-out-underlineunderlinekappaunderlined-underlinef"><span class="header-section-number">9.3</span> Writing out <span class="math inline">\(\underline{\underline{\kappa}}\,\underline{d} = \underline{F}\)</span></a></li>
   <li><a href="#simplifying-based-on-the-supports-of-the-functions" id="toc-simplifying-based-on-the-supports-of-the-functions" class="nav-link" data-scroll-target="#simplifying-based-on-the-supports-of-the-functions"><span class="header-section-number">9.4</span> Simplifying based on the supports of the functions</a></li>
   <li><a href="#evaluating-the-entries" id="toc-evaluating-the-entries" class="nav-link" data-scroll-target="#evaluating-the-entries"><span class="header-section-number">9.5</span> Evaluating the entries</a></li>
   </ul></li>
@@ -353,14 +377,14 @@ window.Quarto = {
 \;\Longrightarrow\; (\mathrm{M})
 \]</span></p>
 </div>
-<p>where <span class="math inline">\((\mathrm{M})\)</span> is: given <span class="math inline">\(f : \Omega \to \mathbb{R}\)</span>, <span class="math inline">\(g : \Gamma_g \to \mathbb{R}\)</span>, <span class="math inline">\(h : \Gamma_h \to \mathbb{R}\)</span>, <span class="math inline">\(\underline{\underline{K}} : \Omega \to
-\mathbb{R}^{n_{sd}\times n_{sd}}\)</span>, find <span class="math inline">\(\underline{d}\)</span> such that <span class="math inline">\(\underline{\underline{K}}\,\underline{d} = \underline{F}\)</span>, where</p>
+<p>where <span class="math inline">\((\mathrm{M})\)</span> is: given <span class="math inline">\(f : \Omega \to \mathbb{R}\)</span>, <span class="math inline">\(g : \Gamma_g \to \mathbb{R}\)</span>, <span class="math inline">\(h : \Gamma_h \to \mathbb{R}\)</span>, <span class="math inline">\(\underline{\underline{\kappa}} : \Omega \to
+\mathbb{R}^{n_{sd}\times n_{sd}}\)</span>, find <span class="math inline">\(\underline{d}\)</span> such that <span class="math inline">\(\underline{\underline{\kappa}}\,\underline{d} = \underline{F}\)</span>, where</p>
 <div class="derivation">
 <p><span class="math display">\[
 \begin{aligned}
-K_{AB} &amp;= \int_\Omega \nabla N_A \cdot \underline{\underline{K}}\nabla N_B\;d\Omega \\[6pt]
+K_{AB} &amp;= \int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}}\nabla N_B\;d\Omega \\[6pt]
 F_A &amp;= \int_\Omega N_A f\;d\Omega + \int_{\Gamma_h} N_A h\;d\Gamma \\[2pt]
-    &amp;\qquad - \int_\Omega \nabla N_A \cdot \underline{\underline{K}}
+    &amp;\qquad - \int_\Omega \nabla N_A \cdot \underline{\underline{\kappa}}
       \left(\sum_{B \in \Gamma_g} g_B N_B\right) d\Omega
 \end{aligned}
 \]</span></p>
@@ -413,7 +437,7 @@ N_A(x) =
 </div>
 <p>The end functions, <span class="math inline">\(N_0\)</span> and <span class="math inline">\(N_3\)</span>, simply lose one of the two branches, because there is no element on the far side of their node.</p>
 <div class="step">
-<p>Two properties to keep hold of: each <span class="math inline">\(N_A\)</span> is <strong>zero outside the one or two elements that touch node <span class="math inline">\(A\)</span></strong> (this is what will make <span class="math inline">\(\underline{\underline{K}}\)</span> sparse), and at every <span class="math inline">\(x\)</span> the four functions <strong>sum to one</strong>, <span class="math inline">\(\sum_A N_A(x) = 1\)</span>.</p>
+<p>Two properties to keep hold of: each <span class="math inline">\(N_A\)</span> is <strong>zero outside the one or two elements that touch node <span class="math inline">\(A\)</span></strong> (this is what will make <span class="math inline">\(\underline{\underline{\kappa}}\)</span> sparse), and at every <span class="math inline">\(x\)</span> the four functions <strong>sum to one</strong>, <span class="math inline">\(\sum_A N_A(x) = 1\)</span>.</p>
 </div>
 </section>
 <section id="the-derivatives-of-the-basis-functions" class="level2" data-number="9.2">
@@ -446,8 +470,8 @@ Figure&nbsp;9.3: The derivative of each basis function: one constant per element
 </ul>
 </div>
 </section>
-<section id="writing-out-underlineunderlinekunderlined-underlinef" class="level2" data-number="9.3">
-<h2 data-number="9.3" class="anchored" data-anchor-id="writing-out-underlineunderlinekunderlined-underlinef"><span class="header-section-number">9.3</span> Writing out <span class="math inline">\(\underline{\underline{K}}\,\underline{d} = \underline{F}\)</span></h2>
+<section id="writing-out-underlineunderlinekappaunderlined-underlinef" class="level2" data-number="9.3">
+<h2 data-number="9.3" class="anchored" data-anchor-id="writing-out-underlineunderlinekappaunderlined-underlinef"><span class="header-section-number">9.3</span> Writing out <span class="math inline">\(\underline{\underline{\kappa}}\,\underline{d} = \underline{F}\)</span></h2>
 <div class="derivation">
 <p><span class="math display">\[
 \begin{bmatrix}
@@ -499,7 +523,7 @@ F_2 &amp;= \int_0^L N_2 f\,dx - g\int_0^L N_{2,x}N_{3,x}\,dx
 </section>
 <section id="evaluating-the-entries" class="level2" data-number="9.5">
 <h2 data-number="9.5" class="anchored" data-anchor-id="evaluating-the-entries"><span class="header-section-number">9.5</span> Evaluating the entries</h2>
-<p>Every integrand left in <span class="math inline">\(\underline{\underline{K}}\)</span> is a product of two of the piecewise-constant derivatives in <a href="#fig-c8-derivs" class="quarto-xref">Figure&nbsp;<span>9.3</span></a>. On any one element that product is itself <strong>a constant</strong>, so the integral over that element is just the constant times the element’s length:</p>
+<p>Every integrand left in <span class="math inline">\(\underline{\underline{\kappa}}\)</span> is a product of two of the piecewise-constant derivatives in <a href="#fig-c8-derivs" class="quarto-xref">Figure&nbsp;<span>9.3</span></a>. On any one element that product is itself <strong>a constant</strong>, so the integral over that element is just the constant times the element’s length:</p>
 <div class="derivation">
 <p><span class="math display">\[
 \int_{x_e}^{x_{e+1}} N_{A,x}\,N_{B,x}\;dx
@@ -544,12 +568,12 @@ K_{02} &amp;= \int_0^L N_{0,x}N_{2,x}\,dx = 0 .
 = +\frac{g}{\ell_2}\)</span>. Every entry of the matrix is now a number. The only integrals still standing are the ones containing <span class="math inline">\(f\)</span>, and those are what quadrature is for.</p>
 </div>
 <div class="step">
-<p>Notice that <strong>all the integrals in <span class="math inline">\(\underline{\underline{K}}\)</span> look the same</strong>, in some way:</p>
+<p>Notice that <strong>all the integrals in <span class="math inline">\(\underline{\underline{\kappa}}\)</span> look the same</strong>, in some way:</p>
 </div>
 <div class="step notes">
 <ul>
-<li>Dirichlet (known) boundary-condition data looks the same as the integrals in <span class="math inline">\(\underline{\underline{K}}\)</span> — it is just <span class="math inline">\(\int \nabla N_A \cdot
-\underline{\underline{K}} \nabla N_B\)</span> against a <em>known</em> coefficient <span class="math inline">\(g_B\)</span>.</li>
+<li>Dirichlet (known) boundary-condition data looks the same as the integrals in <span class="math inline">\(\underline{\underline{\kappa}}\)</span> — it is just <span class="math inline">\(\int \nabla N_A \cdot
+\underline{\underline{\kappa}} \nabla N_B\)</span> against a <em>known</em> coefficient <span class="math inline">\(g_B\)</span>.</li>
 <li>Neumann (known-flux) boundary-condition data is a <strong>number</strong> in 1D — but a <strong>curve</strong> in 2D and a <strong>surface</strong> in 3D.</li>
 <li>Integrals with forcing functions on the right-hand side all look the same as each other.</li>
 </ul>
