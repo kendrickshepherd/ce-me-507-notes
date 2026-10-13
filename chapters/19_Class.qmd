@@ -1,0 +1,324 @@
+---
+title: "Class 19: The Same Code in Any Dimension"
+subtitle: "What carries over from the 1D solver, and the two places it genuinely changes"
+format:
+  html:
+    page-layout: full
+    toc: true
+---
+
+The flowchart in [Class 15](15_Class.qmd) laid out the one-dimensional solver step by step.
+Going to two or three dimensions does **not** add steps to that chart, and it does not
+reorder them. The architecture is the same: build the arrays, loop the elements, loop the
+quadrature points, scatter, solve.
+
+What changes is what lives *inside* some of the boxes. Most of them scale up without any
+new idea --- a longer vector here, a bigger element matrix there. Three of them change in
+kind, and those three are what the next few classes are really about.
+
+The column down the middle below is that shared infrastructure, drawn the same way as the
+trajectory in Class 15: the steps, the element loop, the quadrature loop. It is the same in
+any number of dimensions. **Click any box** and the one-dimensional version of that step
+appears on the left and the multidimensional version on the right, tagged as unchanged,
+merely larger, or genuinely different.
+
+```{=html}
+<style>
+.fw{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;--acc:#b8322a;--blue:#2b5fa8;
+    max-width:900px;margin:0 auto;color:var(--ink)}
+.fw svg{display:block;width:100%;height:auto;border:1px solid var(--faint);border-radius:8px;background:#fff}
+.fw .cap{font-size:13px;color:var(--grey);line-height:1.55;margin:9px 2px 22px}
+.fw .cap b{color:var(--ink)}
+.fw .hit{cursor:pointer}
+</style>
+
+<div class="fw">
+  <svg id="f19" viewBox="0 0 880 1040" role="img"
+       aria-label="The one-dimensional finite element trajectory, with the multidimensional counterpart of each step shown alongside"></svg>
+  <div class="cap" id="f19cap"></div>
+</div>
+
+<script>
+(function(){
+var SEL=5;
+var INK='#18202b',GREY='#6b7684',FAINT='#dfe4ea',ACC='#b8322a',BLUE='#2b5fa8',
+    PAPER='#f8f9fb',AMB='#ffe9a8',GRN='#2f7d4f',S='';
+
+function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function R(x,y,w,h,o){o=o||{};
+  S+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+(o.r||0)+'" fill="'+(o.f||'none')+
+     '" stroke="'+(o.s||'none')+'" stroke-width="'+(o.sw||1)+'" opacity="'+(o.o===undefined?1:o.o)+'"'+
+     (o.d?' stroke-dasharray="'+o.d+'"':'')+'/>';}
+function T(x,y,t,o){o=o||{};
+  S+='<text x="'+x+'" y="'+y+'" font-size="'+(o.s||12)+'" fill="'+(o.f||INK)+
+     '" text-anchor="'+(o.a||'start')+'" font-weight="'+(o.w||400)+
+     '" font-family="'+(o.m?'ui-monospace,Menlo,monospace':'system-ui,sans-serif')+
+     '" letter-spacing="'+(o.ls||0)+'">'+esc(t)+'</text>';}
+function L(x1,y1,x2,y2,o){o=o||{};
+  S+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+(o.s||INK)+
+     '" stroke-width="'+(o.sw||1.3)+'"'+(o.d?' stroke-dasharray="'+o.d+'"':'')+'/>';}
+function C(x,y,r,f,st){S+='<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+f+'"'+
+     (st?' stroke="'+st+'" stroke-width="1.8"':'')+'/>';}
+function AR(x1,y1,x2,y2,col){col=col||INK;
+  var dx=x2-x1,dy=y2-y1,m=Math.sqrt(dx*dx+dy*dy)||1,ux=dx/m,uy=dy/m;
+  L(x1,y1,x2-ux*5,y2-uy*5,{s:col,sw:1.5});
+  S+='<path d="M'+x2+' '+y2+' L'+(x2-ux*6-uy*3)+' '+(y2-uy*6+ux*3)+
+     ' L'+(x2-ux*6+uy*3)+' '+(y2-uy*6-ux*3)+'Z" fill="'+col+'"/>';}
+function GR(x,y,nx,ny,c,o){o=o||{};
+  for(var i=0;i<ny;i++)for(var j=0;j<nx;j++)
+    R(x+j*c,y+i*c,c,c,{f:o.f||'none',s:o.s||GREY,sw:o.sw||0.8});}
+function down(x,y1,y2,col){col=col||INK;
+  L(x,y1,x,y2-7,{s:col,sw:1.5});
+  S+='<path d="M'+(x-4.5)+' '+(y2-7)+' L'+x+' '+y2+' L'+(x+4.5)+' '+(y2-7)+'Z" fill="'+col+'"/>';}
+
+/* ---- the 1D counterpart, drawn in the left panel ---- */
+function d1mesh(x,y){ var x0=x+10,x1=x+230,yy=y+66;
+    L(x0,yy,x1,yy,{sw:1.5});
+    for(var e=0;e<=4;e++){var xx=x0+(x1-x0)*e/4; L(xx,yy-8,xx,yy+8,{sw:1.5}); C(xx,yy,3.4,INK);}
+    T(x+120,y+108,'IEN(a,e) = a + p·e',{a:'middle',s:11.5,m:1});
+    T(x+120,y+126,'a formula',{a:'middle',s:10.5,f:GREY}); }
+
+
+function d1id(x,y){ var x0=x+10,x1=x+230,yy=y+66;
+    L(x0,yy,x1,yy,{s:FAINT,sw:1.5});
+    for(var A=0;A<7;A++){var xx=x0+(x1-x0)*A/6;
+      if(A===6) C(xx,yy,4.2,'#fff',ACC); else C(xx,yy,3.4,INK);}
+    T(x+120,y+104,'one prescribed node',{a:'middle',s:10.5,f:GREY}); }
+
+
+function d1room(x,y){ GR(x+42,y+34,6,6,13,{f:'#fff'}); GR(x+132,y+34,1,6,13,{f:'#fff'});
+    T(x+120,y+126,'small and dense',{a:'middle',s:10.5,f:GREY}); }
+
+
+function d1elem(x,y){ var x0=x+18,x1=x+108,yy=y+52;
+    R(x0-6,yy-11,x1-x0+12,22,{r:4,f:AMB,o:.55});
+    L(x0,yy,x1,yy,{sw:1.5}); C(x0,yy,3.4,INK); C(x1,yy,3.4,INK);
+    AR(x+118,yy,x+150,yy,GREY);
+    var p0=x+160,p1=x+226;
+    L(p0,yy,p1,yy,{sw:1.5}); C(p0,yy,3.4,ACC); C(p1,yy,3.4,ACC);
+    T((p0+p1)/2,yy+22,'ξ ∈ [−1,1]',{a:'middle',s:10.5,f:ACC});
+    T(x+120,y+110,'one coordinate',{a:'middle',s:10.5,f:GREY}); }
+
+
+function d1quad(x,y){ var x0=x+30,x1=x+210,yy=y+48;
+    L(x0,yy,x1,yy,{sw:1.4});
+    for(var q=0;q<3;q++){var xx=x0+(x1-x0)*(q+0.5)/3;
+      S+='<path d="M'+(xx-4)+' '+(yy-4)+' L'+(xx+4)+' '+(yy+4)+' M'+(xx+4)+' '+(yy-4)+
+         ' L'+(xx-4)+' '+(yy+4)+'" stroke="'+ACC+'" stroke-width="1.8"/>';}
+    T(x+120,y+86,'n points',{a:'middle',s:11,f:GREY});
+    R(x+76,y+98,88,26,{r:4,f:PAPER,s:FAINT});
+    T(x+120,y+115,'J = dx/dξ',{a:'middle',s:12,m:1});
+    T(x+120,y+140,'a number',{a:'middle',s:10.5,f:GREY}); }
+
+
+function d1grad(x,y){ R(x+34,y+40,172,40,{r:5,f:PAPER,s:FAINT});
+    T(x+120,y+65,'dN/dx = (dN/dξ) / J',{a:'middle',s:12.5,m:1});
+    T(x+120,y+104,'divide by one number',{a:'middle',s:11,f:GREY});
+    T(x+120,y+128,'the chain rule, once',{a:'middle',s:10.5,f:GREY}); }
+
+
+function d1ke(x,y){ GR(x+70,y+44,2,2,24,{f:'#fff'}); GR(x+134,y+44,1,2,24,{f:'#fff'});
+    T(x+120,y+124,'(p+1) × (p+1)  —  2×2 at p = 1',{a:'middle',s:10.5,f:GREY}); }
+
+
+function d1neu(x,y){ var x0=x+30,x1=x+210,yy=y+58;
+    L(x0,yy,x1,yy,{sw:1.5});
+    for(var e=0;e<=3;e++) L(x0+(x1-x0)*e/3,yy-7,x0+(x1-x0)*e/3,yy+7,{sw:1.4});
+    C(x0,yy,5,ACC); AR(x0-26,yy,x0-7,yy,ACC);
+    T(x+120,y+102,'h enters at a single point',{a:'middle',s:11,f:GREY});
+    R(x+52,y+114,136,26,{r:4,f:PAPER,s:FAINT});
+    T(x+120,y+131,'F[0] += h',{a:'middle',s:12,m:1}); }
+
+
+function d1scat(x,y){ GR(x+36,y+30,2,2,17,{f:AMB}); AR(x+80,y+47,x+106,y+47,GREY);
+  GR(x+118,y+13,5,5,17,{f:'#fff'});
+  T(x+120,y+128,'IEN says which global function,',{a:'middle',s:11,f:GREY});
+  T(x+120,y+144,'ID says which equation',{a:'middle',s:11,f:GREY}); }
+function d1solve(x,y){ GR(x+44,y+26,5,5,13,{f:PAPER}); T(x+120,y+59,'=',{s:15,a:'middle'});
+  GR(x+132,y+26,1,5,13,{f:PAPER});
+  T(x+120,y+128,'a small dense system \u2014 numpy solves it',{a:'middle',s:11,f:GREY});
+  T(x+120,y+144,'without you thinking about it',{a:'middle',s:11,f:GREY}); }
+function d1draw(x,y){ var x0=x+22,x1=x+218,yb=y+100,d='';
+  for(var k=0;k<=40;k++){var t=k/40; d+=(k?' L':'M')+(x0+(x1-x0)*t)+' '+(yb-54*Math.sin(Math.PI*t));}
+  S+='<path d="'+d+'" stroke="'+ACC+'" stroke-width="1.9" fill="none"/>';
+  for(var A=0;A<=4;A++){var t2=A/4; C(x0+(x1-x0)*t2,yb-54*Math.sin(Math.PI*t2),2.6,INK);}
+  T(x+120,y+128,'a curve, sampled inside each element',{a:'middle',s:11,f:GREY}); }
+
+/* ---- the 2D counterpart, drawn in the detail panel (about 240 wide) ---- */
+function d2mesh(x,y){ var c=26,gx=x+58,gy=y+14;
+  GR(gx,gy,4,3,c,{f:'#fff'});
+  for(var i=0;i<=3;i++)for(var j=0;j<=4;j++) C(gx+j*c,gy+i*c,3,INK);
+  T(x+120,y+118,'IEN is read from the mesh file,',{a:'middle',s:11,f:GREY});
+  T(x+120,y+134,'not computed from a formula',{a:'middle',s:11,f:GREY}); }
+function d2id(x,y){ var c=26,gx=x+58,gy=y+14;
+  GR(gx,gy,4,3,c,{f:'#fff'});
+  for(var i=0;i<=3;i++)for(var j=0;j<=4;j++){
+    if(j===0) C(gx+j*c,gy+i*c,4.2,'#fff',ACC); else C(gx+j*c,gy+i*c,3,INK);}
+  L(gx,gy,gx,gy+3*c,{s:ACC,sw:2.6});
+  T(x+120,y+118,'a whole edge Γg is prescribed,',{a:'middle',s:11,f:GREY});
+  T(x+120,y+134,'not a single point',{a:'middle',s:11,f:GREY}); }
+function d2room(x,y){ GR(x+22,y+10,11,11,7.6,{f:'#fff'}); GR(x+118,y+10,1,11,7.6,{f:'#fff'});
+  for(var i=0;i<11;i++)for(var j=0;j<11;j++) if(Math.abs(i-j)<2||Math.abs(i-j)===3)
+    R(x+22+j*7.6+1,y+10+i*7.6+1,5.6,5.6,{f:BLUE,o:.35});
+  T(x+120,y+118,'the same array, far larger and',{a:'middle',s:11,f:GREY});
+  T(x+120,y+134,'almost all zero — so, sparse',{a:'middle',s:11,f:GREY}); }
+function d2elem(x,y){ var qx=x+22,qy=y+16;
+  S+='<path d="M'+qx+' '+(qy+14)+' L'+(qx+62)+' '+qy+' L'+(qx+78)+' '+(qy+60)+
+     ' L'+(qx+10)+' '+(qy+70)+'Z" fill="'+AMB+'" opacity=".55" stroke="'+INK+'" stroke-width="1.4"/>';
+  AR(x+110,qy+36,x+142,qy+36,GREY);
+  R(x+156,qy+8,62,62,{f:'#fff',s:ACC,sw:1.5});
+  T(x+187,qy+86,'(ξ,η) ∈ [−1,1]²',{a:'middle',s:10.5,f:ACC});
+  T(x+120,y+134,'a quadrilateral, possibly distorted',{a:'middle',s:11,f:GREY}); }
+function d2quad(x,y){ var c=46,gx=x+74,gy=y+8;
+  R(gx,gy,c*2,c*2,{f:'#fff',s:INK,sw:1.4});
+  for(var i=0;i<3;i++)for(var j=0;j<3;j++){
+    var xx=gx+c*2*(j+0.5)/3, yy=gy+c*2*(i+0.5)/3;
+    S+='<path d="M'+(xx-4)+' '+(yy-4)+' L'+(xx+4)+' '+(yy+4)+' M'+(xx+4)+' '+(yy-4)+
+       ' L'+(xx-4)+' '+(yy+4)+'" stroke="'+ACC+'" stroke-width="1.6"/>';}
+  R(x+58,y+108,124,28,{r:4,f:'#fffaf2',s:ACC});
+  T(x+120,y+127,'DF = ∂x/∂ξ   (2×2)',{a:'middle',s:12,m:1,f:ACC});
+  T(x+120,y+152,'n×n points; the Jacobian is a matrix',{a:'middle',s:10.5,f:GREY}); }
+function d2grad(x,y){ R(x+14,y+26,212,46,{r:5,f:'#fffaf2',s:ACC,sw:1.5});
+  T(x+120,y+55,'∇ₓN = DF⁻ᵀ ∇_ξ N',{a:'middle',s:14,m:1,f:ACC});
+  T(x+120,y+96,'invert a matrix, then transpose it,',{a:'middle',s:11,f:GREY});
+  T(x+120,y+112,'at every quadrature point',{a:'middle',s:11,f:GREY});
+  GR(x+88,y+124,2,2,16,{f:'#fff'}); }
+function d2ke(x,y){ GR(x+48,y+14,4,4,19,{f:'#fff'}); GR(x+136,y+14,1,4,19,{f:'#fff'});
+  T(x+120,y+118,'four nodes per quadrilateral,',{a:'middle',s:11,f:GREY});
+  T(x+120,y+134,'so 4×4 at degree 1',{a:'middle',s:11,f:GREY}); }
+function d2neu(x,y){ var c=30,gx=x+54,gy=y+16;
+  GR(gx,gy,4,3,c,{f:'#fff'});
+  L(gx,gy,gx+4*c,gy,{s:ACC,sw:3});
+  for(var k=0;k<4;k++){var xx=gx+4*c*(k+0.5)/4; AR(xx,gy-22,xx,gy-4,ACC);}
+  for(var e2=0;e2<4;e2++) for(var g=0;g<2;g++){
+    var xg=gx+e2*c+c*(g+0.5)/2;
+    S+='<path d="M'+(xg-3)+' '+(gy-3)+' L'+(xg+3)+' '+(gy+3)+' M'+(xg+3)+' '+(gy-3)+
+       ' L'+(xg-3)+' '+(gy+3)+'" stroke="'+GRN+'" stroke-width="1.5"/>';}
+  T(x+120,y+124,'a quadrature loop along each face,',{a:'middle',s:11,f:GRN,w:600});
+  T(x+120,y+140,'with its own arc-length Jacobian',{a:'middle',s:11,f:GREY});
+  T(x+120,y+156,'(which is not det DF)',{a:'middle',s:10.5,f:GREY}); }
+function d2scat(x,y){ GR(x+16,y+20,4,4,13,{f:AMB}); AR(x+76,y+46,x+100,y+46,GREY);
+  GR(x+112,y+6,8,8,13,{f:'#fff'});
+  T(x+120,y+128,'IEN says which global function,',{a:'middle',s:11,f:GREY});
+  T(x+120,y+144,'ID says which equation — unchanged',{a:'middle',s:11,f:GREY}); }
+function d2solve(x,y){ GR(x+30,y+16,8,8,11,{f:PAPER}); T(x+128,y+66,'=',{s:15,a:'middle'});
+  GR(x+140,y+16,1,8,11,{f:PAPER});
+  T(x+120,y+128,'the same solve, but sparse — a direct',{a:'middle',s:11,f:GREY});
+  T(x+120,y+144,'dense solve stops being affordable',{a:'middle',s:11,f:GREY}); }
+function d2draw(x,y){ var gx=x+46,gy=y+18,c=26;
+  for(var i=0;i<3;i++)for(var j=0;j<5;j++){
+    var v=Math.sin(Math.PI*(j+0.5)/5)*Math.sin(Math.PI*(i+0.5)/3);
+    R(gx+j*c,gy+i*c,c,c,{f:ACC,o:0.12+0.5*v,s:'#fff',sw:0.6});}
+  T(x+120,y+124,'a surface instead of a curve,',{a:'middle',s:11,f:GREY});
+  T(x+120,y+140,'drawn as contours or a colour map',{a:'middle',s:11,f:GREY}); }
+
+/* ---- the eleven steps.  v: 0 unchanged, 1 just bigger, 2 genuinely different ---- */
+var ST=[
+ {t:'The mesh and the data',        v:1, a:d1mesh,  b:d2mesh},
+ {t:'Decide what is unknown',       v:0, a:d1id,    b:d2id},
+ {t:'Make room for the big system', v:1, a:d1room,  b:d2room},
+ {t:'Look at one element',          v:1, a:d1elem,  b:d2elem},
+ {t:'One quadrature point',         v:2, a:d1quad,  b:d2quad},
+ {t:'Its spatial gradient',         v:2, a:d1grad,  b:d2grad},
+ {t:'The element matrix',           v:1, a:d1ke,    b:d2ke},
+ {t:'Boundary terms',               v:2, a:d1neu,   b:d2neu},
+ {t:'Add it into the big system',   v:0, a:d1scat,  b:d2scat},
+ {t:'Solve',                        v:1, a:d1solve, b:d2solve},
+ {t:'Evaluate and draw it',         v:1, a:d1draw,  b:d2draw}
+];
+var VERD=[{t:'UNCHANGED',f:'#eef3ee',s:'#cfe0cf',i:'#2f7d4f'},
+          {t:'JUST BIGGER',f:'#f1f3f6',s:'#dfe4ea',i:'#6b7684'},
+          {t:'GENUINELY DIFFERENT',f:'#fbeeec',s:'#f0d4d0',i:'#b8322a'}];
+
+var LX=12, LW=256, BX=284, BW=312, RX=612, RW=256;
+var BH=56, GAP=20, CX=BX+BW/2, PH=292;
+
+function loopFrame(x,y,w,h,label,col){ col=col||GREY;
+  R(x,y,w,h,{r:9,s:col,sw:1.2,d:'6 4'});
+  var lw=label.length*5.6+16;
+  R(x+16,y-9,lw,18,{r:4,f:'#fff',s:col,sw:1});
+  T(x+16+lw/2,y+3.5,label,{s:9,a:'middle',f:col,w:700,ls:.5}); }
+
+function panel(x,y,title,tag,drawFn,hot){
+  R(x,y,LW,PH,{r:9,f:'#fff',s:hot?ACC:FAINT,sw:hot?1.5:1.2});
+  R(x,y,LW,34,{r:9,f:hot?'#fffaf2':PAPER}); R(x,y+26,LW,8,{f:hot?'#fffaf2':PAPER});
+  L(x,y+34,x+LW,y+34,{s:hot?'#f0d4d0':FAINT,sw:1});
+  T(x+12,y+22,title,{s:11,w:700,ls:.8,f:hot?ACC:GREY});
+  drawFn(x+(LW-240)/2,y+48);
+}
+
+function draw(){
+  S=''; var ys=[], y=48;
+  T(LX+2,26,'ONE DIMENSION',{s:10.5,w:700,ls:1.4,f:GREY});
+  T(BX+2,26,'THE SHARED INFRASTRUCTURE',{s:10.5,w:700,ls:1.4,f:INK});
+  T(RX+2,26,'TWO OR THREE DIMENSIONS',{s:10.5,w:700,ls:1.4,f:GREY});
+
+  for(var i=0;i<ST.length;i++){
+    if(i===3) y+=26;
+    if(i===4) y+=24;
+    ys.push(y); y+=BH+GAP;
+    if(i===5) y+=16;
+    if(i===8) y+=18;
+  }
+  var totalH=Math.max(y+10, 120+PH);
+
+  loopFrame(BX-8,ys[3]-26,BW+16,(ys[8]+BH+12)-(ys[3]-26),'FOR EACH ELEMENT',GREY);
+  loopFrame(BX+2,ys[4]-22,BW-4,(ys[5]+BH+10)-(ys[4]-22),'FOR EACH QUADRATURE POINT',ACC);
+
+  for(var i2=0;i2<ST.length;i2++){
+    var st=ST[i2], on=(i2===SEL), vd=VERD[st.v], by=ys[i2];
+    R(BX,by,BW,BH,{r:7,f:on?'#fffaf2':'#fff',s:on?ACC:INK,sw:on?2:1.2});
+    R(BX,by,4.5,BH,{r:2,f:vd.i,o:on?1:.4});
+    C(BX+26,by+BH/2,11.5,on?'#fff':PAPER,on?ACC:FAINT);
+    T(BX+26,by+BH/2+4,String(i2+1),{a:'middle',s:11.5,w:700,f:on?ACC:GREY});
+    T(BX+48,by+(st.v?24:33),st.t,{s:12.5,w:on?700:600});
+    if(st.v) T(BX+48,by+40,vd.t,{s:8.5,w:700,ls:.5,f:vd.i});
+    if(i2<ST.length-1) down(CX,by+BH,ys[i2+1]);
+    S+='<rect class="hit" data-i="'+i2+'" x="'+BX+'" y="'+by+'" width="'+BW+
+       '" height="'+BH+'" fill="transparent"/>';
+  }
+
+  var sel=ST[SEL], vd2=VERD[sel.v], hot=(sel.v===2);
+  var py=Math.max(44,Math.min(ys[SEL]+BH/2-PH/2, totalH-PH-14));
+  L(LX+LW,py+PH/2,BX,ys[SEL]+BH/2,{s:hot?ACC:GREY,sw:1.2,d:'4 3'});
+  L(BX+BW,ys[SEL]+BH/2,RX,py+PH/2,{s:hot?ACC:GREY,sw:1.2,d:'4 3'});
+  panel(LX,py,'1D — '+sel.t.toUpperCase(),vd2,sel.a,false);
+  panel(RX,py,(hot?'2D / 3D — ':'2D / 3D — ')+sel.t.toUpperCase(),vd2,sel.b,hot);
+
+  document.getElementById('f19').setAttribute('viewBox','0 0 880 '+totalH);
+  document.getElementById('f19').innerHTML=S;
+  document.getElementById('f19cap').innerHTML =
+    '<b>Step '+(SEL+1)+', '+esc(sel.t)+' — '+vd2.t.toLowerCase()+'.</b> '+
+    (sel.v===2 ? 'One of the three steps that change in kind. Every box above and below it is the code you already wrote.'
+     : sel.v===1 ? 'Nothing new to learn here — the same operation on larger arrays.'
+                 : 'Identical in both. The bookkeeping does not care how many dimensions you are in.');
+}
+
+document.getElementById('f19').addEventListener('click',function(ev){
+  var h=ev.target.closest('.hit'); if(!h) return;
+  SEL=+h.dataset.i; draw();
+});
+draw();
+})();
+</script>
+```
+
+## What the picture is telling you
+
+Eight of the eleven steps are either identical or simply larger. You already know how to
+write them. Three are not, and they are worth naming before you meet them in code.
+
+**The Jacobian, and spatial gradients.** These two go together. In one dimension the
+Jacobian is a single number and the chain rule is a division: $dN/dx$ is
+$(dN/d\xi)$ over the Jacobian. In two dimensions it becomes
+$\nabla_x N = (DF)^{-T}\,\nabla_\xi N$ --- you invert a matrix and transpose it, at every
+quadrature point of every element. Using $DF^{-1}$ instead of $DF^{-T}$ is the single most
+common bug in a first 2D code, and on a mesh of rectangles it will not show up, because
+$DF$ is then diagonal and the two agree. It only breaks once an element is distorted.
+
+**Neumann boundary terms.** In one dimension the boundary of the domain is two points, and
+$h$ enters as one number added to one entry of $\mathbf{F}$. There is no integral. In two
+dimensions the boundary is a curve, and $\int_{\Gamma_h} N_A\,h\;d\Gamma$ is a real
+integral that needs its own quadrature loop along each boundary face, with its own
+arc-length Jacobian --- which is *not* $\det DF$. That machinery has no one-dimensional
+counterpart at all, which is why it gets a class of its own.
