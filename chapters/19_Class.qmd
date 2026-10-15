@@ -155,7 +155,7 @@ function d2id(x,y){ var c=26,gx=x+58,gy=y+14;
   for(var i=0;i<=3;i++)for(var j=0;j<=4;j++){
     if(j===0) C(gx+j*c,gy+i*c,4.2,'#fff',ACC); else C(gx+j*c,gy+i*c,3,INK);}
   L(gx,gy,gx,gy+3*c,{s:ACC,sw:2.6});
-  T(x+120,y+118,'a whole edge Γg is prescribed,',{a:'middle',s:11,f:GREY});
+  T(x+120,y+118,'a set of mesh edges Γg is prescribed,',{a:'middle',s:11,f:GREY});
   T(x+120,y+134,'not a single point',{a:'middle',s:11,f:GREY}); }
 function d2room(x,y){ GR(x+22,y+10,11,11,7.6,{f:'#fff'}); GR(x+118,y+10,1,11,7.6,{f:'#fff'});
   for(var i=0;i<11;i++)for(var j=0;j<11;j++) if(Math.abs(i-j)<2||Math.abs(i-j)===3)

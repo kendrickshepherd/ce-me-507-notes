@@ -1,0 +1,695 @@
+---
+title: "Class 20: Quadrature in 2D, and Integrating Over a Face"
+subtitle: "The tensor product, and why a boundary integral uses a different Jacobian"
+format:
+  html:
+    page-layout: full
+    toc: true
+---
+
+Two things stand between the one-dimensional code and a working multidimensional one, and
+both are about integration. The first is easy and is mostly bookkeeping: a quadrature rule
+on the parent square is built from the rule on the parent interval, by multiplying. The
+second is not bookkeeping at all: integrating over the *boundary* of an element needs a
+different Jacobian from the one you use inside it.
+
+## The 2D rule is the 1D rule, twice
+
+A Gauss rule on $[-1,1]$ is a list of points $\xi_g$ and weights $w_g$ chosen so that
+
+$$ \int_{-1}^{1} f(\xi)\,d\xi \;\approx\; \sum_{g} w_g\, f(\xi_g) $$
+
+is exact whenever $f$ is a polynomial of degree $2n-1$ or less. On the parent square we
+want the same thing in two variables, and because the square is a product of two intervals,
+we get it for free:
+
+$$
+\int_{-1}^{1}\!\!\int_{-1}^{1} f(\xi,\eta)\;d\xi\,d\eta
+\;\approx\; \sum_{i}\sum_{j} \underbrace{w_i\,w_j}_{\text{one weight}}\;
+f\big(\underbrace{\xi_i,\;\eta_j}_{\text{one point}}\big) .
+$$
+
+Every 2D point is a pair of 1D points, and its weight is the **product** of the two 1D
+weights. Nothing is re-derived. Move the sliders and watch the grid come from the two
+rules on the edges.
+
+```{=html}
+<style>
+.qw{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;--acc:#b8322a;--blue:#2b5fa8;
+    --grn:#2f7d4f;max-width:900px;margin:0 auto;color:var(--ink)}
+.qw .bar{display:flex;flex-wrap:wrap;gap:9px 20px;align-items:center;padding:11px 14px;
+  background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.qw .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey)}
+.qw .seg{display:inline-flex;border:1px solid var(--faint);border-radius:6px;overflow:hidden;background:#fff}
+.qw .seg button{border:0;background:#fff;padding:5px 11px;font:inherit;font-size:13px;cursor:pointer;
+  color:var(--grey);border-right:1px solid var(--faint)}
+.qw .seg button:last-child{border-right:0}
+.qw .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.qw input[type=range]{width:120px;vertical-align:middle}
+.qw .val{font:600 13px ui-monospace,Menlo,monospace;color:var(--ink);min-width:1.6em;display:inline-block}
+.qw svg{display:block;width:100%;height:auto;border:1px solid var(--faint);border-radius:8px;background:#fff}
+.qw .cap{font-size:13px;color:var(--grey);line-height:1.55;margin:9px 2px 22px}
+.qw .cap b{color:var(--ink)}
+.qw .hit{cursor:pointer}
+</style>
+
+<div class="qw">
+  <div class="bar">
+    <b>POINTS IN &xi;</b> <input type="range" id="qnx" min="1" max="5" value="3"><span class="val" id="qnxv">3</span>
+    <b>POINTS IN &eta;</b> <input type="range" id="qny" min="1" max="5" value="2"><span class="val" id="qnyv">2</span>
+    <label style="font-size:13px;color:#6b7684"><input type="checkbox" id="qwt" checked> size the dots by weight</label>
+  </div>
+  <svg id="q20" viewBox="0 0 880 470" role="img"
+       aria-label="A 2D Gauss rule on the parent square, built as the tensor product of two 1D rules"></svg>
+  <div class="cap" id="q20cap"></div>
+</div>
+
+<script>
+(function(){
+var NX=3, NY=2, SZ=true, SELI=-1, SELJ=-1, S='';
+var INK='#18202b',GREY='#6b7684',FAINT='#dfe4ea',ACC='#b8322a',BLUE='#2b5fa8',
+    PAPER='#f8f9fb',GRN='#2f7d4f';
+/* Gauss-Legendre on [-1,1], n = 1..5 */
+var GL={1:{x:[0],w:[2]},
+ 2:{x:[-0.5773502691896257,0.5773502691896257],w:[1,1]},
+ 3:{x:[-0.7745966692414834,0,0.7745966692414834],
+    w:[0.5555555555555556,0.8888888888888888,0.5555555555555556]},
+ 4:{x:[-0.8611363115940526,-0.3399810435848563,0.3399810435848563,0.8611363115940526],
+    w:[0.3478548451374538,0.6521451548625461,0.6521451548625461,0.3478548451374538]},
+ 5:{x:[-0.906179845938664,-0.5384693101056831,0,0.5384693101056831,0.906179845938664],
+    w:[0.2369268850561891,0.4786286704993665,0.5688888888888889,0.4786286704993665,0.2369268850561891]}};
+
+function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function R(x,y,w,h,o){o=o||{};S+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+(o.r||0)+
+  '" fill="'+(o.f||'none')+'" stroke="'+(o.s||'none')+'" stroke-width="'+(o.sw||1)+
+  '" opacity="'+(o.o===undefined?1:o.o)+'"'+(o.d?' stroke-dasharray="'+o.d+'"':'')+'/>';}
+function T(x,y,t,o){o=o||{};S+='<text x="'+x+'" y="'+y+'" font-size="'+(o.s||12)+'" fill="'+(o.f||INK)+
+  '" text-anchor="'+(o.a||'start')+'" font-weight="'+(o.w||400)+
+  '" font-family="'+(o.m?'ui-monospace,Menlo,monospace':'system-ui,sans-serif')+'">'+esc(t)+'</text>';}
+function L(x1,y1,x2,y2,o){o=o||{};S+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+
+  '" stroke="'+(o.s||INK)+'" stroke-width="'+(o.sw||1.2)+'"'+(o.d?' stroke-dasharray="'+o.d+'"':'')+'/>';}
+function C(x,y,r,f,st,sw){S+='<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+f+'"'+
+  (st?' stroke="'+st+'" stroke-width="'+(sw||1.5)+'"':'')+'/>';}
+
+var X0=236,X1=516,Y0=58,Y1=338;          /* the parent square */
+function sx(xi){ return X0+(xi+1)/2*(X1-X0); }
+function sy(et){ return Y1-(et+1)/2*(Y1-Y0); }
+
+function draw(){
+  S='';
+  var gx=GL[NX], gy=GL[NY], i, j;
+  var wmax=0; for(i=0;i<NX;i++)for(j=0;j<NY;j++) wmax=Math.max(wmax,gx.w[i]*gy.w[j]);
+
+  T(X0,30,'THE PARENT SQUARE',{s:10.5,w:700,f:GREY});
+  T(596,30,'WHERE EACH POINT COMES FROM',{s:10.5,w:700,f:GREY});
+
+  /* the square */
+  R(X0,Y0,X1-X0,Y1-Y0,{f:'#fff',s:INK,sw:1.4});
+  L(sx(0),Y0,sx(0),Y1,{s:FAINT,d:'3 3'}); L(X0,sy(0),X1,sy(0),{s:FAINT,d:'3 3'});
+
+  /* the 1D rule in xi, drawn under the square */
+  var AY=382;
+  L(X0,AY,X1,AY,{sw:1.4});
+  T(X0-10,AY+4,'−1',{a:'end',s:10,f:GREY}); T(X1+6,AY+4,'+1',{s:10,f:GREY});
+  T((X0+X1)/2,AY+40,'the 1D rule in ξ  —  '+NX+' point'+(NX>1?'s':''),{a:'middle',s:11,f:BLUE,w:600});
+  for(i=0;i<NX;i++){
+    var px=sx(gx.x[i]), bh=gx.w[i]/2*26;
+    R(px-5,AY-bh,10,bh,{f:BLUE,o:.3});
+    C(px,AY,3.6,BLUE);
+    L(px,AY,px,Y1,{s:BLUE,sw:.8,d:'2 3',o:.45});
+    T(px,AY+18,'w'+(i+1),{a:'middle',s:9.5,f:BLUE,m:1});
+  }
+  /* the 1D rule in eta, drawn left of the square */
+  var AX=196;
+  L(AX,Y0,AX,Y1,{sw:1.4});
+  T(AX,Y0-8,'+1',{a:'middle',s:10,f:GREY}); T(AX,Y1+14,'−1',{a:'middle',s:10,f:GREY});
+  for(j=0;j<NY;j++){
+    var py=sy(gy.x[j]), bw=gy.w[j]/2*26;
+    R(AX,py-5,bw,10,{f:GRN,o:.3});
+    C(AX,py,3.6,GRN);
+    L(AX,py,X0,py,{s:GRN,sw:.8,d:'2 3',o:.45});
+    T(AX-10,py+3.5,'w'+(j+1),{a:'end',s:9.5,f:GRN,m:1});
+  }
+  S+='<text transform="translate(150,'+((Y0+Y1)/2)+') rotate(-90)" font-size="11" fill="'+GRN+
+     '" font-weight="600" text-anchor="middle" font-family="system-ui,sans-serif">'+
+     'the 1D rule in η  —  '+NY+' point'+(NY>1?'s':'')+'</text>';
+
+  /* the tensor-product points */
+  for(i=0;i<NX;i++)for(j=0;j<NY;j++){
+    var w=gx.w[i]*gy.w[j], on=(i===SELI&&j===SELJ);
+    var r=SZ? (4+9*Math.sqrt(w/wmax)) : 6;
+    C(sx(gx.x[i]),sy(gy.x[j]),r,on?ACC:'#b8322a',on?INK:'none',2);
+    if(on) C(sx(gx.x[i]),sy(gy.x[j]),r+5,'none',INK,1.5);
+    S+='<rect class="hit" data-i="'+i+'" data-j="'+j+'" x="'+(sx(gx.x[i])-13)+'" y="'+
+       (sy(gy.x[j])-13)+'" width="26" height="26" fill="transparent"/>';
+  }
+  T((X0+X1)/2,Y0-10,NX+' × '+NY+' = '+(NX*NY)+' points',{a:'middle',s:12,w:700});
+
+  /* the readout */
+  var PX=572,PW=294;
+  R(PX,Y0-16,PW,300,{r:9,f:'#fff',s:FAINT,sw:1.2});
+  var ii=(SELI<0?Math.floor(NX/2):SELI), jj=(SELJ<0?Math.floor(NY/2):SELJ);
+  var yy=Y0+14;
+  T(PX+16,yy,'Pick any dot. It is one 1D point in ξ',{s:12,f:GREY}); yy+=17;
+  T(PX+16,yy,'paired with one 1D point in η.',{s:12,f:GREY}); yy+=30;
+  R(PX+14,yy-16,PW-28,74,{r:6,f:PAPER,s:FAINT});
+  T(PX+26,yy,'ξ'+(ii+1)+' = '+gx.x[ii].toFixed(6),{s:11.5,m:1,f:BLUE}); yy+=17;
+  T(PX+26,yy,'η'+(jj+1)+' = '+gy.x[jj].toFixed(6),{s:11.5,m:1,f:GRN}); yy+=17;
+  T(PX+26,yy,'w'+(ii+1)+' × w'+(jj+1)+' = '+gx.w[ii].toFixed(4)+' × '+gy.w[jj].toFixed(4),{s:11.5,m:1}); yy+=17;
+  T(PX+26,yy,'            = '+(gx.w[ii]*gy.w[jj]).toFixed(6),{s:11.5,m:1,w:700,f:ACC}); yy+=36;
+
+  var sw=0; for(i=0;i<NX;i++)for(j=0;j<NY;j++) sw+=gx.w[i]*gy.w[j];
+  T(PX+16,yy,'All the weights add to the area',{s:12,f:GREY}); yy+=17;
+  T(PX+16,yy,'of the square:',{s:12,f:GREY}); yy+=20;
+  T(PX+26,yy,'Σ wᵢwⱼ = '+sw.toFixed(10)+'   (exactly 4)',{s:11.5,m:1,f:(Math.abs(sw-4)<1e-12?GRN:ACC)}); yy+=34;
+
+  T(PX+16,yy,'Exact for polynomials up to',{s:12,f:GREY}); yy+=18;
+  T(PX+26,yy,'degree '+(2*NX-1)+' in ξ  and  degree '+(2*NY-1)+' in η',{s:11.5,m:1,w:600}); yy+=26;
+  /* live exactness check on xi^a, integrated over the square */
+  /* use EVEN powers: an odd power integrates to zero by symmetry whatever the rule does */
+  var a=2*NX-2, ok1=quadMono(a,0), bad=quadMono(a+2,0);
+  T(PX+16,yy,'\u222b \u03be^'+a+'   rule '+ok1[0].toFixed(6)+'   exact '+ok1[1].toFixed(6),
+    {s:10.5,m:1,f:(Math.abs(ok1[0]-ok1[1])<1e-10?GRN:ACC)}); yy+=15;
+  T(PX+16,yy,'\u222b \u03be^'+(a+2)+'  rule '+bad[0].toFixed(6)+'   exact '+bad[1].toFixed(6),
+    {s:10.5,m:1,f:(Math.abs(bad[0]-bad[1])<1e-10?GRN:ACC)}); yy+=16;
+  T(PX+16,yy,'odd powers vanish by symmetry, so the',{s:10,f:GREY}); yy+=13;
+  T(PX+16,yy,'even ones are the honest test',{s:10,f:GREY});
+
+  document.getElementById('q20').innerHTML=S;
+  document.getElementById('q20cap').innerHTML=
+    '<b>'+NX+' × '+NY+' = '+(NX*NY)+' points.</b> The dots are sized by their weight, which is why the '+
+    'ones near the middle are bigger: both of their 1D weights are large. Nothing here is special to two '+
+    'dimensions — a 3D rule is the same construction with a third factor, and the point count becomes '+
+    NX+'×'+NY+'×n. That is also the catch: cost grows like nᵈ, so people do not use high-order rules '+
+    'in 3D without a reason.';
+}
+function quadMono(a,b){           /* rule value and exact value of the monomial over the square */
+  var gx=GL[NX],gy=GL[NY],s=0,i,j;
+  for(i=0;i<NX;i++)for(j=0;j<NY;j++) s+=gx.w[i]*gy.w[j]*Math.pow(gx.x[i],a)*Math.pow(gy.x[j],b);
+  var ea=(a%2)?0:2/(a+1), eb=(b%2)?0:2/(b+1);
+  return [s,ea*eb];
+}
+document.getElementById('q20').addEventListener('click',function(ev){
+  var h=ev.target.closest('.hit'); if(!h) return;
+  SELI=+h.dataset.i; SELJ=+h.dataset.j; draw(); });
+document.getElementById('qnx').addEventListener('input',function(){
+  NX=+this.value; document.getElementById('qnxv').textContent=NX; SELI=-1;SELJ=-1; draw(); });
+document.getElementById('qny').addEventListener('input',function(){
+  NY=+this.value; document.getElementById('qnyv').textContent=NY; SELI=-1;SELJ=-1; draw(); });
+document.getElementById('qwt').addEventListener('change',function(){ SZ=this.checked; draw(); });
+draw();
+})();
+</script>
+```
+
+## Integrating over a face
+
+Everything so far has been about integrating over the *inside* of an element, where the
+Jacobian is $\det(DF)$ and it converts $d\xi\,d\eta$ into $d\Omega$. A Neumann term is not
+that integral. It runs over one **face** (or more faces) of the element,
+
+$$ \int_{\Gamma_h^e} N_A\, h \; d\Gamma , $$
+
+and a face is a curve, not an area. This requires two additional changes.
+
+**A face is a one-dimensional parent domain.** Fix one parent coordinate at $\pm 1$ and the
+other one still runs over $[-1,1]$. So a face integral is a *1D* quadrature operation.
+
+**You only use part of the deformation gradient.** Along a face where $\eta$ is held fixed,
+the curve is traced only by $\xi$, so its tangent is
+
+$$ \underline{t} = \frac{\partial \underline{x}}{\partial \xi}
+    $$
+
+The thing that converts $d\xi$ into arc length $d\Gamma$ is the length of that tangent,
+
+$$ \boxed{\;d\Gamma = \left\| \underline{t} \right\| d\xi \;} $$
+
+which is **not** $\det(DF)$. 
+
+Similarly, along a face where $\xi$ is held fixed, the curve is traced only by $\eta$, so its tangent is
+
+$$ \underline{t} = \frac{\partial \underline{x}}{\partial \eta}
+    $$
+
+and the arclength is
+
+$$ \boxed{\;d\Gamma = \left\| \underline{t} \right\| d\eta. \;} $$
+
+
+### Where that length comes from
+
+The boxed formula is not a definition. It falls out of asking one question: *if I take a
+small step along the face in the parent domain, how far have I actually moved in the
+physical element?*
+
+Hold $\eta$ fixed and step from $\xi$ to $\xi + \Delta\xi$. A Taylor expansion of the
+mapping gives
+
+$$
+\underline{x}(\xi + \Delta\xi,\, \eta)
+\;\approx\; \underline{x}(\xi,\eta) \;+\; \frac{\partial \underline{x}}{\partial \xi}\,\Delta\xi
+\;=\; \underline{x} + \underline{t}\,\Delta\xi ,
+$$
+
+so the physical displacement is the vector $\underline{t}\,\Delta\xi$. Its **length** is
+$\|\underline{t}\|\,\Delta\xi$. That is the entire derivation: $\|\underline{t}\|$ is how
+much physical boundary you get per unit of parent boundary, at that point on the face.
+
+The figure below makes the point by taking the *same* parent step on two different faces.
+
+```{=html}
+<div class="qw">
+  <svg id="fig20a" viewBox="0 0 880 320" role="img"
+       aria-label="The same step in the parent domain produces different physical lengths on the inner and outer faces"></svg>
+  <div class="cap">
+  <b>The same &Delta;&eta; on two faces.</b> On the left both marked intervals are identical:
+  the parent domain has no idea which face is which. On the right the inner one has become a
+  short piece of arc and the outer one a piece twice as long, because
+  &#8741;<i>t</i>&#8741; on the outer face is exactly twice its value on the inner one (the figure prints both). That single number is the
+  whole difference, and it is why the outer arc is twice the length of the inner one.
+  </div>
+</div>
+```
+
+Three consequences worth stating out loud:
+
+- $\|\underline{t}\|$ is a **local stretch factor**. 
+- It **varies along the face** whenever the mapping is not affine. You cannot pull it out
+  of the integral the way you can a constant element length in 1D.
+- Only the length matters. $\underline{t}$ also tells you which way the face runs, but the
+  direction cancels out of $d\Gamma$; it comes back later, when you need the outward
+  **normal** for a flux.
+
+### Why it is not $\det(DF)$
+
+$\det(DF)$ is the answer to a different question. It asks: given a small *rectangle*
+$\Delta\xi \times \Delta\eta$ in the parent domain, what is the **area** of its image? That
+image is a parallelogram spanned by *both* columns of $DF$, and its area is
+$|\det(DF)|\,\Delta\xi\,\Delta\eta$.
+
+On a face you have no second direction to span anything with. You are not carrying a
+rectangle across the mapping, you are carrying a segment. One column, not two; a length,
+not an area.
+
+```{=html}
+<div class="qw">
+  <svg id="fig20b" viewBox="0 0 880 320" role="img"
+       aria-label="A patch maps to a parallelogram whose area is det DF; a face segment maps to a chord whose length is the norm of one column"></svg>
+  <div class="cap">
+  <b>Two different objects.</b> Inside the element, both columns of <i>DF</i> are in play and
+  they span a parallelogram &mdash; that area is what <i>det DF</i> measures. On the face only
+  one column survives, and what you need is the length of that single arrow. They are not the
+  same quantity and they do not even have the same units: one is a length per unit parent
+  length, the other an area per unit parent area.
+  </div>
+</div>
+
+<script>
+(function(){
+var INK='#18202b',GREY='#6b7684',FAINT='#dfe4ea',ACC='#b8322a',BLUE='#2b5fa8',
+    GRN='#2f7d4f',VIO='#6d28d9',S='';
+var P=[-1,0,1],CP=[];
+(function(){for(var b=0;b<3;b++){var th=(Math.PI/2)*(P[b]+1)/2;
+  for(var a=0;a<3;a++){var r=1+(P[a]+1)/2; CP.push([r*Math.cos(th),r*Math.sin(th)]);}}})();
+function lag(i,s){var v=1;for(var k=0;k<3;k++)if(k!==i)v*=(s-P[k])/(P[i]-P[k]);return v;}
+function dlag(i,s){var t=0;for(var k=0;k<3;k++){if(k===i)continue;var pr=1/(P[i]-P[k]);
+  for(var m=0;m<3;m++)if(m!==i&&m!==k)pr*=(s-P[m])/(P[i]-P[m]);t+=pr;}return t;}
+function mapPt(xi,et){var x=0,y=0;for(var A=0;A<9;A++){var a=A%3,b=Math.floor(A/3),
+  w=lag(a,xi)*lag(b,et);x+=CP[A][0]*w;y+=CP[A][1]*w;}return [x,y];}
+function dXi(xi,et){var x=0,y=0;for(var A=0;A<9;A++){var a=A%3,b=Math.floor(A/3),
+  w=dlag(a,xi)*lag(b,et);x+=CP[A][0]*w;y+=CP[A][1]*w;}return [x,y];}
+function dEt(xi,et){var x=0,y=0;for(var A=0;A<9;A++){var a=A%3,b=Math.floor(A/3),
+  w=lag(a,xi)*dlag(b,et);x+=CP[A][0]*w;y+=CP[A][1]*w;}return [x,y];}
+
+function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function R(x,y,w,h,o){o=o||{};S+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+(o.r||0)+
+  '" fill="'+(o.f||'none')+'" stroke="'+(o.s||'none')+'" stroke-width="'+(o.sw||1)+
+  '" opacity="'+(o.o===undefined?1:o.o)+'"'+(o.d?' stroke-dasharray="'+o.d+'"':'')+'/>';}
+function T(x,y,t,o){o=o||{};S+='<text x="'+x+'" y="'+y+'" font-size="'+(o.s||12)+'" fill="'+(o.f||INK)+
+  '" text-anchor="'+(o.a||'start')+'" font-weight="'+(o.w||400)+
+  '" font-family="'+(o.m?'ui-monospace,Menlo,monospace':'system-ui,sans-serif')+'">'+esc(t)+'</text>';}
+function L(x1,y1,x2,y2,o){o=o||{};S+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+
+  '" stroke="'+(o.s||INK)+'" stroke-width="'+(o.sw||1.2)+'"'+(o.d?' stroke-dasharray="'+o.d+'"':'')+'/>';}
+function C(x,y,r,f,st,sw){S+='<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+f+'"'+
+  (st?' stroke="'+st+'" stroke-width="'+(sw||1.5)+'"':'')+'/>';}
+function AR(x1,y1,x2,y2,col,sw){col=col||INK;
+  var dx=x2-x1,dy=y2-y1,m=Math.sqrt(dx*dx+dy*dy)||1,ux=dx/m,uy=dy/m;
+  L(x1,y1,x2-ux*4,y2-uy*4,{s:col,sw:sw||2});
+  S+='<path d="M'+x2+' '+y2+' L'+(x2-ux*8-uy*3.6)+' '+(y2-uy*8+ux*3.6)+
+     ' L'+(x2-ux*8+uy*3.6)+' '+(y2-uy*8-ux*3.6)+'Z" fill="'+col+'"/>';}
+
+var AX0=80,AX1=250,AY0=66,AY1=236;
+function px(xi){return AX0+(xi+1)/2*(AX1-AX0);} function py(et){return AY1-(et+1)/2*(AY1-AY0);}
+var BX0=430,BX1=700,LO=-0.2,HI=2.2,BY1=300;
+function qx(x){return BX0+(x-LO)/(HI-LO)*(BX1-BX0);} function qy(y){return BY1-(y-LO)/(HI-LO)*(BX1-BX0);}
+
+function elementOutline(){
+  var d='',k,q;
+  for(k=0;k<=36;k++){q=mapPt(-1+2*k/36,-1); d+=(k?' L':'M')+qx(q[0])+' '+qy(q[1]);}
+  for(k=0;k<=36;k++){q=mapPt(1,-1+2*k/36); d+=' L'+qx(q[0])+' '+qy(q[1]);}
+  for(k=36;k>=0;k--){q=mapPt(-1+2*k/36,1); d+=' L'+qx(q[0])+' '+qy(q[1]);}
+  for(k=36;k>=0;k--){q=mapPt(-1,-1+2*k/36); d+=' L'+qx(q[0])+' '+qy(q[1]);}
+  S+='<path d="'+d+'Z" fill="#eef3f8" stroke="'+INK+'" stroke-width="1.3"/>';
+}
+function arcPiece(xif,e0,e1,col,wd){
+  var d='',k;
+  for(k=0;k<=20;k++){var q=mapPt(xif,e0+(e1-e0)*k/20); d+=(k?' L':'M')+qx(q[0])+' '+qy(q[1]);}
+  S+='<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="'+wd+'" stroke-linecap="round"/>';
+}
+
+/* ---------------- figure A ---------------- */
+(function(){
+  S='';
+  var E0=-0.25, E1=0.25;    /* the same parent interval on both faces */
+  T(AX0,42,'PARENT SQUARE',{s:10.5,w:700,f:GREY});
+  T(BX0,42,'THE MAPPED ELEMENT',{s:10.5,w:700,f:GREY});
+  R(AX0,AY0,AX1-AX0,AY1-AY0,{f:'#fff',s:INK,sw:1.3});
+  /* the two faces */
+  L(px(-1),py(-1),px(-1),py(1),{s:GRN,sw:3});
+  L(px(1),py(-1),px(1),py(1),{s:VIO,sw:3});
+  /* the identical marked intervals */
+  L(px(-1),py(E0),px(-1),py(E1),{s:ACC,sw:7});
+  L(px(1),py(E0),px(1),py(E1),{s:ACC,sw:7});
+  T(px(-1)-10,(py(E0)+py(E1))/2+4,'Δη',{a:'end',s:11,f:ACC,w:700});
+  T(px(1)+10,(py(E0)+py(E1))/2+4,'Δη',{s:11,f:ACC,w:700});
+  T(px(-1)-10,py(1)-8,'ξ = −1',{a:'end',s:10.5,f:GRN,w:600});
+  T(px(1)+10,py(1)-8,'ξ = +1',{s:10.5,f:VIO,w:600});
+  T((AX0+AX1)/2,AY1+22,'identical intervals',{a:'middle',s:11,f:GREY});
+  AR(AX1+34,(AY0+AY1)/2,AX1+96,(AY0+AY1)/2,GREY,1.6);
+  T(AX1+65,(AY0+AY1)/2-10,'the map',{a:'middle',s:10.5,f:GREY});
+
+  elementOutline();
+  arcPiece(-1,-1,1,GRN,2.2); arcPiece(1,-1,1,VIO,2.2);
+  arcPiece(-1,E0,E1,ACC,6);  arcPiece(1,E0,E1,ACC,6);
+  /* tangents, drawn to true relative scale */
+  var SC=28;
+  var pi=mapPt(-1,0), ti=dEt(-1,0), ni=Math.sqrt(ti[0]*ti[0]+ti[1]*ti[1]);
+  var po=mapPt(1,0),  to=dEt(1,0),  no=Math.sqrt(to[0]*to[0]+to[1]*to[1]);
+  AR(qx(pi[0]),qy(pi[1]),qx(pi[0])+ti[0]*SC/14,qy(pi[1])-ti[1]*SC/14,GRN,2);
+  AR(qx(po[0]),qy(po[1]),qx(po[0])+to[0]*SC/14,qy(po[1])-to[1]*SC/14,VIO,2);
+  T(qx(pi[0])-6,qy(pi[1])-12,'‖t‖ ≈ '+ni.toFixed(2),{a:'end',s:11,f:GRN,w:700,m:1});
+  T(qx(po[0])+14,qy(po[1])-14,'‖t‖ ≈ '+no.toFixed(2),{s:11,f:VIO,w:700,m:1});
+  T(BX0,BY1+14,'same Δη — but the outer piece is twice as long',{s:11,f:ACC,w:600});
+  document.getElementById('fig20a').innerHTML=S;
+})();
+
+/* ---------------- figure B ---------------- */
+(function(){
+  S='';
+  var x0=-0.1,x1=0.35,e0=-0.25,e1=0.25;
+  T(AX0,42,'PARENT SQUARE',{s:10.5,w:700,f:GREY});
+  T(BX0,42,'THE MAPPED ELEMENT',{s:10.5,w:700,f:GREY});
+  R(AX0,AY0,AX1-AX0,AY1-AY0,{f:'#fff',s:INK,sw:1.3});
+  R(px(x0),py(e1),px(x1)-px(x0),py(e0)-py(e1),{f:BLUE,o:.25,s:BLUE,sw:1.4});
+  T((px(x0)+px(x1))/2,py(e1)-8,'Δξ × Δη',{a:'middle',s:10.5,f:BLUE,w:700});
+  L(px(1),py(e0),px(1),py(e1),{s:ACC,sw:7});
+  T(px(1)+10,(py(e0)+py(e1))/2+4,'Δη',{s:11,f:ACC,w:700});
+  AR(AX1+34,(AY0+AY1)/2,AX1+96,(AY0+AY1)/2,GREY,1.6);
+
+  elementOutline();
+  /* the mapped patch, as a parallelogram spanned by both columns */
+  var c=mapPt((x0+x1)/2,(e0+e1)/2), u=dXi((x0+x1)/2,(e0+e1)/2), v=dEt((x0+x1)/2,(e0+e1)/2);
+  var du=(x1-x0), dv=(e1-e0);
+  var p0=[c[0]-u[0]*du/2-v[0]*dv/2, c[1]-u[1]*du/2-v[1]*dv/2];
+  var pu=[p0[0]+u[0]*du, p0[1]+u[1]*du], pv=[p0[0]+v[0]*dv, p0[1]+v[1]*dv];
+  var puv=[p0[0]+u[0]*du+v[0]*dv, p0[1]+u[1]*du+v[1]*dv];
+  S+='<path d="M'+qx(p0[0])+' '+qy(p0[1])+' L'+qx(pu[0])+' '+qy(pu[1])+' L'+qx(puv[0])+' '+
+     qy(puv[1])+' L'+qx(pv[0])+' '+qy(pv[1])+'Z" fill="'+BLUE+'" opacity=".3" stroke="'+BLUE+'" stroke-width="1.5"/>';
+  AR(qx(p0[0]),qy(p0[1]),qx(pu[0]),qy(pu[1]),BLUE,2);
+  AR(qx(p0[0]),qy(p0[1]),qx(pv[0]),qy(pv[1]),BLUE,2);
+  var detDF=u[0]*v[1]-u[1]*v[0];
+  var bl=[BX0+2,268];
+  L(bl[0]+6,bl[1]-10,qx(c[0]),qy(c[1]),{s:BLUE,sw:.9,d:'3 2'});
+  T(bl[0],bl[1],'area = |det DF| ΔξΔη',{s:11,f:BLUE,w:700,m:1});
+  T(bl[0],bl[1]+15,'det DF ≈ '+Math.abs(detDF).toFixed(2)+'   (both columns)',{s:10.5,f:BLUE,m:1});
+  /* the face segment: one column only */
+  arcPiece(1,-1,1,GREY,1.6);
+  arcPiece(1,e0,e1,ACC,6);
+  var pf=mapPt(1,0), tf=dEt(1,0), nf=Math.sqrt(tf[0]*tf[0]+tf[1]*tf[1]);
+  AR(qx(pf[0]),qy(pf[1]),qx(pf[0])+tf[0]*dv,qy(pf[1])-tf[1]*dv,ACC,2.4);
+  var rl=[BX1+16,96];
+  L(rl[0]-6,rl[1]-4,qx(pf[0])+4,qy(pf[1]),{s:ACC,sw:.9,d:'3 2'});
+  T(rl[0],rl[1],'length = ‖t‖ Δη',{s:11,f:ACC,w:700,m:1});
+  T(rl[0],rl[1]+15,'‖t‖ ≈ '+nf.toFixed(2)+'   (one column)',{s:10.5,f:ACC,m:1});
+  document.getElementById('fig20b').innerHTML=S;
+})();
+})();
+</script>
+```
+
+One more reason to be careful: on an **axis-aligned rectangle** the two are proportional.
+For an $h_1 \times h_2$ element, $DF$ is diagonal, $\det(DF) = h_1h_2/4$, and on the
+$\eta$-face $\|\underline{t}\| = h_1/2$. Their ratio is $h_2/2$ --- a constant. Use the
+wrong one on a rectangular mesh and every face integral is off by the same factor, which
+looks far more like a units slip than a bug, and does not disturb the convergence rate at
+all. It only becomes obvious once an element is curved or distorted, which is exactly the
+case the figure above shows.
+
+
+See the following widget to help in understanding this.
+
+```{=html}
+<div class="qw">
+  <div class="bar">
+    <b>FACES</b>
+    <span class="seg" id="bsel">
+      <button data-s="0" aria-pressed="true">&xi; = &minus;1 (inner)</button>
+      <button data-s="1" aria-pressed="false">&xi; = +1 (outer)</button>
+      <button data-s="2" aria-pressed="false">&eta; = &minus;1</button>
+      <button data-s="3" aria-pressed="false">&eta; = +1</button>
+    </span>
+    <b>POINTS</b> <input type="range" id="bnq" min="1" max="5" value="3"><span class="val" id="bnqv">3</span>
+  </div>
+  <div class="bar" style="margin-top:-4px">
+    <b>INTEGRAND</b>
+    <span class="seg" id="bint">
+      <button data-f="L" aria-pressed="true">1  (length)</button>
+      <button data-f="N" aria-pressed="false">N&#8337;</button>
+      <button data-f="R" aria-pressed="false">x&sup2;+y&sup2;</button>
+    </span>
+    <b>NODE A</b> <input type="range" id="bna" min="0" max="8" value="0"><span class="val" id="bnav">0</span>
+    <label style="font-size:13px;color:#6b7684"><input type="checkbox" id="btan" checked> show tangents</label>
+  </div>
+  <svg id="b20" viewBox="0 0 880 470" role="img"
+       aria-label="Integrating over the faces of a mapped quarter-annulus element"></svg>
+  <div class="cap" id="b20cap"></div>
+</div>
+
+<script>
+(function(){
+var SIDES=[true,false,false,false], NQ=3, MODE='L', NA=0, TAN=true, S='';
+var INK='#18202b',GREY='#6b7684',FAINT='#dfe4ea',ACC='#b8322a',BLUE='#2b5fa8',
+    PAPER='#f8f9fb',GRN='#2f7d4f',VIO='#6d28d9';
+var GL={1:{x:[0],w:[2]},
+ 2:{x:[-0.5773502691896257,0.5773502691896257],w:[1,1]},
+ 3:{x:[-0.7745966692414834,0,0.7745966692414834],
+    w:[0.5555555555555556,0.8888888888888888,0.5555555555555556]},
+ 4:{x:[-0.8611363115940526,-0.3399810435848563,0.3399810435848563,0.8611363115940526],
+    w:[0.3478548451374538,0.6521451548625461,0.6521451548625461,0.3478548451374538]},
+ 5:{x:[-0.906179845938664,-0.5384693101056831,0,0.5384693101056831,0.906179845938664],
+    w:[0.2369268850561891,0.4786286704993665,0.5688888888888889,0.4786286704993665,0.2369268850561891]}};
+
+function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function R(x,y,w,h,o){o=o||{};S+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+(o.r||0)+
+  '" fill="'+(o.f||'none')+'" stroke="'+(o.s||'none')+'" stroke-width="'+(o.sw||1)+
+  '" opacity="'+(o.o===undefined?1:o.o)+'"'+(o.d?' stroke-dasharray="'+o.d+'"':'')+'/>';}
+function T(x,y,t,o){o=o||{};S+='<text x="'+x+'" y="'+y+'" font-size="'+(o.s||12)+'" fill="'+(o.f||INK)+
+  '" text-anchor="'+(o.a||'start')+'" font-weight="'+(o.w||400)+
+  '" font-family="'+(o.m?'ui-monospace,Menlo,monospace':'system-ui,sans-serif')+'">'+esc(t)+'</text>';}
+function L(x1,y1,x2,y2,o){o=o||{};S+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+
+  '" stroke="'+(o.s||INK)+'" stroke-width="'+(o.sw||1.2)+'"'+(o.d?' stroke-dasharray="'+o.d+'"':'')+'/>';}
+function C(x,y,r,f,st,sw){S+='<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+f+'"'+
+  (st?' stroke="'+st+'" stroke-width="'+(sw||1.5)+'"':'')+'/>';}
+function AR(x1,y1,x2,y2,col,sw){col=col||INK;
+  var dx=x2-x1,dy=y2-y1,m=Math.sqrt(dx*dx+dy*dy)||1,ux=dx/m,uy=dy/m;
+  L(x1,y1,x2-ux*4,y2-uy*4,{s:col,sw:sw||1.6});
+  S+='<path d="M'+x2+' '+y2+' L'+(x2-ux*7-uy*3.2)+' '+(y2-uy*7+ux*3.2)+
+     ' L'+(x2-ux*7+uy*3.2)+' '+(y2-uy*7-ux*3.2)+'Z" fill="'+col+'"/>';}
+
+/* ---- the element: a biquadratic quarter annulus, 1 <= r <= 2, as in Class 12 ---- */
+var P=2, PN=[-1,0,1], CP=[];
+(function(){ for(var b=0;b<=P;b++){ var th=(Math.PI/2)*(PN[b]+1)/2;
+  for(var a=0;a<=P;a++){ var r=1+(PN[a]+1)/2; CP.push([r*Math.cos(th), r*Math.sin(th)]); } } })();
+function lag(i,s){ var v=1; for(var k=0;k<=P;k++) if(k!==i) v*=(s-PN[k])/(PN[i]-PN[k]); return v; }
+function dlag(i,s){ var t=0;
+  for(var k=0;k<=P;k++){ if(k===i) continue; var pr=1/(PN[i]-PN[k]);
+    for(var m=0;m<=P;m++) if(m!==i&&m!==k) pr*=(s-PN[m])/(PN[i]-PN[m]);
+    t+=pr; } return t; }
+function NA_(A,xi,et){ var a=A%3,b=Math.floor(A/3); return lag(a,xi)*lag(b,et); }
+function mapPt(xi,et){ var x=0,y=0;
+  for(var A=0;A<9;A++){ var w=NA_(A,xi,et); x+=CP[A][0]*w; y+=CP[A][1]*w; } return [x,y]; }
+function dXdxi(xi,et){ var x=0,y=0;
+  for(var A=0;A<9;A++){ var a=A%3,b=Math.floor(A/3), w=dlag(a,xi)*lag(b,et);
+    x+=CP[A][0]*w; y+=CP[A][1]*w; } return [x,y]; }
+function dXdet(xi,et){ var x=0,y=0;
+  for(var A=0;A<9;A++){ var a=A%3,b=Math.floor(A/3), w=lag(a,xi)*dlag(b,et);
+    x+=CP[A][0]*w; y+=CP[A][1]*w; } return [x,y]; }
+
+/* side s: 0 xi=-1, 1 xi=+1, 2 eta=-1, 3 eta=+1.  Returns the parent point and the tangent. */
+function sidePt(s,t){ return (s<2)? mapPt(s===0?-1:1, t) : mapPt(t, s===2?-1:1); }
+function sideTan(s,t){ return (s<2)? dXdet(s===0?-1:1, t) : dXdxi(t, s===2?-1:1); }
+function sideParent(s,t){ return (s<2)? [s===0?-1:1, t] : [t, s===2?-1:1]; }
+var SNAME=['ξ = −1  (inner arc, r = 1)','ξ = +1  (outer arc, r = 2)',
+           'η = −1  (radial, θ = 0)','η = +1  (radial, θ = π/2)'];
+
+/* integrand: 1, N_A, or x^2+y^2 */
+function fval(s,t){
+  if(MODE==='L') return 1;
+  var p=sideParent(s,t);
+  if(MODE==='N') return NA_(NA,p[0],p[1]);
+  var q=sidePt(s,t); return q[0]*q[0]+q[1]*q[1];
+}
+function integrate(s){                 /* 1D Gauss along the face */
+  var g=GL[NQ], tot=0, len=0;
+  for(var k=0;k<NQ;k++){
+    var tt=g.x[k], tv=sideTan(s,tt), J=Math.sqrt(tv[0]*tv[0]+tv[1]*tv[1]);
+    tot+=g.w[k]*fval(s,tt)*J; len+=g.w[k]*J;
+  }
+  return [tot,len];
+}
+/* a dense reference value, so we can show how few points it actually takes */
+function refIntegrate(s){ var n=40,tot=0,len=0,i;
+  for(i=0;i<n;i++){ var tt=-1+2*(i+0.5)/n, tv=sideTan(s,tt),
+      J=Math.sqrt(tv[0]*tv[0]+tv[1]*tv[1]);
+    tot+=(2/n)*fval(s,tt)*J; len+=(2/n)*J; }
+  return [tot,len];
+}
+
+/* ---------- panels ---------- */
+var AX0=56,AX1=286,AY0=76,AY1=306;                 /* parent square */
+function px(xi){ return AX0+(xi+1)/2*(AX1-AX0); }
+function py(et){ return AY1-(et+1)/2*(AY1-AY0); }
+var BX0=392,BX1=700,BY0=62,BY1=370, LO=-0.18, HI=2.18;  /* physical */
+function qx(x){ return BX0+(x-LO)/(HI-LO)*(BX1-BX0); }
+function qy(y){ return BY1-(y-LO)/(HI-LO)*(BY1-BY0); }
+
+function draw(){
+  S='';
+  T(AX0,38,'PARENT SQUARE',{s:10.5,w:700,f:GREY});
+  T(BX0,38,'THE MAPPED ELEMENT',{s:10.5,w:700,f:GREY});
+  T(726,38,'WHAT YOU GET',{s:10.5,w:700,f:GREY});
+
+  /* parent square */
+  R(AX0,AY0,AX1-AX0,AY1-AY0,{f:'#fff',s:INK,sw:1.4});
+  T(px(0),AY1+18,'ξ',{a:'middle',s:11,f:GREY});
+  S+='<text transform="translate('+(AX0-16)+','+py(0)+') rotate(-90)" font-size="11" fill="'+GREY+
+     '" text-anchor="middle" font-family="system-ui,sans-serif">η</text>';
+  /* physical element outline */
+  var d='',k;
+  for(k=0;k<=40;k++){var q=mapPt(-1+2*k/40,-1); d+=(k?' L':'M')+qx(q[0])+' '+qy(q[1]);}
+  for(k=0;k<=40;k++){var q2=mapPt(1,-1+2*k/40); d+=' L'+qx(q2[0])+' '+qy(q2[1]);}
+  for(k=40;k>=0;k--){var q3=mapPt(-1+2*k/40,1); d+=' L'+qx(q3[0])+' '+qy(q3[1]);}
+  for(k=40;k>=0;k--){var q4=mapPt(-1,-1+2*k/40); d+=' L'+qx(q4[0])+' '+qy(q4[1]);}
+  S+='<path d="'+d+'Z" fill="#eef3f8" stroke="'+INK+'" stroke-width="1.4"/>';
+  /* interior parametric grid, faint */
+  for(k=1;k<4;k++){ var u=-1+2*k/4,dd='';
+    for(var m=0;m<=24;m++){var q5=mapPt(u,-1+2*m/24); dd+=(m?' L':'M')+qx(q5[0])+' '+qy(q5[1]);}
+    S+='<path d="'+dd+'" fill="none" stroke="'+FAINT+'" stroke-width=".9"/>';
+    dd='';
+    for(m=0;m<=24;m++){var q6=mapPt(-1+2*m/24,u); dd+=(m?' L':'M')+qx(q6[0])+' '+qy(q6[1]);}
+    S+='<path d="'+dd+'" fill="none" stroke="'+FAINT+'" stroke-width=".9"/>'; }
+  /* nodes */
+  for(var A=0;A<9;A++){
+    var on=(MODE==='N'&&A===NA);
+    C(qx(CP[A][0]),qy(CP[A][1]),on?5.5:3,on?VIO:INK,on?'#fff':'none',1.5);
+    if(on) T(qx(CP[A][0])+9,qy(CP[A][1])-7,'N'+A,{s:10.5,f:VIO,w:700,m:1});
+  }
+
+  /* the selected faces */
+  var g=GL[NQ], anySel=false, sres=[];
+  for(var s=0;s<4;s++){
+    if(!SIDES[s]) continue; anySel=true;
+    /* parent */
+    var a0=sideParent(s,-1), a1=sideParent(s,1);
+    L(px(a0[0]),py(a0[1]),px(a1[0]),py(a1[1]),{s:ACC,sw:4});
+    /* physical */
+    var dd2='';
+    for(k=0;k<=48;k++){ var qq=sidePt(s,-1+2*k/48); dd2+=(k?' L':'M')+qx(qq[0])+' '+qy(qq[1]); }
+    S+='<path d="'+dd2+'" fill="none" stroke="'+ACC+'" stroke-width="3.6"/>';
+    /* quadrature points, both sides */
+    for(k=0;k<NQ;k++){
+      var tt=g.x[k], pp=sideParent(s,tt), qq2=sidePt(s,tt);
+      C(px(pp[0]),py(pp[1]),4,ACC);
+      C(qx(qq2[0]),qy(qq2[1]),4.4,ACC,'#fff',1.4);
+      if(TAN){ var tv=sideTan(s,tt), nn=Math.sqrt(tv[0]*tv[0]+tv[1]*tv[1]);
+        AR(qx(qq2[0]),qy(qq2[1]),qx(qq2[0])+tv[0]/nn*26,qy(qq2[1])-tv[1]/nn*26,VIO,1.5); }
+    }
+    sres.push([s].concat(integrate(s)).concat(refIntegrate(s)));
+  }
+
+  /* readout */
+  var PX=718,PW=150;
+  var yy=62, tot=0, tlen=0, rtot=0;
+  if(!anySel){ T(PX,yy+10,'pick a face',{s:12,f:ACC,w:600}); }
+  for(var i=0;i<sres.length;i++){
+    var r=sres[i]; tot+=r[1]; tlen+=r[2]; rtot+=r[3];
+    T(PX,yy,SNAME[r[0]].split('  ')[0],{s:11,w:700,f:ACC,m:1}); yy+=15;
+    T(PX,yy,'length  '+r[2].toFixed(6),{s:10.5,m:1}); yy+=14;
+    T(PX,yy,'∫ f dΓ  '+r[1].toFixed(6),{s:10.5,m:1,w:700}); yy+=20;
+  }
+  if(sres.length>1){
+    L(PX,yy-8,PX+PW,yy-8,{s:FAINT});
+    T(PX,yy+6,'total length '+tlen.toFixed(6),{s:10.5,m:1,w:700}); yy+=20;
+    T(PX,yy+6,'total ∫    '+tot.toFixed(6),{s:10.5,m:1,w:700,f:ACC}); yy+=22;
+  }
+  /* convergence note: does this few points suffice? */
+  if(anySel){
+    var conv=Math.abs(tot-rtot);
+    T(PX,yy+10,(conv<1e-9?'exact at this n':'off by '+conv.toExponential(1)),
+      {s:10,m:1,f:(conv<1e-9?GRN:GREY)});
+  }
+  T(BX0,BY1+26,'the arrows are ∂x/∂ξ or ∂x/∂η — one column of DF',{s:11,f:VIO});
+  T(BX0,BY1+42,'their length is the arc-length Jacobian, not det DF',{s:11,f:GREY});
+
+  document.getElementById('b20').innerHTML=S;
+  var names=[]; for(var z=0;z<4;z++) if(SIDES[z]) names.push(SNAME[z]);
+  var what=(MODE==='L')?'the length': (MODE==='N')?('∫ N'+NA+' dΓ'):'∫ (x²+y²) dΓ';
+  document.getElementById('b20cap').innerHTML =
+    '<b>'+(names.length?names.join(' and '):'no face selected')+'.</b> '+
+    (names.length? ('Computing '+what+' with '+NQ+' point'+(NQ>1?'s':'')+' along each face. '+
+      (MODE==='N' ? 'A basis function is non-zero on a face only if its node lies on that face — try a node that does not. '
+       : MODE==='R' ? 'On a true circle x²+y² would be exactly 1 on the inner arc and 4 on the outer, making the integral equal the length and four times the length. Both come out a little under that, because the element’s arc is a biquadratic curve through three points and dips just inside the real circle between them. '
+       : 'The true quarter-circle lengths are π/2 ≈ 1.5708 and π ≈ 3.1416; the element’s geometry is a biquadratic approximation of the arc, so these come out close but not equal. ')
+      ) : 'Select at least one face.');
+}
+
+function on(id,ev,fn){ var e=document.getElementById(id); if(e) e.addEventListener(ev,fn); }
+document.getElementById('bsel').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b) return; var s=+b.dataset.s;
+  SIDES[s]=!SIDES[s]; b.setAttribute('aria-pressed',SIDES[s]?'true':'false'); draw(); });
+document.getElementById('bint').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b) return; MODE=b.dataset.f;
+  [].forEach.call(this.querySelectorAll('button'),function(x){
+    x.setAttribute('aria-pressed',x===b?'true':'false');});
+  var _b=document.getElementById('bna'); if(_b) _b.disabled=(MODE!=='N'); draw(); });
+on('bnq','input',function(){
+  NQ=+this.value; document.getElementById('bnqv').textContent=NQ; draw(); });
+on('bna','input',function(){
+  NA=+this.value; document.getElementById('bnav').textContent=NA; draw(); });
+on('btan','change',function(){ TAN=this.checked; draw(); });
+var _bna=document.getElementById('bna'); if(_bna) _bna.disabled=true;
+draw();
+})();
+</script>
+```
+
+## Summary
+
+- **2D Quadrature is the Product of 1D Rules.** 
+1D rules are established in each of the directions, coordinates are the union of individual 1D coordinates, and quadrature weights are the product of 1D quadrature weights.
+This is a similar story to how 2D tensor product basis functions were defined in [Class 11](11_Class.qmd).
+- **A face integral is a mapped 1D operation.** Hold one parent coordinate at $\pm 1$, let the other
+  vary, and reuse the same Gauss points you already have in 1D with the additional 2D coordinate.
+- **The Jacobian on a face is $\|\underline{t}\|$, not $\det(DF)$,** and $\underline{t}$ is
+  one column of $DF$ corresponding to the derivative with respect to whichever parent coordinate is free. 
+- **A basis function contributes to a face only if its node is on it.** Everything else
+  integrates to zero there, which is why the element's face vector has only $p+1$ non-zero
+  entries.
+- The widget's lengths miss the true $\pi/2$ and $\pi$ by about half a percent, and adding
+  quadrature points does not help. It is tempting to blame the quadrature, but that is not it:
+  the rule converges perfectly well, settling on $1.5624171$ by about eight points and staying
+  there. What it is converging *to* is the length of the element's own edge, which is a
+  biquadratic curve through three points on the circle, not the circle. The half percent is
+  **geometry** error, not integration error, and the only cures are a finer mesh or a
+  higher-degree geometry.
