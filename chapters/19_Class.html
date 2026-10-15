@@ -37,7 +37,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../chapters/3_Support_FunctionSpaces.html" rel="next">
+<link href="../chapters/20_Class.html" rel="next">
 <link href="../chapters/18_Class.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -268,6 +268,12 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Class 20: Quadrature in 2D, and Integrating Over a Face</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
@@ -492,7 +498,7 @@ function d2id(x,y){ var c=26,gx=x+58,gy=y+14;
   for(var i=0;i<=3;i++)for(var j=0;j<=4;j++){
     if(j===0) C(gx+j*c,gy+i*c,4.2,'#fff',ACC); else C(gx+j*c,gy+i*c,3,INK);}
   L(gx,gy,gx,gy+3*c,{s:ACC,sw:2.6});
-  T(x+120,y+118,'a whole edge Γg is prescribed,',{a:'middle',s:11,f:GREY});
+  T(x+120,y+118,'a set of mesh edges Γg is prescribed,',{a:'middle',s:11,f:GREY});
   T(x+120,y+134,'not a single point',{a:'middle',s:11,f:GREY}); }
 function d2room(x,y){ GR(x+22,y+10,11,11,7.6,{f:'#fff'}); GR(x+118,y+10,1,11,7.6,{f:'#fff'});
   for(var i=0;i<11;i++)for(var j=0;j<11;j++) if(Math.abs(i-j)<2||Math.abs(i-j)===3)
@@ -1055,8 +1061,8 @@ draw();
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../chapters/3_Support_FunctionSpaces.html" class="pagination-link" aria-label="Support: Norms and Function Spaces">
-        <span class="nav-page-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../chapters/20_Class.html" class="pagination-link" aria-label="Class 20: Quadrature in 2D, and Integrating Over a Face">
+        <span class="nav-page-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Class 20: Quadrature in 2D, and Integrating Over a Face</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
