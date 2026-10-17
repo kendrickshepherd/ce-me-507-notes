@@ -1,5 +1,10 @@
 jupyter
-matplotlib>=3.6
-numpy>=1.22
+# Pinned so every publish draws byte-identical figures (git then stores an
+# unchanged figure only once on gh-pages). These match the local render venv.
+# Pillow is pinned too because matplotlib uses it to write the PNG files.
+# numpy 2.5.3 needs Python >= 3.12, the version the publish workflow uses.
+matplotlib==3.11.2
+numpy==2.5.3
+pillow==12.3.0
 PyYAML
 git+https://github.com/kendrickshepherd/structplot.git@v0.1.0

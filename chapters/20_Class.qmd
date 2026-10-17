@@ -236,6 +236,14 @@ and the arclength is
 
 $$ \boxed{\;d\Gamma = \left\| \underline{t} \right\| d\eta. \;} $$
 
+Consequently, integration over a face which, for instance has $\xi=1$ can be approximated using quadrature as 
+
+$$ \int_{\Gamma_h^e} N_A(1,\eta)\, h\big(x(1,\eta)) \; d\Gamma \approx \sum_q^{n_g} w_g N_A(1,\eta_g) h\big(x(1,\eta_g)) \big|\big|\underline{t}\big(x(1,\eta_g)\big)\big|\big|. $$
+
+Similarly, integration over a face which, for instance, has $\eta=-1$ can be approximated as
+
+$$ \int_{\Gamma_h^e} N_A(\xi,-1)\, h\big(x(\xi,-1)) \; d\Gamma \approx \sum_q^{n_g} w_g N_A(\xi_g,-1) h\big(x(\xi_g,-1)) \big|\big|\underline{t}\big(x(\xi_g,-1)\big)\big|\big|. $$
+
 
 ### Where that length comes from
 
