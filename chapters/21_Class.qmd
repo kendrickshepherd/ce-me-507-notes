@@ -272,7 +272,7 @@ These are defined using the same kind of content learned in Class 12, where a sp
 $$ \underline{x}(u,v), \qquad (u,v) \in [0,1]^2 , $$
 
 built from basis functions in $u$ times basis functions in $v$. 
-(Note that here we typically use $u$ and $v$ for the parametric coordinates compared to $\xi$ and $\eta$ for the refercne or parent coordinates.)
+(Note that here we typically use $u$ and $v$ for the parametric coordinates compared to $\xi$ and $\eta$ for the reference or parent coordinates.)
 The same tensor-productconstruction as is used for bilinear and biquadratic elements, is used for B-splines and NURBS, but just using a different basis, which will be discussed further below.
 
 An example of a B-rep is shown in the widget below.
@@ -743,26 +743,14 @@ function draw(){
   key(lx+520,VIO,'shared edges');
   document.getElementById('brk').innerHTML=S;
   document.getElementById('brkcap').innerHTML=
-    '<b>One solid, thirty-six surfaces.</b> Walking across the section: '+
-    'flange, fillet, web, fillet, flange, stitched along the violet seams. The bracket is a '+
-    'thin part, so each of those five appears twice: once pushed out along its own normal and '+
-    'once pulled in, giving the outer and inner faces of the material, which share one '+
-    'parametric square and so one set of trim curves. Every exposed edge of those faces is then '+
-    'closed off by a <i>side wall</i> running from the outer face to the inner one \u2014 24 of '+
-    'them, plus a cylinder down each hole. A wall is a mapped square like any other, however '+
-    'thin, so it carries its own isocurve grid, spaced to match the one on the faces. '+
-    'Consecutive walls meet along the violet rulings. A seam edge gets no wall at all, and that '+
-    'is what makes the five patches one part rather than five. Faces, edges and vertices, '+
-    'closed up this way, are what a B-rep actually stores. Every patch is '+
-    'a mapped square, and every red curve is a <i>trim curve</i> drawn in that square\u2019s own '+
-    'parametric domain. One trim runs the whole way across: it cuts the web and both fillets '+
-    'back top and bottom, carries straight through the seams, and steps out to full height part '+
-    'way along each flange \u2014 those steps are the orthogonal corners. Each flange is also '+
-    'chamfered at its two outer corners and carries a round hole. Blue edges are a patch\u2019s '+
-    'own natural boundary, and they stop wherever a trim reaches them: a trim masks the edge of '+
-    'a square exactly as it masks the square. Nothing has been deleted: tick <i>isocurves into '+
-    'the trimmed parts</i> and the isocurves, the natural edges and the seams all reappear '+
-    'faintly, running on underneath, which is exactly what the trim curve is recording.';
+    '<b>A closed B-rep of a bracket.</b> Each surface is a B-spline surface mapped from a '+
+    'parametric square, as shown by its grey isocurves. The outer and inner faces of the bracket '+
+    'are each made of five surfaces (two flanges, two fillets, and a web), and they are connected '+
+    'along their edges by 24 planar side walls and by a cylinder through each hole, for 36 surfaces '+
+    'in total. Red curves are trimming curves, which remove parts of a surface, such as the holes '+
+    'and the chamfered corners. Blue curves are the remaining untrimmed edges of each surface, and '+
+    'violet curves are the edges shared by neighbouring surfaces. Unchecking <i>closed solid</i> '+
+    'shows the open B-rep of the midsurface, which has only five surfaces.';
 }
 
 /* ---- drag to rotate ---- */
@@ -814,24 +802,25 @@ draw();
 
 ### Gluing and trimming
 
-Very few parts are a single mapped square. The bracket is five of them: a web, two fillets,
-and two flanges. CAD builds a shape like this out of simple surfaces with two operations.
+Very few shapes of interest can be described by a single mapped square.
+The midsurface of the bracket above, for example, is built from five surfaces: a web, two fillets, and two flanges.
+CAD builds shapes like this from simpler surfaces using two operations, called gluing and trimming.
 
-**Gluing** joins surfaces along shared edges. The violet seams in the widget are where one
-surface stops and the next one starts. Gluing records that the two edges are the same curve in
-space, so the part has no gap there. It can also record how the surfaces meet; on the bracket,
-each fillet turns into the web and into its flange without a corner.
+**Gluing** joins surfaces along shared edges.
+The violet curves in the widget mark the edges where one surface stops and the next one starts.
+Gluing records that the two edges are the same curve in space, so the model has no gap there.
+It can also record how smoothly the surfaces meet.
+In the bracket, for example, each fillet joins the web and its flange without a corner.
 
-**Trimming** cuts part of a surface away. The designer draws a closed curve in the surface's
-parametric square and declares that only what lies inside it belongs to the part. Every red curve
-in the widget is a trim curve: the band taken off the top and bottom, the steps and the
-chamfered corners on the flanges, and the holes. A hole is the plainest case. The surface is not
-rebuilt with a hole in it; an ellipse is drawn on its parametric square, and everything inside the
-ellipse is ignored.
+**Trimming** removes part of a surface.
+The designer draws a closed curve in the parametric domain of the surface, and only the part of the surface inside that curve is kept in the model.
+Every red curve in the widget is a trimming curve, including the bands removed from the top and bottom, the steps and chamfered corners on the flanges, and the holes.
+A hole is the simplest case.
+The surface is not rebuilt with a hole in it; instead, an ellipse is drawn in its parametric domain, and everything inside the ellipse is ignored.
 
-Nothing is deleted when a surface is trimmed. Tick *isocurves into the trimmed parts* in the
-widget and the rest of each surface comes back, faintly, still running underneath the cut. The
-figure below pulls one face out of the bracket to show the whole surface it came from.
+Trimming does not delete any of the underlying surface.
+Checking *isocurves into the trimmed parts* in the widget shows the rest of each surface continuing underneath the trimmed regions.
+@fig-c21-trimming takes one face out of the bracket to show the full surface from which it was cut.
 
 ```{python}
 #| output: false
@@ -839,17 +828,15 @@ fig, _ = C21F.trimming_figure()
 fig_trim_path = save(fig, "C21_Fig4_Trimming.png")
 ```
 
-![One flange of the bracket, three ways. (a) The face as the designer sees it, with the rest of the bracket ghosted. (b) The surface it was cut from: the full image of its parametric square, with the trimmed face laid on top. The dashed blue outline and the dashed isocurves belong to the surface but not to the part. (c) The same face in its own $(u,v)$ square, which is where the trim curves are actually stored. The arrows mark the same corner and the same two directions in (b) and (c); in the 3D view, $u$ happens to run from right to left. The violet edge is the seam where this flange is glued to its fillet.](`{python} fig_trim_path`){#fig-c21-trimming width=100%}
+![One flange of the bracket, shown three ways. (a) The face as it appears in the model, with the rest of the bracket ghosted. (b) The untrimmed surface from which the face was cut, which is the image of the full parametric square, with the trimmed face drawn on top. The dashed blue outline and the dashed isocurves belong to the surface but not to the model. (c) The same face in its parametric domain $(u,v)$, which is where the trimming curves are stored. The arrows mark the same corner and the same two directions in (b) and (c); note that in the 3D view, $u$ runs from right to left. The violet edge is where this flange is glued to its fillet.](`{python} fig_trim_path`){#fig-c21-trimming width=100%}
 
-That is how essentially every CAD model is built: tensor-product surfaces, each trimmed by curves
-drawn in its own parametric square, glued to their neighbours along shared edges. It is an
-excellent way to *describe* a shape. It is an awkward thing to hand to a solver.
+Nearly every CAD model is built in this way: a collection of tensor-product surfaces, each trimmed by curves in its own parametric domain, and glued to its neighbours along shared edges.
+This is an effective way to describe a shape, but it is difficult to use directly for analysis, as described next.
 
-### Why trimming gets in the way of analysis
+### Why trimming complicates analysis
 
-Suppose we tried to compute directly on the face in panel (c), using the grid of its parametric
-square as our elements. The cells of that grid are squares. The trim curves do not follow the
-cell edges; they cut straight through them.
+Suppose we tried to perform an analysis directly on the face in panel (c) of @fig-c21-trimming, using the grid of its parametric domain as our elements.
+The cells of that grid are squares, but the trimming curves do not follow the cell edges, and instead cut directly through them.
 
 ```{python}
 #| output: false
@@ -860,30 +847,26 @@ cut_corner = f"{cut['corner_pct']:.2f}"
 cut_lost = str(9 - cut['gauss_in'])
 ```
 
-![(a) The flange's parametric square, divided into the 7 × 7 cells that lie between its isocurves. Each cell is coloured by the material it actually holds. `{python} cut_n` of the 49 cells are cut by a trim curve (orange outline) and only `{python} cut_whole` survive whole. The two cells at the outer corners hold `{python} cut_corner`% material each: the chamfer passes just inside their inner corners. (b) The cell outlined in (a), enlarged. A 3 × 3 Gauss rule built for the whole cell puts `{python} cut_lost` of its 9 points inside the hole.](`{python} fig_cut_path`){#fig-c21-cutcells width=94%}
+![(a) The parametric domain of the flange, divided into the 7 × 7 cells between its isocurves. Each cell is shaded by the material it actually contains. Of the 49 cells, `{python} cut_n` are cut by a trimming curve (orange outline) and only `{python} cut_whole` are kept whole. The two cells at the outer corners each contain only `{python} cut_corner`% material, since the chamfer passes just inside their inner corners. (b) The cell outlined in (a), enlarged. A 3 × 3 Gauss rule built for the whole cell places `{python} cut_lost` of its 9 points inside the hole.](`{python} fig_cut_path`){#fig-c21-cutcells width=94%}
 
-Each of the resulting problems is one you have already met in another form:
+Each of the resulting problems relates to content from earlier in the course:
 
-1. **Integration.** The Gauss rules of Classes 10 and 20 integrate over a whole element. On a cut
-   cell, part of that square is not material, and the part that is has a curved edge. Panel (b)
-   loses a third of its points to the hole. A cut cell needs an integration rule built for its
-   own shape, and building one for every cut cell is real work.
-2. **Slivers.** A basis function whose support lies almost entirely in the trimmed-away region
-   still has an unknown attached to it, but it touches almost no material: think of the corner
-   cells. Its diagonal entry in the stiffness matrix is nearly zero compared with its neighbours',
-   and the system of equations becomes badly conditioned.
-3. **Boundary conditions.** In Classes 14 and 19 a boundary condition was given to the nodes and
-   element edges lying on $\Gamma_g$ or $\Gamma_h$. Here the boundary of the part is the trim curve,
-   and it runs through the middle of cells. There is no row of nodes sitting on it to prescribe.
-4. **Seams that do not quite meet.** Two glued faces each carry their own trim curve along the
-   shared edge. The two curves approximate the same edge in space but are generally not identical,
-   so a real model has small gaps and overlaps along its seams that a solver has to tolerate.
+1. **Integration.** The Gauss rules of Classes 10 and 20 integrate over a whole element.
+   On a cut cell, part of the square is not material, and the part that is has a curved boundary.
+   In panel (b), a third of the quadrature points fall inside the hole.
+   A cut cell requires an integration rule built for its own shape, and constructing one for every cut cell is a significant amount of work.
+2. **Slivers.** A basis function whose support lies almost entirely in the trimmed region still has an unknown attached to it, even though it touches very little material, as in the corner cells.
+   Its diagonal entry in the stiffness matrix is nearly zero compared with those of its neighbours, and the system of equations becomes poorly conditioned.
+3. **Boundary conditions.** In Classes 14 and 19, boundary conditions were assigned to the nodes and element edges lying on $\Gamma_g$ or $\Gamma_h$.
+   Here the boundary of the part is the trimming curve, which runs through the middle of cells, so there are no nodes on it to which a boundary condition can be assigned.
+4. **Seams that do not quite meet.** Two glued faces each have their own trimming curve along the shared edge.
+   These curves approximate the same edge in space but are generally not identical, so real models have small gaps and overlaps along their seams that a solver must tolerate.
 
 ### Meshing the bracket
 
-The usual way out is to stop computing on the CAD surfaces and mesh them instead. A mesher works
-on the *trimmed* face, the part itself rather than the square it was cut from, so every element
-lies inside the material and every boundary is made of element edges.
+The usual alternative is to mesh the CAD surfaces rather than compute on them directly.
+A mesher works on the *trimmed* face, that is, on the part itself rather than on the square from which it was cut.
+Every element therefore lies inside the material, and every boundary is made up of element edges.
 
 ```{python}
 #| output: false
@@ -894,35 +877,35 @@ mesh_sides, mesh_hole = str(msh['hole_sides']), f"{msh['hole_loss_pct']:.1f}"
 mesh_facets, mesh_sag = str(msh['fillet_facets']), f"{msh['fillet_sag_pct']:.1f}"
 ```
 
-![(a) A quad-dominant mesh of the bracket's mid-surface, which is the surface a shell analysis works on (the *closed solid* checkbox in the widget switches between this surface and the solid). The web and the fillets are bands of their parametric squares and take a structured grid. Each flange was triangulated and then neighbouring triangles were paired into quadrilaterals wherever the pair made a well-shaped one, and the result was smoothed; about `{python} mesh_quadpct`% of each flange's area ended up in quads. (b) The front flange laid flat, with the CAD face's true boundary in red over the mesh. The hole has become a `{python} mesh_sides`-sided polygon with `{python} mesh_hole`% less area than the real hole. Each fillet in (a) has likewise become `{python} mesh_facets` flat strips, whose middles sit `{python} mesh_sag`% of the fillet radius inside the true arc.](`{python} fig_mesh_path`){#fig-c21-bracketmesh width=100%}
+![(a) A quad-dominant mesh of the midsurface of the bracket, which is the surface used by a shell analysis (the *closed solid* checkbox in the widget switches between this surface and the solid). The web and the fillets are bands of their parametric domains and use a structured grid. Each flange was triangulated, neighbouring triangles were then paired into quadrilaterals wherever the pair formed a well-shaped element, and the result was smoothed; quadrilaterals cover about `{python} mesh_quadpct`% of the area of each flange. (b) The front flange laid flat, with the true boundary of the CAD face shown in red over the mesh. The hole is now a `{python} mesh_sides`-sided polygon with `{python} mesh_hole`% less area than the actual hole. Similarly, each fillet in (a) is now `{python} mesh_facets` flat strips, whose midpoints lie `{python} mesh_sag`% of the fillet radius inside the true arc.](`{python} fig_mesh_path`){#fig-c21-bracketmesh width=100%}
 
-All four problems above are gone. There are no cut cells and no slivers, the boundary is element
-edges again, and neighbouring faces share their nodes along each seam. The price is the one from
-the beginning of this class: the mesh is piecewise linear, so every curve has been replaced by
-straight segments. That geometry error does not go away with better quadrature. It shrinks only
-with smaller elements or with curved ones. For many analyses of this bracket a few percent at the
-hole is harmless; for the stress at the edge of that hole, where the stress is largest, it is not.
+The four problems above no longer apply to this mesh.
+There are no cut cells or slivers, the boundary is again made up of element edges, and neighbouring faces share their nodes along each seam.
+The cost is the one described at the earlier in the reading, that the mesh is piecewise linear, so every curve has been replaced by straight segments.
+This geometry error does not decrease with better quadrature, and is only reduced by using smaller elements or curved elements.
+For many analyses of this bracket, an error of a few percent at the hole is acceptable.
+For the stress at the edge of that hole, which is where the stress is largest, it may not be.
 
 ### An all-quadrilateral mesh of the same bracket
 
-Many analysts would rather have no triangles at all. Some element formulations exist only for
-quadrilaterals, and rows of quadrilaterals that follow the edges of a part are the natural way to
-resolve what happens along those edges. Automatic all-quadrilateral meshers, such as *paving*, aim
-for exactly that: they lay a row of quadrilaterals along every boundary and keep marching inward
-until the rows meet.
+Many analysts prefer meshes without any triangles.
+Some element formulations exist only for quadrilaterals, and rows of quadrilaterals that follow the edges of a part are well suited to resolving behavior along those edges.
+Automatic all-quadrilateral meshing methods, such as *paving*, aim to produce these meshes by placing a row of quadrilaterals along every boundary and continuing inward until the rows meet.
+A depiction of such a quadrilateral mesh is shown below.
+Mesh smoothing operations are sometimes improve the quality of an initial output mesh.
 
-This flange is a hard case for that approach. The hole sits less than two element widths from the
-inside corner of the notch, so a row laid along the outer edge and a row laid around the hole run
-into each other almost at once. The outer edge is also about three times as long as the hole, so
-the rows cannot simply be matched one to one. The mesh below was laid out by hand instead, the way
-an analyst guides such a mesher. A ring of quadrilaterals hugs the hole, and its four outer corners
-send spokes to the corners of the flange. Rows of blocks follow every edge, and each chamfered
-corner is filled with the standard three-block pattern for a triangle. The web and fillets are the
-same structured bands as before, so the two bracket meshes differ only in their flanges. Both
-flanges were smoothed the same way. First every node moves to reduce the total distortion of the
-mesh, with the boundary nodes free to slide along their edges and round the hole (the corners, and
-the seam shared with the fillet, stay put). Then each interior node is nudged to wherever the worst
-element around it is best.
+<!-- This flange is a difficult case for that approach.
+The hole is less than two element widths from the inside corner of the notch, so a row placed along the outer edge and a row placed around the hole would overlap almost immediately.
+The outer edge is also about three times as long as the hole, so the rows cannot simply be matched one to one.
+The mesh below was instead laid out by hand, in the way that an analyst might guide such a mesher.
+A ring of quadrilaterals surrounds the hole, and its four outer corners are connected to the corners of the flange.
+Rows of blocks follow every edge, and each chamfered corner is filled with the standard three-block pattern for a triangle.
+The web and fillets use the same structured bands as before, so the two bracket meshes differ only in their flanges.
+
+Both flanges were smoothed in the same way.
+First, every node was moved to reduce the total distortion of the mesh, with boundary nodes allowed to slide along their edges and around the hole (the corners, and the seam shared with the fillet, were held fixed).
+Then each interior node was moved to the position that gives the best worst-shaped element around it.
+-->
 
 ```{python}
 #| output: false
@@ -931,9 +914,15 @@ fig_qo_path = save(fig, "C21_Fig6b_QuadOnly.png")
 qo_n, qo_v5, qo_v3 = str(qo['nquad']), str(qo['valence'].get(5, 0)), str(qo['valence'].get(3, 0))
 ```
 
-![(a) The bracket's mid-surface meshed with quadrilaterals only: `{python} qo_n` elements, and every one of them a quadrilateral. Rows follow every edge, including the seams with the fillets. (b) The front flange laid flat. It was built from blocks: a ring of four round the hole, rows of blocks along the edges, and three blocks filling each chamfered corner. Only `{python} str(int(qo_v5)+int(qo_v3))` vertices inside the flange are irregular: `{python} qo_v5` of valence 5 at the corners of the ring, and `{python} qo_v3` of valence 3 at the centres of the corner fills.](`{python} fig_qo_path`){#fig-c21-quadonly width=100%}
+![(a) The midsurface of the bracket meshed with quadrilaterals only, using `{python} qo_n` elements. Rows follow every edge, including the seams shared with the fillets. (b) The front flange laid flat.  Only `{python} str(int(qo_v5)+int(qo_v3))` vertices inside the flange are irregular: `{python} qo_v5` of valence 5 at the corners of the ring, and `{python} qo_v3` of valence 3 at the centers of the corner fills.](`{python} fig_qo_path`){#fig-c21-quadonly width=100%}
 
 ### Comparing the two meshes
+
+Mesh quality is usually measured element by element, using a few simple measures of shape and size.
+The **scaled Jacobian** is found by evaluating the determinant of the Jacobian (Class 13) at each corner of an element, dividing it by the lengths of the two edges that meet there, and keeping the smallest value.
+It is scaled to equal 1 for a square or an equilateral triangle, and it decreases toward 0 as the corners of the element become more distorted.
+The **edge ratio** is the length of the longest edge of an element divided by the length of its shortest edge, and the **size ratio** is the area of the largest element in the mesh divided by the area of the smallest.
+Both equal 1 in an ideal mesh.
 
 ```{python}
 #| output: false
@@ -943,7 +932,7 @@ qd_, qo_ = cmp_['qd'], cmp_['qo']
 f2 = lambda x: f"{x:.2f}"; f1 = lambda x: f"{x:.1f}"; pc = lambda x: f"{x:.0f}%"
 ```
 
-![Each flange's elements shaded by their scaled Jacobian: (a) the quad-dominant flange of @fig-c21-bracketmesh, (b) the quad-only flange of @fig-c21-quadonly. The scaled Jacobian is the usual measure of element shape. It is 1 when every corner is a right angle (for a triangle, when every angle is 60°) and it falls as corners are squeezed, reaching 0 when an element folds flat. The darker the element, the further it is from ideal; both flanges use the same scale, and both are drawn the same way round as in the figures above.](`{python} fig_cmp_path`){#fig-c21-quality width=88%}
+![The elements of each flange shaded by their scaled Jacobian: (a) the quad-dominant flange of @fig-c21-bracketmesh and (b) the quad-only flange of @fig-c21-quadonly. Darker elements are further from ideal. Both flanges use the same scale and are drawn in the same orientation as in the figures above.](`{python} fig_cmp_path`){#fig-c21-quality width=88%}
 
 |                                                  | quad-dominant | quad-only |
 |:-------------------------------------------------|--------------:|----------:|
@@ -956,29 +945,27 @@ f2 = lambda x: f"{x:.2f}"; f1 = lambda x: f"{x:.1f}"; pc = lambda x: f"{x:.0f}%"
 | largest edge ratio in one element                | `{python} f1(qd_['er_max'])` | `{python} f1(qo_['er_max'])` |
 | largest element's area ÷ smallest                | `{python} f1(qd_['size_ratio'])` | `{python} f1(qo_['size_ratio'])` |
 
-: The two flanges measured the same way. A vertex is irregular if other than four edges meet there. {#tbl-c21-quality}
+: Both flanges measured in the same way. A vertex is irregular if other than four edges meet there. {#tbl-c21-quality}
 
-By the usual shape measures the two flanges are very close. Their average elements are equally
-good, and the automatic quad-dominant mesh keeps a slightly better worst element and more even
-sizes. That is worth saying plainly, because "all quadrilaterals" is often treated as a guarantee
-of quality, and it is not one.
+By these shape measures, the two flanges are very similar.
+Their average element quality is the same, and the automatic quad-dominant mesh has a slightly better worst element and more uniform element sizes.
+This is worth noting, since an all-quadrilateral mesh is not by itself a guarantee of higher quality.
+However, use of triangles for certain kinds of analyses may be strongly discouraged.
 
-The quad-only mesh's weaker elements are all in one place: the upper chamfered corner, where the
-ring round the hole passes close to the chamfer and the three-block fill has to squeeze into a
-long, thin triangle. Everywhere else its elements are as good as the quad-dominant mesh's, or
-better. Its smallest elements are in the ring round the hole, which is why its sizes vary more.
+The weaker elements of the quad-only mesh are all located in the upper chamfered corner, where the ring around the hole passes close to the chamfer and the three-block fill must fit into a long, thin triangle.
+Elsewhere, its elements are as good as or better than those of the quad-dominant mesh.
+Its smallest elements are in the ring around the hole, which is why its element sizes vary more.
 
-What it buys is structure. It has no triangles, so an element type that exists only for
-quadrilaterals can be used everywhere. Its rows run parallel to every edge, which is where a stress
-concentration along an edge, or a thin boundary layer in a flow, needs resolving. And it has six
-irregular vertices against sixteen; why that number matters for splines is the subject of the last
-part of this class. The price of that structure was a layout made by hand. That is the trade from
-the start of this class: quadrilaterals and hexahedra can do more with each element, and they are
-harder to build.
+The advantage of the quad-only mesh is its structure.
+It has no triangles, so element formulations that exist only for quadrilaterals can be used throughout.
+Its rows run parallel to every edge, which is where stress concentrations along an edge, or thin boundary layers in a flow, need to be resolved.
+It also has `{python} str(qo_['irregular'])` irregular vertices per flange, compared with `{python} str(qd_['irregular'])`; the importance of this for splines is discussed at the end of this class.
+Frequently, though getting something with this structure requires manual intervention.
+This reflects the tradeoff described at the beginning of this class, where quadrilaterals and hexahedra are typically better elements but are more difficult to build.
 
 ## Using the CAD basis for analysis
 
-The usual design-to-analysis path translates the model twice:
+The typical design-to-analysis path translates the model twice:
 
 $$
 \text{trimmed CAD surfaces}
@@ -988,13 +975,12 @@ $$
 \text{finite element mesh and basis}.
 $$
 
-The first arrow includes healing gaps along seams, removing small features that do not matter to
-the analysis, and deciding what fills the interior. The second is the meshing we just did. Both
-take time, and both can leave the solver with a geometry that is no longer exactly the one the
-designer made.
+The first step includes repairing gaps along seams, removing small features that do not matter to the analysis, and deciding what fills the interior of the model.
+The second step is meshing, as described above.
+Both steps take time, and both can produce a geometry for the solver that is no longer exactly the one the designer created.
 
-**Isogeometric analysis (IGA)** asks whether the spline functions CAD already uses to describe the
-geometry could also be used to approximate the solution. If the CAD geometry is
+**Isogeometric analysis (IGA)** asks whether the spline functions that CAD already uses to describe the geometry could also be used to approximate the solution.
+If the CAD geometry is
 
 $$
 \underline{x}(\boldsymbol{\xi})
@@ -1008,40 +994,27 @@ u^h(\boldsymbol{\xi})
   = \sum_A R_A(\boldsymbol{\xi})\,d_A .
 $$
 
-This is the isoparametric idea of Class 9 run in the other direction. There, the element's basis
-functions were reused to describe its geometry; here, the geometry's basis functions are reused to
-describe the field. The coefficients $\underline{P}_A$ are control points that place the geometry
-in space, and the coefficients $d_A$ are the unknowns of the analysis. They play different roles
-even though they multiply the same functions.
+This is the isoparametric concept of Class 9 applied in the opposite direction.
+There, the basis functions of an element were reused to describe its geometry; here, the basis functions of the geometry are reused to describe the field.
+The coefficients $\underline{P}_A$ are control points that place the geometry in space, and the coefficients $d_A$ are the unknowns of the analysis.
+These coefficients play different roles even though they multiply the same functions.
 
-Two things stand in the way of doing this on a part like the bracket.
+There are two main obstacles to doing this for a part like the bracket.
 
-- **A CAD model is a skin.** A B-rep describes the surfaces of the part and nothing inside them.
-  Untick *closed solid* in the widget and you get the mid-surface, which is exactly what a shell
-  analysis needs, and shell analysis on CAD surfaces is one of the places IGA works best. A
-  three-dimensional solid analysis needs a map from a parametric *cube* onto the inside of the
-  part, and CAD does not provide one. Building that volume map is still a large part of preparing a
-  solid model for IGA.
-- **Trimming.** Everything in the cut-cell figure above applies directly: IGA on a trimmed
-  surface has to integrate over cut cells, cope with slivers, and impose boundary conditions on
-  curves that cross its cells.
+- **A CAD model only describes surfaces.** A B-rep describes the surfaces of the part and nothing inside them.
+  Unchecking *closed solid* in the widget shows the midsurface, which is what a shell analysis needs, and shell analysis on CAD surfaces is one of the areas where IGA has been most successful.
+  A three-dimensional solid analysis instead needs a map from a parametric *cube* onto the inside of the part, which CAD does not provide.
+  Constructing this volumetric map is still a large part of preparing a solid model for IGA.
+- **Trimming.** Each of the problems described for @fig-c21-cutcells applies directly to IGA on a trimmed surface, including integration over cut cells, slivers, and boundary conditions on curves that cross cells.
 
-::: {.callout-important}
-## The promise is real, but conditional
+Research published between 2009 and 2023 has repeatedly found that, for problems with smooth solutions, B-spline and NURBS bases give more accuracy per basis function than Lagrange bases of the same degree.
+However, this does not mean faster solutions in every case, since singularities, sharp gradients, trimmed cells, and the cost of quadrature and of solving the system can all reduce or remove this advantage.
+Several of these studies are listed under Further reading at the end of this page.
 
-Research published between 2009 and 2023 has repeatedly found that, for problems with smooth
-solutions, B-spline and NURBS bases give more accuracy per basis function than Lagrange bases of
-the same degree. The gains are largest for vibration and wave problems. This is not a promise of
-faster answers in every case: singularities, sharp gradients, trimmed cells, and the cost of
-quadrature and of solving the system can all erase the advantage. Several of these studies are
-listed under Further reading at the end of the page.
-:::
+### Continuity between elements
 
-### Continuity is a choice
-
-Every Lagrange basis in this course has been $C^0$: neighbouring elements agree on the value of the
-field at their shared boundary, but the slope is allowed to jump there. Splines let us choose how
-smooth the field is at each element boundary. In words:
+Every Lagrange basis used so far in this course has been $C^0$, meaning that neighbouring elements agree on the value of the field at their shared boundary, but its slope may jump there.
+Splines allow us to choose how smooth the field is at each element boundary, as summarized below.
 
 | at an element boundary | what has to match                 |
 |:-----------------------|:----------------------------------|
@@ -1050,17 +1023,14 @@ smooth the field is at each element boundary. In words:
 | $C^{1}$                | the value and the slope           |
 | $C^{2}$                | the value, the slope, and the curvature |
 
-A B-spline of degree $p$ can be as smooth as $C^{p-1}$ at each boundary, and the choice can be
-made one boundary at a time. The widget puts the two bases on the same elements, Lagrange above and
-B-spline below. Below each plot is the **slope** of the highlighted function, and that is where
-continuity shows: at a $C^0$ boundary the slope jumps (open and filled dots), at $C^1$ it is
-continuous but has a corner, and at $C^2$ it passes smoothly through.
+A B-spline of degree $p$ can be as smooth as $C^{p-1}$ at each boundary, and this choice can be made separately at each boundary.
+The widget below shows the two bases on the same elements, with Lagrange functions above and B-splines below.
+Below each plot is the **slope** of the highlighted function, which is where continuity is most visible: at a $C^0$ boundary the slope jumps (shown by open and filled dots), at $C^1$ the slope is continuous but has a corner, and at $C^2$ it is smooth.
 
-Underneath, the same functions are put to work as a map: the geometry map of the previous
-section, in one dimension. The sum $\underline{x}(\xi)=\sum_A N_A(\xi)\,\underline{x}_A$ draws a
-curve in the plane. The points $\underline{x}_A$ are Lagrange nodes on the left and B-spline control
-points on the right, and you can drag them. Each element boundary on the two curves is labelled
-with the angle the curve turns through there.
+Below the basis functions, the same functions are used as a map, in the same way as the geometry map above but in one dimension.
+The sum $\underline{x}(\xi)=\sum_A N_A(\xi)\,\underline{x}_A$ defines a curve in the plane.
+The points $\underline{x}_A$ are Lagrange nodes on the left and B-spline control points on the right, and each can be dragged.
+Each element boundary on the two curves is labelled with the angle through which the curve turns there.
 
 ```{=html}
 <style>
@@ -1497,38 +1467,30 @@ reset(); draw();
 
 Things to try:
 
-1. **Support.** With the default settings, click a Lagrange function and then a B-spline function
-   near the middle. The shaded band is where each is nonzero. The quadratic B-spline reaches across
-   three elements; a Lagrange function never reaches past the elements touching its node.
-2. **Count.** Five quadratic elements need 11 Lagrange functions but only 7 smooth B-splines. Each
-   smoothness condition at a boundary removes one function, so the count is $p+1$ plus, for each
-   interior boundary, $p$ minus its continuity.
-3. **Slopes.** Set the degree to 3 and look at a B-spline's slope strip as you make one boundary
-   less smooth: a smooth pass at $C^2$, a corner at $C^1$, a jump at $C^0$.
-4. **Every boundary $C^0$.** The B-spline count becomes the Lagrange count. The two bases then
-   describe exactly the same set of functions, and on each element the B-splines are the Bernstein
-   polynomials of the next section.
-5. **One boundary at $C^{-1}$.** The B-spline basis splits there into two independent pieces, as
-   if it were two separate patches.
-6. **What a coefficient means.** A Lagrange function equals 1 at its own node and 0 at every other
-   node, so its coefficient is the value of the field there. Most B-splines never reach 1, and
-   several are nonzero at every point, so a B-spline coefficient is not the value of the field
-   anywhere in particular.
-7. **Drag a B-spline control point.** The curve moves smoothly, and only along the shaded stretch,
-   which is the support of that point's basis function. Every boundary still reads 0.0°: built from
-   $C^1$ functions, the curve cannot turn a corner, wherever its control points go.
-8. **Drag a Lagrange node.** Its elements move, and corners appear at the element boundaries next
-   to it. Even before you touch it, the Lagrange curve has small corners. Its nodes sit exactly on a
-   smooth arch, but an arch is not a piecewise quadratic, so the pieces meet at slightly different
-   angles.
-9. **Put the Lagrange nodes on the B-spline curve.** Every corner drops to 0.0° and the two curves
-   become the same curve. The Lagrange functions *can* draw anything the B-splines can draw; they
-   just do nothing to keep it smooth, and the next node you move brings the corners back.
-10. **Lower one boundary to $C^0$, then to $C^{-1}$.** The B-spline curve does not move at all.
-    Instead it gains a control point at that boundary. Drag that point and the B-spline curve can
-    now turn a corner there, or at $C^{-1}$ break apart.
+1. **Support.** With the default settings, click a Lagrange function and then a B-spline function near the middle.
+   The shaded band shows where each is nonzero.
+   The quadratic B-spline extends across three elements, while a Lagrange function never extends past the elements that touch its node.
+2. **Number of functions.** Five quadratic elements require 11 Lagrange functions but only 7 smooth B-splines.
+   Each smoothness condition at a boundary removes one function, so the number of B-splines is $p+1$ plus, for each interior boundary, $p$ minus its continuity.
+3. **Slopes.** Set the degree to 3 and observe the slope of a B-spline as one boundary is made less smooth.
+   The slope is smooth at $C^2$, has a corner at $C^1$, and jumps at $C^0$.
+4. **Every boundary $C^0$.** The number of B-splines becomes the number of Lagrange functions.
+   The two bases then describe exactly the same set of functions, and on each element the B-splines are the Bernstein polynomials described in the next section.
+5. **One boundary at $C^{-1}$.** The B-spline basis separates there into two independent pieces, as if it were two separate patches.
+6. **Meaning of a coefficient.** A Lagrange function equals 1 at its own node and 0 at every other node, so its coefficient is the value of the field there.
+   Most B-splines never reach 1, and several are nonzero at every point, so a B-spline coefficient is generally not the value of the field at any particular point.
+7. **Drag a B-spline control point.** The curve moves smoothly, and only along the shaded part, which is the support of the basis function associated with that point.
+   Every boundary still reads 0.0°, since a curve built from $C^1$ functions cannot form a corner, regardless of where its control points are placed.
+8. **Drag a Lagrange node.** Its elements move, and corners appear at the neighbouring element boundaries.
+   Even before any node is moved, the Lagrange curve has small corners.
+   Its nodes lie exactly on a smooth arch, but an arch is not a piecewise quadratic, so the pieces meet at slightly different angles.
+9. **Put the Lagrange nodes on the B-spline curve.** Every corner drops to 0.0°, and the two curves become identical.
+   The Lagrange functions can represent any curve that the B-splines can represent, but nothing in the Lagrange basis keeps the curve smooth, so moving any node brings the corners back.
+10. **Lower one boundary to $C^0$, then to $C^{-1}$.** The B-spline curve does not move.
+    Instead, it gains a control point at that boundary.
+    Dragging that point allows the B-spline curve to form a corner there or, at $C^{-1}$, to separate.
 
-### Same space, different coordinates: Bernstein polynomials
+### Bernstein polynomials
 
 On a single element, the degree-$p$ **Bernstein polynomials**
 
@@ -1536,10 +1498,9 @@ $$
 B_i^p(t)=\binom{p}{i}\,t^i(1-t)^{p-i}, \qquad i=0,\ldots,p, \qquad 0\le t\le 1,
 $$
 
-are another basis for the same polynomials as the degree-$p$ Lagrange functions. Any cubic can be
-written as a combination of the four cubic Lagrange functions or as a combination of the four
-cubic Bernstein polynomials. Only the coefficients change, the way a vector's components change
-when you rotate the axes.
+are another basis for the same polynomials as the degree-$p$ Lagrange functions.
+Any cubic can be written as a combination of the four cubic Lagrange functions or as a combination of the four cubic Bernstein polynomials.
+Only the coefficients change, in the same way that the components of a vector change when the coordinate axes are rotated.
 
 ```{python}
 #| output: false
@@ -1547,21 +1508,19 @@ fig, bern = C21F.bernstein_figure()
 fig_bern_path = save(fig, "C21_Fig7_Bernstein.png")
 ```
 
-![(a), (b) The four cubic functions of each basis on one element. The Lagrange functions equal 1 at their own node and 0 at the others; the Bernstein functions are never negative and add up to 1 everywhere. (c), (d) One cubic polynomial written in each basis. The Lagrange coefficients $d_i$ are the polynomial's values at the four nodes. The Bernstein coefficients $c_i$ are the heights of a control polygon: the curve starts and ends on it, and is pulled toward the two interior points without passing through them.](`{python} fig_bern_path`){#fig-c21-bernstein width=86%}
+![(a) and (b) The four cubic functions of each basis on one element. Each Lagrange function equals 1 at its own node and 0 at the others, while the Bernstein functions are never negative and sum to 1 everywhere. (c) and (d) One cubic polynomial written in each basis. The Lagrange coefficients $d_i$ are the values of the polynomial at the four nodes. The Bernstein coefficients $c_i$ are the heights of a control polygon; the curve starts and ends on this polygon, and is pulled toward the two interior points without passing through them.](`{python} fig_bern_path`){#fig-c21-bernstein width=86%}
 
-Two properties make Bernstein polynomials useful. They are never negative, and they add up to 1, so
-a curve built from them stays inside its control polygon; this is why CAD uses them. And they are
-what a $C^0$ B-spline is: set every boundary in the widget to $C^0$ and the B-splines on each
-element are exactly these polynomials. That connection, called **Bézier extraction**, lets a spline
-code hand each element a Bernstein basis plus a small matrix, and then assemble element by element
-in the same loop as an ordinary finite element code.
+Two properties make Bernstein polynomials useful.
+First, they are never negative and they sum to 1, so a curve built from them stays inside its control polygon, which is one reason they are used in CAD.
+Second, they are exactly the basis functions of a $C^0$ B-spline: setting every boundary in the widget above to $C^0$ makes the B-splines on each element exactly these polynomials.
+This connection, called **Bézier extraction**, allows a spline code to provide each element with a Bernstein basis and a small matrix, and then to assemble element by element in the same loop as a standard finite element code.
 
-### Cubic Hermite: share the slope as well as the value
+### Cubic Hermite polynomials
 
-A spline is one way to get $C^1$. The older way, used in beam theory, is to make the slope itself an
-unknown at every node. The Euler--Bernoulli beam weak form has second derivatives in it ($m=2$, as in
-Homework 11), so the deflection's slope must not jump between elements. A cubic Hermite element
-carries the deflection $w$ and the rotation $\theta = dw/dx$ at each end,
+Splines are one way to obtain $C^1$ continuity.
+An older approach, used in beam theory, makes the slope itself an unknown at every node.
+The Euler--Bernoulli beam weak form contains second derivatives ($m=2$), so the slope of the deflection must not jump between elements.
+A cubic Hermite element uses the deflection $w$ and the rotation $\theta = dw/dx$ at each end,
 
 $$
 w^h(t)=h_{00}(t)\,w_1+L\,h_{10}(t)\,\theta_1
@@ -1587,40 +1546,38 @@ fig_herm_path = save(fig, "C21_Fig8_Hermite.png")
 herm_slope = f"{abs(herm['lagrange_slopes'][0]):.3f}"
 ```
 
-![(a) The four cubic Hermite functions. Two of them carry a value at one end, and two carry a slope. (b) A beam clamped at both ends under a uniform load (dashed), approximated by two Hermite elements. The two pieces are different cubics, but they share the same deflection and the same slope at the middle node, so the beam has no corner there. (c) The same beam with two quadratic Lagrange elements through the same nodal deflections. Each element arrives at the middle node with its own slope (+`{python} herm_slope` and −`{python} herm_slope`), so the approximation has a peak where the beam is actually flat.](`{python} fig_herm_path`){#fig-c21-hermite width=100%}
+![(a) The four cubic Hermite functions. Two of them are associated with a value at one end, and two with a slope. (b) A beam clamped at both ends under a uniform load (dashed), approximated by two Hermite elements. The two pieces are different cubics, but they share the same deflection and the same slope at the middle node, so the approximation has no corner there. (c) The same beam approximated by two quadratic Lagrange elements through the same nodal deflections. Each element has its own slope at the middle node (+`{python} herm_slope` and −`{python} herm_slope`), so the approximation has a peak where the beam is actually flat.](`{python} fig_herm_path`){#fig-c21-hermite width=100%}
 
-Hermite elements work well for beams and for rectangular plate elements. They do not carry over
-well to general shapes. In two and three dimensions, matching slopes across an element edge needs
-derivative unknowns in several directions at every node, including mixed derivatives, and those
-only fit together cleanly on rectangles; on curved or irregular elements they become very
-difficult to match. Splines get their smoothness a different way: not by adding derivative
-unknowns, but by letting each function overlap several elements.
+Hermite elements work well for beams and for rectangular plate elements, but they do not extend well to general shapes.
+In two and three dimensions, matching slopes across an element edge requires derivative unknowns in several directions at every node, including mixed derivatives, and these only fit together easily on rectangles.
+On curved or irregular elements, they become very difficult to match.
+Splines obtain their smoothness differently: rather than adding derivative unknowns, each function overlaps several elements.
 
 ### From a Class 11 element to a spline patch
 
-In [Class 11](11_Class.qmd), a basis function on a quadrilateral was a product of two 1D functions,
+In [Class 11](11_Class.qmd), a basis function on a quadrilateral was defined as the product of two one-dimensional functions,
 
 $$
 N_A(\xi,\eta)=N_a(\xi)\,N_b(\eta).
 $$
 
-A B-spline patch is built the same way, from 1D B-splines,
+A B-spline patch is built in the same way, from one-dimensional B-splines,
 
 $$
 R_A(\xi,\eta)=B_a(\xi)\,B_b(\eta).
 $$
 
-The difference is where the 1D factors live. A Lagrange factor lives on one element, or two if its
-node is on a boundary. A B-spline factor runs across several elements of the patch. The widget
-below shows either basis over the same grid, with the two 1D factors drawn on the back walls as in
-Class 11. The dark curves are the function's profile along each element line, which is where a
-$C^0$ function creases. Drag to rotate, and click a dot in the right-hand view to pick a function.
+The difference lies in the support of the one-dimensional factors.
+A Lagrange factor is nonzero on one element, or on two if its node lies on an element boundary.
+A B-spline factor extends across several elements of the patch.
+The widget below shows either basis over the same grid, with the two one-dimensional factors drawn on the back walls as in Class 11.
+The dark curves show the function along each element line, which is where a $C^0$ function has a crease.
+Drag to rotate the view, and click a dot in the right-hand view to select a function.
 
-Below that, the same functions are used as a map once more, from the square onto a curved region
-of the plane, $\underline{x}(\xi,\eta)=\sum_A R_A(\xi,\eta)\,\underline{x}_A$. It starts as the
-quarter annulus of Classes 12, 13 and 20. The points $\underline{x}_A$ belong to whichever basis is
-selected at the top of the widget, Lagrange nodes or B-spline control points, and you can drag any
-of them. Red marks the places where a grid line turns a corner as it crosses an element line.
+Below that, the same functions are again used as a map, this time from the square onto a curved region of the plane, $\underline{x}(\xi,\eta)=\sum_A R_A(\xi,\eta)\,\underline{x}_A$.
+The region initially is the quarter annulus of Classes 12, 13, and 20.
+The points $\underline{x}_A$ belong to whichever basis is selected at the top of the widget (Lagrange nodes or B-spline control points), and each can be dragged.
+Red marks the locations where a grid line forms a corner as it crosses an element line.
 
 ```{=html}
 <style>
@@ -2077,42 +2034,34 @@ $('bs2_top').on('plotly_click',function(e){
 
 Things to try:
 
-1. **A Lagrange corner function** (the default). It creases along both element lines through its
-   node: its 1D factors each have a corner there.
-2. **Switch to B-spline.** The widget stays at the same place on the patch. The B-spline function
-   covers more cells and passes over the dark curves without a crease.
-3. **Count.** On $3\times3$ quadratic elements, Lagrange needs $7\times7=49$ functions and $C^1$
-   B-splines need $5\times5=25$, the 1D saving from the previous widget, squared.
-4. **Lower the spline continuity to $C^0$.** The count becomes 49 again, and the creases come back.
-5. **Drag a Lagrange node at an element corner.** The grid lines crossing the element lines next to
-   it now turn sharp corners there. Even before you touch anything, the Lagrange grid has small
-   corners: its nodes sit exactly on circles, and a circle is not a piecewise quadratic.
-6. **Switch to B-spline and drag a control point.** The region bends smoothly over a wider patch,
-   and no grid line turns a corner anywhere.
-7. **Put the Lagrange nodes on the B-spline region.** Every corner disappears: the Lagrange
-   functions can make exactly the same region. They just do nothing to keep it smooth, and the next
-   node you move brings the corners back.
-8. **Lower the spline continuity to $C^0$.** The region does not move, but control points appear on
-   the element lines, and dragging one of those can now put a corner in the spline grid as well.
+1. **A Lagrange corner function** (the default).
+   It has creases along both element lines through its node, since each of its one-dimensional factors has a corner there.
+2. **Switch to B-spline.** The widget stays at the same location on the patch.
+   The B-spline function covers more cells and crosses the dark curves without a crease.
+3. **Number of functions.** On $3\times3$ quadratic elements, the Lagrange basis has $7\times7=49$ functions and the $C^1$ B-spline basis has $5\times5=25$, which is the one-dimensional reduction from the previous widget, squared.
+4. **Lower the spline continuity to $C^0$.** The number of functions returns to 49, and the creases reappear.
+5. **Drag a Lagrange node at an element corner.** The grid lines crossing the neighbouring element lines now form sharp corners there.
+   Even before any node is moved, the Lagrange grid has small corners, since its nodes lie exactly on circles and a circle is not a piecewise quadratic.
+6. **Switch to B-spline and drag a control point.** The region bends smoothly over a wider area, and no grid line forms a corner.
+7. **Put the Lagrange nodes on the B-spline region.** Every corner disappears, since the Lagrange functions can represent exactly the same region.
+   However, the Lagrange basis does not keep the region smooth, and moving any node brings the corners back.
+8. **Lower the spline continuity to $C^0$.** The region does not move, but control points appear on the element lines, and dragging one of these can now form a corner in the spline grid as well.
 
-A tensor-product spline lives on **one** parametric square. That suits a single CAD surface, such
-as one flange of the bracket: mapping the square through $\underline{x}(\xi,\eta)$ bends the whole
-picture onto the surface without changing which functions overlap which. A part made of several
-surfaces needs several patches, glued together, and how well that can be done depends on the
-layout of the mesh.
+A tensor-product spline is defined on a **single** parametric square.
+This is well suited to a single CAD surface, such as one flange of the bracket, since mapping the square through $\underline{x}(\xi,\eta)$ places the basis functions on the surface without changing which functions overlap which.
+A part made of several surfaces requires several patches glued together, and how well this can be done depends on the layout of the mesh.
 
-## When quad topology controls spline topology
+## Quadrilateral mesh topology and splines
 
-A tensor-product spline needs a grid it can index by two coordinates: step in $\xi$, or step in
-$\eta$. A structured quad mesh has that property. An arbitrary quad mesh generally does not.
+A tensor-product spline needs a grid that can be indexed by two coordinates, by stepping in either $\xi$ or $\eta$.
+A structured quadrilateral mesh has this property, but an arbitrary quadrilateral mesh generally does not.
 
-At a **regular** interior vertex, four quads meet. At an **extraordinary** vertex, some other number
-meets: three, five, six. On the boundary, a regular vertex has two quads, or one at a corner. A
-**separatrix** is what you get by starting at an irregular vertex, following one of its edges into
-the mesh, and continuing straight through every regular vertex (leaving by the edge opposite the
-one you came in on) until you reach the boundary or another irregular vertex. Cutting the mesh
-along every separatrix leaves blocks that can each be indexed by two coordinates. Those blocks are
-the patches a tensor-product spline would need.
+At a **regular** interior vertex, four quadrilaterals meet.
+At an **extraordinary** vertex, a different number meets, such as three, five, or six.
+On the boundary, a regular vertex has two quadrilaterals, or one at a corner.
+A **separatrix** is obtained by starting at an irregular vertex, following one of its edges into the mesh, and continuing straight through every regular vertex (leaving by the edge opposite the one by which it entered) until reaching the boundary or another irregular vertex.
+Cutting the mesh along every separatrix leaves blocks that can each be indexed by two coordinates.
+These blocks are the patches that a tensor-product spline would need.
 
 ```{python}
 #| output: false
@@ -2125,27 +2074,25 @@ sep_c_q, sep_c_p, sep_c_ev = str(sep['c']['nquad']), str(sep['c']['npatch']), st
 sq = lambda k, f: f"{sep[k][f]:.2f}"; sq1 = lambda k, f: f"{sep[k][f]:.1f}"
 ```
 
-![Three all-quadrilateral meshes of a square plate with a circular hole. Every separatrix was traced by the rule above (violet), and the patches it leaves are tinted so that neighbours differ. (a) Four structured blocks around the hole. The only irregular vertices are the plate's corners, where two quads meet instead of one; their four separatrices cut `{python} sep_a_q` quads into `{python} sep_a_p` patches. (b) A mesh made the way many automatic quad meshers make one: triangulate, pair neighbouring triangles into quads, then split every element into quads. It has `{python} sep_b_ev` interior extraordinary vertices, of valence `{python} sep_b_val`, and its separatrices cut `{python} sep_b_q` quads into `{python} sep_b_p` patches. (c) Twelve patches: a ring of four round the hole, four along the sides and four in the corners. Its `{python} sep_c_ev` extraordinary vertices, all of valence 5, sit at the corners of the ring, and their separatrices join one another in a loop round the hole, cutting `{python} sep_c_q` quads into `{python} sep_c_p` patches.](`{python} fig_sep_path`){#fig-c21-separatrices width=100%}
+![Three all-quadrilateral meshes of a square plate with a circular hole. Every separatrix was traced using the rule above (violet), and the resulting patches are shaded so that neighbouring patches differ. (a) Four structured blocks around the hole. The only irregular vertices are at the corners of the plate, where two quadrilaterals meet instead of one; their four separatrices divide `{python} sep_a_q` quadrilaterals into `{python} sep_a_p` patches. (b) A mesh built in the way many automatic quadrilateral meshers build one: triangulate, pair neighbouring triangles into quadrilaterals, and then split every element into quadrilaterals. It has `{python} sep_b_ev` interior extraordinary vertices, of valence `{python} sep_b_val`, and its separatrices divide `{python} sep_b_q` quadrilaterals into `{python} sep_b_p` patches. (c) Twelve patches: a ring of four around the hole, four along the sides, and four in the corners. Its `{python} sep_c_ev` extraordinary vertices, all of valence 5, are at the corners of the ring, and their separatrices connect to one another in a loop around the hole, dividing `{python} sep_c_q` quadrilaterals into `{python} sep_c_p` patches.](`{python} fig_sep_path`){#fig-c21-separatrices width=100%}
 
-Mesh (b) is a perfectly good mesh for ordinary $C^0$ Lagrange elements. A Lagrange code only asks
-neighbouring elements to agree on the values at their shared nodes, and it never needs to know
-which way is "straight through" a vertex. Raising the Lagrange degree does not change that.
+Mesh (b) is a (moderately) acceptable mesh for standard $C^0$ Lagrange elements.
+A Lagrange code only requires neighbouring elements to agree on the values at their shared nodes, and never needs to know which direction is "straight through" a vertex.
+Raising the Lagrange polynomial degree does not change this.
 
-A smooth spline is different. Its functions are supposed to run across element boundaries, and at
-a valence-3 or valence-5 vertex there is no single way to continue a row of elements straight
-through. Mesh (a) can carry four patches of smooth splines, glued along four seams. Mesh (b) breaks
-into dozens of small patches. Each seam between patches is a place where continuity has to be
-lowered or specially enforced, so on mesh (b) most of the smoothness that made splines attractive
-is gone. A quad mesh can be entirely usable for $C^0$ finite elements and still be a poor starting
-point for a standard B-spline analysis.
+Smooth splines are different.
+Their functions are intended to extend across element boundaries, and at a valence-3 or valence-5 vertex there is no unique way to continue a row of elements straight through.
+Mesh (a) can support four patches of smooth splines, glued along four seams.
+Mesh (b) separates into dozens of small patches.
+Each seam between patches is a location where continuity must be reduced or specially enforced, so on mesh (b) most of the smoothness that makes splines attractive is lost.
+A quadrilateral mesh can therefore be entirely suitable for $C^0$ finite elements and still be a poor starting point for a standard B-spline analysis.
 
-Extraordinary vertices are not bad in themselves, though; what matters is how few there are and
-where they sit. Mesh (c) has four, placed on purpose at the corners of a ring of quadrilaterals
-round the hole, and their separatrices meet one another instead of wandering off across the plate.
-The result is twelve tidy patches. That is more seams than mesh (a) has, but they are long and
-regular, the kind a multi-patch spline code handles routinely; the cost is at the four valence-5
-vertices, where smoothness has to be lowered or specially constructed. Mesh (c) also has the best
-elements of the three:
+Extraordinary vertices are not problematic in themselves; what matters is how many there are and where they are located.
+Mesh (c) has four, placed deliberately at the corners of a ring of quadrilaterals around the hole, and their separatrices connect to one another rather than extending across the plate.
+The result is twelve well-structured patches.
+This is more seams than mesh (a) has, but they are long and regular, which multi-patch spline codes handle routinely.
+The cost is at the four valence-5 vertices, where smoothness must be reduced or specially constructed.
+Mesh (c) also has the best elements of the three meshes.
 
 |                                       | (a) four blocks | (b) triangulate, pair, split | (c) twelve patches |
 |:--------------------------------------|---------:|---------:|---------:|
@@ -2156,60 +2103,51 @@ elements of the three:
 | largest edge ratio in one element     | `{python} sq1('a','er_max')` | `{python} sq1('b','er_max')` | `{python} sq1('c','er_max')` |
 | largest element's area ÷ smallest     | `{python} sq1('a','size_ratio')` | `{python} sq1('b','size_ratio')` | `{python} sq1('c','size_ratio')` |
 
-: The three plate meshes measured the same way. {#tbl-c21-plates}
+: The three plate meshes measured in the same way. {#tbl-c21-plates}
 
-Mesh (a)'s weakest elements are at the plate's corners, where two quadrilaterals have to share one
-right angle and each gets 45°. No smoothing can fix that, because the layout fixes it. Mesh (c)
-gives each corner a block of its own. Its one weakness is size: its smallest elements, round the
-hole, are a few times smaller than its largest, a slightly wider spread than mesh (a)'s.
+The weakest elements of mesh (a) are at the corners of the plate, where two quadrilaterals share a single right angle and each has a 45° corner.
+Smoothing cannot fix this, since it is determined by the layout.
+Mesh (c) gives each corner its own block.
+Its one weakness is element size: its smallest elements, around the hole, are a few times smaller than its largest, which is a slightly wider spread than in mesh (a).
 
-This is an active research area rather than a dead end. Constructions such as T-splines,
-hierarchical and locally refined splines, subdivision surfaces, and spline spaces built
-specifically around extraordinary vertices all aim to keep smooth basis functions on meshes with
-arbitrary layouts. For examples, see the work on
+This is an active area of research.
+Constructions such as T-splines, hierarchical and locally refined splines, subdivision surfaces, and spline spaces built specifically around extraordinary vertices all aim to preserve smooth basis functions on meshes with arbitrary layouts.
+<!-- For examples, see the work on
 [smooth splines on unstructured quad meshes](https://doi.org/10.1016/j.cma.2017.06.008),
 [blended B-splines on unstructured quad and hex meshes](https://doi.org/10.1016/j.cma.2018.07.013),
 and [G-spline analysis on arbitrary quadrilateral layouts](https://doi.org/10.1016/j.cma.2023.115965).
+-->
 
-::: {.callout-warning}
-## Separatrices describe topology, not quality
+Note that separatrices describe the topology of a mesh, not its quality.
+A well-structured separatrix layout can still produce a poor spline if its cells are folded, highly skewed, or crowded together, just as a Lagrange mesh can.
+The separatrices indicate whether a standard tensor-product patch layout is natural, while the quality of the analysis still depends on the Jacobians of Class 13 and on how well the basis can approximate the solution.
 
-A tidy separatrix layout can still produce a poor spline if its cells are folded, badly skewed, or
-crowded together, just as a Lagrange mesh can. The separatrices tell you whether a standard
-tensor-product patch layout is natural. Whether the analysis is good still depends on the Jacobians
-of Class 13 and on how well the basis can approximate the solution.
-:::
+## Summary
 
-## What to carry forward
+1. **CAD describes a part as trimmed surfaces glued together.**
+   This is an exact description of the shape, but cut cells, slivers, and seams make it difficult to use directly for analysis.
+2. **Meshing addresses these problems at the cost of geometric accuracy.**
+   A mesh of the trimmed surfaces has no cut cells, but it replaces every curve with straight edges.
+3. **Geometry and field have separate roles.**
+   IGA uses the same functions for both, but control points place the geometry, while the coefficients $d_A$ are the unknowns of the analysis.
+4. **Continuity should be chosen, not maximized.**
+   Smoothness is beneficial for smooth solutions and for weak forms with higher derivatives, such as the beam.
+   It should be reduced where the solution is not smooth, such as at material interfaces, cracks, and sharp corners.
+5. **An exact surface does not define a volume.**
+   CAD surfaces can be used directly for shell analysis, but solid analysis still requires a volumetric map or a mesh.
+6. **Fewer basis functions does not necessarily mean less computation.**
+   Smooth bases can give lower error per unknown, but each function overlaps more elements, so the matrix is less sparse and each element is more expensive to integrate.
 
-1. **CAD describes a part as trimmed surfaces glued together.** That is an exact description of the
-   shape, but its cut cells, slivers, and seams make it hard to compute on directly.
-2. **Meshing fixes the topology and costs the geometry.** A mesh of the trimmed surfaces has no cut
-   cells, and replaces every curve with straight edges.
-3. **Geometry and field are separate roles.** IGA uses the same functions for both, but control
-   points place the geometry and the coefficients $d_A$ are the analysis unknowns.
-4. **Continuity is a choice, not a virtue in itself.** Smoothness pays off for smooth solutions
-   and for weak forms with higher derivatives, like the beam. It should be lowered where the
-   solution is not smooth: at material interfaces, cracks, and sharp corners.
-5. **An exact surface does not give you a volume.** CAD surfaces suit shell analysis directly.
-   Solid analysis still needs a volume map or a mesh.
-6. **Fewer basis functions is not the same as less work.** Smooth bases can give lower error per
-   unknown, but each function overlaps more elements, so the matrix is less sparse and each
-   element costs more to integrate.
-
-::: {.callout-tip}
-## One-sentence summary
-
-Lagrange finite elements make complicated geometry easy by keeping continuity local, while
-isogeometric methods spend more effort on geometry and topology so that smooth, CAD-quality basis
-functions can carry more approximation power across element boundaries.
-:::
+Overall, Lagrange finite elements handle complicated geometry well by keeping continuity local, while isogeometric methods invest more effort in geometry and topology so that smooth, CAD-quality basis functions can provide more approximation power across element boundaries.
 
 ### Further reading
 
 - [Hughes, Cottrell, and Bazilevs (2005), the original isogeometric-analysis paper](https://doi.org/10.1016/j.cma.2004.10.008)
 - [Cottrell, Hughes, and Bazilevs (2009), *Isogeometric Analysis*](https://onlinelibrary.wiley.com/doi/book/10.1002/9780470749081)
-- [Evans, Bazilevs, Babuška, and Hughes (2009), on how much accuracy smooth splines buy per degree of freedom](https://doi.org/10.1016/j.cma.2009.01.021)
+- [Evans, Bazilevs, Babuška, and Hughes (2009), on the accuracy of smooth splines per degree of freedom](https://doi.org/10.1016/j.cma.2009.01.021)
 - [Marussig and Hughes (2018), a review of trimming in isogeometric analysis](https://doi.org/10.1007/s11831-017-9220-9)
+
+<!-- 
 - [Zheng and Chen (2022), building volume maps for solid IGA](https://doi.org/10.1016/j.cma.2022.115662)
 - [Verhelst, Weinmüller, Mantzaflaris, and Takacs (2024), a comparison of smooth basis constructions](https://doi.org/10.1016/j.cma.2023.116659)
+-->
