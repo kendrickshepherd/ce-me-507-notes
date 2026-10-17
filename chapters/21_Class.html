@@ -1,0 +1,2707 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Finite Element Methods">
+
+<title>21&nbsp; Class 21: CAD, Meshing, and Discretization Choice – CE/ME 507 — Class Notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/3_Support_FunctionSpaces.html" rel="next">
+<link href="../chapters/20_Class.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-5a6c5cd077c1ead4086784ad1389866e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script>
+window.MathJax = {
+  tex: {
+    tags: 'ams',
+    macros: {
+      RR: '{\\mathbb{R}}',
+      Om: '{\\Omega}'
+    }
+  }
+};
+</script>
+<script src="plotly.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/21_Class.html"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Class 21: CAD, Meshing, and Discretization Choice</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">CE/ME 507 — Class Notes</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">CE/ME 507 — Class Notes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/2_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Class 2: Linear FEM</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Class 3: Index Notation, Function Spaces, and the Weak Form</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/4_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Class 4: Strong and Weak Forms of the Boundary Value Problem</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/5_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/6_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Class 6: Basis Functions and Lagrange Polynomials</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/7_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Class 7: From Galerkin to a Matrix Equation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/8_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Class 8: Assembly, Sparsity, and the Road to Quadrature</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/9_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Class 9: The Isoparametric Map and the Jacobian</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Class 10: Assembly with the IEN Array, and Quadrature on an Element</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Class 11: Tensor-Product Basis Functions in 2D</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Class 12: The Spatial Mapping</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Class 13: The Jacobian Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Class 14: The ID and IEN Arrays</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Class 15: Unidimensional Finite Element Code</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Class 16: Derivatives of the Solution</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Class 20: Quadrature in 2D, and Integrating Over a Face</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21_Class.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Class 21: CAD, Meshing, and Discretization Choice</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">1D Poisson I: Heat Conduction Through a Wall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">1D Poisson II: The Wall, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">1D Poisson III: An Axially Loaded Rod</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#what-a-mesh-is-made-of" id="toc-what-a-mesh-is-made-of" class="nav-link active" data-scroll-target="#what-a-mesh-is-made-of"><span class="header-section-number">21.1</span> What a mesh is made of</a>
+  <ul class="collapse">
+  <li><a href="#triangles-and-tetrahedra-easy-to-get-but-not-always-what-you-want" id="toc-triangles-and-tetrahedra-easy-to-get-but-not-always-what-you-want" class="nav-link" data-scroll-target="#triangles-and-tetrahedra-easy-to-get-but-not-always-what-you-want"><span class="header-section-number">21.1.1</span> Triangles and tetrahedra: easy to get but not always what you want</a></li>
+  <li><a href="#quadrilaterals-and-hexahedra-better-elements-but-worse-to-build" id="toc-quadrilaterals-and-hexahedra-better-elements-but-worse-to-build" class="nav-link" data-scroll-target="#quadrilaterals-and-hexahedra-better-elements-but-worse-to-build"><span class="header-section-number">21.1.2</span> Quadrilaterals and hexahedra: better elements but worse to build</a></li>
+  <li><a href="#meshes-are-usually-straight-recent-trends-are-going-towards-curvilinear-representations" id="toc-meshes-are-usually-straight-recent-trends-are-going-towards-curvilinear-representations" class="nav-link" data-scroll-target="#meshes-are-usually-straight-recent-trends-are-going-towards-curvilinear-representations"><span class="header-section-number">21.1.3</span> Meshes are usually straight, recent trends are going towards curvilinear representations</a></li>
+  <li><a href="#more-about-mesh-data-structures" id="toc-more-about-mesh-data-structures" class="nav-link" data-scroll-target="#more-about-mesh-data-structures"><span class="header-section-number">21.1.4</span> More about mesh data structures</a></li>
+  </ul></li>
+  <li><a href="#where-meshes-come-from" id="toc-where-meshes-come-from" class="nav-link" data-scroll-target="#where-meshes-come-from"><span class="header-section-number">21.2</span> Where meshes come from</a>
+  <ul class="collapse">
+  <li><a href="#boundary-representation" id="toc-boundary-representation" class="nav-link" data-scroll-target="#boundary-representation"><span class="header-section-number">21.2.1</span> Boundary representation</a></li>
+  <li><a href="#gluing-and-trimming" id="toc-gluing-and-trimming" class="nav-link" data-scroll-target="#gluing-and-trimming"><span class="header-section-number">21.2.2</span> Gluing and trimming</a></li>
+  <li><a href="#why-trimming-complicates-analysis" id="toc-why-trimming-complicates-analysis" class="nav-link" data-scroll-target="#why-trimming-complicates-analysis"><span class="header-section-number">21.2.3</span> Why trimming complicates analysis</a></li>
+  <li><a href="#meshing-the-bracket" id="toc-meshing-the-bracket" class="nav-link" data-scroll-target="#meshing-the-bracket"><span class="header-section-number">21.2.4</span> Meshing the bracket</a></li>
+  <li><a href="#an-all-quadrilateral-mesh-of-the-same-bracket" id="toc-an-all-quadrilateral-mesh-of-the-same-bracket" class="nav-link" data-scroll-target="#an-all-quadrilateral-mesh-of-the-same-bracket"><span class="header-section-number">21.2.5</span> An all-quadrilateral mesh of the same bracket</a></li>
+  <li><a href="#comparing-the-two-meshes" id="toc-comparing-the-two-meshes" class="nav-link" data-scroll-target="#comparing-the-two-meshes"><span class="header-section-number">21.2.6</span> Comparing the two meshes</a></li>
+  </ul></li>
+  <li><a href="#using-the-cad-basis-for-analysis" id="toc-using-the-cad-basis-for-analysis" class="nav-link" data-scroll-target="#using-the-cad-basis-for-analysis"><span class="header-section-number">21.3</span> Using the CAD basis for analysis</a>
+  <ul class="collapse">
+  <li><a href="#continuity-between-elements" id="toc-continuity-between-elements" class="nav-link" data-scroll-target="#continuity-between-elements"><span class="header-section-number">21.3.1</span> Continuity between elements</a></li>
+  <li><a href="#bernstein-polynomials" id="toc-bernstein-polynomials" class="nav-link" data-scroll-target="#bernstein-polynomials"><span class="header-section-number">21.3.2</span> Bernstein polynomials</a></li>
+  <li><a href="#cubic-hermite-polynomials" id="toc-cubic-hermite-polynomials" class="nav-link" data-scroll-target="#cubic-hermite-polynomials"><span class="header-section-number">21.3.3</span> Cubic Hermite polynomials</a></li>
+  <li><a href="#from-a-class-11-element-to-a-spline-patch" id="toc-from-a-class-11-element-to-a-spline-patch" class="nav-link" data-scroll-target="#from-a-class-11-element-to-a-spline-patch"><span class="header-section-number">21.3.4</span> From a Class 11 element to a spline patch</a></li>
+  </ul></li>
+  <li><a href="#quadrilateral-mesh-topology-and-splines" id="toc-quadrilateral-mesh-topology-and-splines" class="nav-link" data-scroll-target="#quadrilateral-mesh-topology-and-splines"><span class="header-section-number">21.4</span> Quadrilateral mesh topology and splines</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">21.5</span> Summary</a>
+  <ul class="collapse">
+  <li><a href="#further-reading" id="toc-further-reading" class="nav-link" data-scroll-target="#further-reading"><span class="header-section-number">21.5.1</span> Further reading</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content column-body" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Class 21: CAD, Meshing, and Discretization Choice</span></h1>
+<p class="subtitle lead">Where the mesh comes from, qualities of a good mesh, and efforts to improve this process</p>
+</div>
+
+
+
+<div class="quarto-title-meta column-body">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>The a finite element method requires a basis to approximate the solution to a problem of interest. These bases are defined using the structure of a number of cells glued together to approximate the intended shape as a <em>mesh</em>.</p>
+<p>Meshes are typically created by pushing a computer-aided design (CAD) model through a specialized software, though sometimes they come as the result of processing geographic data or point cloud information. To get to a finite element mesh, somebody likely designed the part in CAD and somebody chose how to chop it up. Both of decisions are then baked into your answer before you assemble a single element matrix. This class is a very brief introduction to those two steps, as well as a proposed pipeline to use a the CAD model for analysis directly without the use of an intermediary mesh.</p>
+<section id="what-a-mesh-is-made-of" class="level2" data-number="21.1">
+<h2 data-number="21.1" class="anchored" data-anchor-id="what-a-mesh-is-made-of"><span class="header-section-number">21.1</span> What a mesh is made of</h2>
+<p>For traditional FEM, mesh elements are convex triangles or quadrilaterals in two dimensions, or convex tetrahedra, pyramids, prisms, or hexahedra in three dimensions.</p>
+<div id="fig-c21-surface" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c21-surface-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class21/C21_Fig1_Surface.png" class="img-fluid figure-img" style="width:78.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c21-surface-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;21.1: Surface mesh elements include triangles and quadrilaterals. Triangles are fixed by three points and is always flat planar, while quadrilaterals have a fourth point that is free to leave the plane, which is why it uses a bilinear map. Quadrilaterals can fold or become otherwise problematic if care is not taken.
+</figcaption>
+</figure>
+</div>
+<div id="fig-c21-volume" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c21-volume-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class21/C21_Fig2_Volume.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c21-volume-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;21.2: Four typical volumetric finite elements are shown. Most meshes rely primarily on tetrahedra and hexahedra, while prisms and pyramids mostly exist so that a hexahedral region can transition to an unstructured tetrahedral region.
+</figcaption>
+</figure>
+</div>
+<section id="triangles-and-tetrahedra-easy-to-get-but-not-always-what-you-want" class="level3" data-number="21.1.1">
+<h3 data-number="21.1.1" class="anchored" data-anchor-id="triangles-and-tetrahedra-easy-to-get-but-not-always-what-you-want"><span class="header-section-number">21.1.1</span> Triangles and tetrahedra: easy to get but not always what you want</h3>
+<p>Generating a good triangular or tetrahedral mesh of an arbitrary shape is in many senses a solved problem. The algorithms to generate these are robust, automatic, and in some cases decades old. You can frequently hand a tet mesher a complicated part and get a usable mesh without user intervention, even if the model itself has problems. Local refinement on these meshes is also easily done by splitting a single tetrahedron and patching up its neighbours.</p>
+<p>Triangular and tetrahedral elements (together called <em>simplicial</em> elements) work well for a large class of problems. However, they may perform poorly in some cases, such as</p>
+<ul>
+<li><strong>Directional physics.</strong> In a boundary layer the solution changes dramatically across the layer and barely at all along it. What you want there is a stack of elements aligned <em>with</em> the wall. Tetrahedra lack capacity to effectively operate for these directional problems, and typically give poor results here.</li>
+<li><strong>Nonlinear and constrained problems.</strong> Linear tetrahedra are notoriously stiff when the material is nearly incompressible or has gone plastic because there are not enough degrees of freedom per element to satisfy the constraint and still deform. This phenomenon is called <strong>locking</strong> and solutions using simplicial meshes are far too stiff compared to the actual solution without extensive mesh refinement.</li>
+</ul>
+</section>
+<section id="quadrilaterals-and-hexahedra-better-elements-but-worse-to-build" class="level3" data-number="21.1.2">
+<h3 data-number="21.1.2" class="anchored" data-anchor-id="quadrilaterals-and-hexahedra-better-elements-but-worse-to-build"><span class="header-section-number">21.1.2</span> Quadrilaterals and hexahedra: better elements but worse to build</h3>
+<p>A hex mesh will generally get you a given accuracy with far fewer elements, handles directional features gracefully, and behaves much better on the nonlinear problems above. The challenge is that <strong>automatic all-hex meshing of a general solid is not a solved problem</strong>. Real hex meshes are often built with substantial manual guidance — decomposing the part into mappable blocks by hand — and unstructured local refinement is challenging because you cannot split one hexahedron without propagating the change through a whole layer of its neighbours.</p>
+<p><strong>Prisms and pyramids are the glue.</strong> They are rarely the point of a mesh. A pyramid has a quadrilateral on one face and triangles on the others, which is exactly what you need to close the gap where a hex block meets a tet region. Prisms do the same job for extruded boundary layers sitting on top of a tet interior.</p>
+</section>
+<section id="meshes-are-usually-straight-recent-trends-are-going-towards-curvilinear-representations" class="level3" data-number="21.1.3">
+<h3 data-number="21.1.3" class="anchored" data-anchor-id="meshes-are-usually-straight-recent-trends-are-going-towards-curvilinear-representations"><span class="header-section-number">21.1.3</span> Meshes are usually straight, recent trends are going towards curvilinear representations</h3>
+<div id="fig-c21-curved" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c21-curved-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class21/C21_Fig3_Curved.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c21-curved-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;21.3: For an identical curved geometry, meshes can be defined in a variety of ways. On the left, a coarse straight-sided mesh approximates geometry dramatically. In the center, this can be reduced by additional mesh refinement with (bi-)linear elements, but the approximation is never fully removed. However, curving the elements (on the right) fixes the geometry without adding elements, but through the use of higher polynomials.
+</figcaption>
+</figure>
+</div>
+<p>Most meshes in used in industry are piecewise linear, with straight edges, and flat faces. This allows for a simple representation and is directly usable for all finite element methods. However, this comes at the price of accurate geometry. For the quarter annulus of <a href="../chapters/20_Class.html">Class 20</a>, this introduced a half-percent length error through geometry error, not quadrature error, and no refinement mechanism could address it. <strong>Curved (higher-order) meshes</strong> have extra nodes per edge so the element can bend to the real boundary, and they are becoming common wherever the geometry matters, including for boundary layers, electromagnetics, and anything run at high polynomial degree, where a straight-sided boundary caps convergence rate no matter how good the basis is.</p>
+</section>
+<section id="more-about-mesh-data-structures" class="level3" data-number="21.1.4">
+<h3 data-number="21.1.4" class="anchored" data-anchor-id="more-about-mesh-data-structures"><span class="header-section-number">21.1.4</span> More about mesh data structures</h3>
+<p>The above discussion describes what mesh elements are used. To learn more about how a mesh is actually described and how to navigate around a mesh, one should understand the half-edge data structure. The following is a good interactive page describing how surface meshes are defined and operate: <a href="https://jerryyin.info/geometry-processing-algorithms/half-edge/">jerryyin.info/geometry-processing-algorithms/half-edge</a>.</p>
+</section>
+</section>
+<section id="where-meshes-come-from" class="level2" data-number="21.2">
+<h2 data-number="21.2" class="anchored" data-anchor-id="where-meshes-come-from"><span class="header-section-number">21.2</span> Where meshes come from</h2>
+<p>A significant number of meshes are generated from a CAD model. Others come from measurement instead, such as a laser scan to produce a point cloud or a CT/MRI scan to produce voxels, both of which can be meshed. The CAD route is the most common one in traditional engineering design and will be discussed hereafter. While you should be aware that you can mesh other data, we will not cover this content in this class.</p>
+<p>A CAD model stores smooth surfaces. A mesh stores kinked facets. Converting from CAD model to a mesh throws away exact geometry, which may affect both geometric and analysis precision.</p>
+<section id="boundary-representation" class="level3" data-number="21.2.1">
+<h3 data-number="21.2.1" class="anchored" data-anchor-id="boundary-representation"><span class="header-section-number">21.2.1</span> Boundary representation</h3>
+<p>CAD describes a solid by describing only describing the outside surfaces. This is called a <strong>boundary representation</strong>, or B-rep, and the model is a collection of surfaces, many of which are cut in some form and then stitched together along shared edges so that they enclose a volume. There is no description of the inside. The solid is whatever the skin contains. On the occasion that a CAD model does not represent the outside of a volume, it is typically representative of the solid’s midsurface, and in these cases is called an <em>open B-rep</em>, whereas volume-enclosing B-reps are called <em>closed B-reps</em> or just simply <em>B-reps</em>.</p>
+<p>Each surface of a B-rep is almost always a <strong>B-spline</strong> or <strong>NURBS</strong> surface. These are defined using the same kind of content learned in Class 12, where a spline surface is a mapping from a parametric square or rectangle into a curved patch in space,</p>
+<p><span class="math display">\[ \underline{x}(u,v), \qquad (u,v) \in [0,1]^2 , \]</span></p>
+<p>built from basis functions in <span class="math inline">\(u\)</span> times basis functions in <span class="math inline">\(v\)</span>. (Note that here we typically use <span class="math inline">\(u\)</span> and <span class="math inline">\(v\)</span> for the parametric coordinates compared to <span class="math inline">\(\xi\)</span> and <span class="math inline">\(\eta\)</span> for the reference or parent coordinates.) The same tensor-productconstruction as is used for bilinear and biquadratic elements, is used for B-splines and NURBS, but just using a different basis, which will be discussed further below.</p>
+<p>An example of a B-rep is shown in the widget below. The grey curves are <strong>isocurves</strong>, which are curves of constant <span class="math inline">\(u\)</span> or constant <span class="math inline">\(v\)</span> on each surface. They are the image of a grid in the parametric square, and they are the clearest way to see that a CAD surface is a mapped square. Cutting operations that mask parts of the curvilinear surfaces are called trimming curves, and can be turned on or off as well.</p>
+<style>
+.bw3{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;--acc:#b8322a;--blue:#2b5fa8;
+     --vio:#6d28d9;max-width:900px;margin:0 auto;color:var(--ink)}
+.bw3 .bar{display:flex;flex-wrap:wrap;gap:9px 18px;align-items:center;padding:10px 14px;
+  background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.bw3 .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey)}
+.bw3 input[type=range]{width:120px;vertical-align:middle}
+.bw3 label{font-size:13px;color:#6b7684}
+.bw3 .bar button{font:inherit;font-size:12px;padding:3px 11px;border:1px solid #c8d0da;
+  border-radius:6px;background:#fff;color:var(--ink);cursor:pointer}
+.bw3 .bar button:hover{background:#eef2f7;border-color:#9fb0c4}
+.bw3 svg{display:block;width:100%;height:auto;border:1px solid var(--faint);border-radius:8px;
+  background:#fff;cursor:grab;touch-action:none}
+.bw3 svg.drag{cursor:grabbing}
+.bw3 .cap{font-size:13px;color:var(--grey);line-height:1.55;margin:9px 2px 22px}
+.bw3 .cap b{color:var(--ink)}
+</style>
+
+<div class="bw3">
+  <div class="bar">
+    <b>DRAG TO ROTATE · SCROLL TO ZOOM</b>
+    <label><input type="checkbox" id="k_iso" checked=""> isocurves</label>
+    <label><input type="checkbox" id="k_bnd" checked=""> surface boundaries</label>
+    <label><input type="checkbox" id="k_hole" checked=""> trim curves</label>
+    <label><input type="checkbox" id="k_fill" checked=""> surfaces</label>
+    <label><input type="checkbox" id="k_solid" checked=""> closed solid</label>
+    <label><input type="checkbox" id="k_wall" checked=""> side walls</label>
+    <label><input type="checkbox" id="k_ext"> isocurves into the trimmed parts</label>
+    <b>ISO LINES</b> <input type="range" id="k_n" min="3" max="12" value="7">
+    <button type="button" id="k_home">reset view</button>
+  </div>
+  <svg id="brk" viewbox="0 0 880 470" role="img" aria-label="A rotatable bracket built from five trimmed B-spline surfaces, drawn with isocurves"></svg>
+  <div class="cap" id="brkcap"></div>
+</div>
+
+<script>
+(function(){
+var AZ=-2.27, EL=0.28, NISO=7, ISO=true, BND=true, HOLE=true, FILL=true, EXT=false,
+    WALL=true, SOLID=true, S='';
+var AZ0=AZ, EL0=EL, ZM=1;   /* the starting view, and the zoom about it */
+function clampZ(z){ return Math.max(0.45, Math.min(6, z)); }
+var WCLR='#9fb4d0';   /* the material seen edge-on */
+var INK='#18202b',GREY='#6b7684',FAINT='#dfe4ea',ACC='#b8322a',BLUE='#2b5fa8',VIO='#6d28d9';
+
+/* ---- the bracket: five CURVED trimmed patches ----
+   Cross-section, walking across the part:  flange - fillet - web - fillet -
+   flange.  The web is the flat plate joining the two naked fillet edges; each
+   flange leaves its fillet tangentially and carries a hole.  Nothing is
+   planar except the web, and the trim curves live in the parametric domain,
+   which is where CAD keeps them.                                        */
+var THETA=90*Math.PI/180, RF=0.40, HW=0.62, LF=1.75;
+var BLO=0.10, BHI=0.90;   /* the band kept on the web, fillets and flange roots */
+var ZB0=-0.12, ZT0=2.20;
+
+/* the common seam heights, so neighbouring patches meet exactly */
+function zbF(u){ return ZB0 - 0.38*u; }
+function ztF(u){ return ZT0 - 0.50*u - 0.30*u*u; }
+
+/* where a fillet starts and ends, in the cross-section plane */
+function filletCtr(sgn){ return [RF, sgn*HW]; }
+function filletEnd(sgn){
+  return [RF*(1-Math.cos(THETA)), sgn*(HW + RF*Math.sin(THETA))];
+}
+function flangeDir(sgn){ return [Math.sin(THETA), sgn*Math.cos(THETA)]; }
+
+/* 1. the web: the flat plate between the two naked fillet edges */
+var WEB={ kind:'web', hole:null, vlo:BLO, vhi:BHI, ref:[1,0,0],
+  seams:['u0','u1'],
+  pt:function(u,v){
+    var y=-HW + 2*HW*u;
+    return [0, y, ZB0 + v*(ZT0-ZB0)];   /* straight top and bottom edges */
+  }};
+
+/* 2. the fillets: cylindrical strips turning the web into each flange */
+function fillet(sgn){
+  return { kind:'fillet', hole:null, vlo:BLO, vhi:BHI, seams:['u0','u1'],
+    ref:[Math.SQRT1_2, -sgn*Math.SQRT1_2, 0],
+    pt:function(u,v){
+      var c=filletCtr(sgn), ph=Math.PI - THETA*u;
+      var x=c[0]+RF*Math.cos(ph), y=c[1]+sgn*RF*Math.sin(ph);
+      return [x, y, ZB0+v*(ZT0-ZB0)];
+    }};
+}
+/* 3. the flanges: tangent to the fillet, tapering, each with a hole */
+function flange(sgn){
+  return { kind:'flange', ref:[0,-sgn,0], seams:['u0'],
+    pt:function(u,v){
+      var e=filletEnd(sgn), d=flangeDir(sgn), L=LF*u;
+      return [e[0]+L*d[0], e[1]+L*d[1], zbF(u)+v*(ztF(u)-zbF(u))];
+    },
+    hole:{uc:0.50, vc:0.45, ru:0.20, rv:0.18},
+    /* near the seam the flange keeps only the same band as the fillet, so the
+       top and bottom trim curves run straight through the join; past u0 it
+       opens out to full height.  The two steps are the orthogonal corners. */
+    step:{u0:0.28, vlo:BLO, vhi:BHI},
+    /* the two outer corners are cut off on the diagonal */
+    tri:{a:0.26, b:0.30}
+  };
+}
+var MID=[flange(1), fillet(1), WEB, fillet(-1), flange(-1)];
+
+/* The bracket is a thin part, so the solid is bounded by two surfaces: the
+   mid-surface pushed out by half the thickness and pulled in by half.  Each
+   patch's unit normal comes from its own two parametric tangents, with the
+   sign settled by the patch's `ref` so that "in" means the same thing on all
+   five.  The parametric square, and therefore every trim drawn in it, is
+   shared by the two offsets -- only the mapping into space differs. */
+var TH=0.13;
+function nrmOf(p,u,v){
+  var e=1e-4,
+      uu=Math.min(Math.max(u,e),1-e), vv=Math.min(Math.max(v,e),1-e),
+      a=p.pt(uu+e,vv), b=p.pt(uu-e,vv), c=p.pt(uu,vv+e), d=p.pt(uu,vv-e),
+      tu=[a[0]-b[0],a[1]-b[1],a[2]-b[2]],
+      tv=[c[0]-d[0],c[1]-d[1],c[2]-d[2]],
+      n=[tu[1]*tv[2]-tu[2]*tv[1], tu[2]*tv[0]-tu[0]*tv[2], tu[0]*tv[1]-tu[1]*tv[0]],
+      L=Math.sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2])||1, r=p.ref, k;
+  n=[n[0]/L,n[1]/L,n[2]/L];
+  if(n[0]*r[0]+n[1]*r[1]+n[2]*r[2]<0) n=[-n[0],-n[1],-n[2]];
+  return n;
+}
+function offsetOf(base,s){
+  var o={}, k; for(k in base) o[k]=base[k];
+  o.side=s;
+  o.pt=function(u,v){
+    var q=base.pt(u,v), n=nrmOf(base,u,v), t=s*TH*0.5;
+    return [q[0]+t*n[0], q[1]+t*n[1], q[2]+t*n[2]];
+  };
+  return o;
+}
+var OUTER=MID.map(function(b){return offsetOf(b,-1);}),  /* the larger shell */
+    INNER=MID.map(function(b){return offsetOf(b,+1);});  /* the smaller one  */
+var PANELS=OUTER.concat(INNER);
+
+/* ---- the side walls ---------------------------------------------------
+   The two offsets are only the faces of the material.  Every edge of the
+   trimmed region that is NOT shared with a neighbouring patch is an exposed
+   edge of the solid, and the material there is closed off by a ruled surface
+   running from the outer face to the inner one.  Each hole closes the same
+   way, which makes a cylinder.  Seam edges get no wall: the material runs
+   straight through a seam, which is what makes the five patches one part. */
+function offAt(base,u,v,s){
+  var q=base.pt(u,v), n=nrmOf(base,u,v), t=s*TH*0.5;
+  return [q[0]+t*n[0], q[1]+t*n[1], q[2]+t*n[2]];
+}
+function isSeamSeg(p,sg){
+  var S=p.seams||[], e=1e-9;
+  if(Math.abs(sg.a[0])  <e && Math.abs(sg.b[0])  <e) return S.indexOf('u0')>=0;
+  if(Math.abs(sg.a[0]-1)<e && Math.abs(sg.b[0]-1)<e) return S.indexOf('u1')>=0;
+  return false;
+}
+function wall(base,crv,kind){
+  var W={ kind:kind, base:base,
+    pt:function(t,w){ var c=crv(t); return offAt(base,c[0],c[1],-1+2*w); } };
+  /* how long this wall is, so its grid can be spaced like everyone else's */
+  var L=0, k, a=W.pt(0,0.5), b;
+  for(k=1;k<=24;k++){
+    b=W.pt(k/24,0.5);
+    L+=Math.sqrt((b[0]-a[0])*(b[0]-a[0])+(b[1]-a[1])*(b[1]-a[1])+(b[2]-a[2])*(b[2]-a[2]));
+    a=b;
+  }
+  W.span=L;
+  return W;
+}
+function lineCrv(a,b){
+  return function(t){ return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t]; };
+}
+function holeCrv(h){
+  return function(t){ var th=2*Math.PI*t;
+    return [h.uc+h.ru*Math.cos(th), h.vc+h.rv*Math.sin(th)]; };
+}
+var WALLS=(function(){
+  var W=[],i,j;
+  for(i=0;i<MID.length;i++){
+    var p=MID[i], sg=regionSegs(p);
+    for(j=0;j<sg.length;j++)
+      if(!isSeamSeg(p,sg[j])) W.push(wall(p, lineCrv(sg[j].a, sg[j].b), 'wall'));
+    if(p.hole) W.push(wall(p, holeCrv(p.hole), 'bore'));
+  }
+  return W;
+})();
+function wallLoop(W,n){
+  var P=[],k;
+  for(k=0;k<=n;k++) P.push(W.pt(k/n,0));
+  for(k=n;k>=0;k--) P.push(W.pt(k/n,1));
+  return P;
+}
+/* An isocurve on a wall.  A wall carries no trim of its own, so there is
+   nothing to split: fixT holds t and runs across the thickness (a straight
+   ruling), otherwise w is held and the curve runs along the edge. */
+function wallIso(W,fixT,val,n){
+  var P=[],k;
+  for(k=0;k<=n;k++){ var t=k/n; P.push(fixT ? W.pt(val,t) : W.pt(t,val)); }
+  return P;
+}
+/* A bore is a closed tube, so its two rims are separate loops and the band
+   between them is the even-odd difference of the two. */
+function wallPath(W){
+  if(W.kind!=='bore') return path(wallLoop(W,24),true);
+  var a=[],b=[],k;
+  for(k=0;k<=48;k++){ a.push(W.pt(k/48,0)); b.push(W.pt(k/48,1)); }
+  return path(a,true)+' '+path(b,true);
+}
+
+/* Keep the geometry in one place.  Any later view of this bracket should
+   read this object rather than define a second, almost-the-same bracket. */
+window.C21Bracket={panels:PANELS, mid:MID, outer:OUTER, inner:INNER, walls:WALLS,
+                   flange:flange, fillet:fillet, web:WEB, thickness:TH};
+
+function at(p,u,v){ return p.pt(u,v); }
+function VLO(p){ return p.vlo===undefined?0:p.vlo; }
+function VHI(p){ return p.vhi===undefined?1:p.vhi; }
+
+/* Everything a CAD trim can do here, tested in the PARAMETRIC domain:
+   a band off the top and bottom, an orthogonal corner notch, and a hole. */
+function clipped(p,u,v){
+  if(p.step){
+    if(u<p.step.u0 && (v<p.step.vlo-1e-9 || v>p.step.vhi+1e-9)) return true;
+  } else if(v<VLO(p)-1e-9 || v>VHI(p)+1e-9) return true;
+  if(p.tri){
+    var ta=p.tri.a, tb=p.tri.b;
+    /* bottom-outer corner: chord (1-a,0) -> (1,b) */
+    if(tb*(u-1+ta) - ta*v > 0) return true;
+    /* top-outer corner:    chord (1-a,1) -> (1,1-b) */
+    if(tb*(u-1+ta) + ta*(v-1) > 0) return true;
+  }
+  if(p.hole){
+    var a=(u-p.hole.uc)/p.hole.ru, b=(v-p.hole.vc)/p.hole.rv;
+    if(a*a+b*b<1) return true;
+  }
+  return false;
+}
+function holeLoop(p,n){
+  if(!p.hole) return [];
+  var o=[];
+  for(var k=0;k<=n;k++){ var t=2*Math.PI*k/n;
+    o.push(p.pt(p.hole.uc+p.hole.ru*Math.cos(t), p.hole.vc+p.hole.rv*Math.sin(t))); }
+  return o;
+}
+/* the boundary of the kept region, in parameter space, each piece tagged
+   'bnd' where it is a natural edge of the patch and 'trim' where a trim
+   curve cuts into it */
+function regionSegs(p){
+  var S=[];
+  function seg(a,b,t){ S.push({a:a,b:b,t:t}); }
+  if(p.step){
+    var u0=p.step.u0, lo=p.step.vlo, hi=p.step.vhi;
+    seg([0,lo],[u0,lo],'trim');      /* continues the fillet's bottom trim   */
+    seg([u0,lo],[u0,0],'trim');      /* the orthogonal corner, going down    */
+    if(p.tri){
+      var ta=p.tri.a, tb=p.tri.b;
+      seg([u0,0],[1-ta,0],'bnd');
+      seg([1-ta,0],[1,tb],'trim');          /* bottom-outer chamfer */
+      seg([1,tb],[1,1-tb],'bnd');
+      seg([1,1-tb],[1-ta,1],'trim');        /* top-outer chamfer    */
+      seg([1-ta,1],[u0,1],'bnd');
+    } else {
+      seg([u0,0],[1,0],'bnd');
+      seg([1,0],[1,1],'bnd');
+      seg([1,1],[u0,1],'bnd');
+    }
+    seg([u0,1],[u0,hi],'trim');      /* the orthogonal corner, coming back   */
+    seg([u0,hi],[0,hi],'trim');      /* continues the fillet's top trim      */
+    seg([0,hi],[0,lo],'bnd');
+  } else {
+    var a=VLO(p), b=VHI(p);
+    seg([0,a],[1,a], a>0?'trim':'bnd');
+    seg([1,a],[1,b], 'bnd');
+    seg([1,b],[0,b], b<1?'trim':'bnd');
+    seg([0,b],[0,a], 'bnd');
+  }
+  return S;
+}
+function segPts(p,sg,n){
+  var o=[];
+  for(var k=0;k<=n;k++){ var t=k/n;
+    o.push(p.pt(sg.a[0]+(sg.b[0]-sg.a[0])*t, sg.a[1]+(sg.b[1]-sg.a[1])*t)); }
+  return o;
+}
+function regionLoop(p,n){
+  var sg=regionSegs(p), o=[];
+  for(var i=0;i<sg.length;i++){
+    var q=segPts(p,sg[i],n);
+    for(var k=(i?1:0);k<q.length;k++) o.push(q[k]);
+  }
+  return o;
+}
+/* ---- camera ---- */
+function rot(q){
+  var ca=Math.cos(AZ),sa=Math.sin(AZ),ce=Math.cos(EL),se=Math.sin(EL);
+  var x=ca*q[0]-sa*q[1], y=sa*q[0]+ca*q[1], z=q[2];
+  return [x, ce*y-se*z, se*y+ce*z];
+}
+/* Fit once, from the object's bounding sphere, so it never clips or jumps
+   while you drag. */
+var CX=440, CY=238, SC=104, CEN=[0,0,0];
+(function(){
+  var pts=[],i,k;
+  for(i=0;i<PANELS.length;i++){
+    var p=PANELS[i];
+    for(var a=0;a<=4;a++) for(var b=0;b<=4;b++) pts.push(p.pt(a/4,b/4));
+    var h=holeLoop(p,16); for(k=0;k<h.length;k++) pts.push(h[k]);
+  }
+  var c=[0,0,0];
+  for(i=0;i<pts.length;i++) for(k=0;k<3;k++) c[k]+=pts[i][k]/pts.length;
+  CEN=c;
+  var R=0;
+  for(i=0;i<pts.length;i++){
+    var dx=pts[i][0]-c[0],dy=pts[i][1]-c[1],dz=pts[i][2]-c[2];
+    R=Math.max(R,Math.sqrt(dx*dx+dy*dy+dz*dz));
+  }
+  SC=214/R;                                   /* fills the frame, fits at any orientation */
+})();
+function proj(q){
+  var r=rot([q[0]-CEN[0], q[1]-CEN[1], q[2]-CEN[2]]), k=SC*ZM;
+  return [CX+k*r[0], CY-k*r[2]];
+}
+function depth(q){ return rot([q[0]-CEN[0],q[1]-CEN[1],q[2]-CEN[2]])[1]; }
+
+function path(pts,close){
+  var d='';
+  for(var i=0;i<pts.length;i++){var q=proj(pts[i]); d+=(i?' L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1);}
+  return d+(close?'Z':'');
+}
+/* An isocurve, split into the part the trim keeps and the part it removes.
+   The removed part is still on the surface -- that is the whole point of a
+   trim -- so the widget can draw it faintly on request. */
+function isoCurve(p,fixU,val,n){
+  var keep=[],drop=[],cur=[],curDrop=null;
+  for(var k=0;k<=n;k++){
+    var t=k/n, u=fixU?val:t, v=fixU?t:val, off=clipped(p,u,v), q=p.pt(u,v);
+    if(off===curDrop){ cur.push(q); }
+    else {
+      if(cur.length>1) (curDrop?drop:keep).push(cur);
+      cur=[q]; curDrop=off;
+    }
+  }
+  if(cur.length>1) (curDrop?drop:keep).push(cur);
+  return {keep:keep, drop:drop};
+}
+
+function draw(){
+  S='';
+  // back-to-front by patch centroid depth
+  /* closed: both offsets and the walls between them.  open: the mid-surface
+     on its own, which is the shell the two offsets were made from. */
+  var PL=SOLID?PANELS:MID, WL=SOLID?WALLS:[];
+  var NP=PL.length, oi;
+  function cenOf(i){ return i<NP ? at(PL[i],0.5,0.5) : WL[i-NP].pt(0.5,0.5); }
+  var order=[]; for(oi=0;oi<NP+WL.length;oi++) order.push(oi);
+  order.sort(function(a,b){ return depth(cenOf(b))-depth(cenOf(a)); });
+  for(oi=0;oi<order.length;oi++){
+    if(order[oi]>=NP){                         /* a side wall or a bore */
+      if(WALL){
+        var W=WL[order[oi]-NP], bore=(W.kind==='bore'), nt=bore?48:24, wi;
+        if(FILL)
+          S+='<path d="'+wallPath(W)+'" fill="'+WCLR+'" fill-rule="evenodd" '+
+             'opacity=".72" stroke="none"/>';
+        if(ISO){
+          /* A wall gets the same grid as every other patch, but spaced rather
+             than counted: NISO curves across a wall only a tenth as wide as it
+             is long would collapse into a solid band and the surface would
+             still look filled with the fill switched off.  Matching the
+             spacing to the face grid keeps the cells roughly square. */
+          var nw=Math.max(2, Math.min(NISO, Math.round(NISO*TH/W.span)));
+          for(wi=1;wi<nw;wi++)
+            S+='<path d="'+path(wallIso(W,false,wi/nw,nt),false)+'" fill="none" stroke="'+
+               GREY+'" stroke-width="1" opacity=".75"/>';
+          for(wi=1;wi<NISO;wi++)
+            S+='<path d="'+path(wallIso(W,true,wi/NISO,2),false)+'" fill="none" stroke="'+
+               GREY+'" stroke-width="1" opacity=".75"/>';
+        }
+        /* the end rulings, where this wall meets the next one round */
+        if(BND && !bore)
+          for(wi=0;wi<2;wi++)
+            S+='<path d="'+path(wallIso(W,true,wi,2),false)+'" fill="none" stroke="'+
+               VIO+'" stroke-width="1.6" opacity=".85"/>';
+      }
+      continue;
+    }
+    var p=PL[order[oi]];
+    if(FILL){
+      // the patch, with the hole punched out using the even-odd rule
+      var d=path(regionLoop(p,16),true)+(p.hole?' '+path(holeLoop(p,48),true):'');
+      S+='<path d="'+d+'" fill="#dce6f2" fill-rule="evenodd" opacity=".80" stroke="none"/>';
+    }
+    if(ISO){
+      for(var i=1;i<NISO;i++){
+        var t=i/NISO, cs=[isoCurve(p,true,t,70), isoCurve(p,false,t,70)], ci, sgp;
+        for(ci=0;ci<2;ci++){
+          for(sgp=0;sgp<cs[ci].keep.length;sgp++)
+            S+='<path d="'+path(cs[ci].keep[sgp],false)+'" fill="none" stroke="'+GREY+
+               '" stroke-width="1" opacity=".75"/>';
+          if(EXT) for(sgp=0;sgp<cs[ci].drop.length;sgp++)
+            S+='<path d="'+path(cs[ci].drop[sgp],false)+'" fill="none" stroke="'+GREY+
+               '" stroke-width=".9" opacity=".38" stroke-dasharray="3 3"/>';
+        }
+      }
+    }
+    /* The four natural patch edges, in blue.  A trim masks the edge of a patch
+       exactly as it masks the patch itself, so each edge is split by the same
+       test the isocurves use: the surviving pieces are solid, and the pieces
+       the trim removed are available faintly under the same toggle. */
+    if(BND){
+      var ed=[isoCurve(p,true,0,60), isoCurve(p,true,1,60),
+              isoCurve(p,false,0,60), isoCurve(p,false,1,60)], ei, ep;
+      for(ei=0;ei<4;ei++){
+        for(ep=0;ep<ed[ei].keep.length;ep++)
+          S+='<path d="'+path(ed[ei].keep[ep],false)+'" fill="none" stroke="'+BLUE+
+             '" stroke-width="2.4"/>';
+        if(EXT) for(ep=0;ep<ed[ei].drop.length;ep++)
+          S+='<path d="'+path(ed[ei].drop[ep],false)+'" fill="none" stroke="'+BLUE+
+             '" stroke-width="1.7" opacity=".62" stroke-dasharray="5 3"/>';
+      }
+    }
+    /* trim curves in red */
+    if(HOLE){
+      var sg=regionSegs(p);
+      for(var qi=0;qi<sg.length;qi++){
+        if(sg[qi].t!=='trim') continue;
+        S+='<path d="'+path(segPts(p,sg[qi],16),false)+'" fill="none" stroke="'+ACC+
+           '" stroke-width="2.2"/>';
+      }
+    }
+    if(HOLE && p.hole)
+      S+='<path d="'+path(holeLoop(p,64),true)+'" fill="none" stroke="'+ACC+
+         '" stroke-width="2.4"/>';
+  }
+  /* The seams where neighbouring patches are stitched together.  A seam is
+     the shared boundary of two patches, so it answers to the same switch as
+     the free boundaries do -- as the wall rulings already did. */
+  if(BND){
+    var seams=(SOLID?[0,1,3,4,5,6,8,9]:[0,1,3,4]).map(
+          function(i){ return [PL[i], 0]; });
+    for(var si=0; si<seams.length; si++){
+      var sc=isoCurve(seams[si][0],true,seams[si][1],48), sp2;
+      for(sp2=0;sp2<sc.keep.length;sp2++)
+        S+='<path d="'+path(sc.keep[sp2],false)+'" fill="none" stroke="'+VIO+
+           '" stroke-width="2.6"/>';
+      if(EXT) for(sp2=0;sp2<sc.drop.length;sp2++)
+        S+='<path d="'+path(sc.drop[sp2],false)+'" fill="none" stroke="'+VIO+
+           '" stroke-width="1.7" opacity=".62" stroke-dasharray="5 3"/>';
+    }
+    var ft=proj(PL[2].pt(0.5,1));
+    S+='<line x1="'+ft[0]+'" y1="'+ft[1]+'" x2="'+(ft[0]+30)+'" y2="'+(ft[1]-58)+
+       '" stroke="'+VIO+'" stroke-width=".9" stroke-dasharray="3 2"/>';
+    S+='<text x="'+(ft[0]+34)+'" y="'+(ft[1]-58)+'" font-size="11.5" fill="'+VIO+
+       '" font-family="system-ui,sans-serif" font-weight="600">shared edges</text>';
+  }
+  var lx=22,ly=424;
+  function key(x,col,txt,w){
+    S+='<line x1="'+x+'" y1="'+ly+'" x2="'+(x+26)+'" y2="'+ly+'" stroke="'+col+
+       '" stroke-width="'+(w||2.4)+'"/>'+
+       '<text x="'+(x+32)+'" y="'+(ly+4)+'" font-size="11.5" fill="'+GREY+
+       '" font-family="system-ui,sans-serif">'+txt+'</text>';
+  }
+  key(lx,GREY,'isocurves (constant u or v)',1);
+  key(lx+210,BLUE,'surface boundary');
+  key(lx+380,ACC,'trim curve');
+  key(lx+520,VIO,'shared edges');
+  document.getElementById('brk').innerHTML=S;
+  document.getElementById('brkcap').innerHTML=
+    '<b>A closed B-rep of a bracket.</b> Each surface is a B-spline surface mapped from a '+
+    'parametric square, as shown by its grey isocurves. The outer and inner faces of the bracket '+
+    'are each made of five surfaces (two flanges, two fillets, and a web), and they are connected '+
+    'along their edges by 24 planar side walls and by a cylinder through each hole, for 36 surfaces '+
+    'in total. Red curves are trimming curves, which remove parts of a surface, such as the holes '+
+    'and the chamfered corners. Blue curves are the remaining untrimmed edges of each surface, and '+
+    'violet curves are the edges shared by neighbouring surfaces. Unchecking <i>closed solid</i> '+
+    'shows the open B-rep of the midsurface, which has only five surfaces.';
+}
+
+/* ---- drag to rotate ---- */
+var svg=document.getElementById('brk'), drag=null, pinch=null;
+function pt(e){ return e.touches? {x:e.touches[0].clientX,y:e.touches[0].clientY}
+                                : {x:e.clientX,y:e.clientY}; }
+function gap(e){ var a=e.touches[0], b=e.touches[1];
+  return Math.sqrt((a.clientX-b.clientX)*(a.clientX-b.clientX)+
+                   (a.clientY-b.clientY)*(a.clientY-b.clientY)); }
+function down(e){
+  if(e.touches && e.touches.length===2){   /* two fingers pinch instead of turn */
+    pinch={d:gap(e), z:ZM}; drag=null; e.preventDefault(); return;
+  }
+  drag=pt(e); svg.classList.add('drag');
+}
+function move(e){
+  if(pinch && e.touches && e.touches.length===2){
+    ZM=clampZ(pinch.z*gap(e)/pinch.d); draw(); e.preventDefault(); return;
+  }
+  if(!drag) return;
+  var q=pt(e);
+  AZ+=(q.x-drag.x)*0.010;
+  EL=Math.max(-1.25,Math.min(1.25,EL+(q.y-drag.y)*0.008));
+  drag=q; draw(); e.preventDefault();
+}
+function up(){ drag=null; pinch=null; svg.classList.remove('drag'); }
+svg.addEventListener('mousedown',down); window.addEventListener('mousemove',move);
+window.addEventListener('mouseup',up);
+svg.addEventListener('wheel',function(e){
+  ZM=clampZ(ZM*Math.exp(-e.deltaY*0.0016)); draw(); e.preventDefault();
+},{passive:false});
+svg.addEventListener('touchstart',down,{passive:false});
+svg.addEventListener('touchmove',move,{passive:false});
+window.addEventListener('touchend',up);
+document.getElementById('k_iso').addEventListener('change',function(){ISO=this.checked;draw();});
+document.getElementById('k_bnd').addEventListener('change',function(){BND=this.checked;draw();});
+document.getElementById('k_hole').addEventListener('change',function(){HOLE=this.checked;draw();});
+document.getElementById('k_fill').addEventListener('change',function(){FILL=this.checked;draw();});
+document.getElementById('k_solid').addEventListener('change',function(){SOLID=this.checked;draw();});
+document.getElementById('k_wall').addEventListener('change',function(){WALL=this.checked;draw();});
+document.getElementById('k_ext').addEventListener('change',function(){EXT=this.checked;draw();});
+document.getElementById('k_n').addEventListener('input',function(){NISO=+this.value;draw();});
+document.getElementById('k_home').addEventListener('click',function(){
+  AZ=AZ0; EL=EL0; ZM=1; draw(); });
+draw();
+})();
+</script>
+</section>
+<section id="gluing-and-trimming" class="level3" data-number="21.2.2">
+<h3 data-number="21.2.2" class="anchored" data-anchor-id="gluing-and-trimming"><span class="header-section-number">21.2.2</span> Gluing and trimming</h3>
+<p>Very few shapes of interest can be described by a single mapped square. The midsurface of the bracket above, for example, is built from five surfaces: a web, two fillets, and two flanges. CAD builds shapes like this from simpler surfaces using two operations, called gluing and trimming.</p>
+<p><strong>Gluing</strong> joins surfaces along shared edges. The violet curves in the widget mark the edges where one surface stops and the next one starts. Gluing records that the two edges are the same curve in space, so the model has no gap there. It can also record how smoothly the surfaces meet. In the bracket, for example, each fillet joins the web and its flange without a corner.</p>
+<p><strong>Trimming</strong> removes part of a surface. The designer draws a closed curve in the parametric domain of the surface, and only the part of the surface inside that curve is kept in the model. Every red curve in the widget is a trimming curve, including the bands removed from the top and bottom, the steps and chamfered corners on the flanges, and the holes. A hole is the simplest case. The surface is not rebuilt with a hole in it; instead, an ellipse is drawn in its parametric domain, and everything inside the ellipse is ignored.</p>
+<p>Trimming does not delete any of the underlying surface. Checking <em>isocurves into the trimmed parts</em> in the widget shows the rest of each surface continuing underneath the trimmed regions. <a href="#fig-c21-trimming" class="quarto-xref">Figure&nbsp;<span>21.4</span></a> takes one face out of the bracket to show the full surface from which it was cut.</p>
+<div id="fig-c21-trimming" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c21-trimming-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class21/C21_Fig4_Trimming.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c21-trimming-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;21.4: One flange of the bracket, shown three ways. (a) The face as it appears in the model, with the rest of the bracket ghosted. (b) The untrimmed surface from which the face was cut, which is the image of the full parametric square, with the trimmed face drawn on top. The dashed blue outline and the dashed isocurves belong to the surface but not to the model. (c) The same face in its parametric domain <span class="math inline">\((u,v)\)</span>, which is where the trimming curves are stored. The arrows mark the same corner and the same two directions in (b) and (c); note that in the 3D view, <span class="math inline">\(u\)</span> runs from right to left. The violet edge is where this flange is glued to its fillet.
+</figcaption>
+</figure>
+</div>
+<p>Nearly every CAD model is built in this way: a collection of tensor-product surfaces, each trimmed by curves in its own parametric domain, and glued to its neighbours along shared edges. This is an effective way to describe a shape, but it is difficult to use directly for analysis, as described next.</p>
+</section>
+<section id="why-trimming-complicates-analysis" class="level3" data-number="21.2.3">
+<h3 data-number="21.2.3" class="anchored" data-anchor-id="why-trimming-complicates-analysis"><span class="header-section-number">21.2.3</span> Why trimming complicates analysis</h3>
+<p>Suppose we tried to perform an analysis directly on the face in panel (c) of <a href="#fig-c21-trimming" class="quarto-xref">Figure&nbsp;<span>21.4</span></a>, using the grid of its parametric domain as our elements. The cells of that grid are squares, but the trimming curves do not follow the cell edges, and instead cut directly through them.</p>
+<div id="fig-c21-cutcells" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c21-cutcells-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class21/C21_Fig5_CutCells.png" class="img-fluid figure-img" style="width:94.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c21-cutcells-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;21.5: (a) The parametric domain of the flange, divided into the 7 × 7 cells between its isocurves. Each cell is shaded by the material it actually contains. Of the 49 cells, 22 are cut by a trimming curve (orange outline) and only 25 are kept whole. The two cells at the outer corners each contain only 0.13% material, since the chamfer passes just inside their inner corners. (b) The cell outlined in (a), enlarged. A 3 × 3 Gauss rule built for the whole cell places 3 of its 9 points inside the hole.
+</figcaption>
+</figure>
+</div>
+<p>Each of the resulting problems relates to content from earlier in the course:</p>
+<ol type="1">
+<li><strong>Integration.</strong> The Gauss rules of Classes 10 and 20 integrate over a whole element. On a cut cell, part of the square is not material, and the part that is has a curved boundary. In panel (b), a third of the quadrature points fall inside the hole. A cut cell requires an integration rule built for its own shape, and constructing one for every cut cell is a significant amount of work.</li>
+<li><strong>Slivers.</strong> A basis function whose support lies almost entirely in the trimmed region still has an unknown attached to it, even though it touches very little material, as in the corner cells. Its diagonal entry in the stiffness matrix is nearly zero compared with those of its neighbours, and the system of equations becomes poorly conditioned.</li>
+<li><strong>Boundary conditions.</strong> In Classes 14 and 19, boundary conditions were assigned to the nodes and element edges lying on <span class="math inline">\(\Gamma_g\)</span> or <span class="math inline">\(\Gamma_h\)</span>. Here the boundary of the part is the trimming curve, which runs through the middle of cells, so there are no nodes on it to which a boundary condition can be assigned.</li>
+<li><strong>Seams that do not quite meet.</strong> Two glued faces each have their own trimming curve along the shared edge. These curves approximate the same edge in space but are generally not identical, so real models have small gaps and overlaps along their seams that a solver must tolerate.</li>
+</ol>
+</section>
+<section id="meshing-the-bracket" class="level3" data-number="21.2.4">
+<h3 data-number="21.2.4" class="anchored" data-anchor-id="meshing-the-bracket"><span class="header-section-number">21.2.4</span> Meshing the bracket</h3>
+<p>The usual alternative is to mesh the CAD surfaces rather than compute on them directly. A mesher works on the <em>trimmed</em> face, that is, on the part itself rather than on the square from which it was cut. Every element therefore lies inside the material, and every boundary is made up of element edges.</p>
+<div id="fig-c21-bracketmesh" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c21-bracketmesh-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class21/C21_Fig6_BracketMesh.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c21-bracketmesh-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;21.6: (a) A quad-dominant mesh of the midsurface of the bracket, which is the surface used by a shell analysis (the <em>closed solid</em> checkbox in the widget switches between this surface and the solid). The web and the fillets are bands of their parametric domains and use a structured grid. Each flange was triangulated, neighbouring triangles were then paired into quadrilaterals wherever the pair formed a well-shaped element, and the result was smoothed; quadrilaterals cover about 76% of the area of each flange. (b) The front flange laid flat, with the true boundary of the CAD face shown in red over the mesh. The hole is now a 12-sided polygon with 4.8% less area than the actual hole. Similarly, each fillet in (a) is now 3 flat strips, whose midpoints lie 3.4% of the fillet radius inside the true arc.
+</figcaption>
+</figure>
+</div>
+<p>The four problems above no longer apply to this mesh. There are no cut cells or slivers, the boundary is again made up of element edges, and neighbouring faces share their nodes along each seam. The cost is the one described at the earlier in the reading, that the mesh is piecewise linear, so every curve has been replaced by straight segments. This geometry error does not decrease with better quadrature, and is only reduced by using smaller elements or curved elements. For many analyses of this bracket, an error of a few percent at the hole is acceptable. For the stress at the edge of that hole, which is where the stress is largest, it may not be.</p>
+</section>
+<section id="an-all-quadrilateral-mesh-of-the-same-bracket" class="level3" data-number="21.2.5">
+<h3 data-number="21.2.5" class="anchored" data-anchor-id="an-all-quadrilateral-mesh-of-the-same-bracket"><span class="header-section-number">21.2.5</span> An all-quadrilateral mesh of the same bracket</h3>
+<p>Many analysts prefer meshes without any triangles. Some element formulations exist only for quadrilaterals, and rows of quadrilaterals that follow the edges of a part are well suited to resolving behavior along those edges. Automatic all-quadrilateral meshing methods, such as <em>paving</em>, aim to produce these meshes by placing a row of quadrilaterals along every boundary and continuing inward until the rows meet. A depiction of such a quadrilateral mesh is shown below. Mesh smoothing operations are sometimes improve the quality of an initial output mesh.</p>
+<!-- This flange is a difficult case for that approach.
+The hole is less than two element widths from the inside corner of the notch, so a row placed along the outer edge and a row placed around the hole would overlap almost immediately.
+The outer edge is also about three times as long as the hole, so the rows cannot simply be matched one to one.
+The mesh below was instead laid out by hand, in the way that an analyst might guide such a mesher.
+A ring of quadrilaterals surrounds the hole, and its four outer corners are connected to the corners of the flange.
+Rows of blocks follow every edge, and each chamfered corner is filled with the standard three-block pattern for a triangle.
+The web and fillets use the same structured bands as before, so the two bracket meshes differ only in their flanges.
+
+Both flanges were smoothed in the same way.
+First, every node was moved to reduce the total distortion of the mesh, with boundary nodes allowed to slide along their edges and around the hole (the corners, and the seam shared with the fillet, were held fixed).
+Then each interior node was moved to the position that gives the best worst-shaped element around it.
+-->
+<div id="fig-c21-quadonly" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c21-quadonly-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class21/C21_Fig6b_QuadOnly.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c21-quadonly-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;21.7: (a) The midsurface of the bracket meshed with quadrilaterals only, using 236 elements. Rows follow every edge, including the seams shared with the fillets. (b) The front flange laid flat. Only 6 vertices inside the flange are irregular: 4 of valence 5 at the corners of the ring, and 2 of valence 3 at the centers of the corner fills.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="comparing-the-two-meshes" class="level3" data-number="21.2.6">
+<h3 data-number="21.2.6" class="anchored" data-anchor-id="comparing-the-two-meshes"><span class="header-section-number">21.2.6</span> Comparing the two meshes</h3>
+<p>Mesh quality is usually measured element by element, using a few simple measures of shape and size. The <strong>scaled Jacobian</strong> is found by evaluating the determinant of the Jacobian (Class 13) at each corner of an element, dividing it by the lengths of the two edges that meet there, and keeping the smallest value. It is scaled to equal 1 for a square or an equilateral triangle, and it decreases toward 0 as the corners of the element become more distorted. The <strong>edge ratio</strong> is the length of the longest edge of an element divided by the length of its shortest edge, and the <strong>size ratio</strong> is the area of the largest element in the mesh divided by the area of the smallest. Both equal 1 in an ideal mesh.</p>
+<div id="fig-c21-quality" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c21-quality-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class21/C21_Fig6c_Quality.png" class="img-fluid figure-img" style="width:88.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c21-quality-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;21.8: The elements of each flange shaded by their scaled Jacobian: (a) the quad-dominant flange of <a href="#fig-c21-bracketmesh" class="quarto-xref">Figure&nbsp;<span>21.6</span></a> and (b) the quad-only flange of <a href="#fig-c21-quadonly" class="quarto-xref">Figure&nbsp;<span>21.7</span></a>. Darker elements are further from ideal. Both flanges use the same scale and are drawn in the same orientation as in the figures above.
+</figcaption>
+</figure>
+</div>
+<div id="tbl-c21-quality" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-c21-quality-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;21.1: Both flanges measured in the same way. A vertex is irregular if other than four edges meet there.
+</figcaption>
+<div aria-describedby="tbl-c21-quality-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 65%">
+<col style="width: 19%">
+<col style="width: 14%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">quad-dominant</th>
+<th style="text-align: right;">quad-only</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">elements in the bracket</td>
+<td style="text-align: right;">242</td>
+<td style="text-align: right;">236</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">of which triangles</td>
+<td style="text-align: right;">56</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">irregular vertices inside one flange</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">6</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">scaled Jacobian of the worst element</td>
+<td style="text-align: right;">0.82</td>
+<td style="text-align: right;">0.79</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">average scaled Jacobian</td>
+<td style="text-align: right;">0.91</td>
+<td style="text-align: right;">0.91</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">elements below 0.85</td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">15%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">largest edge ratio in one element</td>
+<td style="text-align: right;">2.3</td>
+<td style="text-align: right;">2.5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">largest element’s area ÷ smallest</td>
+<td style="text-align: right;">5.8</td>
+<td style="text-align: right;">7.4</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>By these shape measures, the two flanges are very similar. Their average element quality is the same, and the automatic quad-dominant mesh has a slightly better worst element and more uniform element sizes. This is worth noting, since an all-quadrilateral mesh is not by itself a guarantee of higher quality. However, use of triangles for certain kinds of analyses may be strongly discouraged.</p>
+<p>The weaker elements of the quad-only mesh are all located in the upper chamfered corner, where the ring around the hole passes close to the chamfer and the three-block fill must fit into a long, thin triangle. Elsewhere, its elements are as good as or better than those of the quad-dominant mesh. Its smallest elements are in the ring around the hole, which is why its element sizes vary more.</p>
+<p>The advantage of the quad-only mesh is its structure. It has no triangles, so element formulations that exist only for quadrilaterals can be used throughout. Its rows run parallel to every edge, which is where stress concentrations along an edge, or thin boundary layers in a flow, need to be resolved. It also has 6 irregular vertices per flange, compared with 16; the importance of this for splines is discussed at the end of this class. Frequently, though getting something with this structure requires manual intervention. This reflects the tradeoff described at the beginning of this class, where quadrilaterals and hexahedra are typically better elements but are more difficult to build.</p>
+</section>
+</section>
+<section id="using-the-cad-basis-for-analysis" class="level2" data-number="21.3">
+<h2 data-number="21.3" class="anchored" data-anchor-id="using-the-cad-basis-for-analysis"><span class="header-section-number">21.3</span> Using the CAD basis for analysis</h2>
+<p>The typical design-to-analysis path translates the model twice:</p>
+<p><span class="math display">\[
+\text{trimmed CAD surfaces}
+\longrightarrow
+\text{analysis-suitable geometry}
+\longrightarrow
+\text{finite element mesh and basis}.
+\]</span></p>
+<p>The first step includes repairing gaps along seams, removing small features that do not matter to the analysis, and deciding what fills the interior of the model. The second step is meshing, as described above. Both steps take time, and both can produce a geometry for the solver that is no longer exactly the one the designer created.</p>
+<p><strong>Isogeometric analysis (IGA)</strong> asks whether the spline functions that CAD already uses to describe the geometry could also be used to approximate the solution. If the CAD geometry is</p>
+<p><span class="math display">\[
+\underline{x}(\boldsymbol{\xi})
+  = \sum_A R_A(\boldsymbol{\xi})\,\underline{P}_A,
+\]</span></p>
+<p>then an isogeometric approximation uses the same functions for the unknown field,</p>
+<p><span class="math display">\[
+u^h(\boldsymbol{\xi})
+  = \sum_A R_A(\boldsymbol{\xi})\,d_A .
+\]</span></p>
+<p>This is the isoparametric concept of Class 9 applied in the opposite direction. There, the basis functions of an element were reused to describe its geometry; here, the basis functions of the geometry are reused to describe the field. The coefficients <span class="math inline">\(\underline{P}_A\)</span> are control points that place the geometry in space, and the coefficients <span class="math inline">\(d_A\)</span> are the unknowns of the analysis. These coefficients play different roles even though they multiply the same functions.</p>
+<p>There are two main obstacles to doing this for a part like the bracket.</p>
+<ul>
+<li><strong>A CAD model only describes surfaces.</strong> A B-rep describes the surfaces of the part and nothing inside them. Unchecking <em>closed solid</em> in the widget shows the midsurface, which is what a shell analysis needs, and shell analysis on CAD surfaces is one of the areas where IGA has been most successful. A three-dimensional solid analysis instead needs a map from a parametric <em>cube</em> onto the inside of the part, which CAD does not provide. Constructing this volumetric map is still a large part of preparing a solid model for IGA.</li>
+<li><strong>Trimming.</strong> Each of the problems described for <a href="#fig-c21-cutcells" class="quarto-xref">Figure&nbsp;<span>21.5</span></a> applies directly to IGA on a trimmed surface, including integration over cut cells, slivers, and boundary conditions on curves that cross cells.</li>
+</ul>
+<p>Research published between 2009 and 2023 has repeatedly found that, for problems with smooth solutions, B-spline and NURBS bases give more accuracy per basis function than Lagrange bases of the same degree. However, this does not mean faster solutions in every case, since singularities, sharp gradients, trimmed cells, and the cost of quadrature and of solving the system can all reduce or remove this advantage. Several of these studies are listed under Further reading at the end of this page.</p>
+<section id="continuity-between-elements" class="level3" data-number="21.3.1">
+<h3 data-number="21.3.1" class="anchored" data-anchor-id="continuity-between-elements"><span class="header-section-number">21.3.1</span> Continuity between elements</h3>
+<p>Every Lagrange basis used so far in this course has been <span class="math inline">\(C^0\)</span>, meaning that neighbouring elements agree on the value of the field at their shared boundary, but its slope may jump there. Splines allow us to choose how smooth the field is at each element boundary, as summarized below.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">at an element boundary</th>
+<th style="text-align: left;">what has to match</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(C^{-1}\)</span></td>
+<td style="text-align: left;">nothing: the function may jump</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(C^{0}\)</span></td>
+<td style="text-align: left;">the value</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(C^{1}\)</span></td>
+<td style="text-align: left;">the value and the slope</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(C^{2}\)</span></td>
+<td style="text-align: left;">the value, the slope, and the curvature</td>
+</tr>
+</tbody>
+</table>
+<p>A B-spline of degree <span class="math inline">\(p\)</span> can be as smooth as <span class="math inline">\(C^{p-1}\)</span> at each boundary, and this choice can be made separately at each boundary. The widget below shows the two bases on the same elements, with Lagrange functions above and B-splines below. Below each plot is the <strong>slope</strong> of the highlighted function, which is where continuity is most visible: at a <span class="math inline">\(C^0\)</span> boundary the slope jumps (shown by open and filled dots), at <span class="math inline">\(C^1\)</span> the slope is continuous but has a corner, and at <span class="math inline">\(C^2\)</span> it is smooth.</p>
+<p>Below the basis functions, the same functions are used as a map, in the same way as the geometry map above but in one dimension. The sum <span class="math inline">\(\underline{x}(\xi)=\sum_A N_A(\xi)\,\underline{x}_A\)</span> defines a curve in the plane. The points <span class="math inline">\(\underline{x}_A\)</span> are Lagrange nodes on the left and B-spline control points on the right, and each can be dragged. Each element boundary on the two curves is labelled with the angle through which the curve turns there.</p>
+<style>
+.bs1{--ink:#18202b;--muted:#6b7684;--line:#dfe4ea;--paper:#f8f9fb;--blue:#1f6feb;--vio:#6d28d9;
+  max-width:980px;margin:1rem auto 1.6rem;color:var(--ink)}
+.bs1 .bar{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;padding:10px 14px;
+  background:var(--paper);border:1px solid var(--line);border-radius:8px;margin-bottom:10px;font-size:13px}
+.bs1 .bar b{font-size:12px;letter-spacing:.05em;color:var(--muted)}
+.bs1 .bar label{color:var(--muted)}
+.bs1 .bar output{display:inline-block;min-width:1.4em;font-weight:600;color:var(--ink)}
+.bs1 input[type=range]{width:120px;vertical-align:middle}
+.bs1 button{font:inherit;font-size:12px;padding:3px 10px;border:1px solid #c8d0da;border-radius:6px;
+  background:#fff;color:var(--ink);cursor:pointer}
+.bs1 button:hover{background:#eef2f7;border-color:#9fb0c4}
+.bs1 button:disabled{opacity:.4;cursor:default}
+.bs1 .knotctl{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
+.bs1 svg{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:8px;background:#fff}
+.bs1 svg .hit{cursor:pointer}
+.bs1 #bs1_map{touch-action:none}
+.bs1 #bs1_map .grab{cursor:grab}
+.bs1 .bar.sub{margin-top:18px}
+.bs1 .cap{font-size:13px;color:var(--muted);line-height:1.55;margin:9px 2px 0}
+.bs1 .cap b{color:var(--ink)}
+</style>
+
+<div class="bs1" id="bs1">
+  <div class="bar">
+    <span><label for="bs1_p">degree</label> <input id="bs1_p" type="range" min="1" max="4" value="2">
+      <output id="bs1_pv">2</output></span>
+    <span><label for="bs1_e">elements</label> <input id="bs1_e" type="range" min="2" max="8" value="5">
+      <output id="bs1_ev">5</output></span>
+    <span class="knotctl"><b>SELECTED BOUNDARY</b> <output id="bs1_kv"></output>
+      <button type="button" id="bs1_dn">less smooth</button>
+      <button type="button" id="bs1_up">smoother</button>
+      <button type="button" id="bs1_all0">every boundary C⁰</button>
+      <button type="button" id="bs1_allmax">every boundary smoothest</button></span>
+  </div>
+  <svg id="bs1_svg" viewbox="0 0 820 616" role="img" aria-label="One-dimensional Lagrange and B-spline basis functions over the same elements"></svg>
+  <div class="cap" id="bs1_cap"></div>
+  <div class="bar sub">
+    <b>THE SAME FUNCTIONS, USED AS A MAP INTO THE PLANE</b>
+    <button type="button" id="bs1_copy">put the Lagrange nodes on the B-spline curve</button>
+    <button type="button" id="bs1_rst">reset both curves</button>
+    <label><input type="checkbox" id="bs1_ghost" checked=""> show the other curve faintly</label>
+  </div>
+  <svg id="bs1_map" viewbox="0 0 820 274" role="img" aria-label="A planar curve drawn by each basis, with points that can be dragged"></svg>
+  <div class="cap" id="bs1_mcap"></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var root=document.getElementById('bs1'); if(!root) return;
+var $=function(id){ return root.querySelector('#'+id); };
+var svg=$('bs1_svg');
+var INK='#18202b', MUTED='#6b7684', FAINT='#c9d0d8', BLUE='#1f6feb', VIO='#6d28d9', SHADE='#eef3fb';
+var p=2, ne=5, cont=[], knot=2, selL=null, selB=null;
+var X0=66, X1=800;
+var SUP={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴'};
+function sup(n){ return String(n).split('').map(function(c){ return SUP[c]||c; }).join(''); }
+function Ck(c){ return 'C'+sup(c); }
+
+/* ---- the two bases ---------------------------------------------------- */
+function knots(){                       /* uniform elements; repeats lower continuity */
+  var U=[],j,k;
+  for(j=0;j<=p;j++) U.push(0);
+  for(k=1;k<ne;k++) for(j=0;j<p-cont[k-1];j++) U.push(k);
+  for(j=0;j<=p;j++) U.push(ne);
+  return U;
+}
+function bspl(x,U){                     /* Cox-de Boor; x strictly inside an element */
+  var n=U.length-1, N=[], i, d, a, b;
+  for(i=0;i<n;i++) N.push(x>=U[i] && x<U[i+1] ? 1 : 0);
+  for(d=1;d<=p;d++){
+    var M=[];
+    for(i=0;i<N.length-1;i++){
+      a=U[i+d]>U[i]     ? (x-U[i])/(U[i+d]-U[i])*N[i]           : 0;
+      b=U[i+d+1]>U[i+1] ? (U[i+d+1]-x)/(U[i+d+1]-U[i+1])*N[i+1] : 0;
+      M.push(a+b);
+    }
+    N=M;
+  }
+  return N;
+}
+function lagLocal(a,t){                 /* degree-p Lagrange on [0,1], equally spaced */
+  var v=1; for(var b=0;b<=p;b++) if(b!==a) v*=(t-b/p)/(a/p-b/p); return v;
+}
+/* value of basis function idx at x, evaluated inside element e */
+function valL(idx,e,t){ var a=idx-e*p; return (a>=0 && a<=p) ? lagLocal(a,t) : 0; }
+function valB(idx,e,t,U){ return bspl(e+t,U)[idx]||0; }
+
+/* ---- drawing helpers --------------------------------------------------- */
+function sx(x){ return X0+(X1-X0)*x/ne; }
+function panelGeom(top){ return {top:top, main:top+50, mh:150, slope:top+50+150+30, sh:46}; }
+var GL=panelGeom(4), GB=panelGeom(304);
+var YMIN=-0.42, YMAX=1.12;
+function sy(G,v){ return G.main+G.mh*(YMAX-v)/(YMAX-YMIN); }
+function path(pts){ var d=''; for(var i=0;i<pts.length;i++) d+=(i?'L':'M')+pts[i][0].toFixed(1)+' '+pts[i][1].toFixed(1); return d; }
+var NS=60, TS=[]; for(var s=0;s<=NS;s++) TS.push(1e-7+(1-2e-7)*s/NS);
+
+/* one basis function, element by element, so a jump is drawn as a jump */
+function curvePieces(G,val,idx){
+  var out=[];
+  for(var e=0;e<ne;e++){
+    var pts=[], nz=false;
+    for(var s=0;s<TS.length;s++){ var v=val(idx,e,TS[s]); if(Math.abs(v)>1e-12) nz=true;
+      pts.push([sx(e+TS[s]), sy(G,v)]); }
+    if(nz) out.push({e:e, pts:pts});
+  }
+  return out;
+}
+function slopePieces(val,idx){
+  var h=1e-6, out=[], mx=0;
+  for(var e=0;e<ne;e++){
+    var vs=[], nz=false;
+    for(var s=0;s<TS.length;s++){
+      var t=Math.min(Math.max(TS[s],2*h),1-2*h);
+      var d=(val(idx,e,t+h)-val(idx,e,t-h))/(2*h);
+      if(Math.abs(val(idx,e,TS[s]))>1e-12 || Math.abs(d)>1e-9) nz=true;
+      vs.push(d); mx=Math.max(mx,Math.abs(d));
+    }
+    if(nz) out.push({e:e, vs:vs});
+  }
+  return {pieces:out, mx:mx||1};
+}
+function supportOf(which,idx,U){
+  if(which==='B') return [U[idx], U[idx+p+1]];
+  if(idx%p===0) return [Math.max(0,idx/p-1), Math.min(ne,idx/p+1)];
+  var e=Math.floor(idx/p); return [e,e+1];
+}
+
+function drawPanel(G,which,title,sub,nb,val,sel,U){
+  var s='';
+  s+='<text x="'+X0+'" y="'+(G.top+18)+'" font-size="17" fill="'+INK+'"><tspan font-weight="650">'+title+
+     '</tspan><tspan dx="12" font-size="14" fill="'+MUTED+'">'+sub+'</tspan></text>';
+  var sp=supportOf(which,sel,U);
+  s+='<rect x="'+sx(sp[0])+'" y="'+G.main+'" width="'+(sx(sp[1])-sx(sp[0]))+'" height="'+G.mh+
+     '" fill="'+SHADE+'"/>';
+  s+='<line x1="'+X0+'" x2="'+X1+'" y1="'+sy(G,0)+'" y2="'+sy(G,0)+'" stroke="#9aa3ae"/>';
+  s+='<line x1="'+X0+'" x2="'+X1+'" y1="'+sy(G,1)+'" y2="'+sy(G,1)+'" stroke="#eef0f3"/>';
+  s+='<text x="'+(X0-8)+'" y="'+(sy(G,1)+4)+'" font-size="12.5" text-anchor="end" fill="'+MUTED+'">1</text>';
+  s+='<text x="'+(X0-8)+'" y="'+(sy(G,0)+4)+'" font-size="12.5" text-anchor="end" fill="'+MUTED+'">0</text>';
+  for(var k=0;k<=ne;k++)
+    s+='<line x1="'+sx(k)+'" x2="'+sx(k)+'" y1="'+G.main+'" y2="'+(G.slope+G.sh)+'" stroke="#d6dbe2" stroke-dasharray="3 3"/>';
+  var i,j,pc;
+  for(i=0;i<nb;i++){                    /* every function, faint */
+    pc=curvePieces(G,val,i);
+    for(j=0;j<pc.length;j++)
+      s+='<path d="'+path(pc[j].pts)+'" fill="none" stroke="'+FAINT+'" stroke-width="1.3"/>';
+  }
+  pc=curvePieces(G,val,sel);           /* the highlighted one */
+  var col=(which==='L'?BLUE:VIO);
+  for(j=0;j<pc.length;j++)
+    s+='<path d="'+path(pc[j].pts)+'" fill="none" stroke="'+col+'" stroke-width="3.2" stroke-linecap="round"/>';
+  s+=jumpMarks(G,val,sel,col,function(v){ return sy(G,v); });
+  for(i=0;i<nb;i++){                    /* invisible fat strokes to click on */
+    pc=curvePieces(G,val,i);
+    for(j=0;j<pc.length;j++)
+      s+='<path class="hit" data-w="'+which+'" data-i="'+i+'" d="'+path(pc[j].pts)+
+         '" fill="none" stroke="transparent" stroke-width="13"/>';
+  }
+  /* the slope strip */
+  var sl=slopePieces(val,sel), mid=G.slope+G.sh/2, sc=(G.sh/2-3)/sl.mx;
+  s+='<text x="'+(X0-8)+'" y="'+(mid+4)+'" font-size="12.5" text-anchor="end" fill="'+MUTED+'">slope</text>';
+  s+='<line x1="'+X0+'" x2="'+X1+'" y1="'+mid+'" y2="'+mid+'" stroke="#c9d0d8"/>';
+  for(j=0;j<sl.pieces.length;j++){
+    var P=sl.pieces[j], pts=[];
+    for(var q=0;q<TS.length;q++) pts.push([sx(P.e+TS[q]), mid-sc*P.vs[q]]);
+    s+='<path d="'+path(pts)+'" fill="none" stroke="'+col+'" stroke-width="2" opacity=".85"/>';
+  }
+  s+=slopeJumps(sl,col,mid,sc);
+  return s;
+}
+/* open/filled dots wherever the highlighted function itself jumps */
+function jumpMarks(G,val,idx,col,Y){
+  var s='';
+  for(var k=1;k<ne;k++){
+    var l=val(idx,k-1,1-1e-9), r=val(idx,k,1e-9);
+    if(Math.abs(l-r)>1e-6){
+      s+='<line x1="'+sx(k)+'" x2="'+sx(k)+'" y1="'+Y(l)+'" y2="'+Y(r)+'" stroke="'+col+'" stroke-dasharray="2 3"/>';
+      s+='<circle cx="'+sx(k)+'" cy="'+Y(l)+'" r="4" fill="#fff" stroke="'+col+'" stroke-width="2"/>';
+      s+='<circle cx="'+sx(k)+'" cy="'+Y(r)+'" r="4" fill="'+col+'"/>';
+    }
+  }
+  return s;
+}
+function slopeJumps(sl,col,mid,sc){
+  var s='', byE={};
+  for(var j=0;j<sl.pieces.length;j++) byE[sl.pieces[j].e]=sl.pieces[j].vs;
+  for(var k=1;k<ne;k++){
+    var a=byE[k-1], b=byE[k];
+    var l=a?a[a.length-1]:0, r=b?b[0]:0;
+    if((a||b) && Math.abs(l-r)>1e-3*sl.mx){
+      s+='<line x1="'+sx(k)+'" x2="'+sx(k)+'" y1="'+(mid-sc*l)+'" y2="'+(mid-sc*r)+'" stroke="'+col+'" stroke-dasharray="2 3"/>';
+      s+='<circle cx="'+sx(k)+'" cy="'+(mid-sc*l)+'" r="3.2" fill="#fff" stroke="'+col+'" stroke-width="1.8"/>';
+      s+='<circle cx="'+sx(k)+'" cy="'+(mid-sc*r)+'" r="3.2" fill="'+col+'"/>';
+    }
+  }
+  return s;
+}
+/* the clickable boundaries on the B-spline axis, each with its own C^k */
+function knotMarks(){
+  var s='', y=sy(GB,0), yl=GB.main-8;
+  for(var k=1;k<ne;k++){
+    var on=(k===knot), c=cont[k-1], X=sx(k);
+    s+='<g class="hit" data-k="'+k+'">';
+    s+='<rect x="'+(X-17)+'" y="'+(yl-16)+'" width="34" height="'+(GB.slope+GB.sh-yl+18)+'" fill="transparent"/>';
+    s+='<text x="'+X+'" y="'+yl+'" text-anchor="middle" font-size="15" font-weight="'+(on?700:500)+
+       '" fill="'+(on?VIO:MUTED)+'">'+Ck(c)+'</text>';
+    s+='<path d="M'+X+' '+(y-7)+'L'+(X+7)+' '+y+'L'+X+' '+(y+7)+'L'+(X-7)+' '+y+'Z" fill="'+(on?VIO:'#fff')+
+       '" stroke="'+(on?VIO:'#8b95a2')+'" stroke-width="1.6"/>';
+    s+='</g>';
+  }
+  return s;
+}
+
+function draw(){
+  var U=knots(), nL=ne*p+1, nB=U.length-p-1;
+  if(selL===null || selL>=nL) selL=p*Math.floor(ne/2);   /* a vertex function: its kink is the point */
+  if(selB===null || selB>=nB) selB=Math.floor(nB/2);
+  var s='';
+  s+=drawPanel(GL,'L','Lagrange basis',nL+' functions · always C⁰ at element boundaries',nL,valL,selL,U);
+  s+=drawPanel(GB,'B','B-spline basis',nB+' functions · continuity chosen at each boundary',nB,
+               function(i,e,t){ return valB(i,e,t,U); },selB,U);
+  s+=knotMarks();
+  for(var k=0;k<=ne;k++)
+    s+='<text x="'+sx(k)+'" y="'+(GB.slope+GB.sh+18)+'" text-anchor="middle" font-size="12.5" fill="'+MUTED+'">'+k+'</text>';
+  svg.innerHTML=s;
+  syncShapes(); drawMap();
+  $('bs1_pv').textContent=p; $('bs1_ev').textContent=ne;
+  $('bs1_kv').textContent='at x = '+knot+':  '+Ck(cont[knot-1]);
+  $('bs1_dn').disabled=(cont[knot-1]<=-1); $('bs1_up').disabled=(cont[knot-1]>=p-1);
+  var same=(nB===nL);
+  $('bs1_cap').innerHTML='<b>'+nL+'</b> Lagrange functions against <b>'+nB+'</b> B-spline functions on the same '+ne+
+    ' elements.'+(same?' With every boundary at C⁰ the two counts agree: the two bases describe the same set of'+
+    ' functions, and on each element the B-splines are exactly the Bernstein polynomials.':'')+
+    ' Click any curve to highlight it; the shaded band is where it is nonzero. Click a diamond to pick a boundary.';
+}
+
+/* ================= the same functions as a map into the plane ================
+   x(xi) = sum_A N_A(xi) x_A.  The x_A are Lagrange nodes (the curve passes
+   through them) or B-spline control points (the curve follows them).          */
+var mapSvg=$('bs1_map'), Q=[], P=[], keyL='', keyB='', GHOST=true, drag=null;
+var WX=[-1.3,1.3], WY=[-0.30,1.12], MS=150;          /* plane window, px per unit */
+var PAN={L:{x0:14, title:'Lagrange: the curve passes through its nodes'},
+         B:{x0:416, title:'B-spline: the curve follows its control points'}}, MT=44;
+function target(s){ return [-Math.cos(Math.PI*s), 0.82*Math.sin(Math.PI*s)]; }   /* a smooth arch */
+function toSvg(w,q){ return [PAN[w].x0+MS*(q[0]-WX[0]), MT+MS*(WY[1]-q[1])]; }
+function toPlane(w,X,Y){ return [WX[0]+(X-PAN[w].x0)/MS, WY[1]-(Y-MT)/MS]; }
+function grev(U,i){ var s=0; for(var k=1;k<=p;k++) s+=U[i+k]; return s/p; }
+function buildL(){ Q=[]; for(var A=0;A<=ne*p;A++) Q.push(target(A/(ne*p))); }
+function buildB(){ var U=knots(); P=[]; for(var i=0;i<U.length-p-1;i++) P.push(target(grev(U,i)/ne)); }
+/* one point of each curve, inside element e */
+function ptL(e,t){ var x=0,y=0; for(var a=0;a<=p;a++){ var v=lagLocal(a,t), q=Q[e*p+a]; x+=v*q[0]; y+=v*q[1]; } return [x,y]; }
+function ptB(e,t,U){ var N=bspl(e+t,U), x=0, y=0;
+  for(var i=0;i<N.length;i++) if(N[i]){ x+=N[i]*P[i][0]; y+=N[i]*P[i][1]; } return [x,y]; }
+function atXi(f,xi){ var e=Math.min(ne-1,Math.floor(xi)); return f(e, Math.min(xi-e, 1-1e-12)); }
+
+/* Lowering continuity is knot insertion: the curve does not move, it gains a
+   control point.  (Boehm's algorithm.) */
+function insertKnot(Uold,Pold,u){
+  var k=-1,s=0,i; for(i=0;i<Uold.length-1;i++) if(Uold[i]<=u && u<Uold[i+1]) k=i;
+  for(i=0;i<Uold.length;i++) if(Math.abs(Uold[i]-u)<1e-12) s++;
+  var R=[];
+  for(i=0;i<=Pold.length;i++){
+    if(i<=k-p) R.push(Pold[i].slice());
+    else if(i>=k-s+1) R.push(Pold[i-1].slice());
+    else { var a=(u-Uold[i])/(Uold[i+p]-Uold[i]);
+           R.push([(1-a)*Pold[i-1][0]+a*Pold[i][0], (1-a)*Pold[i-1][1]+a*Pold[i][1]]); }
+  }
+  return R;
+}
+/* Raising continuity cannot keep every curve, so take the closest smoother one
+   (least squares on a dense sample of the old curve). */
+function refit(Uold,Pold,Unew){
+  var n=Unew.length-p-1, M=[], rhs=[[],[]], i, j, e, s;
+  for(i=0;i<n;i++){ M.push(new Array(n).fill(0)); rhs[0].push(0); rhs[1].push(0); }
+  var keepP=P; P=Pold;
+  for(e=0;e<ne;e++) for(s=1;s<40;s++){
+    var t=s/40, q=ptB(e,t,Uold), N=bspl(e+t,Unew);
+    for(i=0;i<n;i++) if(N[i]){ rhs[0][i]+=N[i]*q[0]; rhs[1][i]+=N[i]*q[1];
+      for(j=0;j<n;j++) if(N[j]) M[i][j]+=N[i]*N[j]; }
+  }
+  P=keepP;
+  /* Gaussian elimination; the matrix is small, symmetric and positive definite */
+  for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ var f=M[j][i]/M[i][i];
+      for(var c=i;c<n;c++) M[j][c]-=f*M[i][c]; rhs[0][j]-=f*rhs[0][i]; rhs[1][j]-=f*rhs[1][i]; } }
+  var X=new Array(n), Y=new Array(n);
+  for(i=n-1;i>=0;i--){ var sx_=rhs[0][i], sy_=rhs[1][i];
+    for(j=i+1;j<n;j++){ sx_-=M[i][j]*X[j]; sy_-=M[i][j]*Y[j]; } X[i]=sx_/M[i][i]; Y[i]=sy_/M[i][i]; }
+  var R=[]; for(i=0;i<n;i++) R.push([X[i],Y[i]]); return R;
+}
+
+/* the angle the curve turns through at each interior element boundary */
+function corners(f){
+  var out=[], h=1e-4, d=1e-10;
+  for(var k=1;k<ne;k++){
+    var a=f(k-1,1-d), a1=f(k-1,1-d-h), a2=f(k-1,1-d-2*h), b=f(k,d), b1=f(k,d+h), b2=f(k,d+2*h);
+    var tl=[3*a[0]-4*a1[0]+a2[0], 3*a[1]-4*a1[1]+a2[1]];      /* one-sided, second order */
+    var tr=[-3*b[0]+4*b1[0]-b2[0], -3*b[1]+4*b1[1]-b2[1]];
+    var gap=Math.hypot(a[0]-b[0],a[1]-b[1]), ang=null;
+    if(Math.hypot(tl[0],tl[1])>1e-9 && Math.hypot(tr[0],tr[1])>1e-9)
+      ang=Math.abs(Math.atan2(tl[0]*tr[1]-tl[1]*tr[0], tl[0]*tr[0]+tl[1]*tr[1]))*180/Math.PI;
+    out.push({k:k, a:a, b:b, gap:gap, ang:ang});
+  }
+  return out;
+}
+function curvePath(w,f,e0,e1){
+  var d='';
+  for(var e=e0;e<e1;e++){ for(var s=0;s<=40;s++){ var q=toSvg(w,f(e,1e-9+(1-2e-9)*s/40));
+      d+=(s?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1); } }
+  return d;
+}
+function drawMapPanel(w,f,pts,sel,support,col,other,otherCol){
+  var o=PAN[w], s='', i, W=MS*(WX[1]-WX[0]), H=MS*(WY[1]-WY[0]);
+  s+='<text x="'+o.x0+'" y="26" font-size="16.5" font-weight="650" fill="'+INK+'">'+o.title+'</text>';
+  s+='<rect x="'+o.x0+'" y="'+MT+'" width="'+W+'" height="'+H+'" fill="#fbfcfd" stroke="#e3e7ec"/>';
+  if(GHOST) for(var e=0;e<ne;e++)
+    s+='<path d="'+curvePath(w,other,e,e+1)+'" fill="none" stroke="'+otherCol+'" stroke-width="2" opacity=".28" stroke-dasharray="5 4"/>';
+  /* the stretch of curve the highlighted function can move */
+  for(e=Math.floor(support[0]);e<Math.ceil(support[1]);e++)
+    s+='<path d="'+curvePath(w,f,e,e+1)+'" fill="none" stroke="'+col+'" stroke-width="13" opacity=".16" stroke-linecap="round"/>';
+  if(w==='B'){                                       /* control polygon */
+    var d=''; for(i=0;i<pts.length;i++){ var q=toSvg(w,pts[i]); d+=(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1); }
+    s+='<path d="'+d+'" fill="none" stroke="#9aa3ae" stroke-width="1.2" stroke-dasharray="4 3"/>';
+  }
+  for(e=0;e<ne;e++)
+    s+='<path d="'+curvePath(w,f,e,e+1)+'" fill="none" stroke="'+col+'" stroke-width="3.3" stroke-linecap="round"/>';
+  var cs=corners(f), worst=0;
+  for(i=0;i<cs.length;i++){
+    var c=cs[i], A=toSvg(w,c.a), lab, bad;
+    if(c.gap>1e-6){ lab='gap'; bad=true; worst=Infinity; }
+    else { var g=(c.ang===null?0:c.ang); worst=Math.max(worst,g); bad=(g>=0.05); lab=g.toFixed(1)+'°'; }
+    s+='<circle cx="'+A[0].toFixed(1)+'" cy="'+A[1].toFixed(1)+'" r="4.4" fill="#fff" stroke="'+INK+'" stroke-width="1.6"/>';
+    s+='<text x="'+(A[0]+8).toFixed(1)+'" y="'+(A[1]-11).toFixed(1)+'" font-size="15.5" font-weight="'+(bad?700:500)+
+       '" fill="'+(bad?'#b8322a':'#8b95a2')+'" stroke="#fff" stroke-width="3" paint-order="stroke">'+lab+'</text>';
+  }
+  for(i=0;i<pts.length;i++){                         /* the points you can drag */
+    var q=toSvg(w,pts[i]), on=(i===sel);
+    if(w==='L'){
+      var vtx=(i%p===0);
+      s+='<circle cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="'+(on?8.5:(vtx?6.5:5.5))+'" fill="'+
+         (on||vtx?col:'#fff')+'" stroke="'+col+'" stroke-width="1.8"/>';
+    } else {
+      var r=on?8:6;
+      s+='<rect x="'+(q[0]-r).toFixed(1)+'" y="'+(q[1]-r).toFixed(1)+'" width="'+2*r+'" height="'+2*r+'" fill="'+
+         (on?col:'#fff')+'" stroke="'+col+'" stroke-width="1.8"/>';
+    }
+    s+='<circle class="grab" data-pt="'+w+':'+i+'" cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="13" fill="transparent"/>';
+  }
+  return {svg:s, worst:worst};
+}
+function drawMap(){
+  var U=knots(), fL=ptL, fB=function(e,t){ return ptB(e,t,U); };
+  var a=drawMapPanel('L',fL,Q,selL,supportOf('L',selL,U),BLUE,fB,VIO);
+  var b=drawMapPanel('B',fB,P,selB,supportOf('B',selB,U),VIO,fL,BLUE);
+  mapSvg.innerHTML=a.svg+b.svg;
+  function deg(v){ return v===Infinity ? 'a gap' : v.toFixed(1)+'°'; }
+  $('bs1_mcap').innerHTML='Each dot on a curve is an element boundary, labelled with the angle the curve turns through '+
+    'there. Largest corner: <b>'+deg(a.worst)+'</b> on the Lagrange curve, <b>'+deg(b.worst)+'</b> on the B-spline curve. '+
+    'Drag any circle or square. The highlighted point belongs to the highlighted function above, and the shaded '+
+    'stretch is the part of the curve it can move.';
+}
+/* keep the two shapes in step with the bases they belong to */
+function syncShapes(){
+  var kL=p+'|'+ne, kB=p+'|'+ne+'|'+cont.join(',');
+  if(kL!==keyL){ buildL(); keyL=kL; }
+  if(kB!==keyB){ buildB(); keyB=kB; }
+}
+function svgXY(ev){ var pt=mapSvg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY;
+  return pt.matrixTransform(mapSvg.getScreenCTM().inverse()); }
+mapSvg.addEventListener('pointerdown',function(ev){
+  var t=ev.target.closest('[data-pt]'); if(!t) return;
+  var a=t.getAttribute('data-pt').split(':'); drag={w:a[0], i:+a[1]};
+  if(drag.w==='L') selL=drag.i; else selB=drag.i;
+  draw(); ev.preventDefault();
+});
+window.addEventListener('pointermove',function(ev){
+  if(!drag) return;
+  var q=svgXY(ev), z=toPlane(drag.w,q.x,q.y);
+  z=[Math.max(WX[0],Math.min(WX[1],z[0])), Math.max(WY[0],Math.min(WY[1],z[1]))];
+  if(drag.w==='L') Q[drag.i]=z; else P[drag.i]=z;
+  drawMap(); ev.preventDefault();
+});
+window.addEventListener('pointerup',function(){ drag=null; });
+$('bs1_copy').addEventListener('click',function(){
+  var U=knots(), f=function(e,t){ return ptB(e,t,U); };
+  for(var A=0;A<=ne*p;A++) Q[A]=atXi(f, A/p);
+  drawMap();
+});
+$('bs1_rst').addEventListener('click',function(){ buildL(); buildB(); drawMap(); });
+$('bs1_ghost').addEventListener('change',function(){ GHOST=this.checked; drawMap(); });
+
+function reset(){ cont=[]; for(var k=1;k<ne;k++) cont.push(p-1); knot=Math.min(Math.max(1,knot),ne-1);
+                  selL=null; selB=null; }
+$('bs1_p').addEventListener('input',function(){ p=+this.value; reset(); draw(); });
+$('bs1_e').addEventListener('input',function(){ ne=+this.value; knot=Math.floor(ne/2); reset(); draw(); });
+/* when the knots change, keep the highlight on the B-spline at the same place:
+   the one whose centre (its Greville point) is nearest the old one's */
+function centre(U,i){ var s=0; for(var k=1;k<=p;k++) s+=U[i+k]; return s/p; }
+function changeKnots(fn){
+  syncShapes();                                   /* P belongs to the knots as they are now */
+  var U0=knots(), c=(selB===null)?ne/2:centre(U0,selB), cont0=cont.slice(), P0=P.slice();
+  fn();
+  var U=knots(), nB=U.length-p-1, best=0, d=1e9;
+  /* carry the B-spline curve across the change rather than rebuilding it */
+  var lower=true, k, Pc=P0;
+  for(k=0;k<cont.length;k++) if(cont[k]>cont0[k]) lower=false;
+  if(lower){
+    var keep=cont; cont=cont0.slice();
+    for(k=0;k<keep.length;k++) while(cont[k]>keep[k]){ Pc=insertKnot(knots(),Pc,k+1); cont[k]--; }
+    cont=keep;
+  } else Pc=refit(U0,P0,U);
+  P=Pc; keyB=p+'|'+ne+'|'+cont.join(',');
+  for(var i=0;i<nB;i++){ var e=Math.abs(centre(U,i)-c); if(e<d-1e-9){ d=e; best=i; } }
+  selB=best; draw();
+}
+$('bs1_dn').addEventListener('click',function(){ if(cont[knot-1]>-1) changeKnots(function(){ cont[knot-1]--; }); });
+$('bs1_up').addEventListener('click',function(){ if(cont[knot-1]<p-1) changeKnots(function(){ cont[knot-1]++; }); });
+$('bs1_all0').addEventListener('click',function(){ changeKnots(function(){ cont=cont.map(function(){ return 0; }); }); });
+$('bs1_allmax').addEventListener('click',function(){ changeKnots(function(){ cont=cont.map(function(){ return p-1; }); }); });
+svg.addEventListener('click',function(ev){
+  var t=ev.target.closest('.hit'); if(!t) return;
+  if(t.hasAttribute('data-k')){ knot=+t.getAttribute('data-k'); draw(); return; }
+  if(t.getAttribute('data-w')==='L') selL=+t.getAttribute('data-i'); else selB=+t.getAttribute('data-i');
+  draw();
+});
+reset(); draw();
+})();
+</script>
+<p>Things to try:</p>
+<ol type="1">
+<li><strong>Support.</strong> With the default settings, click a Lagrange function and then a B-spline function near the middle. The shaded band shows where each is nonzero. The quadratic B-spline extends across three elements, while a Lagrange function never extends past the elements that touch its node.</li>
+<li><strong>Number of functions.</strong> Five quadratic elements require 11 Lagrange functions but only 7 smooth B-splines. Each smoothness condition at a boundary removes one function, so the number of B-splines is <span class="math inline">\(p+1\)</span> plus, for each interior boundary, <span class="math inline">\(p\)</span> minus its continuity.</li>
+<li><strong>Slopes.</strong> Set the degree to 3 and observe the slope of a B-spline as one boundary is made less smooth. The slope is smooth at <span class="math inline">\(C^2\)</span>, has a corner at <span class="math inline">\(C^1\)</span>, and jumps at <span class="math inline">\(C^0\)</span>.</li>
+<li><strong>Every boundary <span class="math inline">\(C^0\)</span>.</strong> The number of B-splines becomes the number of Lagrange functions. The two bases then describe exactly the same set of functions, and on each element the B-splines are the Bernstein polynomials described in the next section.</li>
+<li><strong>One boundary at <span class="math inline">\(C^{-1}\)</span>.</strong> The B-spline basis separates there into two independent pieces, as if it were two separate patches.</li>
+<li><strong>Meaning of a coefficient.</strong> A Lagrange function equals 1 at its own node and 0 at every other node, so its coefficient is the value of the field there. Most B-splines never reach 1, and several are nonzero at every point, so a B-spline coefficient is generally not the value of the field at any particular point.</li>
+<li><strong>Drag a B-spline control point.</strong> The curve moves smoothly, and only along the shaded part, which is the support of the basis function associated with that point. Every boundary still reads 0.0°, since a curve built from <span class="math inline">\(C^1\)</span> functions cannot form a corner, regardless of where its control points are placed.</li>
+<li><strong>Drag a Lagrange node.</strong> Its elements move, and corners appear at the neighbouring element boundaries. Even before any node is moved, the Lagrange curve has small corners. Its nodes lie exactly on a smooth arch, but an arch is not a piecewise quadratic, so the pieces meet at slightly different angles.</li>
+<li><strong>Put the Lagrange nodes on the B-spline curve.</strong> Every corner drops to 0.0°, and the two curves become identical. The Lagrange functions can represent any curve that the B-splines can represent, but nothing in the Lagrange basis keeps the curve smooth, so moving any node brings the corners back.</li>
+<li><strong>Lower one boundary to <span class="math inline">\(C^0\)</span>, then to <span class="math inline">\(C^{-1}\)</span>.</strong> The B-spline curve does not move. Instead, it gains a control point at that boundary. Dragging that point allows the B-spline curve to form a corner there or, at <span class="math inline">\(C^{-1}\)</span>, to separate.</li>
+</ol>
+</section>
+<section id="bernstein-polynomials" class="level3" data-number="21.3.2">
+<h3 data-number="21.3.2" class="anchored" data-anchor-id="bernstein-polynomials"><span class="header-section-number">21.3.2</span> Bernstein polynomials</h3>
+<p>On a single element, the degree-<span class="math inline">\(p\)</span> <strong>Bernstein polynomials</strong></p>
+<p><span class="math display">\[
+B_i^p(t)=\binom{p}{i}\,t^i(1-t)^{p-i}, \qquad i=0,\ldots,p, \qquad 0\le t\le 1,
+\]</span></p>
+<p>are another basis for the same polynomials as the degree-<span class="math inline">\(p\)</span> Lagrange functions. Any cubic can be written as a combination of the four cubic Lagrange functions or as a combination of the four cubic Bernstein polynomials. Only the coefficients change, in the same way that the components of a vector change when the coordinate axes are rotated.</p>
+<div id="fig-c21-bernstein" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c21-bernstein-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class21/C21_Fig7_Bernstein.png" class="img-fluid figure-img" style="width:86.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c21-bernstein-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;21.9: (a) and (b) The four cubic functions of each basis on one element. Each Lagrange function equals 1 at its own node and 0 at the others, while the Bernstein functions are never negative and sum to 1 everywhere. (c) and (d) One cubic polynomial written in each basis. The Lagrange coefficients <span class="math inline">\(d_i\)</span> are the values of the polynomial at the four nodes. The Bernstein coefficients <span class="math inline">\(c_i\)</span> are the heights of a control polygon; the curve starts and ends on this polygon, and is pulled toward the two interior points without passing through them.
+</figcaption>
+</figure>
+</div>
+<p>Two properties make Bernstein polynomials useful. First, they are never negative and they sum to 1, so a curve built from them stays inside its control polygon, which is one reason they are used in CAD. Second, they are exactly the basis functions of a <span class="math inline">\(C^0\)</span> B-spline: setting every boundary in the widget above to <span class="math inline">\(C^0\)</span> makes the B-splines on each element exactly these polynomials. This connection, called <strong>Bézier extraction</strong>, allows a spline code to provide each element with a Bernstein basis and a small matrix, and then to assemble element by element in the same loop as a standard finite element code.</p>
+</section>
+<section id="cubic-hermite-polynomials" class="level3" data-number="21.3.3">
+<h3 data-number="21.3.3" class="anchored" data-anchor-id="cubic-hermite-polynomials"><span class="header-section-number">21.3.3</span> Cubic Hermite polynomials</h3>
+<p>Splines are one way to obtain <span class="math inline">\(C^1\)</span> continuity. An older approach, used in beam theory, makes the slope itself an unknown at every node. The Euler–Bernoulli beam weak form contains second derivatives (<span class="math inline">\(m=2\)</span>), so the slope of the deflection must not jump between elements. A cubic Hermite element uses the deflection <span class="math inline">\(w\)</span> and the rotation <span class="math inline">\(\theta = dw/dx\)</span> at each end,</p>
+<p><span class="math display">\[
+w^h(t)=h_{00}(t)\,w_1+L\,h_{10}(t)\,\theta_1
+       +h_{01}(t)\,w_2+L\,h_{11}(t)\,\theta_2,
+\qquad 0\le t\le 1,
+\]</span></p>
+<p>where <span class="math inline">\(L\)</span> is the element length and</p>
+<p><span class="math display">\[
+\begin{aligned}
+h_{00}&amp;=2t^3-3t^2+1, &amp; h_{10}&amp;=t^3-2t^2+t,\\
+h_{01}&amp;=-2t^3+3t^2,  &amp; h_{11}&amp;=t^3-t^2.
+\end{aligned}
+\]</span></p>
+<p>Neighbouring elements share both <span class="math inline">\(w\)</span> and <span class="math inline">\(\theta\)</span> at their common node, so the deflection is <span class="math inline">\(C^1\)</span>.</p>
+<div id="fig-c21-hermite" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c21-hermite-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class21/C21_Fig8_Hermite.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c21-hermite-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;21.10: (a) The four cubic Hermite functions. Two of them are associated with a value at one end, and two with a slope. (b) A beam clamped at both ends under a uniform load (dashed), approximated by two Hermite elements. The two pieces are different cubics, but they share the same deflection and the same slope at the middle node, so the approximation has no corner there. (c) The same beam approximated by two quadratic Lagrange elements through the same nodal deflections. Each element has its own slope at the middle node (+0.031 and −0.031), so the approximation has a peak where the beam is actually flat.
+</figcaption>
+</figure>
+</div>
+<p>Hermite elements work well for beams and for rectangular plate elements, but they do not extend well to general shapes. In two and three dimensions, matching slopes across an element edge requires derivative unknowns in several directions at every node, including mixed derivatives, and these only fit together easily on rectangles. On curved or irregular elements, they become very difficult to match. Splines obtain their smoothness differently: rather than adding derivative unknowns, each function overlaps several elements.</p>
+</section>
+<section id="from-a-class-11-element-to-a-spline-patch" class="level3" data-number="21.3.4">
+<h3 data-number="21.3.4" class="anchored" data-anchor-id="from-a-class-11-element-to-a-spline-patch"><span class="header-section-number">21.3.4</span> From a Class 11 element to a spline patch</h3>
+<p>In <a href="../chapters/11_Class.html">Class 11</a>, a basis function on a quadrilateral was defined as the product of two one-dimensional functions,</p>
+<p><span class="math display">\[
+N_A(\xi,\eta)=N_a(\xi)\,N_b(\eta).
+\]</span></p>
+<p>A B-spline patch is built in the same way, from one-dimensional B-splines,</p>
+<p><span class="math display">\[
+R_A(\xi,\eta)=B_a(\xi)\,B_b(\eta).
+\]</span></p>
+<p>The difference lies in the support of the one-dimensional factors. A Lagrange factor is nonzero on one element, or on two if its node lies on an element boundary. A B-spline factor extends across several elements of the patch. The widget below shows either basis over the same grid, with the two one-dimensional factors drawn on the back walls as in Class 11. The dark curves show the function along each element line, which is where a <span class="math inline">\(C^0\)</span> function has a crease. Drag to rotate the view, and click a dot in the right-hand view to select a function.</p>
+<p>Below that, the same functions are again used as a map, this time from the square onto a curved region of the plane, <span class="math inline">\(\underline{x}(\xi,\eta)=\sum_A R_A(\xi,\eta)\,\underline{x}_A\)</span>. The region initially is the quarter annulus of Classes 12, 13, and 20. The points <span class="math inline">\(\underline{x}_A\)</span> belong to whichever basis is selected at the top of the widget (Lagrange nodes or B-spline control points), and each can be dragged. Red marks the locations where a grid line forms a corner as it crosses an element line.</p>
+<style>
+.bs2{--ink:#18202b;--muted:#6b7684;--line:#dfe4ea;--paper:#f8f9fb;max-width:1100px;margin:1rem auto 1.6rem;color:var(--ink)}
+.bs2 .bar{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;padding:10px 14px;
+  background:var(--paper);border:1px solid var(--line);border-radius:8px;margin-bottom:10px;font-size:13px}
+.bs2 .bar b{font-size:12px;letter-spacing:.05em;color:var(--muted)}
+.bs2 .bar label{color:var(--muted)}
+.bs2 .bar output{display:inline-block;min-width:1.6em;font-weight:600;color:var(--ink)}
+.bs2 input[type=range]{width:110px;vertical-align:middle}
+.bs2 .seg{display:inline-flex;border:1px solid #c8d0da;border-radius:7px;overflow:hidden}
+.bs2 .seg button{font:inherit;font-size:12.5px;padding:4px 12px;border:0;background:#fff;color:var(--ink);cursor:pointer}
+.bs2 .seg button+button{border-left:1px solid #c8d0da}
+.bs2 .seg button.on{background:#18202b;color:#fff}
+.bs2 .pair{display:grid;grid-template-columns:1.45fr 1fr;gap:12px}
+.bs2 .pair>div{border:1px solid var(--line);border-radius:8px;background:#fff}
+.bs2 .cap{font-size:13px;color:var(--muted);line-height:1.55;margin:9px 2px 0}
+.bs2 .cap b{color:var(--ink)}
+.bs2 .bar.sub{margin-top:18px}
+.bs2 #bs2_map{display:block;width:100%;max-width:660px;margin:0 auto;height:auto;border:1px solid var(--line);
+  border-radius:8px;background:#fff;touch-action:none}
+.bs2 #bs2_map .grab{cursor:grab}
+@media (max-width:820px){.bs2 .pair{grid-template-columns:1fr}}
+</style>
+
+<div class="bs2" id="bs2">
+  <div class="bar">
+    <span class="seg" role="group" aria-label="basis">
+      <button type="button" id="bs2_L">Lagrange</button><button type="button" id="bs2_B" class="on">B-spline</button></span>
+    <span><label for="bs2_p">degree</label> <input id="bs2_p" type="range" min="1" max="3" value="2">
+      <output id="bs2_pv">2</output></span>
+    <span><label for="bs2_e">elements per side</label> <input id="bs2_e" type="range" min="2" max="4" value="3">
+      <output id="bs2_ev">3</output></span>
+    <span id="bs2_cwrap"><label for="bs2_c">spline continuity</label> <input id="bs2_c" type="range" min="0" max="1" value="1">
+      <output id="bs2_cv">C¹</output></span>
+  </div>
+  <div class="pair">
+    <div id="bs2_3d" style="height:520px"></div>
+    <div id="bs2_top" style="height:520px"></div>
+  </div>
+  <div class="cap" id="bs2_cap"></div>
+  <div class="bar sub">
+    <b>THE SAME FUNCTIONS, USED AS A MAP</b>
+    <button type="button" id="bs2_copy">put the Lagrange nodes on the B-spline region</button>
+    <button type="button" id="bs2_rst">reset both regions</button>
+  </div>
+  <svg id="bs2_map" viewbox="0 0 660 620" role="img" aria-label="The parametric square mapped onto a curved planar region, with points that can be dragged"></svg>
+  <div class="cap" id="bs2_mcap"></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var root=document.getElementById('bs2'); if(!root || typeof Plotly==='undefined') return;
+var $=function(id){ return root.querySelector('#'+id); };
+var C={xi:"#1f5fbf", eta:"#c2410c", node:"#e0a800", ink:"#18202b", grey:"#9aa3ae",
+       neg:"#2f6db5", mid:"#f2f2f0", pos:"#b8322a", crease:"#18202b"};
+var kind='B', p=2, ne=3, r=1, sel={B:null, L:null};
+var SUP={'-':'⁻','0':'⁰','1':'¹','2':'²'};
+function Ck(c){ return 'C'+String(c).split('').map(function(q){ return SUP[q]||q; }).join(''); }
+
+/* ---- 1D bases on [0, ne] ------------------------------------------------- */
+function knots(){
+  var U=[],j,k;
+  for(j=0;j<=p;j++) U.push(0);
+  for(k=1;k<ne;k++) for(j=0;j<p-r;j++) U.push(k);
+  for(j=0;j<=p;j++) U.push(ne);
+  return U;
+}
+function bspl(x,U){
+  if(x>=ne) x=ne-1e-12;
+  var N=[],i,d,a,b;
+  for(i=0;i<U.length-1;i++) N.push(x>=U[i] && x<U[i+1] ? 1 : 0);
+  for(d=1;d<=p;d++){
+    var M=[];
+    for(i=0;i<N.length-1;i++){
+      a=U[i+d]>U[i]     ? (x-U[i])/(U[i+d]-U[i])*N[i]           : 0;
+      b=U[i+d+1]>U[i+1] ? (U[i+d+1]-x)/(U[i+d+1]-U[i+1])*N[i+1] : 0;
+      M.push(a+b);
+    }
+    N=M;
+  }
+  return N;
+}
+function lag(x){
+  var n=ne*p+1, out=new Array(n).fill(0);
+  var e=Math.min(ne-1,Math.floor(x)), t=x-e;
+  for(var a=0;a<=p;a++){
+    var v=1; for(var b=0;b<=p;b++) if(b!==a) v*=(t-b/p)/(a/p-b/p);
+    out[e*p+a]+=v;
+  }
+  return out;
+}
+function basis1D(){ return basisOf(kind); }
+function basisOf(kd){
+  if(kd==='L'){
+    var n=ne*p+1, c=[]; for(var i=0;i<n;i++) c.push(i/p);
+    return {n:n, f:lag, centres:c};
+  }
+  var U=knots(), nb=U.length-p-1, g=[];
+  for(var a=0;a<nb;a++){ var s=0; for(var k=1;k<=p;k++) s+=U[a+k]; g.push(s/p); }
+  return {n:nb, f:function(x){ return bspl(x,U); }, centres:g, U:U};
+}
+function support(B,i){
+  if(kind==='B') return [B.U[i], B.U[i+p+1]];
+  if(i%p===0) return [Math.max(0,i/p-1), Math.min(ne,i/p+1)];
+  var e=Math.floor(i/p); return [e,e+1];
+}
+
+/* ---- sampling ------------------------------------------------------------ */
+function samples(){
+  var per=Math.max(10, Math.round(36/ne)), S=[];
+  for(var k=0;k<=ne*per;k++) S.push(k/per);
+  return S;
+}
+
+function render(){
+  var B=basis1D(), n=B.n;
+  if(sel[kind]===null || sel[kind]>=n*n){
+    /* Lagrange: start on an element corner, where four elements meet and the
+       crease is the point; splines: start in the middle of the patch */
+    var m=(kind==='L') ? p*Math.floor(ne/2) : Math.floor(n/2); sel[kind]=m + n*m;
+  }
+  var A=sel[kind], i=A%n, j=Math.floor(A/n);
+  var S=samples(), Fx=S.map(B.f);
+  var fi=Fx.map(function(v){ return v[i]||0; }), fj=Fx.map(function(v){ return v[j]||0; });
+  var Z=fj.map(function(b){ return fi.map(function(a){ return a*b; }); });
+  var zabs=1e-9; Z.forEach(function(row){ row.forEach(function(v){ zabs=Math.max(zabs,Math.abs(v)); }); });
+  zabs=Math.max(zabs, 1);
+  var zmin=kind==='L' ? -0.45 : -0.08, top=ne;
+
+  /* the 3D view */
+  var T=[{type:'surface', x:S, y:S, z:Z, cmin:-zabs, cmax:zabs, showscale:false, opacity:0.95,
+          colorscale:[[0,C.neg],[0.5,C.mid],[1,C.pos]],
+          lighting:{ambient:0.75, diffuse:0.5, specular:0.05},
+          contours:{x:{show:true, start:0, end:ne, size:0.25, color:'#9aa3ae', width:1},
+                    y:{show:true, start:0, end:ne, size:0.25, color:'#9aa3ae', width:1}},
+          hovertemplate:'ξ=%{x:.2f}<br>η=%{y:.2f}<br>N=%{z:.3f}<extra></extra>'}];
+  /* where the element lines cross the function: a crease for Lagrange, smooth for splines */
+  for(var k=1;k<ne;k++){
+    var ka=B.f(k), xs=[], ys=[], zs=[], xs2=[], ys2=[], zs2=[];
+    for(var q=0;q<S.length;q++){
+      xs.push(k); ys.push(S[q]); zs.push((ka[i]||0)*fj[q]);
+      xs2.push(S[q]); ys2.push(k); zs2.push(fi[q]*(ka[j]||0));
+    }
+    T.push({type:'scatter3d', mode:'lines', x:xs, y:ys, z:zs, line:{color:C.crease, width:4},
+            hoverinfo:'skip', showlegend:false});
+    T.push({type:'scatter3d', mode:'lines', x:xs2, y:ys2, z:zs2, line:{color:C.crease, width:4},
+            hoverinfo:'skip', showlegend:false});
+  }
+  /* the element grid on the floor */
+  for(k=0;k<=ne;k++){
+    T.push({type:'scatter3d', mode:'lines', x:[k,k], y:[0,ne], z:[zmin,zmin], line:{color:'#b8c0ca', width:2},
+            hoverinfo:'skip', showlegend:false});
+    T.push({type:'scatter3d', mode:'lines', x:[0,ne], y:[k,k], z:[zmin,zmin], line:{color:'#b8c0ca', width:2},
+            hoverinfo:'skip', showlegend:false});
+  }
+  /* the two 1D factors on the back walls, as in Class 11 */
+  var ones=S.map(function(){ return top; }), zeros=S.map(function(){ return 0; });
+  for(var a=0;a<n;a++) if(a!==i)
+    T.push({type:'scatter3d', mode:'lines', x:S, y:ones, z:Fx.map(function(v){ return v[a]||0; }),
+            line:{color:C.xi, width:2}, opacity:0.22, hoverinfo:'skip', showlegend:false});
+  for(a=0;a<n;a++) if(a!==j)
+    T.push({type:'scatter3d', mode:'lines', x:zeros, y:S, z:Fx.map(function(v){ return v[a]||0; }),
+            line:{color:C.eta, width:2}, opacity:0.22, hoverinfo:'skip', showlegend:false});
+  T.push({type:'scatter3d', mode:'lines', x:S, y:ones, z:fi, line:{color:C.xi, width:7},
+          name:'1D factor in ξ', hoverinfo:'skip'});
+  T.push({type:'scatter3d', mode:'lines', x:zeros, y:S, z:fj, line:{color:C.eta, width:7},
+          name:'1D factor in η', hoverinfo:'skip'});
+  var lbl=(kind==='L'?'N':'R');
+  Plotly.react($('bs2_3d'), T, {
+    uirevision:'keep-camera', margin:{l:0,r:0,t:34,b:0},
+    title:{text:lbl+'<sub>'+A+'</sub>(ξ,η) = '+(kind==='L'?'N':'B')+'<sub>'+i+'</sub>(ξ) · '+
+                (kind==='L'?'N':'B')+'<sub>'+j+'</sub>(η)', font:{size:14}},
+    legend:{x:0.02, y:0.98, font:{size:11}},
+    scene:{xaxis:{title:'ξ', range:[0,ne], dtick:1}, yaxis:{title:'η', range:[0,ne], dtick:1},
+           zaxis:{title:'', range:[zmin, zabs+0.05]}, aspectmode:'manual', aspectratio:{x:1,y:1,z:0.62},
+           camera:{eye:{x:-1.45, y:-1.65, z:0.95}}}
+  }, {responsive:true, displaylogo:false, displayModeBar:false, scrollZoom:false});
+
+  /* the top-down view: click a centre to pick a function */
+  var cx=[], cy=[], cd=[], col=[], sz=[];
+  for(var b=0;b<n;b++) for(a=0;a<n;a++){
+    var on=(a===i && b===j);
+    cx.push(B.centres[a]); cy.push(B.centres[b]); cd.push(a+n*b);
+    col.push(on?C.node:C.ink); sz.push(on?15:(n>9?6:8));
+  }
+  var sp=[support(B,i), support(B,j)], shapes=[];
+  shapes.push({type:'rect', x0:sp[0][0], x1:sp[0][1], y0:sp[1][0], y1:sp[1][1],
+               line:{color:C.node, width:2.5}, fillcolor:'rgba(0,0,0,0)'});
+  for(k=0;k<=ne;k++){
+    shapes.push({type:'line', x0:k, x1:k, y0:0, y1:ne, line:{color:'#18202b', width:1}});
+    shapes.push({type:'line', x0:0, x1:ne, y0:k, y1:k, line:{color:'#18202b', width:1}});
+  }
+  Plotly.react($('bs2_top'), [
+    {type:'heatmap', x:S, y:S, z:Z, zmin:-zabs, zmax:zabs, zsmooth:'best', showscale:false,
+     colorscale:[[0,C.neg],[0.5,C.mid],[1,C.pos]], hoverinfo:'skip'},
+    {type:'scatter', mode:'markers', x:cx, y:cy, customdata:cd,
+     marker:{size:sz, color:col, line:{color:'#fff', width:1.2}},
+     hovertemplate:'function %{customdata}<extra>click to select</extra>'}
+  ], {
+    margin:{l:42,r:12,t:34,b:40}, showlegend:false, shapes:shapes, dragmode:false,
+    title:{text:'seen from above: click a dot', font:{size:14}},
+    xaxis:{title:'ξ', range:[-0.12,ne+0.12], dtick:1, zeroline:false, showgrid:false, constrain:'domain', fixedrange:true},
+    yaxis:{title:'η', range:[-0.12,ne+0.12], dtick:1, zeroline:false, showgrid:false, scaleanchor:'x', constrain:'domain', fixedrange:true}
+  }, {responsive:true, displaylogo:false, displayModeBar:false});
+
+  /* readouts */
+  var cells=(sp[0][1]-sp[0][0])*(sp[1][1]-sp[1][0]);
+  $('bs2_pv').textContent=p; $('bs2_ev').textContent=ne; $('bs2_cv').textContent=Ck(r);
+  $('bs2_L').className=(kind==='L'?'on':''); $('bs2_B').className=(kind==='B'?'on':'');
+  $('bs2_cwrap').style.opacity=(kind==='B'?1:0.4); $('bs2_c').disabled=(kind!=='B');
+  var nL=ne*p+1, nBs=p+1+(ne-1)*(p-r);
+  var lines=(sp[0][1]-sp[0][0]-1)+(sp[1][1]-sp[1][0]-1);
+  $('bs2_cap').innerHTML=(kind==='L'
+    ? '<b>Lagrange:</b> '+nL+' × '+nL+' = <b>'+(nL*nL)+'</b> functions on these '+ne+'×'+ne+' elements. '+
+      'The highlighted one is nonzero on '+cells+' element'+(cells>1?'s':'')+
+      (lines>0 ? ', and its surface creases along the element line'+(lines>1?'s':'')+' it crosses (the dark curves).'
+               : '. It sits inside a single element and is zero on that element’s edges, so it crosses no'+
+                 ' element line; pick a dot on a line to see a crease.')
+    : '<b>B-spline, '+Ck(r)+':</b> '+nBs+' × '+nBs+' = <b>'+(nBs*nBs)+'</b> functions on the same '+ne+'×'+ne+
+      ' cells (Lagrange would need '+(nL*nL)+'). The highlighted one is nonzero on '+cells+' cells'+
+      (r>0?' and crosses the dark curves without a crease.':'; at '+Ck(0)+' it creases along cell lines, as Lagrange does.'))+
+    ' The gold box is where the function is nonzero.';
+  renderMap();
+}
+
+/* ================= the same functions as a map: a curved planar region ==========
+   x(xi,eta) = sum_A R_A(xi,eta) x_A, with each x_A a point in the plane.  Each
+   basis keeps its own points, so switching basis switches which ones you drag.
+   The starting region is the quarter annulus of Classes 12, 13 and 20.         */
+var PTS={L:null, B:null}, keyM={L:'', B:''}, drag=null, lastKink=0;
+var mapSvg=$('bs2_map'), MW=[-0.32,2.32], MSC=230, MX0=26, MY0=44;
+function annulus(s,t){ var r_=1+s, th=Math.PI/2*t; return [r_*Math.cos(th), r_*Math.sin(th)]; }
+function build(kd){
+  var c=basisOf(kd).centres, n=c.length, P=[];
+  for(var i=0;i<n;i++){ P.push([]); for(var j=0;j<n;j++) P[i].push(annulus(c[i]/ne, c[j]/ne)); }
+  PTS[kd]=P;
+}
+function mapAt(Bx,By,P){                      /* sum_ij Bx_i By_j x_ij */
+  var x=0, y=0;
+  for(var i=0;i<Bx.length;i++) if(Bx[i]) for(var j=0;j<By.length;j++) if(By[j]){
+    var w_=Bx[i]*By[j]; x+=w_*P[i][j][0]; y+=w_*P[i][j][1]; }
+  return [x,y];
+}
+function toS(q){ return [MX0+MSC*(q[0]-MW[0]), MY0+MSC*(MW[1]-q[1])]; }
+function toP(X,Y){ return [MW[0]+(X-MX0)/MSC, MW[1]-(Y-MY0)/MSC]; }
+function pth(pts){ var d=''; for(var i=0;i<pts.length;i++){ var q=toS(pts[i]); d+=(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1); } return d; }
+
+/* lowering continuity is knot insertion, so the region does not move */
+function insertScalar(U,P,u){
+  var k=-1,s=0,i; for(i=0;i<U.length-1;i++) if(U[i]<=u && u<U[i+1]) k=i;
+  for(i=0;i<U.length;i++) if(Math.abs(U[i]-u)<1e-12) s++;
+  var R=[];
+  for(i=0;i<=P.length;i++){
+    if(i<=k-p) R.push(P[i]);
+    else if(i>=k-s+1) R.push(P[i-1]);
+    else { var a=(u-U[i])/(U[i+p]-U[i]); R.push((1-a)*P[i-1]+a*P[i]); }
+  }
+  var V=U.slice(); V.splice(k+1,0,u);
+  return {U:V, P:R};
+}
+function insertAll(U0,Z0,times){
+  var Z=Z0.map(function(r_){ return r_.slice(); }), U=U0.slice(), k, t, j, i, res;
+  for(k=1;k<ne;k++) for(t=0;t<times;t++){                     /* along xi: each column */
+    var cols=[]; for(j=0;j<Z[0].length;j++){ res=insertScalar(U,Z.map(function(r_){ return r_[j]; }),k); cols.push(res.P); }
+    U=res.U; Z=[]; for(i=0;i<cols[0].length;i++){ Z.push([]); for(j=0;j<cols.length;j++) Z[i].push(cols[j][i]); }
+  }
+  U=U0.slice();
+  for(k=1;k<ne;k++) for(t=0;t<times;t++){                     /* along eta: each row */
+    var rows=[]; for(i=0;i<Z.length;i++){ res=insertScalar(U,Z[i],k); rows.push(res.P); }
+    U=res.U; Z=rows;
+  }
+  return Z;
+}
+/* raising continuity cannot keep every region: take the closest smoother one */
+function lsq(Bm,v){
+  var n=Bm[0].length, M=[], b=[], i, j, q;
+  for(i=0;i<n;i++){ M.push(new Array(n).fill(0)); b.push(0); }
+  for(q=0;q<Bm.length;q++) for(i=0;i<n;i++) if(Bm[q][i]){ b[i]+=Bm[q][i]*v[q];
+    for(j=0;j<n;j++) if(Bm[q][j]) M[i][j]+=Bm[q][i]*Bm[q][j]; }
+  for(i=0;i<n;i++) for(j=i+1;j<n;j++){ var f=M[j][i]/M[i][i];
+    for(var c=i;c<n;c++) M[j][c]-=f*M[i][c]; b[j]-=f*b[i]; }
+  var x=new Array(n); for(i=n-1;i>=0;i--){ var s_=b[i]; for(j=i+1;j<n;j++) s_-=M[i][j]*x[j]; x[i]=s_/M[i][i]; }
+  return x;
+}
+function zAt(Bx,By,Z){ var v=0; for(var i=0;i<Bx.length;i++) if(Bx[i]) for(var j=0;j<By.length;j++) if(By[j]) v+=Bx[i]*Z[i][j]*By[j]; return v; }
+function refit(U0,Z0,U1){
+  var ts=[], e, s_; for(e=0;e<ne;e++) for(s_=0;s_<8;s_++) ts.push(e+(s_+0.5)/8);
+  var B0=ts.map(function(t){ return bspl(t,U0); }), B1=ts.map(function(t){ return bspl(t,U1); });
+  var V=ts.map(function(_,a){ return ts.map(function(_,b){ return zAt(B0[a],B0[b],Z0); }); });
+  var n1=U1.length-p-1, W=[], i, b;
+  for(b=0;b<ts.length;b++) W.push(lsq(B1, ts.map(function(_,a){ return V[a][b]; })));
+  var Z=[]; for(i=0;i<n1;i++) Z.push(lsq(B1, W.map(function(w_){ return w_[i]; })));
+  return Z;
+}
+function comp(P,c){ return P.map(function(r_){ return r_.map(function(q){ return q[c]; }); }); }
+function zip2(X,Y){ return X.map(function(r_,i){ return r_.map(function(v,j){ return [v, Y[i][j]]; }); }); }
+
+function syncMap(){
+  var kL=p+'|'+ne, kB=p+'|'+ne+'|'+r;
+  if(keyM.L!==kL){ build('L'); keyM.L=kL; }
+  if(keyM.B!==kB){ build('B'); keyM.B=kB; }
+}
+/* where a grid line crosses an element line, the angle it turns through */
+function kinks(kd){
+  var f=basisOf(kd).f, P=PTS[kd], h=1e-4, d=1e-9, out={max:0, lines:[]}, k, e, s_;
+  var ts=[]; for(e=0;e<ne;e++) for(s_=0;s_<10;s_++) ts.push(e+(s_+0.5)/10);
+  var Bt=ts.map(function(t){ return f(t); });
+  for(k=1;k<ne;k++){
+    var L=[f(k-d),f(k-d-h),f(k-d-2*h)], R=[f(k+d),f(k+d+h),f(k+d+2*h)];
+    [0,1].forEach(function(dir){
+      var m=dir===0 ? function(Ba,Bb){ return mapAt(Ba,Bb,P); } : function(Ba,Bb){ return mapAt(Bb,Ba,P); };
+      var pts=[], bad=[];
+      for(var q=0;q<ts.length;q++){
+        var a0=m(L[0],Bt[q]), a1=m(L[1],Bt[q]), a2=m(L[2],Bt[q]);
+        var b0=m(R[0],Bt[q]), b1=m(R[1],Bt[q]), b2=m(R[2],Bt[q]);
+        var tl=[3*a0[0]-4*a1[0]+a2[0], 3*a0[1]-4*a1[1]+a2[1]];
+        var tr=[-3*b0[0]+4*b1[0]-b2[0], -3*b0[1]+4*b1[1]-b2[1]];
+        var ang=Math.abs(Math.atan2(tl[0]*tr[1]-tl[1]*tr[0], tl[0]*tr[0]+tl[1]*tr[1]))*180/Math.PI;
+        out.max=Math.max(out.max,ang); pts.push(a0); bad.push(ang<0.05 ? 0 : (ang<1 ? 1 : 2));
+      }
+      out.lines.push({pts:pts, bad:bad});
+    });
+  }
+  return out;
+}
+function renderMap(){
+  syncMap();
+  var kd=kind, Bs=basisOf(kd), f=Bs.f, P=PTS[kd], n=Bs.n, A=sel[kd], si=A%n, sj=Math.floor(A/n);
+  var col=(kd==='L'?'#1f6feb':'#6d28d9'), s='', q, k;
+  var per=12, S=[]; for(q=0;q<=ne*per;q++) S.push(q/per);
+  var FS=S.map(f);
+  function line(dir,c,Fc){ var pts=[];                   /* the image of xi = c (dir 0) or eta = c (dir 1) */
+    for(var q_=0;q_<S.length;q_++) pts.push(dir===0 ? mapAt(Fc,FS[q_],P) : mapAt(FS[q_],Fc,P));
+    return pts; }
+  /* the whole region, and the part where the highlighted function is nonzero */
+  var edge=line(1,0,f(0)).concat(line(0,ne,f(ne)), line(1,ne,f(ne)).reverse(), line(0,0,f(0)).reverse());
+  s+='<path d="'+pth(edge)+'Z" fill="#f3f6fb" stroke="none"/>';
+  var sx=(kd==='B') ? [Bs.U[si],Bs.U[si+p+1]] : lagSupport(si),
+      sy=(kd==='B') ? [Bs.U[sj],Bs.U[sj+p+1]] : lagSupport(sj);
+  function sub(u0,u1,v0,v1){ var pts=[], m=24, t_;
+    for(t_=0;t_<=m;t_++) pts.push(mapAt(f(u0+(u1-u0)*t_/m), f(v0), P));
+    for(t_=0;t_<=m;t_++) pts.push(mapAt(f(u1), f(v0+(v1-v0)*t_/m), P));
+    for(t_=0;t_<=m;t_++) pts.push(mapAt(f(u1-(u1-u0)*t_/m), f(v1), P));
+    for(t_=0;t_<=m;t_++) pts.push(mapAt(f(u0), f(v1-(v1-v0)*t_/m), P));
+    return pts; }
+  s+='<path d="'+pth(sub(sx[0],sx[1],sy[0],sy[1]))+'Z" fill="'+col+'" fill-opacity=".10" stroke="'+col+'" stroke-opacity=".35" stroke-width="1.2"/>';
+  /* grid lines every quarter element, then the element lines over them */
+  for(q=1;q<4*ne;q++){ if(q%4===0) continue; var c=q/4, Fc=f(c);
+    s+='<path d="'+pth(line(0,c,Fc))+'" fill="none" stroke="#b9c1cc" stroke-width="0.9"/>';
+    s+='<path d="'+pth(line(1,c,Fc))+'" fill="none" stroke="#b9c1cc" stroke-width="0.9"/>'; }
+  for(k=0;k<=ne;k++){ var Fk=f(Math.min(k,ne));
+    s+='<path d="'+pth(line(0,k,Fk))+'" fill="none" stroke="#18202b" stroke-width="'+(k===0||k===ne?2:1.4)+'"/>';
+    s+='<path d="'+pth(line(1,k,Fk))+'" fill="none" stroke="#18202b" stroke-width="'+(k===0||k===ne?2:1.4)+'"/>'; }
+  /* red where a grid line turns a corner at an element line */
+  var kk=kinks(kd); lastKink=kk.max;
+  /* small corners (under 1 degree) thin, large ones bold */
+  kk.lines.forEach(function(L){
+    var run=[], lvl=0;
+    function flush(){
+      if(run.length>1) s+='<path d="'+pth(run)+'" fill="none" stroke="#d62728" stroke-width="'+(lvl===2?4.5:1.8)+
+                          '" stroke-opacity="'+(lvl===2?1:.75)+'" stroke-linecap="round"/>';
+      else if(run.length===1){ var z=toS(run[0]); s+='<circle cx="'+z[0]+'" cy="'+z[1]+'" r="'+(lvl===2?2.5:1.4)+'" fill="#d62728"/>'; }
+      run=[];
+    }
+    for(var i=0;i<L.pts.length;i++){
+      if(L.bad[i]!==lvl){ flush(); lvl=L.bad[i]; }
+      if(lvl>0) run.push(L.pts[i]);
+    }
+    flush();
+  });
+  /* the control net (splines), then the points you can drag */
+  if(kd==='B'){
+    var net='', i, j;
+    for(i=0;i<n;i++){ var row=[]; for(j=0;j<n;j++) row.push(P[i][j]); net+=pth(row)+' '; }
+    for(j=0;j<n;j++){ var colm=[]; for(i=0;i<n;i++) colm.push(P[i][j]); net+=pth(colm)+' '; }
+    s+='<path d="'+net+'" fill="none" stroke="#8b95a2" stroke-width="1" stroke-dasharray="4 3"/>';
+  }
+  var rr=(n>9?4:5.5);
+  for(var b=0;b<n;b++) for(var a=0;a<n;a++){
+    var z=toS(P[a][b]), on=(a===si && b===sj), AA=a+n*b;
+    if(kd==='B') s+='<rect x="'+(z[0]-(on?7.5:rr))+'" y="'+(z[1]-(on?7.5:rr))+'" width="'+2*(on?7.5:rr)+'" height="'+2*(on?7.5:rr)+
+                    '" fill="'+(on?'#e0a800':'#fff')+'" stroke="'+(on?'#18202b':col)+'" stroke-width="1.8"/>';
+    else s+='<circle cx="'+z[0].toFixed(1)+'" cy="'+z[1].toFixed(1)+'" r="'+(on?8:rr)+'" fill="'+(on?'#e0a800':col)+
+            '" stroke="'+(on?'#18202b':'#fff')+'" stroke-width="1.5"/>';
+    s+='<circle class="grab" data-a="'+AA+'" cx="'+z[0].toFixed(1)+'" cy="'+z[1].toFixed(1)+'" r="12" fill="transparent"/>';
+  }
+  s+='<text x="'+MX0+'" y="26" font-size="17" font-weight="650" fill="#18202b">'+
+     (kd==='L'?'Lagrange: the grid passes through its nodes':'B-spline: the region follows its control points')+'</text>';
+  mapSvg.innerHTML=s;
+  $('bs2_mcap').innerHTML='Largest corner where a grid line crosses an element line: <b>'+lastKink.toFixed(1)+'°</b>'+
+    ' (red wherever it is not zero; bold above 1°). Drag any '+(kd==='L'?'node':'control point')+'. The gold one belongs to the '+
+    'highlighted function above, and the tinted part of the region is where that function is nonzero, the only '+
+    'part that moves. Switch basis at the top of the widget; each basis keeps its own points.';
+}
+function lagSupport(i){ if(i%p===0) return [Math.max(0,i/p-1), Math.min(ne,i/p+1)]; var e=Math.floor(i/p); return [e,e+1]; }
+function changeR(nr){
+  syncMap();
+  var U0=knots(), r0=r, P0=PTS.B, c=basisOf('B').centres, n0=c.length, A=sel.B===null?0:sel.B;
+  var gx=c[A%n0], gy=c[Math.floor(A/n0)];
+  r=nr; var U1=knots();
+  var fx=(nr<r0) ? function(Z){ return insertAll(U0,Z,r0-nr); } : function(Z){ return refit(U0,Z,U1); };
+  PTS.B=zip2(fx(comp(P0,0)), fx(comp(P0,1)));
+  keyM.B=p+'|'+ne+'|'+r;
+  var c1=basisOf('B').centres, n1=c1.length;
+  function near(v){ var b=0,d=1e9; c1.forEach(function(cc,q){ if(Math.abs(cc-v)<d-1e-9){ d=Math.abs(cc-v); b=q; } }); return b; }
+  sel.B=near(gx)+n1*near(gy);
+}
+function svgXY(ev){ var pt=mapSvg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY;
+  return pt.matrixTransform(mapSvg.getScreenCTM().inverse()); }
+mapSvg.addEventListener('pointerdown',function(ev){
+  var t=ev.target.closest('[data-a]'); if(!t) return;
+  drag=+t.getAttribute('data-a'); sel[kind]=drag; render(); ev.preventDefault();
+});
+window.addEventListener('pointermove',function(ev){
+  if(drag===null) return;
+  var n=basisOf(kind).n, q=svgXY(ev), z=toP(q.x,q.y);
+  z=[Math.max(MW[0],Math.min(MW[1],z[0])), Math.max(MW[0],Math.min(MW[1],z[1]))];
+  PTS[kind][drag%n][Math.floor(drag/n)]=z; renderMap(); ev.preventDefault();
+});
+window.addEventListener('pointerup',function(){ drag=null; });
+
+function switchTo(k){
+  if(k===kind) return;
+  /* keep roughly the same place on the patch when changing basis */
+  var B=basis1D(), n=B.n, A=sel[kind], x=B.centres[A%n], y=B.centres[Math.floor(A/n)];
+  kind=k; var B2=basis1D(), m=B2.n;
+  function near(v){ var b=0,d=1e9; B2.centres.forEach(function(c,q){ if(Math.abs(c-v)<d){ d=Math.abs(c-v); b=q; } }); return b; }
+  sel[kind]=near(x)+m*near(y); render();
+}
+$('bs2_L').addEventListener('click',function(){ switchTo('L'); });
+$('bs2_B').addEventListener('click',function(){ switchTo('B'); });
+$('bs2_p').addEventListener('input',function(){ p=+this.value; $('bs2_c').max=p-1; r=Math.min(r,p-1);
+  $('bs2_c').value=r; sel={B:null,L:null}; render(); });
+$('bs2_e').addEventListener('input',function(){ ne=+this.value; sel={B:null,L:null}; render(); });
+$('bs2_c').addEventListener('input',function(){ changeR(+this.value); render(); });
+$('bs2_copy').addEventListener('click',function(){
+  syncMap(); var B=basisOf('B'), L=basisOf('L'), n=L.n;
+  var BL=L.centres.map(function(x){ return B.f(x); });
+  for(var a=0;a<n;a++) for(var b=0;b<n;b++) PTS.L[a][b]=mapAt(BL[a],BL[b],PTS.B);
+  if(kind!=='L') switchTo('L'); else renderMap();
+});
+$('bs2_rst').addEventListener('click',function(){ build('L'); build('B'); renderMap(); });
+render();
+$('bs2_top').on('plotly_click',function(e){
+  var pt=e.points.find(function(q){ return q.customdata!==undefined; }); if(!pt) return;
+  sel[kind]=pt.customdata; render();
+});
+})();
+</script>
+<p>Things to try:</p>
+<ol type="1">
+<li><strong>A Lagrange corner function</strong> (the default). It has creases along both element lines through its node, since each of its one-dimensional factors has a corner there.</li>
+<li><strong>Switch to B-spline.</strong> The widget stays at the same location on the patch. The B-spline function covers more cells and crosses the dark curves without a crease.</li>
+<li><strong>Number of functions.</strong> On <span class="math inline">\(3\times3\)</span> quadratic elements, the Lagrange basis has <span class="math inline">\(7\times7=49\)</span> functions and the <span class="math inline">\(C^1\)</span> B-spline basis has <span class="math inline">\(5\times5=25\)</span>, which is the one-dimensional reduction from the previous widget, squared.</li>
+<li><strong>Lower the spline continuity to <span class="math inline">\(C^0\)</span>.</strong> The number of functions returns to 49, and the creases reappear.</li>
+<li><strong>Drag a Lagrange node at an element corner.</strong> The grid lines crossing the neighbouring element lines now form sharp corners there. Even before any node is moved, the Lagrange grid has small corners, since its nodes lie exactly on circles and a circle is not a piecewise quadratic.</li>
+<li><strong>Switch to B-spline and drag a control point.</strong> The region bends smoothly over a wider area, and no grid line forms a corner.</li>
+<li><strong>Put the Lagrange nodes on the B-spline region.</strong> Every corner disappears, since the Lagrange functions can represent exactly the same region. However, the Lagrange basis does not keep the region smooth, and moving any node brings the corners back.</li>
+<li><strong>Lower the spline continuity to <span class="math inline">\(C^0\)</span>.</strong> The region does not move, but control points appear on the element lines, and dragging one of these can now form a corner in the spline grid as well.</li>
+</ol>
+<p>A tensor-product spline is defined on a <strong>single</strong> parametric square. This is well suited to a single CAD surface, such as one flange of the bracket, since mapping the square through <span class="math inline">\(\underline{x}(\xi,\eta)\)</span> places the basis functions on the surface without changing which functions overlap which. A part made of several surfaces requires several patches glued together, and how well this can be done depends on the layout of the mesh.</p>
+</section>
+</section>
+<section id="quadrilateral-mesh-topology-and-splines" class="level2" data-number="21.4">
+<h2 data-number="21.4" class="anchored" data-anchor-id="quadrilateral-mesh-topology-and-splines"><span class="header-section-number">21.4</span> Quadrilateral mesh topology and splines</h2>
+<p>A tensor-product spline needs a grid that can be indexed by two coordinates, by stepping in either <span class="math inline">\(\xi\)</span> or <span class="math inline">\(\eta\)</span>. A structured quadrilateral mesh has this property, but an arbitrary quadrilateral mesh generally does not.</p>
+<p>At a <strong>regular</strong> interior vertex, four quadrilaterals meet. At an <strong>extraordinary</strong> vertex, a different number meets, such as three, five, or six. On the boundary, a regular vertex has two quadrilaterals, or one at a corner. A <strong>separatrix</strong> is obtained by starting at an irregular vertex, following one of its edges into the mesh, and continuing straight through every regular vertex (leaving by the edge opposite the one by which it entered) until reaching the boundary or another irregular vertex. Cutting the mesh along every separatrix leaves blocks that can each be indexed by two coordinates. These blocks are the patches that a tensor-product spline would need.</p>
+<div id="fig-c21-separatrices" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c21-separatrices-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class21/C21_Fig9_Separatrices.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c21-separatrices-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;21.11: Three all-quadrilateral meshes of a square plate with a circular hole. Every separatrix was traced using the rule above (violet), and the resulting patches are shaded so that neighbouring patches differ. (a) Four structured blocks around the hole. The only irregular vertices are at the corners of the plate, where two quadrilaterals meet instead of one; their four separatrices divide 120 quadrilaterals into 4 patches. (b) A mesh built in the way many automatic quadrilateral meshers build one: triangulate, pair neighbouring triangles into quadrilaterals, and then split every element into quadrilaterals. It has 15 interior extraordinary vertices, of valence 3, 5 and 6, and its separatrices divide 131 quadrilaterals into 83 patches. (c) Twelve patches: a ring of four around the hole, four along the sides, and four in the corners. Its 4 extraordinary vertices, all of valence 5, are at the corners of the ring, and their separatrices connect to one another in a loop around the hole, dividing 112 quadrilaterals into 12 patches.
+</figcaption>
+</figure>
+</div>
+<p>Mesh (b) is a (moderately) acceptable mesh for standard <span class="math inline">\(C^0\)</span> Lagrange elements. A Lagrange code only requires neighbouring elements to agree on the values at their shared nodes, and never needs to know which direction is “straight through” a vertex. Raising the Lagrange polynomial degree does not change this.</p>
+<p>Smooth splines are different. Their functions are intended to extend across element boundaries, and at a valence-3 or valence-5 vertex there is no unique way to continue a row of elements straight through. Mesh (a) can support four patches of smooth splines, glued along four seams. Mesh (b) separates into dozens of small patches. Each seam between patches is a location where continuity must be reduced or specially enforced, so on mesh (b) most of the smoothness that makes splines attractive is lost. A quadrilateral mesh can therefore be entirely suitable for <span class="math inline">\(C^0\)</span> finite elements and still be a poor starting point for a standard B-spline analysis.</p>
+<p>Extraordinary vertices are not problematic in themselves; what matters is how many there are and where they are located. Mesh (c) has four, placed deliberately at the corners of a ring of quadrilaterals around the hole, and their separatrices connect to one another rather than extending across the plate. The result is twelve well-structured patches. This is more seams than mesh (a) has, but they are long and regular, which multi-patch spline codes handle routinely. The cost is at the four valence-5 vertices, where smoothness must be reduced or specially constructed. Mesh (c) also has the best elements of the three meshes.</p>
+<div id="tbl-c21-plates" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-c21-plates-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;21.2: The three plate meshes measured in the same way.
+</figcaption>
+<div aria-describedby="tbl-c21-plates-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 56%">
+<col style="width: 14%">
+<col style="width: 14%">
+<col style="width: 14%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">(a) four blocks</th>
+<th style="text-align: right;">(b) triangulate, pair, split</th>
+<th style="text-align: right;">(c) twelve patches</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">patches</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">83</td>
+<td style="text-align: right;">12</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">extraordinary vertices inside</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">scaled Jacobian of the worst element</td>
+<td style="text-align: right;">0.71</td>
+<td style="text-align: right;">0.44</td>
+<td style="text-align: right;">0.91</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">average scaled Jacobian</td>
+<td style="text-align: right;">0.87</td>
+<td style="text-align: right;">0.88</td>
+<td style="text-align: right;">0.98</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">largest edge ratio in one element</td>
+<td style="text-align: right;">2.8</td>
+<td style="text-align: right;">3.3</td>
+<td style="text-align: right;">1.5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">largest element’s area ÷ smallest</td>
+<td style="text-align: right;">2.8</td>
+<td style="text-align: right;">4.0</td>
+<td style="text-align: right;">3.7</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The weakest elements of mesh (a) are at the corners of the plate, where two quadrilaterals share a single right angle and each has a 45° corner. Smoothing cannot fix this, since it is determined by the layout. Mesh (c) gives each corner its own block. Its one weakness is element size: its smallest elements, around the hole, are a few times smaller than its largest, which is a slightly wider spread than in mesh (a).</p>
+<p>This is an active area of research. Constructions such as T-splines, hierarchical and locally refined splines, subdivision surfaces, and spline spaces built specifically around extraordinary vertices all aim to preserve smooth basis functions on meshes with arbitrary layouts. <!-- For examples, see the work on
+[smooth splines on unstructured quad meshes](https://doi.org/10.1016/j.cma.2017.06.008),
+[blended B-splines on unstructured quad and hex meshes](https://doi.org/10.1016/j.cma.2018.07.013),
+and [G-spline analysis on arbitrary quadrilateral layouts](https://doi.org/10.1016/j.cma.2023.115965).
+--></p>
+<p>Note that separatrices describe the topology of a mesh, not its quality. A well-structured separatrix layout can still produce a poor spline if its cells are folded, highly skewed, or crowded together, just as a Lagrange mesh can. The separatrices indicate whether a standard tensor-product patch layout is natural, while the quality of the analysis still depends on the Jacobians of Class 13 and on how well the basis can approximate the solution.</p>
+</section>
+<section id="summary" class="level2" data-number="21.5">
+<h2 data-number="21.5" class="anchored" data-anchor-id="summary"><span class="header-section-number">21.5</span> Summary</h2>
+<ol type="1">
+<li><strong>CAD describes a part as trimmed surfaces glued together.</strong> This is an exact description of the shape, but cut cells, slivers, and seams make it difficult to use directly for analysis.</li>
+<li><strong>Meshing addresses these problems at the cost of geometric accuracy.</strong> A mesh of the trimmed surfaces has no cut cells, but it replaces every curve with straight edges.</li>
+<li><strong>Geometry and field have separate roles.</strong> IGA uses the same functions for both, but control points place the geometry, while the coefficients <span class="math inline">\(d_A\)</span> are the unknowns of the analysis.</li>
+<li><strong>Continuity should be chosen, not maximized.</strong> Smoothness is beneficial for smooth solutions and for weak forms with higher derivatives, such as the beam. It should be reduced where the solution is not smooth, such as at material interfaces, cracks, and sharp corners.</li>
+<li><strong>An exact surface does not define a volume.</strong> CAD surfaces can be used directly for shell analysis, but solid analysis still requires a volumetric map or a mesh.</li>
+<li><strong>Fewer basis functions does not necessarily mean less computation.</strong> Smooth bases can give lower error per unknown, but each function overlaps more elements, so the matrix is less sparse and each element is more expensive to integrate.</li>
+</ol>
+<p>Overall, Lagrange finite elements handle complicated geometry well by keeping continuity local, while isogeometric methods invest more effort in geometry and topology so that smooth, CAD-quality basis functions can provide more approximation power across element boundaries.</p>
+<section id="further-reading" class="level3" data-number="21.5.1">
+<h3 data-number="21.5.1" class="anchored" data-anchor-id="further-reading"><span class="header-section-number">21.5.1</span> Further reading</h3>
+<ul>
+<li><a href="https://doi.org/10.1016/j.cma.2004.10.008">Hughes, Cottrell, and Bazilevs (2005), the original isogeometric-analysis paper</a></li>
+<li><a href="https://onlinelibrary.wiley.com/doi/book/10.1002/9780470749081">Cottrell, Hughes, and Bazilevs (2009), <em>Isogeometric Analysis</em></a></li>
+<li><a href="https://doi.org/10.1016/j.cma.2009.01.021">Evans, Bazilevs, Babuška, and Hughes (2009), on the accuracy of smooth splines per degree of freedom</a></li>
+<li><a href="https://doi.org/10.1007/s11831-017-9220-9">Marussig and Hughes (2018), a review of trimming in isogeometric analysis</a></li>
+</ul>
+<!-- 
+- [Zheng and Chen (2022), building volume maps for solid IGA](https://doi.org/10.1016/j.cma.2022.115662)
+- [Verhelst, Weinmüller, Mantzaflaris, and Takacs (2024), a comparison of smooth basis constructions](https://doi.org/10.1016/j.cma.2023.116659)
+-->
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation column-body">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/20_Class.html" class="pagination-link" aria-label="Class 20: Quadrature in 2D, and Integrating Over a Face">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Class 20: Quadrature in 2D, and Integrating Over a Face</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/3_Support_FunctionSpaces.html" class="pagination-link" aria-label="Support: Norms and Function Spaces">
+        <span class="nav-page-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

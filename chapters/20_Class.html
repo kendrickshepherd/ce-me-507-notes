@@ -37,7 +37,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../chapters/3_Support_FunctionSpaces.html" rel="next">
+<link href="../chapters/21_Class.html" rel="next">
 <link href="../chapters/19_Class.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -272,6 +272,12 @@ window.Quarto = {
   <div class="sidebar-item-container"> 
   <a href="../chapters/20_Class.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Class 20: Quadrature in 2D, and Integrating Over a Face</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Class 21: CAD, Meshing, and Discretization Choice</span></span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
@@ -565,6 +571,10 @@ draw();
     \]</span></p>
 <p>and the arclength is</p>
 <p><span class="math display">\[ \boxed{\;d\Gamma = \left\| \underline{t} \right\| d\eta. \;} \]</span></p>
+<p>Consequently, integration over a face which, for instance has <span class="math inline">\(\xi=1\)</span> can be approximated using quadrature as</p>
+<p><span class="math display">\[ \int_{\Gamma_h^e} N_A(1,\eta)\, h\big(x(1,\eta)) \; d\Gamma \approx \sum_q^{n_g} w_g N_A(1,\eta_g) h\big(x(1,\eta_g)) \big|\big|\underline{t}\big(x(1,\eta_g)\big)\big|\big|. \]</span></p>
+<p>Similarly, integration over a face which, for instance, has <span class="math inline">\(\eta=-1\)</span> can be approximated as</p>
+<p><span class="math display">\[ \int_{\Gamma_h^e} N_A(\xi,-1)\, h\big(x(\xi,-1)) \; d\Gamma \approx \sum_q^{n_g} w_g N_A(\xi_g,-1) h\big(x(\xi_g,-1)) \big|\big|\underline{t}\big(x(\xi_g,-1)\big)\big|\big|. \]</span></p>
 <section id="where-that-length-comes-from" class="level3" data-number="20.2.1">
 <h3 data-number="20.2.1" class="anchored" data-anchor-id="where-that-length-comes-from"><span class="header-section-number">20.2.1</span> Where that length comes from</h3>
 <p>The boxed formula is not a definition. It falls out of asking one question: <em>if I take a small step along the face in the parent domain, how far have I actually moved in the physical element?</em></p>
@@ -1385,8 +1395,8 @@ draw();
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../chapters/3_Support_FunctionSpaces.html" class="pagination-link" aria-label="Support: Norms and Function Spaces">
-        <span class="nav-page-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../chapters/21_Class.html" class="pagination-link" aria-label="Class 21: CAD, Meshing, and Discretization Choice">
+        <span class="nav-page-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Class 21: CAD, Meshing, and Discretization Choice</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
