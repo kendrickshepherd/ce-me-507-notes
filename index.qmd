@@ -41,6 +41,8 @@ computed on the page so that the text and the drawings always agree.
 | [Class 19](chapters/19_Class.qmd) | The same pipeline in any dimension: what carries over from the 1D solver, and the three steps that genuinely change |
 | [Class 20](chapters/20_Class.qmd) | Quadrature on the parent square as a tensor product, and integrating over an element face with the arc-length Jacobian |
 | [Class 21](chapters/21_Class.qmd) | CAD, meshing and discretization choice: element types, where meshes come from, and isogeometric analysis |
+| [Class 22](chapters/22_Class.qmd) | Robin boundary conditions: where they come from, their weak and Galerkin forms, and the face integrals they add to the stiffness matrix and force vector, with an interactive wall example |
+| [Class 23](chapters/23_Class.qmd) | The minimization form and its equivalence to the weak form, uniqueness of the solution, and why the stiffness matrix is symmetric and positive definite, with an interactive energy landscape |
 
 ### Support material
 

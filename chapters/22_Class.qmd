@@ -20,9 +20,9 @@ import os, sys, math
 sys.path.append('.')
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
-from notes_style import (use_chapter, save, tidy,
-                         INK, DOMCLR, BDRYCLR, FLUXCLR, REFCLR)
+from matplotlib.patches import Rectangle, Polygon as MplPolygon
+from notes_style import (use_chapter, save, tidy, iso, dim_x,
+                         INK, LOADCLR, REACTCLR, DOMCLR, BDRYCLR, FLUXCLR, REFCLR)
 IMGDIR = use_chapter("Class22")
 ROBCLR = "#0d9488"   # Robin boundary (Gamma_r)
 
@@ -52,8 +52,9 @@ u = g \quad \text{on } \Gamma_g,
 $$
 
 Many boundaries of practical interest are neither.
-The outside face of a building wall does not have a known temperature, and the heat flowing through it is not known in advance either.
-Instead, the heat flowing through the face depends on the temperature of the face itself, and a relationship of this kind is described by a **Robin boundary condition**.
+The outside face of a building wall does not have a known temperature, and the heat flowing through it is not known in advance either, since it depends on the temperature of the face itself.
+Similarly, the end of a pile resting on soft rock is neither held in place nor free, since the force it carries depends on how far the end moves.
+In both cases, the flux through the boundary depends on the value of the solution at the boundary, and a relationship of this kind is described by a **Robin boundary condition**.
 In this class, we will add Robin boundary conditions to the strong, weak, and Galerkin forms of the problem, and determine how they change the stiffness matrix and the force vector.
 The back face of the brick in Project 2 has a Robin boundary condition, and Homework 16 implements the terms derived here.
 
@@ -79,7 +80,161 @@ When the conductivity is isotropic, $\kappa_{ij}=\kappa\,\delta_{ij}$, the condi
 
 ### Where Robin conditions come from
 
-The most common example in heat transfer is **convection**, in which a surface exchanges heat with a surrounding fluid such as air or water.
+A Robin condition arises whenever the boundary is connected to something outside of the domain that responds in proportion to the value of the solution at the boundary.
+Rearranging the condition as
+
+$$
+-\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = \hat{a}\left(u - \frac{\hat{c}}{\hat{a}}\right)
+$$
+
+shows that the flux leaving the domain is proportional to the difference between $u$ and a reference value $\hat{c}/\hat{a}$, where $\hat{a}$ measures how strongly the boundary is connected to its surroundings.
+What provides this connection depends on the physical problem, and @tbl-c22-sources lists several common cases.
+A surrounding fluid is the most common case in heat transfer, but it is only one of them, and a pile resting on a spring, for example, involves no fluid at all.
+@fig-c22-sources shows two of these settings, drawn in the same way as the examples of the appendices.
+
+```{python fig_sources}
+#| echo: false
+#| output: false
+HOTCLR, SOIL, ROCK = "#e67e22", "#efe3cf", "#c9c3b8"
+rng = np.random.default_rng(7)
+
+
+def arrow(ax, p_from, p_to, color=INK, lw=1.8, ms=13, z=6):
+    ax.annotate("", xy=p_to, xytext=p_from,
+                arrowprops=dict(arrowstyle="-|>", color=color, lw=lw, mutation_scale=ms,
+                                shrinkA=0, shrinkB=0), zorder=z)
+
+
+def spring(ax, p0, p1, n=5, amp=0.2, lead=0.18, color=ROBCLR, lw=1.8, z=4):
+    """A zigzag spring from p0 to p1."""
+    p0, p1 = np.asarray(p0, float), np.asarray(p1, float)
+    d = p1 - p0
+    Ls = np.linalg.norm(d)
+    u, v = d / Ls, np.array([-d[1], d[0]]) / Ls
+    sv = np.linspace(0, Ls, 400)
+    a, b = lead * Ls, (1 - lead) * Ls
+    ph = np.clip((sv - a) / (b - a), 0, 1) * n
+    zz = np.where((sv > a) & (sv < b), amp * (4 * np.abs((ph + 0.25) % 1.0 - 0.5) - 1), 0.0)
+    pts = p0[None, :] + sv[:, None] * u[None, :] + zz[:, None] * v[None, :]
+    ax.plot(pts[:, 0], pts[:, 1], color=color, lw=lw, zorder=z)
+
+
+def box(ax, x0, x1, y0, y1, fc, ec=INK, lw=1.3, z=1, **kw):
+    ax.add_patch(Rectangle((x0, y0), x1 - x0, y1 - y0, facecolor=fc, edgecolor=ec, lw=lw,
+                           zorder=z, **kw))
+
+
+fig, (ax, bx) = plt.subplots(1, 2, figsize=(11.8, 5.9),
+                             gridspec_kw=dict(width_ratios=[1.2, 1.0]))
+
+# ---- (a) the wall of the 1D heat appendix, its exterior face cooled by outside air
+KW = dict(ang=150.0, k=0.55)
+T, D, H = 1.3, 3.0, 3.0          # drawn thickness (x), length (y), height (z)
+
+
+def P3(x, y, z):
+    return iso(x, y, z, **KW)
+
+
+def face(pts, fc, ec=INK, lw=1.2, z=2):
+    ax.add_patch(MplPolygon([P3(*q) for q in pts], closed=True, facecolor=fc,
+                            edgecolor=ec, lw=lw, zorder=z))
+
+
+face([(0, 0, 0), (0, D, 0), (0, D, H), (0, 0, H)], "#e9e9e9")             # exterior face
+face([(0, 0, H), (T, 0, H), (T, D, H), (0, D, H)], "#f4f4f4")             # top
+face([(0, 0, 0), (T, 0, 0), (T, 0, H), (0, 0, H)], "#fbfbfb", z=3)        # front cut
+xs, zs = rng.uniform(0.08, T - 0.08, 45), rng.uniform(0.15, H - 0.15, 45)
+ax.plot(xs, zs, "+", color=LOADCLR, ms=5, mew=1.2, zorder=4)
+
+# heat leaving the exterior face by convection
+for yy, zz in ((0.5, 0.55), (1.3, 1.25), (2.1, 1.95), (2.7, 2.75)):
+    x0, y0 = P3(0, yy, zz)
+    arrow(ax, (x0 - 0.05, y0), (x0 - 1.05, y0), color=ROBCLR, lw=1.8, ms=12)
+ax.text(-2.3, -0.2, "heat leaving by convection:\n$h_c\\,(u - u_\\infty)$", ha="center",
+        va="top", fontsize=10.5, color=ROBCLR)
+# the outside air moving past the face
+for xa in (-3.05, -3.55):
+    zz = np.linspace(0.2, 3.7, 200)
+    ax.plot(xa + 0.07 * np.sin(5.0 * zz), zz, color=ROBCLR, lw=1.2, alpha=0.8, zorder=2)
+    arrow(ax, (xa + 0.07 * np.sin(5.0 * 3.6), 3.6), (xa + 0.07 * np.sin(5.0 * 3.85), 3.85),
+          color=ROBCLR, lw=1.2, ms=10)
+ax.text(-3.3, 4.05, "outside air\nat $u_\\infty$", ha="center", va="bottom", fontsize=10.5,
+        color=ROBCLR)
+# the sun, still absorbed at the exterior face
+sun = (-1.0, 5.15)
+ax.add_patch(plt.Circle(sun, 0.3, color="#f5b301", zorder=5))
+for a in np.linspace(0, 2 * math.pi, 12, endpoint=False):
+    ax.plot([sun[0] + 0.38 * math.cos(a), sun[0] + 0.56 * math.cos(a)],
+            [sun[1] + 0.38 * math.sin(a), sun[1] + 0.56 * math.sin(a)],
+            color="#f5b301", lw=1.4, zorder=5)
+for yy, zz in ((1.2, 2.2), (2.2, 2.5)):
+    tx, ty = P3(0, yy, zz)
+    arrow(ax, (sun[0] + 0.15, sun[1] - 0.6), (tx + 0.05, ty), color=HOTCLR, lw=1.3, ms=10)
+ax.text(sun[0] + 0.75, sun[1] + 0.15, "absorbed sunlight $q_s$", ha="left", va="center",
+        fontsize=10.5, color=HOTCLR)
+ax.text(T + 0.3, 0.45, "interior face\nheld at $g$", ha="left", va="bottom", fontsize=10.5,
+        color=BDRYCLR)
+arrow(ax, P3(0, 0, 0), (T + 0.9, 0.0), color=INK, lw=1.3, ms=11)
+ax.text(T + 0.95, 0.0, "$x$", ha="left", va="center", fontsize=13)
+dim_x(ax, 0.0, T, -0.35, "$L$", fs=11)
+ax.text(-1.0, -1.45, "exterior face ($x = 0$, $n = -1$):\n"
+        "$h_c\\,u - \\kappa\\,u_{,x} = h_c\\,u_\\infty + q_s$", ha="center", va="top",
+        fontsize=11, color=ROBCLR)
+ax.set_title("(a) A wall exchanging heat with the outside air", fontsize=12)
+tidy(ax)
+ax.set_xlim(-4.4, T + 2.3)
+ax.set_ylim(-2.75, 5.85)
+
+# ---- (b) the pile of the rod appendix, its toe resting on soft rock
+top, toe = 0.35, -5.0
+rtop = toe - 1.2                    # top of the rock layer
+box(bx, -2.4, 2.4, rtop, 0.0, SOIL, ec="none", z=0)
+box(bx, -2.4, 2.4, rtop - 1.0, rtop, ROCK, ec="none", z=0, hatch="xx")
+bx.plot([-2.4, 2.4], [0, 0], color="#8a6d3b", lw=1.6, zorder=1)
+bx.text(2.3, 0.08, "ground", fontsize=9.5, color="#8a6d3b", va="bottom", ha="right")
+box(bx, -0.3, 0.3, toe, top, "#d9d9d9", lw=1.5, z=3)
+arrow(bx, (0, top + 1.5), (0, top), color=LOADCLR, lw=2.6, ms=17)
+bx.text(0.15, top + 0.95, "column load $P$", ha="left", va="center", fontsize=10.5,
+        color=LOADCLR)
+for yv in np.linspace(toe + 0.6, -0.6, 5):
+    for xv in (-0.52, 0.52):
+        arrow(bx, (xv, yv - 0.28), (xv, yv + 0.28), color=REACTCLR, lw=1.3, ms=9)
+bx.text(0.75, -2.0, "skin\nfriction", ha="left", va="center", fontsize=10.5, color=REACTCLR)
+# the soft rock under the toe, modeled as a spring
+spring(bx, (0, toe), (0, rtop + 0.08), n=5, amp=0.22)
+bx.plot([-0.4, 0.4], [rtop + 0.08, rtop + 0.08], color=INK, lw=2.2, zorder=4)
+bx.text(0.5, (toe + rtop) / 2, "soft rock, modeled as a\nspring of stiffness $k_s$",
+        ha="left", va="center", fontsize=10.5, color=ROBCLR)
+bx.text(-2.3, rtop - 0.5, "rock", fontsize=10, color="#5a544a", va="center",
+        bbox=dict(fc=ROCK, ec="none", pad=1.0))
+# x runs down the pile
+arrow(bx, (-1.6, top), (-1.6, toe - 0.5), color=INK, lw=1.2, ms=11)
+bx.text(-1.72, top, "$x = 0$", ha="right", va="center", fontsize=10.5)
+bx.text(-1.72, toe, "$x = L$", ha="right", va="center", fontsize=10.5)
+bx.text(-1.5, toe - 0.5, "$x$", ha="left", va="top", fontsize=13)
+bx.text(0.0, rtop - 1.25, "toe ($x = L$, $n = +1$):\n$k_s\\,u + EA\\,u_{,x} = 0$",
+        ha="center", va="top", fontsize=11, color=ROBCLR)
+bx.set_title("(b) A pile resting on soft rock", fontsize=12)
+tidy(bx)
+bx.set_xlim(-3.0, 3.3)
+bx.set_ylim(rtop - 2.55, top + 2.0)
+fig.tight_layout(w_pad=2.5)
+fig_sources_path = save(fig, "C22_Fig0_Sources.png")
+```
+
+![Two settings that lead to a Robin condition, drawn as in the appendices. (a) The concrete wall of the [1D heat appendix](Poisson1D_Heat.qmd), with its exterior face now exchanging heat with the outside air by convection, in addition to absorbing sunlight. The heat leaving the face depends on the temperature of the face, so neither the temperature nor the flux there is known in advance. This is the problem solved later in this class. (b) The pile of the [rod appendix](Poisson1D_Rod.qmd), with its toe now resting on soft rock that is modeled as a spring. The rock pushes back on the toe in proportion to how far the toe moves, so neither the displacement nor the force at the toe is known in advance.](`{python} fig_sources_path`){#fig-c22-sources width=100%}
+
+| physical setting | flux leaving, $-\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}$ | $\hat{a}$ | $\hat{c}$ |
+|:-------------------------------------------------|:------------------------:|:--------:|:-----------:|
+| convection to a fluid at temperature $u_\infty$ | $h_c\,(u - u_\infty)$ | $h_c$ | $h_c\,u_\infty$ |
+| conduction through a thin layer of thickness $t$ and conductivity $\kappa_t$ to a body at temperature $u_b$ | $\dfrac{\kappa_t}{t}\,(u - u_b)$ | $\dfrac{\kappa_t}{t}$ | $\dfrac{\kappa_t}{t}\,u_b$ |
+| the end of a rod on a spring of stiffness $k_s$, whose other end is at $u_s$ | $k_s\,(u - u_s)$ | $k_s$ | $k_s\,u_s$ |
+| mass transfer to a fluid at concentration $u_\infty$, with coefficient $k_m$ | $k_m\,(u - u_\infty)$ | $k_m$ | $k_m\,u_\infty$ |
+
+: Physical settings that lead to a Robin condition $\hat{a}\,u + \left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = \hat{c}$. In each case, the flux leaving the domain is proportional to the difference between the solution and a reference value. For the rod, $\underline{\underline{\kappa}}$ is replaced by the axial stiffness $EA$, and the flux is the axial force that the end of the rod transmits to the spring. {#tbl-c22-sources}
+
+The most common case in heat transfer is **convection**, in which a surface exchanges heat with a surrounding fluid such as air or water.
 Newton's law of cooling states that the heat flux leaving the surface is proportional to the difference between the temperature of the surface and the temperature of the fluid away from the surface, $u_\infty$:
 
 $$
@@ -102,12 +257,13 @@ If the surface also absorbs a known heat flux $q_s$, such as from sunlight, it i
 Typical convection coefficients are 2 to 25 W/(m²·K) for air moving by natural convection (driven only by buoyancy), 25 to 250 W/(m²·K) for air moved by a fan or by wind, and roughly 50 to 20,000 W/(m²·K) for liquids, depending on how they flow.
 The back face of the brick in Project 2 uses $h_c = 9.06$ W/(m²·K), which is typical of still air.
 
-Robin conditions also arise outside of heat transfer.
-In the [rod appendix](Poisson1D_Rod.qmd), the end of a pile resting on a spring of stiffness $k_s$ has the condition $h = -k_s\,u$, which is a Robin condition with $\hat{a} = k_s$ and $\hat{c} = 0$.
-A thin layer of a different material, such as the thermal interface material under the battery cell in the [2D heat appendix](Poisson2D_Heat.qmd), behaves similarly, since the heat crossing the layer is proportional to the temperature drop across it.
-In contaminant transport, the rate at which a substance crosses a surface is often modeled as proportional to the difference in concentration across that surface, which has the same form.
+The other cases in @tbl-c22-sources have the same form, but do not involve a surrounding fluid.
+In the [rod appendix](Poisson1D_Rod.qmd), the end of a pile resting on rock that is modeled as a spring of stiffness $k_s$ has the condition $h = -k_s\,u$, since the spring pushes back on the pile in proportion to how far its end moves.
+This is a Robin condition with $\hat{a} = k_s$ and $\hat{c} = 0$, and the connection to the surroundings is elastic rather than thermal.
+A thin layer of a different solid material, such as the thermal interface material under the battery cell in the [2D heat appendix](Poisson2D_Heat.qmd), gives a Robin condition by conduction alone, since the heat crossing the layer is proportional to the temperature drop across it.
+In contaminant transport, the rate at which a substance crosses a surface is often modeled as proportional to the difference in concentration across that surface, which again has the same form.
 
-### Robin conditions contain the other two
+### Robin conditions interpolate Dirichlet and Neumann
 
 The Robin condition can be viewed as lying between the Neumann and Dirichlet conditions.
 If $\hat{a} = 0$, it is a Neumann condition with $h = \hat{c}$.
@@ -119,17 +275,19 @@ $$
 
 and let $\hat{a}$ become very large while $\hat{c}/\hat{a}$ is held fixed, the flux term vanishes, and the condition becomes a Dirichlet condition with $g = \hat{c}/\hat{a}$.
 For convection, $\hat{c}/\hat{a} = u_\infty$, so a very large convection coefficient holds the surface at the temperature of the fluid.
+Similarly, a very stiff spring holds the end of a rod at the position of the spring's other end, in the same way as a fixed support.
 
-Whether a particular convection coefficient should be considered large or small depends on the body to which it is applied.
-For a body of thickness $L$, the **Biot number**
+Whether a particular value of $\hat{a}$ should be considered large or small depends on the body to which it is applied, since the strength of the connection to the surroundings must be compared with the ability of the body itself to conduct.
+For convection from a body of thickness $L$, this comparison is the **Biot number**
 
 $$
 \mathrm{Bi} = \frac{h_c\,L}{\kappa}
 $$
 
-compares the resistance to conduction through the body, $L/\kappa$, with the resistance to heat transfer across its surface, $1/h_c$.
-When $\mathrm{Bi}$ is much greater than 1, the solution is close to that of a Dirichlet condition, and when $\mathrm{Bi}$ is much less than 1, it is close to that of a Neumann condition.
-The example later in this class shows this directly.
+which compares the resistance to conduction through the body, $L/\kappa$, with the resistance to heat transfer across its surface, $1/h_c$.
+For a rod of length $L$ and axial stiffness $EA$ resting on a spring, the corresponding ratio is $k_s L/(EA)$, which compares the stiffness of the spring with the axial stiffness of the rod.
+In either case, when the ratio is much greater than 1, the solution is close to that of a Dirichlet condition, and when it is much less than 1, the solution is close to that of a Neumann condition.
+The example later in this class shows this directly for convection.
 
 ## The strong form
 
@@ -152,7 +310,7 @@ $$
 ```{python fig_domain}
 #| echo: false
 #| output: false
-fig, ax = plt.subplots(figsize=(6.6, 5.4))
+fig, ax = plt.subplots(figsize=(7.2, 5.4))
 t = np.linspace(0, 2 * math.pi, 600)
 r = 2.3 + 0.28 * np.sin(3 * t) + 0.16 * np.cos(5 * t)
 X, Y = r * np.cos(t), r * np.sin(t)
@@ -173,37 +331,50 @@ ax.text(-0.15, 2.95, r"$\Gamma_h$: flux $h$ prescribed", ha="center", va="bottom
         fontsize=12.5, color=FLUXCLR)
 ax.text(-2.75, 0.3, r"$\Gamma_g$: value $g$" + "\nprescribed", ha="right", va="center",
         fontsize=12.5, color=BDRYCLR)
-ax.text(1.75, -2.95, r"$\Gamma_r$: $\hat{a}\,u + (\kappa\nabla u)\cdot n = \hat{c}$",
+ax.text(-2.05, -2.75, r"$\Gamma_r$: $\hat{a}\,u + (\kappa\nabla u)\cdot n = \hat{c}$",
         ha="center", va="top", fontsize=12.5, color=ROBCLR)
 
-# the surrounding fluid along Gamma_r, drawn as a few short wavy lines
-for k, tt in enumerate(np.linspace(1.74 * math.pi, 1.90 * math.pi, 3)):
-    j = np.argmin(np.abs(t - tt))
-    nx, ny = math.cos(t[j]), math.sin(t[j])
-    tx, ty = -ny, nx
-    s = np.linspace(-0.32, 0.32, 40)
-    off = 0.55
-    xs = X[j] + off * nx + s * tx + 0.06 * np.sin(14 * s) * nx
-    ys = Y[j] + off * ny + s * ty + 0.06 * np.sin(14 * s) * ny
-    ax.plot(xs, ys, color=ROBCLR, lw=1.1, alpha=0.75, zorder=2)
-ax.text(2.95, -1.45, "surrounding\nfluid at $u_\\infty$", ha="left", va="center",
-        fontsize=11, color=ROBCLR)
+# Gamma_r is connected to its surroundings, drawn generically as springs to a hatched support
+ia, ib = np.argmin(np.abs(t - 1.62 * math.pi)), np.argmin(np.abs(t - 1.90 * math.pi))
+chord = np.array([X[ib] - X[ia], Y[ib] - Y[ia]])
+ug = chord / np.linalg.norm(chord)                 # direction along the support
+ng = np.array([ug[1], -ug[0]])                     # from the boundary toward the support
+mid = np.array([(X[ia] + X[ib]) / 2, (Y[ia] + Y[ib]) / 2])
+G0 = mid + 1.15 * ng
+ends = np.array([G0 - 1.55 * ug, G0 + 1.2 * ug])
+ax.plot(ends[:, 0], ends[:, 1], color=ROBCLR, lw=2.0, zorder=2, solid_capstyle="butt")
+for sh in np.linspace(-1.45, 1.1, 14):            # hatching beyond the support
+    q = G0 + sh * ug
+    ax.plot([q[0], q[0] + 0.17 * ng[0] + 0.12 * ug[0]], [q[1], q[1] + 0.17 * ng[1] + 0.12 * ug[1]],
+            color=ROBCLR, lw=1.0, zorder=2)
+for tt in np.linspace(1.66 * math.pi, 1.87 * math.pi, 4):
+    k = np.argmin(np.abs(t - tt))
+    P = np.array([X[k], Y[k]])
+    Ls = (G0 - P) @ ng                             # distance from the boundary to the support
+    sv = np.linspace(0, Ls, 300)
+    a, b = 0.2 * Ls, 0.8 * Ls
+    ph = np.clip((sv - a) / (b - a), 0, 1) * 5     # five full zigzags between the leads
+    zig = np.where((sv > a) & (sv < b), 0.10 * (4 * np.abs(ph % 1.0 - 0.5) - 1), 0.0)
+    ax.plot(P[0] + sv * ng[0] + zig * ug[0], P[1] + sv * ng[1] + zig * ug[1],
+            color=ROBCLR, lw=1.2, zorder=2)
+ax.text(3.45, -1.9, "connection to the\nsurroundings:\na fluid, a spring,\na thin layer, ...",
+        ha="left", va="center", fontsize=10.5, color=ROBCLR)
 
 # outward normal on Gamma_r
-j = np.argmin(np.abs(t - 1.40 * math.pi))
+j = np.argmin(np.abs(t - 1.50 * math.pi))
 nx, ny = math.cos(t[j]), math.sin(t[j])
 ax.annotate("", xy=(X[j] + 0.95 * nx, Y[j] + 0.95 * ny), xytext=(X[j], Y[j]),
             arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.5, mutation_scale=13), zorder=6)
-ax.text(X[j] + 1.05 * nx - 0.12, Y[j] + 1.05 * ny + 0.05, r"$\underline{n}$",
-        ha="right", va="center", fontsize=13, color=INK)
+ax.text(X[j] + 1.05 * nx + 0.12, Y[j] + 1.05 * ny + 0.05, r"$\underline{n}$",
+        ha="left", va="center", fontsize=13, color=INK)
 
 tidy(ax)
-ax.set_xlim(-4.6, 4.4)
-ax.set_ylim(-3.6, 3.5)
+ax.set_xlim(-4.6, 5.6)
+ax.set_ylim(-3.75, 3.5)
 fig_domain_path = save(fig, "C22_Fig1_Domain.png")
 ```
 
-![A domain whose boundary is divided into a Dirichlet part $\Gamma_g$, a Neumann part $\Gamma_h$, and a Robin part $\Gamma_r$. Every point of the boundary belongs to exactly one of the three parts. On $\Gamma_r$, the boundary exchanges heat with a surrounding fluid, so neither the temperature nor the flux is known in advance.](`{python} fig_domain_path`){#fig-c22-domain width=66%}
+![A domain whose boundary is divided into a Dirichlet part $\Gamma_g$, a Neumann part $\Gamma_h$, and a Robin part $\Gamma_r$. Every point of the boundary belongs to exactly one of the three parts. On $\Gamma_r$, the boundary is connected to its surroundings, drawn here generically as springs to a support, so that the flux through the boundary depends on the value of $u$ there, and neither is known in advance. Depending on the problem, the connection may be a surrounding fluid, a spring support, a thin layer of another material, or another mechanism of this kind (@tbl-c22-sources).](`{python} fig_domain_path`){#fig-c22-domain width=66%}
 
 ## The weak form
 
@@ -323,7 +494,7 @@ A Robin boundary condition therefore changes both the stiffness matrix and the f
 - The Dirichlet term in $F_A$ gains a Robin integral as well.
   This is nonzero only where a node on $\Gamma_g$ also lies on a Robin face, which occurs at the points (or edges) where $\Gamma_g$ and $\Gamma_r$ meet.
 
-Since $\hat{a}\ge 0$ for physical problems such as convection, the Robin term adds nonnegative contributions to the stiffness matrix.
+Since $\hat{a}\ge 0$ in physical problems, such as convection ($\hat{a} = h_c$) and spring supports ($\hat{a} = k_s$), the Robin term adds nonnegative contributions to the stiffness matrix.
 [Class 23](23_Class.qmd) shows that these contributions can make the stiffness matrix invertible even when there is no Dirichlet boundary at all.
 
 ## Example: a wall exposed to outside air
@@ -636,9 +807,9 @@ Several practical points follow from these formulas.
 ## Summary
 
 - A **Robin boundary condition**, $\hat{a}\,u + \left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = \hat{c}$ on $\Gamma_r$, relates the value of the solution to its flux.
-  For convection, $\hat{a} = h_c$ and $\hat{c} = h_c\,u_\infty$, plus any absorbed flux.
+  It describes a boundary that is connected to its surroundings, such as a surface cooled by a fluid ($\hat{a} = h_c$, $\hat{c} = h_c\,u_\infty$), a thin layer of another material, or the end of a rod resting on a spring ($\hat{a} = k_s$).
 - The Robin condition becomes a Neumann condition when $\hat{a} = 0$, and approaches a Dirichlet condition with $g = \hat{c}/\hat{a}$ as $\hat{a}$ becomes large.
-  The Biot number indicates which of these a particular convection coefficient is closer to.
+  The Biot number for convection, or $k_s L/(EA)$ for a spring support, indicates which of these a particular coefficient is closer to.
 - A Robin condition is a **natural** boundary condition: it does not change $\mathcal{S}$ or $\mathcal{V}$, and the nodes on $\Gamma_r$ carry unknowns.
 - It adds $(N_A,\hat{a}\,N_B)_{\Gamma_r}$ to the stiffness matrix and $(N_A,\hat{c})_{\Gamma_r}$ to the force vector, together with a Dirichlet term where $\Gamma_r$ meets $\Gamma_g$.
 - These integrals are computed with the face quadrature of Class 20, and each Robin face contributes to a $(p+1)\times(p+1)$ block of the element stiffness matrix.

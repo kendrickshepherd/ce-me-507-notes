@@ -1,0 +1,660 @@
+---
+title: "Class 23: Minimization, Symmetry, and Positive Definiteness"
+subtitle: "Why the problems we have been solving have exactly one solution, and when they do not"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+format:
+  html:
+    page-layout: full
+    toc: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+import os, sys, math
+sys.path.append('.')
+import numpy as np
+import matplotlib.pyplot as plt
+from notes_style import use_chapter, save, INK, BASISCLRS
+IMGDIR = use_chapter("Class23")
+
+
+def plot_axes(ax, xlabel, ylabel):
+    """Plain plotting axes, matching the rest of the notes."""
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+    for s in ("left", "bottom"):
+        ax.spines[s].set_color("0.35")
+    ax.tick_params(colors="0.25", labelsize=10)
+    ax.grid(True, color="0.90", lw=0.8)
+    ax.set_axisbelow(True)
+    ax.set_xlabel(xlabel, fontsize=11.5, color=INK)
+    ax.set_ylabel(ylabel, fontsize=11.5, color=INK)
+```
+
+To this point, we have assumed that the problems we are working on can actually be solved, and that each has exactly one solution.
+In this class, we will show why this is true, and identify when it is not.
+
+We will approach this question in two ways.
+First, we will show that the weak form is equivalent to a third statement of the problem, in which the solution is the function that minimizes an energy.
+This viewpoint explains why the solution is unique, and it is the minimization that [Class 18](18_Class.qmd) indicated would return here.
+Second, we will show that the stiffness matrix is symmetric and positive definite, which guarantees that the matrix equations of the finite element method have exactly one solution.
+
+## Notation
+
+Throughout this class, we include the Robin terms of [Class 22](22_Class.qmd).
+To keep the expressions compact, the left side of the weak form will be combined into a single bilinear form, and the right side into a single linear form.
+
+$$
+B(w,u) := a(w,u) + (w,\hat{a}\,u)_{\Gamma_r}
+= \int_\Omega \nabla w\cdot\underline{\underline{\kappa}}\nabla u\;d\Omega + \int_{\Gamma_r} w\,\hat{a}\,u\;d\Gamma ,
+$$
+
+$$
+L(w) := (w,f) + (w,h)_{\Gamma_h} + (w,\hat{c})_{\Gamma_r}
+= \int_\Omega w\,f\;d\Omega + \int_{\Gamma_h} w\,h\;d\Gamma + \int_{\Gamma_r} w\,\hat{c}\;d\Gamma .
+$$
+
+When there is no Robin boundary, $B(w,u) = a(w,u)$, which is the form used in Class 18.
+The weak form of Class 22 is then
+
+$$
+(\mathrm{W})\qquad
+\text{find } u\in\mathcal{S} \text{ such that } B(w,u) = L(w) \text{ for all } w\in\mathcal{V} .
+$$
+
+Three properties of $B$ will be used repeatedly.
+
+- **$B$ is bilinear**, meaning that it is linear in each of its two arguments, so that, for example, $B(w, u_1 + \alpha\,u_2) = B(w,u_1) + \alpha\,B(w,u_2)$ for any number $\alpha$.
+  Similarly, $L$ is linear.
+- **$B$ is symmetric**, $B(w,u) = B(u,w)$, whenever the conductivity is symmetric.
+  In index notation, $w_{,i}\,\kappa_{ij}\,u_{,j} = u_{,j}\,\kappa_{ij}\,w_{,i} = u_{,j}\,\kappa_{ji}\,w_{,i}$, where the last step uses $\kappa_{ij} = \kappa_{ji}$, and the Robin term is unchanged when $w$ and $u$ are exchanged.
+- **$B(w,w)\ge 0$** whenever the conductivity is positive definite and $\hat{a}\ge 0$, since
+
+$$
+B(w,w) = \int_\Omega \nabla w\cdot\underline{\underline{\kappa}}\nabla w\;d\Omega + \int_{\Gamma_r} \hat{a}\,w^2\;d\Gamma ,
+$$
+
+  and both integrands are nonnegative.
+
+Each of these assumptions has a physical meaning.
+The conductivity is symmetric and positive definite, so that heat never flows toward higher temperatures (see the [2D heat appendix](Poisson2D_Heat.qmd)).
+The Robin coefficient is also nonnegative in physical problems.
+For convection, $\hat{a} = h_c\ge 0$, so that heat flows from a warmer surface into a cooler fluid and not the reverse, and for a spring support, $\hat{a} = k_s\ge 0$, so that the spring resists the motion of the end rather than assisting it.
+
+## The minimization form
+
+Define the **total potential energy** of a candidate function $v$ as
+
+$$
+\Pi(v) := \tfrac{1}{2}\,B(v,v) - L(v)
+= \frac{1}{2}\int_\Omega \nabla v\cdot\underline{\underline{\kappa}}\nabla v\;d\Omega
++ \frac{1}{2}\int_{\Gamma_r} \hat{a}\,v^2\;d\Gamma
+- \int_\Omega v\,f\;d\Omega - \int_{\Gamma_h} v\,h\;d\Gamma - \int_{\Gamma_r} v\,\hat{c}\;d\Gamma .
+$$
+
+$\Pi$ is a **functional**: it takes an entire function $v$ as its input, and returns a single number.
+The minimization form of the problem is
+
+$$
+(\mathrm{M})\qquad
+\text{find } u\in\mathcal{S} \text{ such that } \Pi(u)\le\Pi(v) \text{ for every } v\in\mathcal{S} .
+$$
+
+The name comes from mechanics.
+For the pile of the [rod appendix](Poisson1D_Rod.qmd), which has no Robin boundary,
+
+$$
+\Pi(v) = \frac{1}{2}\int_0^L EA\,\left(v_{,x}\right)^2 dx - \int_0^L v\,f\;dx - v(0)\,h .
+$$
+
+The first term is the strain energy stored in the pile when it is displaced by $v$, and the remaining terms are the work done by the distributed load and by the load at the head of the pile.
+The principle of minimum potential energy states that, of all of the displacements that satisfy the support conditions, the one that actually occurs minimizes this total.
+For heat conduction, $\Pi$ is not a physical energy, but it has the same mathematical structure, and it is still common to refer to it as an energy.
+Its first term is the square of the energy norm of Class 18, $\|v\|_E^2 = B(v,v)$, and it measures how much $v$ varies across the domain, weighted by the conductivity.
+
+## The weak form and the minimization form are equivalent
+
+We now show that, under the assumptions above, a function solves (W) if and only if it solves (M).
+
+### From the weak form to the minimization form
+
+Suppose that $u$ solves (W), and let $v\in\mathcal{S}$ be any other candidate.
+Write the difference between them as $w = v - u$.
+Since $u$ and $v$ both equal $g$ on $\Gamma_g$, their difference is zero on $\Gamma_g$, and therefore $w\in\mathcal{V}$.
+Expanding the energy of $v = u + w$ using the bilinearity of $B$ gives
+
+$$
+\begin{aligned}
+\Pi(u + w)
+&= \tfrac{1}{2}B(u,u) + \tfrac{1}{2}B(u,w) + \tfrac{1}{2}B(w,u) + \tfrac{1}{2}B(w,w) - L(u) - L(w) \\[2pt]
+&= \underbrace{\left[\tfrac{1}{2}B(u,u) - L(u)\right]}_{\Pi(u)}
++ \underbrace{\left[B(w,u) - L(w)\right]}_{0 \text{ by (W), since } w\in\mathcal{V}}
++ \tfrac{1}{2}B(w,w) ,
+\end{aligned}
+$$
+
+where the second line uses the symmetry of $B$ to combine $\tfrac{1}{2}B(u,w) + \tfrac{1}{2}B(w,u) = B(w,u)$.
+Therefore, for every $v\in\mathcal{S}$,
+
+$$
+\boxed{\;\Pi(v) = \Pi(u) + \tfrac{1}{2}\,B(v - u,\, v - u)\;}
+$$
+
+Since $B(w,w)\ge 0$, it follows that $\Pi(v)\ge\Pi(u)$, and $u$ minimizes the energy.
+
+### From the minimization form to the weak form
+
+Suppose instead that $u$ minimizes $\Pi$ over $\mathcal{S}$.
+Choose any $w\in\mathcal{V}$ and any number $\varepsilon$.
+Then $u + \varepsilon w\in\mathcal{S}$, since adding a function that is zero on $\Gamma_g$ does not change the values on $\Gamma_g$.
+Define the ordinary function of one variable
+
+$$
+\varphi(\varepsilon) := \Pi(u + \varepsilon w)
+= \Pi(u) + \varepsilon\left[B(w,u) - L(w)\right] + \tfrac{1}{2}\,\varepsilon^2\,B(w,w) ,
+$$
+
+which follows from the same expansion as above, with $\varepsilon w$ in place of $w$.
+Since $u$ minimizes $\Pi$, the function $\varphi$ has its minimum at $\varepsilon = 0$, and therefore $\varphi'(0) = 0$ (where the derivative is taken with respect to $\varepsilon$).
+
+$$
+\varphi'(0) = B(w,u) - L(w) = 0 .
+$$
+
+Since $w\in\mathcal{V}$ was arbitrary, this is the weak form (W).
+
+The weak form therefore states that the derivative of the energy at the solution is zero in every admissible direction $w$.
+The test functions are the directions in which the solution can be changed without violating the Dirichlet condition.
+This is the reason that the weak form is also called the **variational form**: the calculation above is the basic step of the calculus of variations, and $B(w,u) - L(w)$ is called the first variation of $\Pi$ in the direction $w$.
+In mechanics, $w$ is a virtual displacement, and the weak form is the principle of virtual work, which will return in the classes on elasticity.
+
+```{python fig_energy}
+#| echo: false
+#| output: false
+# the wall of Class 22, with its outer face exchanging heat with air (h_c = 10)
+L, kappa, f0, qs, g0, u_inf, hc = 0.30, 1.4, 500.0, 50.0, 20.0, 0.0, 10.0
+chat = hc * u_inf + qs
+g_eff = g0 + f0 * L**2 / (2 * kappa)
+A = (hc * (g_eff - u_inf) - qs) / (hc * L + kappa)
+x = np.linspace(0.0, L, 4001)
+u = -f0 * x**2 / (2 * kappa) + A * x + (g_eff - A * L)
+du = -f0 * x / kappa + A
+
+dirs = [
+    (r"$w_1 = 1 - x/L$", 1 - x / L, -np.ones_like(x) / L),
+    (r"$w_2 = \sin(\pi x/L)$", np.sin(np.pi * x / L), np.pi / L * np.cos(np.pi * x / L)),
+    (r"$w_3 = \sin(2\pi x/L)$", np.sin(2 * np.pi * x / L), 2 * np.pi / L * np.cos(2 * np.pi * x / L)),
+]
+
+
+def energy(v, dv):
+    return (0.5 * np.trapezoid(kappa * dv**2, x) + 0.5 * hc * v[0]**2
+            - np.trapezoid(f0 * v, x) - chat * v[0])
+
+
+Pi_u = energy(u, du)
+eps = np.linspace(-10, 10, 201)
+fig, (axL, axR) = plt.subplots(1, 2, figsize=(11.0, 4.3))
+axL.plot(x, u, color=INK, lw=2.4, label="$u$, the solution", zorder=5)
+slopes, curv = [], []
+for (lab, w, dw), c in zip(dirs, BASISCLRS):
+    for e in (-8.0, 8.0):
+        axL.plot(x, u + e * w, color=c, lw=1.2, alpha=0.8)
+    dPi = np.array([energy(u + e * w, du + e * dw) - Pi_u for e in eps])
+    axR.plot(eps, dPi, color=c, lw=2.0, label=lab)
+    slopes.append((energy(u + 1e-3 * w, du + 1e-3 * dw) - energy(u - 1e-3 * w, du - 1e-3 * dw)) / 2e-3)
+    curv.append(np.trapezoid(kappa * dw**2, x) + hc * w[0]**2)
+axL.plot([], [], color="0.4", lw=1.2, label=r"$u \pm 8\,w_i$")
+axL.set_xlim(0, L)
+axL.set_ylim(5, 36)
+plot_axes(axL, "$x$ (m)", "temperature (°C)")
+axL.legend(frameon=False, fontsize=10, loc="upper left", ncol=2)
+axL.set_title("(a) The solution and six other candidates", fontsize=12, color=INK)
+axR.axvline(0, color="0.6", lw=0.9, ls="--")
+axR.set_xlim(-10, 10)
+axR.set_ylim(bottom=0)
+plot_axes(axR, r"$\varepsilon$ (°C)", r"$\Pi(u + \varepsilon w) - \Pi(u)$  (W·K/m²)")
+axR.legend(frameon=True, facecolor="white", edgecolor="none", framealpha=1, fontsize=10.5, loc="upper center")
+axR.set_title("(b) The energy along each direction", fontsize=12, color=INK)
+fig.tight_layout(w_pad=3)
+fig_energy_path = save(fig, "C23_Fig1_Energy.png")
+max_slope = max(abs(s) for s in slopes)
+assert max_slope < 1e-4   # the caption says so
+curv_s = [f"{c:.1f}" for c in curv]
+```
+
+@fig-c23-energy shows this for the wall of Class 22, with its outer face exchanging heat with air at $h_c$ = 10 W/(m²·K).
+Three directions $w_1$, $w_2$, and $w_3$ are chosen, each of which is zero at the interior face, where the temperature is prescribed.
+Moving away from the solution in any of these directions increases the energy, and each curve has zero slope at $\varepsilon = 0$.
+
+![(a) The solution $u$ of the wall problem of Class 22 with $h_c$ = 10 W/(m²·K), together with six other functions in $\mathcal{S}$, obtained by adding $\pm 8$ °C times each of three functions $w_i\in\mathcal{V}$. Each of these candidates satisfies the Dirichlet condition at $x = L$. (b) The change in energy along each direction, computed directly from the definition of $\Pi$. Each curve is a parabola with its minimum at $\varepsilon = 0$; the slope of each curve at $\varepsilon = 0$, computed numerically, is zero to within the accuracy of the numerical integration (less than 10^-4^ in magnitude), which is the weak form for these three choices of $w$. The curvatures, $B(w_i,w_i)$ = `{python} curv_s[0]`, `{python} curv_s[1]`, and `{python} curv_s[2]`, increase as the direction varies more rapidly across the wall.](`{python} fig_energy_path`){#fig-c23-energy width=100%}
+
+### Uniqueness
+
+The energy viewpoint also shows that the solution is unique.
+Suppose that $u_1$ and $u_2$ both solve (W), and let $e = u_2 - u_1\in\mathcal{V}$.
+Applying the boxed identity twice, once with $u = u_1$ and $v = u_2$, and once with the roles exchanged, gives
+
+$$
+\Pi(u_2) = \Pi(u_1) + \tfrac{1}{2}B(e,e)
+\qquad\text{and}\qquad
+\Pi(u_1) = \Pi(u_2) + \tfrac{1}{2}B(e,e) .
+$$
+
+Adding these two equations gives $B(e,e) = 0$, that is,
+
+$$
+\int_\Omega \nabla e\cdot\underline{\underline{\kappa}}\nabla e\;d\Omega + \int_{\Gamma_r} \hat{a}\,e^2\;d\Gamma = 0 .
+$$
+
+Both integrals are nonnegative, so both must be zero.
+
+- Since $\underline{\underline{\kappa}}$ is positive definite, $\nabla e\cdot\underline{\underline{\kappa}}\nabla e > 0$ wherever $\nabla e\neq\underline{0}$.
+  The first integral can only be zero if $\nabla e = \underline{0}$ throughout $\Omega$, which means that $e$ is a constant (assuming that $\Omega$ is a single connected piece).
+- If $\Gamma_g$ is not empty, then $e = 0$ on $\Gamma_g$, since $e\in\mathcal{V}$, and the constant must be zero.
+- If $\Gamma_g$ is empty, but $\hat{a} > 0$ on some part of $\Gamma_r$, then the second integral can only be zero if $e = 0$ on that part, and again the constant must be zero.
+
+In either case, $e = 0$, and $u_1 = u_2$.
+The solution of the weak form, and therefore of the strong form, is unique provided that
+
+1. the conductivity $\underline{\underline{\kappa}}$ is symmetric and positive definite throughout $\Omega$,
+2. $\hat{a}\ge 0$ on $\Gamma_r$, and
+3. either $\Gamma_g$ is not empty, or $\hat{a} > 0$ on some part of $\Gamma_r$.
+
+Geometrically, $\Pi$ can be pictured as a bowl over the space of candidate functions.
+The weak form states that the bowl is flat at $u$ in every admissible direction, and the three conditions ensure that the bowl curves upward in every direction, so that it has only one bottom.
+
+The arguments above show that if a solution exists, it is unique, and it minimizes the energy.
+Showing that a minimizer exists at all in the infinite-dimensional space $\mathcal{S}$ requires more advanced analysis, in particular the **Lax–Milgram theorem**, which relies on the same three conditions together with properties of the space $H^1$.
+We will take this result as given.
+For the finite element problem, which has finitely many unknowns, existence follows directly from the properties of the stiffness matrix, as shown below.
+
+## The finite element problem is also a minimization
+
+The Galerkin method looks for $u^h$ in the smaller space $\mathcal{S}^h\subset\mathcal{S}$.
+Writing a candidate as $v^h + g^h$, with $v^h = \sum_B d_B N_B$ as in Class 22, and substituting into $\Pi$ gives
+
+$$
+\Pi(v^h + g^h) = \tfrac{1}{2}\,\underline{d}^T\underline{\underline{K}}\,\underline{d} - \underline{d}^T\underline{F} + \text{(terms that do not depend on } \underline{d}\text{)} ,
+$$
+
+where $\underline{\underline{K}}$ and $\underline{F}$ are the stiffness matrix and force vector of Class 22.
+In index notation, the first two terms are $\tfrac{1}{2}d_A K_{AB} d_B - d_A F_A$.
+The energy is now an ordinary function of the vector of unknowns $\underline{d}$, and its minimum is found by setting its gradient to zero.
+Using the symmetry of $\underline{\underline{K}}$,
+
+$$
+\frac{\partial\Pi}{\partial d_A} = K_{AB}\,d_B - F_A = 0
+\qquad\Longleftrightarrow\qquad
+\underline{\underline{K}}\,\underline{d} = \underline{F} ,
+$$
+
+which are the Galerkin equations.
+The matrix of second derivatives of $\Pi$ is $\partial^2\Pi/\partial d_A\partial d_B = K_{AB}$, so the shape of the energy as a function of $\underline{d}$ is determined entirely by $\underline{\underline{K}}$.
+For problems with a symmetric bilinear form, such as this one, the Galerkin method is therefore the same as minimizing the energy over $\mathcal{S}^h$, which is known as the **Rayleigh–Ritz method**.
+
+This also connects the two minimization statements of Class 18.
+Since $\mathcal{S}^h\subset\mathcal{S}$, the boxed identity holds for every $v\in\mathcal{S}^h$, and states that
+
+$$
+\Pi(v) = \Pi(u) + \tfrac{1}{2}\,\left\|v - u\right\|_E^2 .
+$$
+
+Since $\Pi(u)$ is a fixed number, the function in $\mathcal{S}^h$ with the smallest energy is also the function in $\mathcal{S}^h$ that is closest to $u$ in the energy norm.
+The physical statement (the solution minimizes the energy) and the approximation statement (the finite element solution is the best approximation in the energy norm, which is Céa's lemma) are therefore two views of the same result.
+
+## The stiffness matrix is symmetric and positive definite
+
+With the Robin terms included, the entries of the stiffness matrix are $K_{AB} = B(N_A,N_B)$, for $A$ and $B$ not on $\Gamma_g$.
+We now show that $\underline{\underline{K}}$ is symmetric and positive definite.
+
+### Symmetry
+
+In index notation,
+
+$$
+K_{AB} = \int_\Omega N_{A,i}\,\kappa_{ij}\,N_{B,j}\;d\Omega + \int_{\Gamma_r} N_A\,\hat{a}\,N_B\;d\Gamma ,
+\qquad
+K_{BA} = \int_\Omega N_{B,i}\,\kappa_{ij}\,N_{A,j}\;d\Omega + \int_{\Gamma_r} N_B\,\hat{a}\,N_A\;d\Gamma .
+$$
+
+The two Robin integrals are equal.
+Renaming the dummy indices $i\leftrightarrow j$ in the first integral of $K_{BA}$ gives $\int_\Omega N_{B,j}\,\kappa_{ji}\,N_{A,i}\,d\Omega = \int_\Omega N_{A,i}\,\kappa_{ji}\,N_{B,j}\,d\Omega$, which equals the first integral of $K_{AB}$ when $\kappa_{ji} = \kappa_{ij}$.
+The same steps in matrix notation are
+
+$$
+\left(\nabla N_A\right)^T\underline{\underline{\kappa}}\,\nabla N_B
+= \left(\underline{\underline{\kappa}}^T\nabla N_A\right)^T\nabla N_B
+= \left(\underline{\underline{\kappa}}\,\nabla N_A\right)^T\nabla N_B
+= \left(\nabla N_B\right)^T\underline{\underline{\kappa}}\,\nabla N_A ,
+$$
+
+where the second step uses $\underline{\underline{\kappa}}^T = \underline{\underline{\kappa}}$, and the last step uses the fact that the dot product of two vectors does not depend on their order.
+Therefore, $\underline{\underline{K}}$ is symmetric whenever $\underline{\underline{\kappa}}$ is symmetric.
+
+### Positive definiteness
+
+A symmetric matrix $\underline{\underline{K}}$ is **positive definite** if
+
+1. $\underline{c}^T\underline{\underline{K}}\,\underline{c}\ge 0$ for every vector $\underline{c}$, which alone is called positive semidefinite, and
+2. $\underline{c}^T\underline{\underline{K}}\,\underline{c} = 0$ only when $\underline{c} = \underline{0}$.
+
+Equivalently, every eigenvalue of $\underline{\underline{K}}$ is positive.
+To check these properties, take any vector $\underline{c}$ and build the function $w^h = \sum_A c_A N_A\in\mathcal{V}^h$ from it.
+Using summation notation and the bilinearity of $B$,
+
+$$
+\underline{c}^T\underline{\underline{K}}\,\underline{c}
+= c_A\,K_{AB}\,c_B
+= c_A\,B(N_A,N_B)\,c_B
+= B\!\left(c_A N_A,\; c_B N_B\right)
+= B(w^h,w^h)
+= \int_\Omega \nabla w^h\cdot\underline{\underline{\kappa}}\nabla w^h\;d\Omega + \int_{\Gamma_r} \hat{a}\,\left(w^h\right)^2 d\Gamma .
+$$
+
+The question about the matrix has become the same question that was answered for uniqueness.
+
+1. Both integrals are nonnegative when $\underline{\underline{\kappa}}$ is positive definite and $\hat{a}\ge 0$, so $\underline{c}^T\underline{\underline{K}}\,\underline{c}\ge 0$.
+2. If $\underline{c}^T\underline{\underline{K}}\,\underline{c} = 0$, then, by the same argument as before, $\nabla w^h = \underline{0}$, so $w^h$ is a constant.
+   This constant is zero if $\Gamma_g$ is not empty, since every basis function in $\mathcal{V}^h$ is zero on $\Gamma_g$, or if $\hat{a} > 0$ on some part of $\Gamma_r$.
+   Finally, $w^h = 0$ implies $\underline{c} = \underline{0}$, since evaluating $w^h$ at the node of $N_A$ gives $c_A$, because each Lagrange basis function equals one at its own node and zero at all other nodes.
+
+The stiffness matrix is therefore symmetric and positive definite under the same three conditions found for uniqueness.
+Consequently, $\underline{\underline{K}}$ is invertible, and $\underline{\underline{K}}\,\underline{d} = \underline{F}$ has exactly one solution for any force vector.
+In terms of the energy, $\Pi(\underline{d})$ is a bowl with a single lowest point.
+
+## When the conditions fail
+
+### Only Neumann boundaries
+
+If the entire boundary is a Neumann boundary, the third condition fails.
+The basis functions sum to one everywhere, $\sum_A N_A = 1$, so choosing $\underline{c} = \underline{1} = (1, 1, \ldots, 1)$ gives $w^h = 1$, whose gradient is zero.
+Then $\underline{1}^T\underline{\underline{K}}\,\underline{1} = 0$, and in fact $\underline{\underline{K}}\,\underline{1} = \underline{0}$, so $\underline{\underline{K}}$ is singular.
+Physically, when only fluxes are prescribed, adding the same constant to the temperature everywhere changes nothing, since the problem contains no reference temperature.
+This is the same situation as the floating pile in the [rod appendix](Poisson1D_Rod_FEM.qmd), which can translate as a rigid body.
+
+A singular system may have no solution or infinitely many solutions.
+Multiplying $\underline{\underline{K}}\,\underline{d} = \underline{F}$ by $\underline{1}^T$ shows that a solution can exist only if $\underline{1}^T\underline{F} = 0$, and since the basis functions sum to one, this condition is
+
+$$
+\sum_A F_A = \int_\Omega f\;d\Omega + \int_{\Gamma} h\;d\Gamma = 0 .
+$$
+
+This is a statement of steady state: the total heat generated in the body and entering through its boundary must be zero.
+If this holds, there are infinitely many solutions, which differ from each other by a constant, and an additional condition, such as fixing the temperature at one point, is needed to select one of them.
+If it does not hold, there is no steady-state solution at all, since the body continues to heat up or cool down.
+In terms of the energy, $\Pi(\underline{d} + t\,\underline{1}) = \Pi(\underline{d}) - t\,\underline{1}^T\underline{F}$, so the energy decreases without bound along the direction $\underline{1}$.
+
+### Robin coefficients that are small
+
+If there is no Dirichlet boundary and $\hat{a} > 0$ on $\Gamma_r$, the stiffness matrix is positive definite, but its smallest eigenvalue decreases as $\hat{a}$ decreases.
+@tbl-c23-eigs shows this for a one-dimensional bar with $\kappa = 1$, length 1, and eight linear elements.
+
+```{python eig_table}
+#| echo: false
+#| output: false
+def bar_K(ne, dirichlet_left=False, ahat=0.0):
+    he = 1.0 / ne
+    K = np.zeros((ne + 1, ne + 1))
+    for e in range(ne):
+        K[e:e + 2, e:e + 2] += np.array([[1.0, -1.0], [-1.0, 1.0]]) / he
+    K[0, 0] += ahat
+    return K[1:, 1:] if dirichlet_left else K
+
+rows = [bar_K(8, dirichlet_left=True), bar_K(8, ahat=1.0), bar_K(8, ahat=0.1),
+        bar_K(8, ahat=0.01), bar_K(8)]
+eig_rows = []
+for K in rows:
+    ev = np.linalg.eigvalsh(K)
+    lo, hi = ev[0], ev[-1]
+    if abs(lo) < 1e-12:
+        eig_rows.append((None, "0 (to roundoff)", f"{hi:.1f}", "infinite"))
+    else:
+        eig_rows.append((None, f"{lo:.3g}", f"{hi:.1f}", f"{hi / lo:,.0f}"))
+E = eig_rows
+```
+
+| boundary conditions (Neumann at $x = 1$) | smallest eigenvalue | largest eigenvalue | ratio |
+|:-----------------------------------------|--------------------:|-------------------:|------:|
+| Dirichlet at $x = 0$ | `{python} E[0][1]` | `{python} E[0][2]` | `{python} E[0][3]` |
+| Robin at $x = 0$, $\hat{a} = 1$ | `{python} E[1][1]` | `{python} E[1][2]` | `{python} E[1][3]` |
+| Robin at $x = 0$, $\hat{a} = 0.1$ | `{python} E[2][1]` | `{python} E[2][2]` | `{python} E[2][3]` |
+| Robin at $x = 0$, $\hat{a} = 0.01$ | `{python} E[3][1]` | `{python} E[3][2]` | `{python} E[3][3]` |
+| Neumann at both ends | `{python} E[4][1]` | `{python} E[4][2]` | `{python} E[4][3]` |
+
+: The smallest and largest eigenvalues of the stiffness matrix of a bar with eight linear elements, for different conditions at its left end. The ratio of the largest to the smallest eigenvalue is the condition number of the matrix. {#tbl-c23-eigs}
+
+As $\hat{a}$ decreases, the smallest eigenvalue approaches zero, and the ratio of the largest to the smallest eigenvalue, which is called the **condition number**, grows.
+A large condition number means that small changes in $\underline{F}$, including roundoff errors, can produce large changes in $\underline{d}$.
+Physically, a boundary that is only weakly connected to its surroundings requires a large difference from the reference value to pass a given flux, such as a large temperature difference for a surface cooled by convection, or a large displacement for the end of a rod resting on a soft spring.
+
+### Other ways the conditions can fail
+
+- If $\underline{\underline{\kappa}}$ is not positive definite somewhere, for example in a region assigned zero conductivity or given incorrect material data, the stiffness matrix can be singular.
+- If $\Omega$ consists of separate pieces, such as two parts of an assembly that the mesh does not connect, each piece needs its own Dirichlet boundary or Robin boundary with $\hat{a} > 0$.
+- If $\hat{a} < 0$, which does not occur for convection or for spring supports, positive definiteness can be lost.
+- Some problems are not symmetric at all.
+  For example, the transport of a contaminant by a moving fluid adds a term of the form $\int_\Omega w\,\left(\underline{v}\cdot\nabla u\right)d\Omega$ to the weak form, where $\underline{v}$ is the fluid velocity, and this term changes when $w$ and $u$ are exchanged.
+  The stiffness matrix is then not symmetric, and there is no energy whose minimum is the solution.
+  The Galerkin method still applies, and existence and uniqueness can often still be shown using the Lax–Milgram theorem, which does not require symmetry, but the minimization viewpoint of this class is lost.
+
+## Seeing the cases on a small problem
+
+The widget below shows the energy $\Pi(\underline{d}) = \tfrac{1}{2}\,\underline{d}^T\underline{\underline{K}}\,\underline{d} - \underline{d}^T\underline{F}$ for the smallest possible problem: a bar of one linear element, with $\kappa/L = 1$, whose two nodal values are $d_1$ (left end) and $d_2$ (right end).
+Each case uses a different pair of boundary conditions.
+The energy is shaded so that darker regions have lower energy, and the thin curves are curves of constant energy.
+
+```{=html}
+<style>
+.ew{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;--acc:#b8322a;
+    max-width:900px;margin:0 auto;color:var(--ink)}
+.ew .bar{display:flex;flex-wrap:wrap;gap:9px 18px;align-items:center;padding:11px 14px;
+  background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.ew .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey)}
+.ew .seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--faint);border-radius:6px;overflow:hidden;background:#fff}
+.ew .seg button{border:0;background:#fff;padding:5px 11px;font:inherit;font-size:13px;cursor:pointer;
+  color:var(--grey);border-right:1px solid var(--faint)}
+.ew .seg button:last-child{border-right:0}
+.ew .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.ew input[type=range]{width:140px;vertical-align:middle}
+.ew input[type=range]:disabled{opacity:.35}
+.ew .val{font:600 13px ui-monospace,Menlo,monospace;color:var(--ink);display:inline-block;min-width:2.6em}
+.ew .row{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.ew svg{display:block;width:100%;max-width:470px;height:auto;border:1px solid var(--faint);border-radius:8px;background:#fff;flex:1 1 320px}
+.ew .panel{flex:1 1 260px;font-size:13.5px;line-height:1.55;color:var(--ink)}
+.ew .panel .mono{font:12.5px ui-monospace,Menlo,monospace;background:var(--paper);border:1px solid var(--faint);
+  border-radius:6px;padding:8px 10px;margin-bottom:10px;white-space:pre}
+.ew .panel .verdict{font-weight:700;margin-bottom:4px}
+.ew .cap{font-size:13px;color:var(--grey);line-height:1.55;margin:9px 2px 22px}
+</style>
+
+<div class="ew">
+  <div class="bar">
+    <span class="seg" id="e23mode">
+      <button data-m="DN" aria-pressed="true">Dirichlet + Neumann</button>
+      <button data-m="RN" aria-pressed="false">Robin + Neumann</button>
+      <button data-m="NNb" aria-pressed="false">Neumann, balanced</button>
+      <button data-m="NNu" aria-pressed="false">Neumann, unbalanced</button>
+    </span>
+    <b>ROBIN â</b> <input type="range" id="e23a" min="0.2" max="3" step="0.01" value="0.5" disabled>
+    <span class="val" id="e23av">0.50</span>
+  </div>
+  <div class="row">
+    <svg id="e23svg" viewBox="0 0 480 462" role="img"
+         aria-label="The energy of a one-element bar as a function of its two nodal values, for a chosen pair of boundary conditions"></svg>
+    <div class="panel">
+      <div class="mono" id="e23mat"></div>
+      <div class="verdict" id="e23ver"></div>
+      <div id="e23txt"></div>
+    </div>
+  </div>
+  <div class="cap">
+    The left end has the condition named first and the right end the condition named second.
+    Dirichlet: the left end is held at d<sub>1</sub> = 1. Robin: the left end is connected to surroundings at the reference value 1, with coefficient â (for example, by convection to a fluid at temperature 1).
+    Neumann: a flux of 0.5 enters the right end; in the balanced case the same amount leaves through the left end, and in the unbalanced case another 0.5 enters through the left end.
+    The red marks show the solution, or the set of candidates allowed by a Dirichlet condition.
+  </div>
+</div>
+
+<script>
+(function(){
+var INK='#18202b',GREY='#6b7684',FAINT='#dfe4ea',ACC='#b8322a';
+var mode='DN', ahat=0.5;
+var D0=-1, D1=4.5, PX=60, PY=14, PS=400, NC=180, M=90;
+function sx(d){return PX+(d-D0)/(D1-D0)*PS;} function sy(d){return PY+PS-(d-D0)/(D1-D0)*PS;}
+function el(n,at,txt){var e=document.createElementNS('http://www.w3.org/2000/svg',n);
+  for(var k in at) e.setAttribute(k,at[k]); if(txt!==undefined) e.textContent=txt; return e;}
+function T(x,y,s,o){o=o||{}; return el('text',{x:x,y:y,'font-size':o.fs||12,fill:o.f||GREY,
+  'text-anchor':o.a||'start','font-weight':o.w||400,'font-family':'system-ui, sans-serif'},s);}
+function model(){
+  var K=[[1,-1],[-1,1]], F=[0,0.5], dir=null;
+  if(mode==='DN'){ dir=1; }
+  else if(mode==='RN'){ K=[[1+ahat,-1],[-1,1]]; F=[ahat*1,0.5]; }
+  else if(mode==='NNb'){ F=[-0.5,0.5]; }
+  else { F=[0.5,0.5]; }
+  return {K:K,F:F,dir:dir};
+}
+function Pi(m,a,b){var K=m.K,F=m.F;
+  return 0.5*(K[0][0]*a*a+2*K[0][1]*a*b+K[1][1]*b*b)-F[0]*a-F[1]*b;}
+function eig(K){var a=K[0][0],b=K[0][1],c=K[1][1],r=Math.sqrt((a-c)*(a-c)+4*b*b);
+  return [(a+c-r)/2,(a+c+r)/2];}
+function contour(G,lev){ /* marching squares on an (M+1) x (M+1) grid */
+  var d='',i,j,k;
+  for(j=0;j<M;j++) for(i=0;i<M;i++){
+    var v=[G[j*(M+1)+i],G[j*(M+1)+i+1],G[(j+1)*(M+1)+i+1],G[(j+1)*(M+1)+i]];
+    var c=[[i,j],[i+1,j],[i+1,j+1],[i,j+1]], p=[];
+    for(k=0;k<4;k++){ var a=v[k]-lev,b=v[(k+1)%4]-lev;
+      if((a<0)!==(b<0)){ var t=a/(a-b), q=c[(k+1)%4];
+        p.push([c[k][0]+t*(q[0]-c[k][0]), c[k][1]+t*(q[1]-c[k][1])]); } }
+    function seg(P,Q){ var g=function(z){return D0+(D1-D0)*z/M;};
+      d+='M'+sx(g(P[0])).toFixed(1)+' '+sy(g(P[1])).toFixed(1)+'L'+sx(g(Q[0])).toFixed(1)+' '+sy(g(Q[1])).toFixed(1); }
+    if(p.length===2) seg(p[0],p[1]); else if(p.length===4){ seg(p[0],p[1]); seg(p[2],p[3]); }
+  }
+  return d;
+}
+var svg=document.getElementById('e23svg');
+var cv=document.createElement('canvas'); cv.width=cv.height=NC; var ctx=cv.getContext('2d');
+function f2(v){ var s=v.toFixed(2); return s==='-0.00'?'0.00':s; }
+function draw(){
+  var m=model(), i, j;
+  /* the shaded energy */
+  var img=ctx.createImageData(NC,NC), vals=new Float64Array(NC*NC), lo=Infinity, hi=-Infinity;
+  for(j=0;j<NC;j++) for(i=0;i<NC;i++){
+    var v=Pi(m,D0+(i+0.5)/NC*(D1-D0),D1-(j+0.5)/NC*(D1-D0)); vals[j*NC+i]=v;
+    if(v<lo) lo=v; if(v>hi) hi=v; }
+  var C0=[30,58,95], C1=[246,249,252];
+  for(i=0;i<NC*NC;i++){ var s=Math.sqrt((vals[i]-lo)/(hi-lo));
+    img.data[4*i]=C0[0]+(C1[0]-C0[0])*s; img.data[4*i+1]=C0[1]+(C1[1]-C0[1])*s;
+    img.data[4*i+2]=C0[2]+(C1[2]-C0[2])*s; img.data[4*i+3]=255; }
+  ctx.putImageData(img,0,0);
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+  svg.appendChild(el('image',{x:PX,y:PY,width:PS,height:PS,href:cv.toDataURL(),preserveAspectRatio:'none'}));
+  /* curves of constant energy */
+  var G=new Float64Array((M+1)*(M+1));
+  for(j=0;j<=M;j++) for(i=0;i<=M;i++) G[j*(M+1)+i]=Pi(m,D0+(D1-D0)*i/M,D0+(D1-D0)*j/M);
+  var gl=Infinity, gh=-Infinity; for(i=0;i<G.length;i++){ if(G[i]<gl) gl=G[i]; if(G[i]>gh) gh=G[i]; }
+  for(var k=1;k<14;k++){ var lev=gl+(gh-gl)*Math.pow(k/14,2);
+    svg.appendChild(el('path',{d:contour(G,lev),fill:'none',stroke:'#ffffff','stroke-width':0.9,opacity:0.75})); }
+  svg.appendChild(el('rect',{x:PX,y:PY,width:PS,height:PS,fill:'none',stroke:GREY,'stroke-width':1}));
+  for(var t=-1;t<=4;t++){
+    svg.appendChild(T(sx(t),PY+PS+16,String(t),{a:'middle',fs:11}));
+    svg.appendChild(T(PX-8,sy(t)+4,String(t),{a:'end',fs:11}));
+    svg.appendChild(el('line',{x1:sx(t),y1:PY+PS,x2:sx(t),y2:PY+PS+4,stroke:GREY}));
+    svg.appendChild(el('line',{x1:PX-4,y1:sy(t),x2:PX,y2:sy(t),stroke:GREY}));
+  }
+  svg.appendChild(T(PX+PS/2,PY+PS+36,'d₁  (left node)',{a:'middle',fs:12,f:INK}));
+  var yl=T(18,PY+PS/2,'d₂  (right node)',{a:'middle',fs:12,f:INK});
+  yl.setAttribute('transform','rotate(-90 18 '+(PY+PS/2)+')'); svg.appendChild(yl);
+  /* the solution, or the admissible set */
+  var ev=eig(m.K), K=m.K, F=m.F, mat, ver, txt;
+  mat='K = [ '+f2(K[0][0])+'  '+f2(K[0][1])+' ]    F = [ '+f2(F[0])+' ]\n'+
+      '    [ '+f2(K[1][0])+'  '+f2(K[1][1])+' ]        [ '+f2(F[1])+' ]\n\n'+
+      'eigenvalues of K:  '+f2(ev[0])+',  '+f2(ev[1]);
+  function dot(a,b){ svg.appendChild(el('circle',{cx:sx(a),cy:sy(b),r:6,fill:ACC,stroke:'#fff','stroke-width':2})); }
+  function line(a1,b1,a2,b2,w){ svg.appendChild(el('line',{x1:sx(a1),y1:sy(b1),x2:sx(a2),y2:sy(b2),stroke:ACC,'stroke-width':w||2.6})); }
+  if(mode==='DN'){
+    line(1,D0,1,D1,2.2); dot(1,1.5);
+    svg.appendChild(T(sx(1)+8,sy(4.2),'d₁ = 1',{fs:12,f:ACC,w:700}));
+    ver='One solution.';
+    txt='On its own, K is singular (one eigenvalue is zero), and the energy is a tilted trough along the direction (1, 1). '+
+        'The Dirichlet condition allows only the candidates on the red line d₁ = 1, which crosses the trough. '+
+        'Along that line, Π is a parabola with a single minimum, at d₂ = 1.5. '+
+        'This is the reduced system K₂₂ d₂ = F₂ − K₂₁ g that the code solves after the Dirichlet row and column are removed.';
+  } else if(mode==='RN'){
+    var det=K[0][0]*K[1][1]-K[0][1]*K[1][0], a1=(K[1][1]*F[0]-K[0][1]*F[1])/det, a2=(K[0][0]*F[1]-K[1][0]*F[0])/det;
+    dot(a1,a2);
+    ver='One solution, at d = ('+a1.toFixed(2)+', '+a2.toFixed(2)+').';
+    txt='K is positive definite: both eigenvalues are positive, and the energy is a bowl with one lowest point. '+
+        'As â decreases, the smaller eigenvalue approaches zero, the bowl stretches into a trough, and its lowest point moves away. '+
+        'A surface that is weakly connected to its surroundings needs a large temperature difference to remove the heat that enters at the right end.';
+  } else if(mode==='NNb'){
+    line(D0,D0+0.5,D1-0.5,D1);
+    ver='Infinitely many solutions.';
+    txt='K is singular, because adding the same constant to d₁ and d₂ does not change the energy. '+
+        'Since F₁ + F₂ = 0, the heat entering at the right end equals the heat leaving at the left, and every point on the red line d₂ = d₁ + 0.5 is a minimum. '+
+        'The solutions differ only by a constant, and one more condition is needed to choose among them.';
+  } else {
+    var defs=el('defs',{}), mk=el('marker',{id:'e23ah',viewBox:'0 0 10 10',refX:8,refY:5,markerWidth:7,markerHeight:7,orient:'auto'});
+    mk.appendChild(el('path',{d:'M0 0L10 5L0 10z',fill:ACC})); defs.appendChild(mk); svg.appendChild(defs);
+    svg.appendChild(el('line',{x1:sx(0.3),y1:sy(0.3),x2:sx(3.9),y2:sy(3.9),stroke:ACC,'stroke-width':2.6,'marker-end':'url(#e23ah)'}));
+    var lab=T(sx(2.3)+10,sy(2.0),'Π decreases',{fs:12.5,f:ACC,w:700});
+    lab.setAttribute('stroke','#fff'); lab.setAttribute('stroke-width','3.5'); lab.setAttribute('paint-order','stroke');
+    svg.appendChild(lab);
+    ver='No solution.';
+    txt='K is singular, and F₁ + F₂ = 1 is not zero: heat enters at both ends and cannot leave, so no steady state exists. '+
+        'The energy decreases without bound along the direction (1, 1), so it has no lowest point, and K d = F has no solution.';
+  }
+  document.getElementById('e23mat').textContent=mat;
+  document.getElementById('e23ver').textContent=ver;
+  document.getElementById('e23txt').textContent=txt;
+  document.getElementById('e23av').textContent=ahat.toFixed(2);
+  document.getElementById('e23a').disabled=(mode!=='RN');
+}
+document.getElementById('e23mode').addEventListener('click',function(ev){
+  var b=ev.target.closest('button'); if(!b) return; mode=b.dataset.m;
+  var bs=this.querySelectorAll('button');
+  for(var i=0;i<bs.length;i++) bs[i].setAttribute('aria-pressed',bs[i]===b?'true':'false');
+  draw(); });
+document.getElementById('e23a').addEventListener('input',function(){ ahat=+this.value; draw(); });
+draw();
+})();
+</script>
+```
+
+Things to try:
+
+1. **Dirichlet + Neumann.** Without the Dirichlet condition, the energy has no lowest point.
+   The Dirichlet condition restricts the candidates to a line, and along that line there is only one minimum.
+   This is why removing the Dirichlet rows and columns turns a singular matrix into an invertible one.
+2. **Robin + Neumann.** Even without a Dirichlet condition, the Robin term makes the energy a bowl.
+   Decrease $\hat{a}$, and observe the smaller eigenvalue and the location of the minimum.
+3. **Neumann, balanced.** The heat entering equals the heat leaving, and the energy is a trough whose floor is flat.
+4. **Neumann, unbalanced.** The floor of the trough is tilted, and the energy has no minimum.
+
+## Why this matters in practice
+
+- **Solvers.** Symmetric positive definite systems can be solved with methods that do not work for general matrices.
+  The Cholesky factorization requires about half of the work of a general LU factorization, and the conjugate gradient method, which is widely used for large finite element problems, requires a symmetric positive definite matrix.
+- **Debugging.** An error such as `LinAlgError: Singular matrix` almost always indicates a missing or misapplied boundary condition, for example a model with no Dirichlet boundary, Robin coefficients that were not assembled, or a region of the mesh that is not connected to the rest.
+- **Verification.** Three inexpensive checks follow from this class.
+  The assembled stiffness matrix should be symmetric, which can be checked with `np.allclose(K, K.T)`.
+  On a small mesh, its smallest eigenvalue should be positive.
+  For a problem with only Neumann boundaries, $\underline{\underline{K}}\,\underline{1}$ should be zero to roundoff, which checks the assembly of the interior terms without requiring an exact solution.
+
+## Summary
+
+- The weak form is equivalent to the **minimization form**: the solution minimizes the energy $\Pi(v) = \tfrac{1}{2}B(v,v) - L(v)$ over all functions that satisfy the Dirichlet condition.
+  The weak form states that the derivative of $\Pi$ at the solution is zero in every admissible direction, which is why it is also called the variational form.
+- For every $v\in\mathcal{S}$, $\Pi(v) = \Pi(u) + \tfrac{1}{2}\|v - u\|_E^2$.
+  This identity shows that the solution is unique, and that the finite element solution, which minimizes $\Pi$ over $\mathcal{S}^h$, is the best approximation in the energy norm.
+- The stiffness matrix is **symmetric** when the conductivity is symmetric, and **positive definite** when the conductivity is positive definite, $\hat{a}\ge 0$, and either $\Gamma_g$ is not empty or $\hat{a} > 0$ on part of $\Gamma_r$.
+  Under these conditions, $\underline{\underline{K}}\,\underline{d} = \underline{F}$ has one solution.
+- With only Neumann boundaries, $\underline{\underline{K}}$ is singular, and a solution exists only if the total heat supplied is zero, in which case it is determined only up to a constant.
+- Small Robin coefficients without a Dirichlet boundary give a matrix that is positive definite but poorly conditioned.
+- Problems that are not symmetric, such as transport by a moving fluid, have no minimization form, although the Galerkin method still applies.
