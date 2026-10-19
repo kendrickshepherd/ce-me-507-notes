@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Finite Element Methods">
+
+<title>22&nbsp; Class 22: Robin Boundary Conditions – CE/ME 507 — Class Notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/23_Class.html" rel="next">
+<link href="../chapters/21_Class.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-5a6c5cd077c1ead4086784ad1389866e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script>
+window.MathJax = {
+  tex: {
+    tags: 'ams',
+    macros: {
+      RR: '{\\mathbb{R}}',
+      Om: '{\\Omega}'
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/22_Class.html"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Class 22: Robin Boundary Conditions</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">CE/ME 507 — Class Notes</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">CE/ME 507 — Class Notes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/2_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Class 2: Linear FEM</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Class 3: Index Notation, Function Spaces, and the Weak Form</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/4_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Class 4: Strong and Weak Forms of the Boundary Value Problem</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/5_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/6_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Class 6: Basis Functions and Lagrange Polynomials</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/7_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Class 7: From Galerkin to a Matrix Equation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/8_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Class 8: Assembly, Sparsity, and the Road to Quadrature</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/9_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Class 9: The Isoparametric Map and the Jacobian</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Class 10: Assembly with the IEN Array, and Quadrature on an Element</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Class 11: Tensor-Product Basis Functions in 2D</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Class 12: The Spatial Mapping</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Class 13: The Jacobian Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Class 14: The ID and IEN Arrays</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Class 15: Unidimensional Finite Element Code</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Class 16: Derivatives of the Solution</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Class 20: Quadrature in 2D, and Integrating Over a Face</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Class 21: CAD, Meshing, and Discretization Choice</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/22_Class.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Class 22: Robin Boundary Conditions</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/23_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Class 23: Minimization, Symmetry, and Positive Definiteness</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">1D Poisson I: Heat Conduction Through a Wall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">1D Poisson II: The Wall, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">1D Poisson III: An Axially Loaded Rod</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#the-robin-boundary-condition" id="toc-the-robin-boundary-condition" class="nav-link active" data-scroll-target="#the-robin-boundary-condition"><span class="header-section-number">22.1</span> The Robin boundary condition</a>
+  <ul class="collapse">
+  <li><a href="#where-robin-conditions-come-from" id="toc-where-robin-conditions-come-from" class="nav-link" data-scroll-target="#where-robin-conditions-come-from"><span class="header-section-number">22.1.1</span> Where Robin conditions come from</a></li>
+  <li><a href="#robin-conditions-interpolate-dirichlet-and-neumann" id="toc-robin-conditions-interpolate-dirichlet-and-neumann" class="nav-link" data-scroll-target="#robin-conditions-interpolate-dirichlet-and-neumann"><span class="header-section-number">22.1.2</span> Robin conditions interpolate Dirichlet and Neumann</a></li>
+  </ul></li>
+  <li><a href="#the-strong-form" id="toc-the-strong-form" class="nav-link" data-scroll-target="#the-strong-form"><span class="header-section-number">22.2</span> The strong form</a></li>
+  <li><a href="#the-weak-form" id="toc-the-weak-form" class="nav-link" data-scroll-target="#the-weak-form"><span class="header-section-number">22.3</span> The weak form</a></li>
+  <li><a href="#the-galerkin-form-and-the-matrix-equations" id="toc-the-galerkin-form-and-the-matrix-equations" class="nav-link" data-scroll-target="#the-galerkin-form-and-the-matrix-equations"><span class="header-section-number">22.4</span> The Galerkin form and the matrix equations</a></li>
+  <li><a href="#example-a-wall-exposed-to-outside-air" id="toc-example-a-wall-exposed-to-outside-air" class="nav-link" data-scroll-target="#example-a-wall-exposed-to-outside-air"><span class="header-section-number">22.5</span> Example: a wall exposed to outside air</a></li>
+  <li><a href="#computing-the-robin-terms-on-an-element" id="toc-computing-the-robin-terms-on-an-element" class="nav-link" data-scroll-target="#computing-the-robin-terms-on-an-element"><span class="header-section-number">22.6</span> Computing the Robin terms on an element</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">22.7</span> Summary</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content column-body" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Class 22: Robin Boundary Conditions</span></h1>
+<p class="subtitle lead">Boundary conditions that relate the value of the solution to its flux</p>
+</div>
+
+
+
+<div class="quarto-title-meta column-body">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>To this point, we have used two kinds of boundary conditions. On the Dirichlet boundary <span class="math inline">\(\Gamma_g\)</span>, the value of the solution is prescribed, and on the Neumann boundary <span class="math inline">\(\Gamma_h\)</span>, the flux is prescribed:</p>
+<p><span class="math display">\[
+u = g \quad \text{on } \Gamma_g,
+\qquad\qquad
+\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = \kappa_{ij}u_{,j}n_i = h \quad \text{on } \Gamma_h .
+\]</span></p>
+<p>Many boundaries of practical interest are neither. The outside face of a building wall does not have a known temperature, and the heat flowing through it is not known in advance either, since it depends on the temperature of the face itself. Similarly, the end of a pile resting on soft rock is neither held in place nor free, since the force it carries depends on how far the end moves. In both cases, the flux through the boundary depends on the value of the solution at the boundary, and a relationship of this kind is described by a <strong>Robin boundary condition</strong>. In this class, we will add Robin boundary conditions to the strong, weak, and Galerkin forms of the problem, and determine how they change the stiffness matrix and the force vector. The back face of the brick in Project 2 has a Robin boundary condition, and Homework 16 implements the terms derived here.</p>
+<section id="the-robin-boundary-condition" class="level2" data-number="22.1">
+<h2 data-number="22.1" class="anchored" data-anchor-id="the-robin-boundary-condition"><span class="header-section-number">22.1</span> The Robin boundary condition</h2>
+<p>A Robin boundary condition prescribes a combination of the value of the solution and its flux on a portion of the boundary, <span class="math inline">\(\Gamma_r\)</span>:</p>
+<p><span class="math display">\[
+\hat{a}\,u + \left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = \hat{c}
+\qquad \text{on } \Gamma_r ,
+\]</span></p>
+<p>or, in index notation,</p>
+<p><span class="math display">\[
+\hat{a}\,u + \kappa_{ij}u_{,j}n_i = \hat{c}
+\qquad \text{on } \Gamma_r .
+\]</span></p>
+<p>Here <span class="math inline">\(\hat{a}:\Gamma_r\to\mathbb{R}\)</span> and <span class="math inline">\(\hat{c}:\Gamma_r\to\mathbb{R}\)</span> are given functions, in the same way that <span class="math inline">\(g\)</span> and <span class="math inline">\(h\)</span> are given functions on <span class="math inline">\(\Gamma_g\)</span> and <span class="math inline">\(\Gamma_h\)</span>. The hats distinguish them from other uses of the letters <span class="math inline">\(a\)</span> and <span class="math inline">\(c\)</span> in this course, such as the bilinear form <span class="math inline">\(a(\cdot,\cdot)\)</span> and the coefficients <span class="math inline">\(c_A\)</span> of a test function <span class="math inline">\(w^h\)</span>. When the conductivity is isotropic, <span class="math inline">\(\kappa_{ij}=\kappa\,\delta_{ij}\)</span>, the condition is often written using the normal derivative <span class="math inline">\(\partial u/\partial n = \nabla u\cdot\underline{n}\)</span>, as <span class="math inline">\(\hat{a}\,u + \kappa\,\partial u/\partial n = \hat{c}\)</span>.</p>
+<section id="where-robin-conditions-come-from" class="level3" data-number="22.1.1">
+<h3 data-number="22.1.1" class="anchored" data-anchor-id="where-robin-conditions-come-from"><span class="header-section-number">22.1.1</span> Where Robin conditions come from</h3>
+<p>A Robin condition arises whenever the boundary is connected to something outside of the domain that responds in proportion to the value of the solution at the boundary. Rearranging the condition as</p>
+<p><span class="math display">\[
+-\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = \hat{a}\left(u - \frac{\hat{c}}{\hat{a}}\right)
+\]</span></p>
+<p>shows that the flux leaving the domain is proportional to the difference between <span class="math inline">\(u\)</span> and a reference value <span class="math inline">\(\hat{c}/\hat{a}\)</span>, where <span class="math inline">\(\hat{a}\)</span> measures how strongly the boundary is connected to its surroundings. What provides this connection depends on the physical problem, and <a href="#tbl-c22-sources" class="quarto-xref">Table&nbsp;<span>22.1</span></a> lists several common cases. A surrounding fluid is the most common case in heat transfer, but it is only one of them, and a pile resting on a spring, for example, involves no fluid at all. <a href="#fig-c22-sources" class="quarto-xref">Figure&nbsp;<span>22.1</span></a> shows two of these settings, drawn in the same way as the examples of the appendices.</p>
+<div id="fig-c22-sources" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c22-sources-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class22/C22_Fig0_Sources.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c22-sources-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;22.1: Two settings that lead to a Robin condition, drawn as in the appendices. (a) The concrete wall of the <a href="../chapters/Poisson1D_Heat.html">1D heat appendix</a>, with its exterior face now exchanging heat with the outside air by convection, in addition to absorbing sunlight. The heat leaving the face depends on the temperature of the face, so neither the temperature nor the flux there is known in advance. This is the problem solved later in this class. (b) The pile of the <a href="../chapters/Poisson1D_Rod.html">rod appendix</a>, with its toe now resting on soft rock that is modeled as a spring. The rock pushes back on the toe in proportion to how far the toe moves, so neither the displacement nor the force at the toe is known in advance.
+</figcaption>
+</figure>
+</div>
+<div id="tbl-c22-sources" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-c22-sources-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;22.1: Physical settings that lead to a Robin condition <span class="math inline">\(\hat{a}\,u + \left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = \hat{c}\)</span>. In each case, the flux leaving the domain is proportional to the difference between the solution and a reference value. For the rod, <span class="math inline">\(\underline{\underline{\kappa}}\)</span> is replaced by the axial stiffness <span class="math inline">\(EA\)</span>, and the flux is the axial force that the end of the rod transmits to the spring.
+</figcaption>
+<div aria-describedby="tbl-c22-sources-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 26%">
+<col style="width: 10%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">physical setting</th>
+<th style="text-align: center;">flux leaving, <span class="math inline">\(-\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\)</span></th>
+<th style="text-align: center;"><span class="math inline">\(\hat{a}\)</span></th>
+<th style="text-align: center;"><span class="math inline">\(\hat{c}\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">convection to a fluid at temperature <span class="math inline">\(u_\infty\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(h_c\,(u - u_\infty)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(h_c\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(h_c\,u_\infty\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">conduction through a thin layer of thickness <span class="math inline">\(t\)</span> and conductivity <span class="math inline">\(\kappa_t\)</span> to a body at temperature <span class="math inline">\(u_b\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\dfrac{\kappa_t}{t}\,(u - u_b)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\dfrac{\kappa_t}{t}\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\dfrac{\kappa_t}{t}\,u_b\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">the end of a rod on a spring of stiffness <span class="math inline">\(k_s\)</span>, whose other end is at <span class="math inline">\(u_s\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(k_s\,(u - u_s)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(k_s\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(k_s\,u_s\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">mass transfer to a fluid at concentration <span class="math inline">\(u_\infty\)</span>, with coefficient <span class="math inline">\(k_m\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(k_m\,(u - u_\infty)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(k_m\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(k_m\,u_\infty\)</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The most common case in heat transfer is <strong>convection</strong>, in which a surface exchanges heat with a surrounding fluid such as air or water. Newton’s law of cooling states that the heat flux leaving the surface is proportional to the difference between the temperature of the surface and the temperature of the fluid away from the surface, <span class="math inline">\(u_\infty\)</span>:</p>
+<p><span class="math display">\[
+\underline{q}\cdot\underline{n} = h_c\left(u - u_\infty\right),
+\]</span></p>
+<p>where <span class="math inline">\(h_c\)</span> is the <strong>convection coefficient</strong>, with units of W/(m²·K). Recall from the appendices that the heat flux is given by Fourier’s law, <span class="math inline">\(\underline{q} = -\underline{\underline{\kappa}}\nabla u\)</span>. Substituting this and rearranging gives</p>
+<p><span class="math display">\[
+-\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = h_c\left(u - u_\infty\right)
+\qquad\Longrightarrow\qquad
+h_c\,u + \left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = h_c\,u_\infty ,
+\]</span></p>
+<p>which is a Robin condition with <span class="math inline">\(\hat{a} = h_c\)</span> and <span class="math inline">\(\hat{c} = h_c\,u_\infty\)</span>. If the surface also absorbs a known heat flux <span class="math inline">\(q_s\)</span>, such as from sunlight, it is added to the right side, so that <span class="math inline">\(\hat{c} = h_c\,u_\infty + q_s\)</span>.</p>
+<p>Typical convection coefficients are 2 to 25 W/(m²·K) for air moving by natural convection (driven only by buoyancy), 25 to 250 W/(m²·K) for air moved by a fan or by wind, and roughly 50 to 20,000 W/(m²·K) for liquids, depending on how they flow. The back face of the brick in Project 2 uses <span class="math inline">\(h_c = 9.06\)</span> W/(m²·K), which is typical of still air.</p>
+<p>The other cases in <a href="#tbl-c22-sources" class="quarto-xref">Table&nbsp;<span>22.1</span></a> have the same form, but do not involve a surrounding fluid. In the <a href="../chapters/Poisson1D_Rod.html">rod appendix</a>, the end of a pile resting on rock that is modeled as a spring of stiffness <span class="math inline">\(k_s\)</span> has the condition <span class="math inline">\(h = -k_s\,u\)</span>, since the spring pushes back on the pile in proportion to how far its end moves. This is a Robin condition with <span class="math inline">\(\hat{a} = k_s\)</span> and <span class="math inline">\(\hat{c} = 0\)</span>, and the connection to the surroundings is elastic rather than thermal. A thin layer of a different solid material, such as the thermal interface material under the battery cell in the <a href="../chapters/Poisson2D_Heat.html">2D heat appendix</a>, gives a Robin condition by conduction alone, since the heat crossing the layer is proportional to the temperature drop across it. In contaminant transport, the rate at which a substance crosses a surface is often modeled as proportional to the difference in concentration across that surface, which again has the same form.</p>
+</section>
+<section id="robin-conditions-interpolate-dirichlet-and-neumann" class="level3" data-number="22.1.2">
+<h3 data-number="22.1.2" class="anchored" data-anchor-id="robin-conditions-interpolate-dirichlet-and-neumann"><span class="header-section-number">22.1.2</span> Robin conditions interpolate Dirichlet and Neumann</h3>
+<p>The Robin condition can be viewed as lying between the Neumann and Dirichlet conditions. If <span class="math inline">\(\hat{a} = 0\)</span>, it is a Neumann condition with <span class="math inline">\(h = \hat{c}\)</span>. If we instead divide the condition by <span class="math inline">\(\hat{a}\)</span>,</p>
+<p><span class="math display">\[
+u + \frac{1}{\hat{a}}\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = \frac{\hat{c}}{\hat{a}} ,
+\]</span></p>
+<p>and let <span class="math inline">\(\hat{a}\)</span> become very large while <span class="math inline">\(\hat{c}/\hat{a}\)</span> is held fixed, the flux term vanishes, and the condition becomes a Dirichlet condition with <span class="math inline">\(g = \hat{c}/\hat{a}\)</span>. For convection, <span class="math inline">\(\hat{c}/\hat{a} = u_\infty\)</span>, so a very large convection coefficient holds the surface at the temperature of the fluid. Similarly, a very stiff spring holds the end of a rod at the position of the spring’s other end, in the same way as a fixed support.</p>
+<p>Whether a particular value of <span class="math inline">\(\hat{a}\)</span> should be considered large or small depends on the body to which it is applied, since the strength of the connection to the surroundings must be compared with the ability of the body itself to conduct. For convection from a body of thickness <span class="math inline">\(L\)</span>, this comparison is the <strong>Biot number</strong></p>
+<p><span class="math display">\[
+\mathrm{Bi} = \frac{h_c\,L}{\kappa}
+\]</span></p>
+<p>which compares the resistance to conduction through the body, <span class="math inline">\(L/\kappa\)</span>, with the resistance to heat transfer across its surface, <span class="math inline">\(1/h_c\)</span>. For a rod of length <span class="math inline">\(L\)</span> and axial stiffness <span class="math inline">\(EA\)</span> resting on a spring, the corresponding ratio is <span class="math inline">\(k_s L/(EA)\)</span>, which compares the stiffness of the spring with the axial stiffness of the rod. In either case, when the ratio is much greater than 1, the solution is close to that of a Dirichlet condition, and when it is much less than 1, the solution is close to that of a Neumann condition. The example later in this class shows this directly for convection.</p>
+</section>
+</section>
+<section id="the-strong-form" class="level2" data-number="22.2">
+<h2 data-number="22.2" class="anchored" data-anchor-id="the-strong-form"><span class="header-section-number">22.2</span> The strong form</h2>
+<p>As before, consider a domain <span class="math inline">\(\Omega\subset\mathbb{R}^{n_{sd}}\)</span>, now with its boundary divided into three parts, <span class="math inline">\(\Gamma_g\)</span>, <span class="math inline">\(\Gamma_h\)</span>, and <span class="math inline">\(\Gamma_r\)</span>. These parts do not overlap, and together they make up the entire boundary <span class="math inline">\(\Gamma\)</span>, so that every point of the boundary has exactly one boundary condition. Given <span class="math inline">\(f:\Omega\to\mathbb{R}\)</span>, <span class="math inline">\(g:\Gamma_g\to\mathbb{R}\)</span>, <span class="math inline">\(h:\Gamma_h\to\mathbb{R}\)</span>, <span class="math inline">\(\hat{a}:\Gamma_r\to\mathbb{R}\)</span>, <span class="math inline">\(\hat{c}:\Gamma_r\to\mathbb{R}\)</span>, and a symmetric positive definite <span class="math inline">\(\underline{\underline{\kappa}}:\Omega\to\mathbb{R}^{n_{sd}\times n_{sd}}\)</span>, find <span class="math inline">\(u:\bar{\Omega}\to\mathbb{R}\)</span> such that</p>
+<p><span class="math display">\[
+(\mathrm{S})\qquad
+\left\{
+\begin{aligned}
+-\nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right) &amp;= f &amp;&amp; \text{in } \Omega\\
+u &amp;= g &amp;&amp; \text{on } \Gamma_g\\
+\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} &amp;= h &amp;&amp; \text{on } \Gamma_h\\
+\hat{a}\,u + \left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} &amp;= \hat{c} &amp;&amp; \text{on } \Gamma_r
+\end{aligned}
+\right.
+\]</span></p>
+<div id="fig-c22-domain" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c22-domain-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class22/C22_Fig1_Domain.png" class="img-fluid figure-img" style="width:66.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c22-domain-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;22.2: A domain whose boundary is divided into a Dirichlet part <span class="math inline">\(\Gamma_g\)</span>, a Neumann part <span class="math inline">\(\Gamma_h\)</span>, and a Robin part <span class="math inline">\(\Gamma_r\)</span>. Every point of the boundary belongs to exactly one of the three parts. On <span class="math inline">\(\Gamma_r\)</span>, the boundary is connected to its surroundings, drawn here generically as springs to a support, so that the flux through the boundary depends on the value of <span class="math inline">\(u\)</span> there, and neither is known in advance. Depending on the problem, the connection may be a surrounding fluid, a spring support, a thin layer of another material, or another mechanism of this kind (<a href="#tbl-c22-sources" class="quarto-xref">Table&nbsp;<span>22.1</span></a>).
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="the-weak-form" class="level2" data-number="22.3">
+<h2 data-number="22.3" class="anchored" data-anchor-id="the-weak-form"><span class="header-section-number">22.3</span> The weak form</h2>
+<p>The weak form is derived in the same way as in <a href="../chapters/4_Class.html">Class 4</a>. Multiplying the differential equation by a test function <span class="math inline">\(w\in\mathcal{V}\)</span> and integrating over <span class="math inline">\(\Omega\)</span> gives</p>
+<p><span class="math display">\[
+-\int_\Omega w\,\nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right)d\Omega = \int_\Omega w\,f\,d\Omega .
+\]</span></p>
+<p>Applying the product rule and the divergence theorem, exactly as in Class 4, moves one derivative onto <span class="math inline">\(w\)</span> and produces an integral over the boundary:</p>
+<p><span class="math display">\[
+\int_\Omega \nabla w\cdot\underline{\underline{\kappa}}\nabla u\;d\Omega
+- \int_\Gamma w\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\;d\Gamma
+= \int_\Omega w\,f\,d\Omega .
+\]</span></p>
+<p>The boundary now has three parts, so the boundary integral splits into three integrals, and each is simplified using the boundary condition on its part:</p>
+<p><span class="math display">\[
+\int_\Gamma w\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\;d\Gamma
+=
+\underbrace{\int_{\Gamma_g} w\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\;d\Gamma}_{0, \text{ since } w = 0 \text{ on } \Gamma_g}
++
+\underbrace{\int_{\Gamma_h} w\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\;d\Gamma}_{\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = h}
++
+\underbrace{\int_{\Gamma_r} w\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\;d\Gamma}_{\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = \hat{c} - \hat{a}\,u}
+=
+\int_{\Gamma_h} w\,h\;d\Gamma + \int_{\Gamma_r} w\left(\hat{c} - \hat{a}\,u\right)d\Gamma .
+\]</span></p>
+<p>On <span class="math inline">\(\Gamma_r\)</span>, the Robin condition was solved for the flux, <span class="math inline">\(\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = \hat{c} - \hat{a}\,u\)</span>. Substituting this into the previous equation and moving the term that contains <span class="math inline">\(u\)</span> to the left side gives</p>
+<p><span class="math display">\[
+\boxed{\;
+\int_\Omega \nabla w\cdot\underline{\underline{\kappa}}\nabla u\;d\Omega
++ \int_{\Gamma_r} w\,\hat{a}\,u\;d\Gamma
+= \int_\Omega w\,f\,d\Omega + \int_{\Gamma_h} w\,h\;d\Gamma + \int_{\Gamma_r} w\,\hat{c}\;d\Gamma
+\;}
+\]</span></p>
+<p>or, in index notation,</p>
+<p><span class="math display">\[
+\int_\Omega w_{,i}\,\kappa_{ij}\,u_{,j}\;d\Omega
++ \int_{\Gamma_r} w\,\hat{a}\,u\;d\Gamma
+= \int_\Omega w\,f\,d\Omega + \int_{\Gamma_h} w\,h\;d\Gamma + \int_{\Gamma_r} w\,\hat{c}\;d\Gamma .
+\]</span></p>
+<p>The weak form is therefore: given the same data as the strong form, find <span class="math inline">\(u\in\mathcal{S}\)</span> such that the boxed equation holds for every <span class="math inline">\(w\in\mathcal{V}\)</span>. The spaces <span class="math inline">\(\mathcal{S}\)</span> and <span class="math inline">\(\mathcal{V}\)</span> are the same as in Class 4, since only the Dirichlet boundary constrains them. Using the shorthand of earlier classes, <span class="math inline">\(a(w,u) = \int_\Omega \nabla w\cdot\underline{\underline{\kappa}}\nabla u\,d\Omega\)</span> and <span class="math inline">\((w,v)_{\Gamma_r} = \int_{\Gamma_r} w\,v\,d\Gamma\)</span>, the weak form is written as</p>
+<p><span class="math display">\[
+(\mathrm{W})\qquad
+a(w,u) + (w,\hat{a}\,u)_{\Gamma_r} = (w,f) + (w,h)_{\Gamma_h} + (w,\hat{c})_{\Gamma_r}
+\qquad \text{for all } w\in\mathcal{V} .
+\]</span></p>
+<p>Three observations about this result are worth noting.</p>
+<ul>
+<li>A Robin condition, like a Neumann condition, is a <strong>natural</strong> boundary condition. It appears in the integrals of the weak form, and not in the definitions of <span class="math inline">\(\mathcal{S}\)</span> and <span class="math inline">\(\mathcal{V}\)</span>. Consequently, the value of <span class="math inline">\(u\)</span> on <span class="math inline">\(\Gamma_r\)</span> is unknown, and the basis functions whose nodes lie on <span class="math inline">\(\Gamma_r\)</span> carry unknown coefficients, just as those on <span class="math inline">\(\Gamma_h\)</span> and in the interior do. Only the nodes on <span class="math inline">\(\Gamma_g\)</span> are prescribed.</li>
+<li>Unlike a Neumann condition, a Robin condition contributes a term to the left side of the weak form, since the flux on <span class="math inline">\(\Gamma_r\)</span> depends on the unknown <span class="math inline">\(u\)</span>. This term will add to the stiffness matrix.</li>
+<li>The weak form also implies the strong form. Following the argument of <a href="../chapters/5_Class.html">Class 5</a>, choosing test functions that are nonzero only near <span class="math inline">\(\Gamma_r\)</span> recovers the Robin condition, in the same way that the Neumann condition was recovered on <span class="math inline">\(\Gamma_h\)</span>.</li>
+</ul>
+</section>
+<section id="the-galerkin-form-and-the-matrix-equations" class="level2" data-number="22.4">
+<h2 data-number="22.4" class="anchored" data-anchor-id="the-galerkin-form-and-the-matrix-equations"><span class="header-section-number">22.4</span> The Galerkin form and the matrix equations</h2>
+<p>As in <a href="../chapters/7_Class.html">Class 7</a>, the trial solution is split into an unknown part and a known part, <span class="math inline">\(u^h = v^h + g^h\)</span>, where</p>
+<p><span class="math display">\[
+w^h = \sum_{A \notin \Gamma_g} c_A\,N_A ,
+\qquad
+v^h = \sum_{B \notin \Gamma_g} d_B\,N_B ,
+\qquad
+g^h = \sum_{\hat{B} \in \Gamma_g} g_{\hat{B}}\,N_{\hat{B}} .
+\]</span></p>
+<p>Here <span class="math inline">\(\hat{B}\)</span> indexes the basis functions whose nodes lie on <span class="math inline">\(\Gamma_g\)</span>. Substituting <span class="math inline">\(u^h = v^h + g^h\)</span> into the weak form, and moving the known terms that contain <span class="math inline">\(g^h\)</span> to the right side, gives the Galerkin form: find <span class="math inline">\(v^h\in\mathcal{V}^h\)</span> such that, for all <span class="math inline">\(w^h\in\mathcal{V}^h\)</span>,</p>
+<p><span class="math display">\[
+a(w^h,v^h) + (w^h,\hat{a}\,v^h)_{\Gamma_r}
+= (w^h,f) + (w^h,h)_{\Gamma_h} + (w^h,\hat{c})_{\Gamma_r}
+- a(w^h,g^h) - (w^h,\hat{a}\,g^h)_{\Gamma_r} .
+\]</span></p>
+<p>The final term is new. Since the Robin term on the left side contains <span class="math inline">\(u^h\)</span>, the known part <span class="math inline">\(g^h\)</span> contributes to it as well, and that contribution is moved to the right side in the same way as <span class="math inline">\(a(w^h,g^h)\)</span>.</p>
+<p>Substituting the sums for <span class="math inline">\(w^h\)</span>, <span class="math inline">\(v^h\)</span>, and <span class="math inline">\(g^h\)</span>, and choosing <span class="math inline">\(w^h = N_A\)</span> one basis function at a time, as in Class 7, gives the matrix equation <span class="math inline">\(\underline{\underline{K}}\,\underline{d} = \underline{F}\)</span>, with</p>
+<p><span class="math display">\[
+K_{AB} = a(N_A,N_B) + (N_A,\hat{a}\,N_B)_{\Gamma_r}
+= \int_\Omega \nabla N_A\cdot\underline{\underline{\kappa}}\nabla N_B\;d\Omega
++ \int_{\Gamma_r} N_A\,\hat{a}\,N_B\;d\Gamma
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+F_A = (N_A,f) + (N_A,h)_{\Gamma_h} + (N_A,\hat{c})_{\Gamma_r}
+- \sum_{\hat{B}\in\Gamma_g} g_{\hat{B}}\left[\,a(N_A,N_{\hat{B}}) + (N_A,\hat{a}\,N_{\hat{B}})_{\Gamma_r}\right] .
+\]</span></p>
+<p>A Robin boundary condition therefore changes both the stiffness matrix and the force vector.</p>
+<ul>
+<li>The stiffness matrix gains the integral <span class="math inline">\(\int_{\Gamma_r} N_A\,\hat{a}\,N_B\,d\Gamma\)</span>. This is nonzero only when both <span class="math inline">\(N_A\)</span> and <span class="math inline">\(N_B\)</span> are nonzero on <span class="math inline">\(\Gamma_r\)</span>, which happens only when both of their nodes lie on a Robin face of the same element.</li>
+<li>The force vector gains <span class="math inline">\(\int_{\Gamma_r} N_A\,\hat{c}\,d\Gamma\)</span>, which is computed in exactly the same way as the Neumann term, with <span class="math inline">\(\hat{c}\)</span> in place of <span class="math inline">\(h\)</span>.</li>
+<li>The Dirichlet term in <span class="math inline">\(F_A\)</span> gains a Robin integral as well. This is nonzero only where a node on <span class="math inline">\(\Gamma_g\)</span> also lies on a Robin face, which occurs at the points (or edges) where <span class="math inline">\(\Gamma_g\)</span> and <span class="math inline">\(\Gamma_r\)</span> meet.</li>
+</ul>
+<p>Since <span class="math inline">\(\hat{a}\ge 0\)</span> in physical problems, such as convection (<span class="math inline">\(\hat{a} = h_c\)</span>) and spring supports (<span class="math inline">\(\hat{a} = k_s\)</span>), the Robin term adds nonnegative contributions to the stiffness matrix. <a href="../chapters/23_Class.html">Class 23</a> shows that these contributions can make the stiffness matrix invertible even when there is no Dirichlet boundary at all.</p>
+</section>
+<section id="example-a-wall-exposed-to-outside-air" class="level2" data-number="22.5">
+<h2 data-number="22.5" class="anchored" data-anchor-id="example-a-wall-exposed-to-outside-air"><span class="header-section-number">22.5</span> Example: a wall exposed to outside air</h2>
+<p>The <a href="../chapters/Poisson1D_Heat.html">1D heat appendix</a> modeled a concrete wall of thickness <span class="math inline">\(L\)</span> = 0.30 m and conductivity <span class="math inline">\(\kappa\)</span> = 1.4 W/(m·K), heated internally by the hydration of the cement at <span class="math inline">\(f\)</span> = 500 W/m³. Its interior face, at <span class="math inline">\(x = L\)</span>, was held at the room temperature <span class="math inline">\(g\)</span> = 20 °C, and its outer face, at <span class="math inline">\(x = 0\)</span>, absorbed a solar heat flux of 50 W/m² as a Neumann condition. A more realistic model of the outer face also accounts for the heat that it exchanges with the outside air. Taking the outside air to be at <span class="math inline">\(u_\infty\)</span> = 0 °C and keeping the solar flux <span class="math inline">\(q_s\)</span> = 50 W/m², the outer face has the Robin condition</p>
+<p><span class="math display">\[
+h_c\,u(0) - \kappa\,u_{,x}(0) = h_c\,u_\infty + q_s ,
+\]</span></p>
+<p>since the outward normal at <span class="math inline">\(x = 0\)</span> is <span class="math inline">\(n = -1\)</span>. This is a Robin condition with <span class="math inline">\(\hat{a} = h_c\)</span> and <span class="math inline">\(\hat{c} = h_c\,u_\infty + q_s\)</span>.</p>
+<p>In one dimension, <span class="math inline">\(\Gamma_r\)</span> is a single point, and the boundary integrals reduce to evaluations at that point:</p>
+<p><span class="math display">\[
+(N_A,\hat{a}\,N_B)_{\Gamma_r} = h_c\,N_A(0)\,N_B(0),
+\qquad
+(N_A,\hat{c})_{\Gamma_r} = \hat{c}\,N_A(0) .
+\]</span></p>
+<p>With linear elements, the only basis function that is nonzero at <span class="math inline">\(x = 0\)</span> is the one belonging to the first node, so the Robin condition adds <span class="math inline">\(h_c\)</span> to the first diagonal entry of <span class="math inline">\(\underline{\underline{K}}\)</span> and adds <span class="math inline">\(\hat{c}\)</span> to the first entry of <span class="math inline">\(\underline{F}\)</span>, and changes nothing else.</p>
+<p>Solving the strong form of this problem exactly shows that the temperature of the outer face is</p>
+<p><span class="math display">\[
+u(0) = u_\infty + \frac{u_N(0) - u_\infty}{1 + \mathrm{Bi}} ,
+\]</span></p>
+<p>where <span class="math inline">\(u_N(0)\)</span> = 46.8 °C is the temperature of the outer face in the Neumann problem of the appendix (<span class="math inline">\(h_c = 0\)</span>). The Biot number alone therefore determines where the temperature of the outer face falls between the Dirichlet value <span class="math inline">\(u_\infty\)</span> and the Neumann value <span class="math inline">\(u_N(0)\)</span>. For example, with <span class="math inline">\(h_c\)</span> = 10 W/(m²·K), which is typical of outdoor air, <span class="math inline">\(\mathrm{Bi}\)</span> = 2.14 and the outer face is at 14.9 °C. The widget below solves this problem with linear finite elements and shows the resulting matrix equations.</p>
+<style>
+.rw{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;--acc:#b8322a;--rob:#0d9488;
+    --amb:#fff1c7;max-width:900px;margin:0 auto;color:var(--ink)}
+.rw .bar{display:flex;flex-wrap:wrap;gap:9px 20px;align-items:center;padding:11px 14px;
+  background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.rw .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey)}
+.rw input[type=range]{width:170px;vertical-align:middle}
+.rw label{font-size:13px;color:var(--grey)}
+.rw .val{font:600 13px ui-monospace,Menlo,monospace;color:var(--ink);display:inline-block;min-width:8.5em}
+.rw svg{display:block;width:100%;height:auto;border:1px solid var(--faint);border-radius:8px;background:#fff}
+.rw .nums{font:12.5px ui-monospace,Menlo,monospace;color:var(--ink);margin:9px 2px 4px;line-height:1.6}
+.rw .sys{overflow-x:auto;margin:6px 0 4px;padding:10px 12px;border:1px solid var(--faint);border-radius:8px;background:#fff}
+.rw .sys table{border-collapse:separate;border-spacing:0;font:12.5px ui-monospace,Menlo,monospace;color:var(--ink);margin:0 auto}
+.rw .sys td{padding:3px 8px;text-align:right;white-space:nowrap}
+.rw .sys td.lb{border-left:1.5px solid var(--ink)} .rw .sys td.rb{border-right:1.5px solid var(--ink)}
+.rw .sys td.op{border:0;padding:0 10px;color:var(--grey);text-align:center}
+.rw .sys td.hl{background:var(--amb);font-weight:700}
+.rw .sys .hdr td{border:0;color:var(--grey);font-size:11.5px;text-align:center;padding-bottom:4px}
+.rw .cap{font-size:13px;color:var(--grey);line-height:1.55;margin:9px 2px 22px}
+.rw .cap b{color:var(--ink)}
+</style>
+
+<div class="rw">
+  <div class="bar">
+    <b>CONVECTION COEFFICIENT</b>
+    <input type="range" id="r22h" min="-1" max="4" step="0.05" value="1">
+    <span class="val" id="r22hv"></span>
+    <b>ELEMENTS</b>
+    <input type="range" id="r22n" min="2" max="6" step="1" value="3" style="width:110px">
+    <span class="val" id="r22nv" style="min-width:1.2em"></span>
+    <label><input type="checkbox" id="r22lim" checked=""> show the Neumann and Dirichlet limits</label>
+  </div>
+  <svg id="r22svg" viewbox="0 0 880 330" role="img" aria-label="Temperature through a concrete wall whose outer face exchanges heat with outside air, for a chosen convection coefficient"></svg>
+  <div class="nums" id="r22nums"></div>
+  <div class="sys" id="r22sys"></div>
+  <div class="cap" id="r22cap"></div>
+</div>
+
+<script>
+(function(){
+var INK='#18202b',GREY='#6b7684',FAINT='#dfe4ea',ACC='#b8322a',ROB='#0d9488',BLUE='#1e3a5f';
+var L=0.30,KAP=1.4,F0=500,QS=50,G=20,UINF=0;
+var GEFF=G+F0*L*L/(2*KAP);
+function exact(hc){ /* u(x) = -f x^2/(2k) + A x + B, with B = GEFF - A L */
+  var A=(isFinite(hc)? (hc*(GEFF-UINF)-QS)/(hc*L+KAP) : (GEFF-UINF)/L), B=GEFF-A*L;
+  return function(x){ return -F0*x*x/(2*KAP)+A*x+B; };
+}
+function solve(K,F){ /* Gaussian elimination; K is small, symmetric and positive definite */
+  var n=F.length,a=K.map(function(r){return r.slice();}),b=F.slice(),i,j,k;
+  for(k=0;k<n;k++){ for(i=k+1;i<n;i++){ var m=a[i][k]/a[k][k];
+      for(j=k;j<n;j++) a[i][j]-=m*a[k][j]; b[i]-=m*b[k]; } }
+  var x=new Array(n);
+  for(i=n-1;i>=0;i--){ var s=b[i]; for(j=i+1;j<n;j++) s-=a[i][j]*x[j]; x[i]=s/a[i][i]; }
+  return x;
+}
+function system(hc,ne){ /* nodes 0..ne; node ne (x = L) is Dirichlet, so ne unknowns */
+  var he=L/ne,n=ne,K=[],F=[],i,e,a,b;
+  for(i=0;i<n;i++){ K.push(new Array(n).fill(0)); F.push(0); }
+  for(e=0;e<ne;e++){
+    var ke=[[KAP/he,-KAP/he],[-KAP/he,KAP/he]], fe=[F0*he/2,F0*he/2];
+    for(a=0;a<2;a++){ var A=e+a; if(A>=n) continue; F[A]+=fe[a];
+      for(b=0;b<2;b++){ var B=e+b; if(B>=n) F[A]-=ke[a][b]*G; else K[A][B]+=ke[a][b]; } }
+  }
+  K[0][0]+=hc; F[0]+=hc*UINF+QS;          /* the Robin terms */
+  return {K:K,F:F,d:solve(K,F),he:he};
+}
+var svg=document.getElementById('r22svg');
+var X0=70,X1=640,Y0=26,Y1=290,XL=-0.045,XR=0.345,UL=-6,UH=52;
+function sx(x){return X0+(x-XL)/(XR-XL)*(X1-X0);}
+function sy(u){return Y1-(u-UL)/(UH-UL)*(Y1-Y0);}
+function el(n,at,txt){var e=document.createElementNS('http://www.w3.org/2000/svg',n);
+  for(var k in at) e.setAttribute(k,at[k]); if(txt!==undefined) e.textContent=txt; return e;}
+function T(x,y,s,o){o=o||{}; return el('text',{x:x,y:y,'font-size':o.fs||12,fill:o.f||GREY,
+  'text-anchor':o.a||'start','font-weight':o.w||400,'font-family':'system-ui, sans-serif'},s);}
+function TS(x,y,parts,o){ /* text with subscripts: parts = [[text, isSub], ...] */
+  var t=T(x,y,'',o), down=false;
+  parts.forEach(function(q){ var sp=el('tspan',{},q[0]);
+    if(q[1]&&!down){ sp.setAttribute('dy','3.5'); sp.setAttribute('font-size','80%'); down=true; }
+    else if(q[1]){ sp.setAttribute('font-size','80%'); }
+    else if(down){ sp.setAttribute('dy','-3.5'); down=false; }
+    t.appendChild(sp); });
+  return t;
+}
+function path(fn,col,wd,dash){var d='',k;for(k=0;k<=160;k++){var x=L*k/160;
+  d+=(k?'L':'M')+sx(x).toFixed(1)+' '+sy(fn(x)).toFixed(1);}
+  var p=el('path',{d:d,fill:'none',stroke:col,'stroke-width':wd}); if(dash) p.setAttribute('stroke-dasharray',dash); return p;}
+function fmt(v,d){ var s=v.toFixed(d); return (s==='-0.0'||s==='-0')?s.slice(1):s; }
+function draw(){
+  var lh=+document.getElementById('r22h').value, hc=Math.pow(10,lh);
+  var ne=+document.getElementById('r22n').value, lim=document.getElementById('r22lim').checked;
+  document.getElementById('r22hv').textContent=(hc<10?hc.toFixed(2):hc<100?hc.toFixed(1):hc.toFixed(0))+' W/(m²·K)';
+  document.getElementById('r22nv').textContent=ne;
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+  /* outside air, wall, room */
+  svg.appendChild(el('rect',{x:X0,y:Y0,width:sx(0)-X0,height:Y1-Y0,fill:'#eef8f6'}));
+  svg.appendChild(el('rect',{x:sx(0),y:Y0,width:sx(L)-sx(0),height:Y1-Y0,fill:'#f4f4f4'}));
+  svg.appendChild(el('rect',{x:sx(L),y:Y0,width:X1-sx(L),height:Y1-Y0,fill:'#eef3f9'}));
+  svg.appendChild(el('rect',{x:X0,y:Y0,width:X1-X0,height:Y1-Y0,fill:'none',stroke:FAINT}));
+  var u;
+  for(u=0;u<=50;u+=10){ svg.appendChild(el('line',{x1:X0,y1:sy(u),x2:X1,y2:sy(u),stroke:FAINT,'stroke-width':0.8}));
+    svg.appendChild(T(X0-8,sy(u)+4,String(u),{a:'end',fs:11})); }
+  svg.appendChild(T(26,(Y0+Y1)/2,'u (°C)',{fs:11.5}));
+  [0,0.1,0.2,0.3].forEach(function(x){ svg.appendChild(T(sx(x),Y1+16,x.toFixed(1),{a:'middle',fs:11})); });
+  svg.appendChild(T((sx(0)+sx(L))/2,Y1+31,'x (m)',{a:'middle',fs:11.5}));
+  svg.appendChild(T((sx(0)+sx(L))/2,Y1-8,'concrete wall',{a:'middle',fs:11}));
+  /* the fluid and room temperatures */
+  svg.appendChild(el('line',{x1:X0,y1:sy(UINF),x2:sx(0),y2:sy(UINF),stroke:ROB,'stroke-width':1.6,'stroke-dasharray':'5 3'}));
+  svg.appendChild(T(X0+3,sy(UINF)-6,'air, 0 °C',{fs:10.5,f:ROB}));
+  svg.appendChild(el('line',{x1:sx(L),y1:sy(G),x2:X1,y2:sy(G),stroke:BLUE,'stroke-width':1.6,'stroke-dasharray':'5 3'}));
+  svg.appendChild(T(sx(L)+4,sy(G)-6,'room, 20 °C',{fs:10.5,f:BLUE}));
+  /* the two limits */
+  if(lim){
+    svg.appendChild(path(exact(0),GREY,1.3,'6 4'));
+    svg.appendChild(path(exact(Infinity),GREY,1.3,'2 3'));
+    svg.appendChild(TS(sx(0.12),sy(43),[['h',0],['c',1],[' = 0 (Neumann)',0]],{fs:10.5}));
+    svg.appendChild(TS(sx(0.12),sy(7),[['h',0],['c',1],[' → ∞ (Dirichlet)',0]],{fs:10.5}));
+  }
+  /* exact solution and the finite element solution */
+  var ex=exact(hc); svg.appendChild(path(ex,INK,2.2));
+  var S=system(hc,ne), d=S.d.concat([G]), xs=[], i;
+  for(i=0;i<=ne;i++) xs.push(i*S.he);
+  var pd='';
+  for(i=0;i<=ne;i++) pd+=(i?'L':'M')+sx(xs[i]).toFixed(1)+' '+sy(d[i]).toFixed(1);
+  svg.appendChild(el('path',{d:pd,fill:'none',stroke:ACC,'stroke-width':1.6}));
+  for(i=0;i<=ne;i++) svg.appendChild(el('circle',{cx:sx(xs[i]),cy:sy(d[i]),r:i===ne?3.6:4.2,
+      fill:i===ne?'#fff':ACC,stroke:i===ne?BLUE:'none','stroke-width':1.6}));
+  /* legend */
+  var lx=X1+16, ly=Y0+18;
+  svg.appendChild(el('line',{x1:lx,y1:ly,x2:lx+26,y2:ly,stroke:INK,'stroke-width':2.2}));
+  svg.appendChild(T(lx+32,ly+4,'exact solution',{fs:11.5,f:INK}));
+  svg.appendChild(el('line',{x1:lx,y1:ly+22,x2:lx+26,y2:ly+22,stroke:ACC,'stroke-width':1.6}));
+  svg.appendChild(el('circle',{cx:lx+13,cy:ly+22,r:4,fill:ACC}));
+  svg.appendChild(T(lx+32,ly+26,'finite elements',{fs:11.5,f:INK}));
+  svg.appendChild(el('circle',{cx:lx+13,cy:ly+44,r:3.6,fill:'#fff',stroke:BLUE,'stroke-width':1.6}));
+  svg.appendChild(T(lx+32,ly+48,'Dirichlet node',{fs:11.5,f:INK}));
+  var Bi=hc*L/KAP, u0=ex(0);
+  svg.appendChild(T(lx,ly+92,'outer face',{fs:11,w:700}));
+  svg.appendChild(T(lx,ly+110,'u(0) = '+u0.toFixed(1)+' °C',{fs:12,f:INK}));
+  svg.appendChild(T(lx,ly+130,'Bi = '+(Bi<10?Bi.toFixed(2):Bi.toFixed(0)),{fs:12,f:INK}));
+  svg.appendChild(T(lx,ly+150,'heat to the air:',{fs:11}));
+  svg.appendChild(T(lx,ly+168,(hc*(u0-UINF)).toFixed(0)+' W/m²',{fs:12,f:INK}));
+  /* numbers and the matrix system */
+  document.getElementById('r22nums').innerHTML=
+    'h<sub>c</sub> = '+(hc<10?hc.toFixed(2):hc.toFixed(1))+' W/(m²·K) &nbsp; Bi = h<sub>c</sub>L/κ = '+Bi.toFixed(3)+
+    ' &nbsp; u(0) = u<sub>∞</sub> + (u<sub>N</sub>(0) − u<sub>∞</sub>)/(1 + Bi) = '+u0.toFixed(2)+' °C';
+  var n=ne, html='<tab'+'le><tr class="hdr"><td colspan="'+n+'">K &nbsp;(W/(m²·K))</td><td></td><td>d (°C)</td><td></td><td>F &nbsp;(W/m²)</td></tr>';
+  for(i=0;i<n;i++){
+    html+='<tr>';
+    for(var j=0;j<n;j++){
+      var cls=(j===0?'lb ':'')+(j===n-1?'rb ':'')+(i===0&&j===0?'hl':'');
+      html+='<td class="'+cls+'">'+fmt(S.K[i][j],1)+'</td>';
+    }
+    html+='<td class="op">'+(i===Math.floor((n-1)/2)?'×':'')+'</td>';
+    html+='<td class="lb rb">'+S.d[i].toFixed(2)+'</td>';
+    html+='<td class="op">'+(i===Math.floor((n-1)/2)?'=':'')+'</td>';
+    html+='<td class="lb rb'+(i===0?' hl':'')+'">'+fmt(S.F[i],1)+'</td></tr>';
+  }
+  html+='</tab'+'le>';
+  document.getElementById('r22sys').innerHTML=html;
+  document.getElementById('r22cap').innerHTML=
+    '<b>The highlighted entries are the only ones that contain the Robin terms:</b> '+
+    'K<sub>00</sub> = κ/h<sub>e</sub> + h<sub>c</sub> = '+fmt(KAP/S.he,1)+' + '+(hc<10?hc.toFixed(2):hc.toFixed(1))+
+    ', and F<sub>0</sub> includes h<sub>c</sub>u<sub>∞</sub> + q<sub>s</sub>. '+
+    'The last entry of F also includes the Dirichlet term κg/h<sub>e</sub>, from the room temperature at x = L. '+
+    'The finite element solution matches the exact solution at every node, as expected in one dimension (Class 18).';
+}
+['r22h','r22n','r22lim'].forEach(function(id){
+  document.getElementById(id).addEventListener('input',draw); });
+draw();
+})();
+</script>
+<p>Things to try:</p>
+<ol type="1">
+<li><strong>Make <span class="math inline">\(h_c\)</span> as small as possible.</strong> The solution approaches the Neumann solution of the appendix, and the outer face approaches 46.8 °C. The Robin term adds almost nothing to <span class="math inline">\(K_{00}\)</span>.</li>
+<li><strong>Set <span class="math inline">\(h_c\)</span> near 10 W/(m²·K).</strong> This is typical of outdoor air. The outer face is now much colder than in the Neumann problem, and most of the heat generated in the wall leaves through the outer face rather than into the room.</li>
+<li><strong>Make <span class="math inline">\(h_c\)</span> as large as possible.</strong> The outer face approaches the air temperature, as for a Dirichlet condition with <span class="math inline">\(g = u_\infty\)</span>. The entry <span class="math inline">\(K_{00}\)</span> becomes much larger than the rest of the matrix, which forces <span class="math inline">\(d_0\)</span> toward <span class="math inline">\(F_0/K_{00} \approx u_\infty\)</span>.</li>
+<li><strong>Change the number of elements.</strong> Only the first row of <span class="math inline">\(\underline{\underline{K}}\)</span> and the first entry of <span class="math inline">\(\underline{F}\)</span> contain the Robin terms, regardless of how many elements are used.</li>
+</ol>
+</section>
+<section id="computing-the-robin-terms-on-an-element" class="level2" data-number="22.6">
+<h2 data-number="22.6" class="anchored" data-anchor-id="computing-the-robin-terms-on-an-element"><span class="header-section-number">22.6</span> Computing the Robin terms on an element</h2>
+<p>In two dimensions, <span class="math inline">\(\Gamma_r\)</span> is made up of element faces, and the Robin integrals are computed face by face, using the face quadrature of <a href="../chapters/20_Class.html">Class 20</a>. For an element <span class="math inline">\(e\)</span> with a face on <span class="math inline">\(\Gamma_r\)</span>, for example the face <span class="math inline">\(\xi = 1\)</span>, the Robin contributions to the element stiffness matrix and force vector are</p>
+<p><span class="math display">\[
+k^{e}_{ab} \mathrel{+}= \int_{\Gamma^e_r} N_a\,\hat{a}\,N_b\;d\Gamma
+\approx \sum_{g} w_g\,N_a(1,\eta_g)\,\hat{a}\big(\underline{x}(1,\eta_g)\big)\,N_b(1,\eta_g)\,\big\|\underline{t}(1,\eta_g)\big\| ,
+\]</span></p>
+<p><span class="math display">\[
+f^{e}_{a} \mathrel{+}= \int_{\Gamma^e_r} N_a\,\hat{c}\;d\Gamma
+\approx \sum_{g} w_g\,N_a(1,\eta_g)\,\hat{c}\big(\underline{x}(1,\eta_g)\big)\,\big\|\underline{t}(1,\eta_g)\big\| ,
+\]</span></p>
+<p>where <span class="math inline">\(\underline{t} = \partial\underline{x}/\partial\eta\)</span> is the tangent to the face, and <span class="math inline">\(\|\underline{t}\|\)</span> is the arc-length Jacobian of Class 20. These are the same face integrals used for the Neumann term, with a second basis function in the stiffness term.</p>
+<div id="fig-c22-face" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c22-face-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class22/C22_Fig2_RobinFace.png" class="img-fluid figure-img" style="width:94.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c22-face-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;22.3: (a) A biquadratic element in its parent domain, with local nodes numbered as in Homework 16 and its face <span class="math inline">\(\xi = 1\)</span> on <span class="math inline">\(\Gamma_r\)</span>. Only the basis functions of nodes 2, 5, and 8 are nonzero on that face. (b) The entries of the element stiffness matrix and element force vector to which the Robin face contributes are shaded. The face integrals change only the <span class="math inline">\(3\times 3\)</span> block for the nodes on the face, and only the three corresponding entries of the force vector. Every entry, shaded or not, also contains the integral over the element interior.
+</figcaption>
+</figure>
+</div>
+<p>Several practical points follow from these formulas.</p>
+<ul>
+<li>Only the basis functions whose nodes lie on the face are nonzero there, as noted in Class 20. For an element of degree <span class="math inline">\(p\)</span>, the Robin face therefore contributes to a <span class="math inline">\((p+1)\times(p+1)\)</span> block of the element stiffness matrix, as shown in <a href="#fig-c22-face" class="quarto-xref">Figure&nbsp;<span>22.3</span></a>.</li>
+<li>For a straight face and a constant <span class="math inline">\(\hat{a}\)</span>, the integrand of the stiffness term is a polynomial of degree <span class="math inline">\(2p\)</span> in the face coordinate, so <span class="math inline">\(p+1\)</span> Gauss points integrate it exactly.</li>
+<li>These contributions are assembled into <span class="math inline">\(\underline{\underline{K}}\)</span> and <span class="math inline">\(\underline{F}\)</span> in the same way as the interior contributions, using the IEN and ID arrays. If a node on the Robin face is a Dirichlet node, which can occur at an end of the face where <span class="math inline">\(\Gamma_r\)</span> meets <span class="math inline">\(\Gamma_g\)</span>, its column is not assembled into <span class="math inline">\(\underline{\underline{K}}\)</span>. Instead, <span class="math inline">\(k^e_{ab}\,g_b\)</span> is subtracted from <span class="math inline">\(f^e_a\)</span>, exactly as is done for the interior terms. This is the term <span class="math inline">\(-(N_A,\hat{a}\,N_{\hat{B}})_{\Gamma_r}\,g_{\hat{B}}\)</span> in <span class="math inline">\(F_A\)</span>.</li>
+<li>In Homework 16, these integrals are computed by the functions <code>LocalStiffnessBoundaryTerms</code> and <code>LocalForceBoundaryTerms</code>.</li>
+</ul>
+</section>
+<section id="summary" class="level2" data-number="22.7">
+<h2 data-number="22.7" class="anchored" data-anchor-id="summary"><span class="header-section-number">22.7</span> Summary</h2>
+<ul>
+<li>A <strong>Robin boundary condition</strong>, <span class="math inline">\(\hat{a}\,u + \left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = \hat{c}\)</span> on <span class="math inline">\(\Gamma_r\)</span>, relates the value of the solution to its flux. It describes a boundary that is connected to its surroundings, such as a surface cooled by a fluid (<span class="math inline">\(\hat{a} = h_c\)</span>, <span class="math inline">\(\hat{c} = h_c\,u_\infty\)</span>), a thin layer of another material, or the end of a rod resting on a spring (<span class="math inline">\(\hat{a} = k_s\)</span>).</li>
+<li>The Robin condition becomes a Neumann condition when <span class="math inline">\(\hat{a} = 0\)</span>, and approaches a Dirichlet condition with <span class="math inline">\(g = \hat{c}/\hat{a}\)</span> as <span class="math inline">\(\hat{a}\)</span> becomes large. The Biot number for convection, or <span class="math inline">\(k_s L/(EA)\)</span> for a spring support, indicates which of these a particular coefficient is closer to.</li>
+<li>A Robin condition is a <strong>natural</strong> boundary condition: it does not change <span class="math inline">\(\mathcal{S}\)</span> or <span class="math inline">\(\mathcal{V}\)</span>, and the nodes on <span class="math inline">\(\Gamma_r\)</span> carry unknowns.</li>
+<li>It adds <span class="math inline">\((N_A,\hat{a}\,N_B)_{\Gamma_r}\)</span> to the stiffness matrix and <span class="math inline">\((N_A,\hat{c})_{\Gamma_r}\)</span> to the force vector, together with a Dirichlet term where <span class="math inline">\(\Gamma_r\)</span> meets <span class="math inline">\(\Gamma_g\)</span>.</li>
+<li>These integrals are computed with the face quadrature of Class 20, and each Robin face contributes to a <span class="math inline">\((p+1)\times(p+1)\)</span> block of the element stiffness matrix.</li>
+<li><a href="../chapters/23_Class.html">Class 23</a> shows why the stiffness matrix, including these Robin terms, is invertible, and when it is not.</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation column-body">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/21_Class.html" class="pagination-link" aria-label="Class 21: CAD, Meshing, and Discretization Choice">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Class 21: CAD, Meshing, and Discretization Choice</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/23_Class.html" class="pagination-link" aria-label="Class 23: Minimization, Symmetry, and Positive Definiteness">
+        <span class="nav-page-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Class 23: Minimization, Symmetry, and Positive Definiteness</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
