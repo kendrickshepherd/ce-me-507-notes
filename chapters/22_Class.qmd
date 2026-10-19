@@ -1,0 +1,645 @@
+---
+title: "Class 22: Robin Boundary Conditions"
+subtitle: "Boundary conditions that relate the value of the solution to its flux"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+format:
+  html:
+    page-layout: full
+    toc: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+import os, sys, math
+sys.path.append('.')
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+from notes_style import (use_chapter, save, tidy,
+                         INK, DOMCLR, BDRYCLR, FLUXCLR, REFCLR)
+IMGDIR = use_chapter("Class22")
+ROBCLR = "#0d9488"   # Robin boundary (Gamma_r)
+
+# the concrete wall of the 1D heat appendix, with its outer face exposed to air
+L, kappa, f0, qs, g0, u_inf = 0.30, 1.4, 500.0, 50.0, 20.0, 0.0
+g_eff = g0 + f0 * L**2 / (2 * kappa)
+
+
+def wall_u0(hc):
+    """Exact temperature of the outer face (x = 0) for convection coefficient hc."""
+    A = (hc * (g_eff - u_inf) - qs) / (hc * L + kappa)
+    return g_eff - A * L
+
+
+uN0 = wall_u0(0.0)                   # the Neumann problem of the appendix
+u10 = wall_u0(10.0)
+bi10 = 10.0 * L / kappa
+```
+
+To this point, we have used two kinds of boundary conditions.
+On the Dirichlet boundary $\Gamma_g$, the value of the solution is prescribed, and on the Neumann boundary $\Gamma_h$, the flux is prescribed:
+
+$$
+u = g \quad \text{on } \Gamma_g,
+\qquad\qquad
+\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = \kappa_{ij}u_{,j}n_i = h \quad \text{on } \Gamma_h .
+$$
+
+Many boundaries of practical interest are neither.
+The outside face of a building wall does not have a known temperature, and the heat flowing through it is not known in advance either.
+Instead, the heat flowing through the face depends on the temperature of the face itself, and a relationship of this kind is described by a **Robin boundary condition**.
+In this class, we will add Robin boundary conditions to the strong, weak, and Galerkin forms of the problem, and determine how they change the stiffness matrix and the force vector.
+The back face of the brick in Project 2 has a Robin boundary condition, and Homework 16 implements the terms derived here.
+
+## The Robin boundary condition
+
+A Robin boundary condition prescribes a combination of the value of the solution and its flux on a portion of the boundary, $\Gamma_r$:
+
+$$
+\hat{a}\,u + \left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = \hat{c}
+\qquad \text{on } \Gamma_r ,
+$$
+
+or, in index notation,
+
+$$
+\hat{a}\,u + \kappa_{ij}u_{,j}n_i = \hat{c}
+\qquad \text{on } \Gamma_r .
+$$
+
+Here $\hat{a}:\Gamma_r\to\mathbb{R}$ and $\hat{c}:\Gamma_r\to\mathbb{R}$ are given functions, in the same way that $g$ and $h$ are given functions on $\Gamma_g$ and $\Gamma_h$.
+The hats distinguish them from other uses of the letters $a$ and $c$ in this course, such as the bilinear form $a(\cdot,\cdot)$ and the coefficients $c_A$ of a test function $w^h$.
+When the conductivity is isotropic, $\kappa_{ij}=\kappa\,\delta_{ij}$, the condition is often written using the normal derivative $\partial u/\partial n = \nabla u\cdot\underline{n}$, as $\hat{a}\,u + \kappa\,\partial u/\partial n = \hat{c}$.
+
+### Where Robin conditions come from
+
+The most common example in heat transfer is **convection**, in which a surface exchanges heat with a surrounding fluid such as air or water.
+Newton's law of cooling states that the heat flux leaving the surface is proportional to the difference between the temperature of the surface and the temperature of the fluid away from the surface, $u_\infty$:
+
+$$
+\underline{q}\cdot\underline{n} = h_c\left(u - u_\infty\right),
+$$
+
+where $h_c$ is the **convection coefficient**, with units of W/(m²·K).
+Recall from the appendices that the heat flux is given by Fourier's law, $\underline{q} = -\underline{\underline{\kappa}}\nabla u$.
+Substituting this and rearranging gives
+
+$$
+-\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = h_c\left(u - u_\infty\right)
+\qquad\Longrightarrow\qquad
+h_c\,u + \left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = h_c\,u_\infty ,
+$$
+
+which is a Robin condition with $\hat{a} = h_c$ and $\hat{c} = h_c\,u_\infty$.
+If the surface also absorbs a known heat flux $q_s$, such as from sunlight, it is added to the right side, so that $\hat{c} = h_c\,u_\infty + q_s$.
+
+Typical convection coefficients are 2 to 25 W/(m²·K) for air moving by natural convection (driven only by buoyancy), 25 to 250 W/(m²·K) for air moved by a fan or by wind, and roughly 50 to 20,000 W/(m²·K) for liquids, depending on how they flow.
+The back face of the brick in Project 2 uses $h_c = 9.06$ W/(m²·K), which is typical of still air.
+
+Robin conditions also arise outside of heat transfer.
+In the [rod appendix](Poisson1D_Rod.qmd), the end of a pile resting on a spring of stiffness $k_s$ has the condition $h = -k_s\,u$, which is a Robin condition with $\hat{a} = k_s$ and $\hat{c} = 0$.
+A thin layer of a different material, such as the thermal interface material under the battery cell in the [2D heat appendix](Poisson2D_Heat.qmd), behaves similarly, since the heat crossing the layer is proportional to the temperature drop across it.
+In contaminant transport, the rate at which a substance crosses a surface is often modeled as proportional to the difference in concentration across that surface, which has the same form.
+
+### Robin conditions contain the other two
+
+The Robin condition can be viewed as lying between the Neumann and Dirichlet conditions.
+If $\hat{a} = 0$, it is a Neumann condition with $h = \hat{c}$.
+If we instead divide the condition by $\hat{a}$,
+
+$$
+u + \frac{1}{\hat{a}}\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = \frac{\hat{c}}{\hat{a}} ,
+$$
+
+and let $\hat{a}$ become very large while $\hat{c}/\hat{a}$ is held fixed, the flux term vanishes, and the condition becomes a Dirichlet condition with $g = \hat{c}/\hat{a}$.
+For convection, $\hat{c}/\hat{a} = u_\infty$, so a very large convection coefficient holds the surface at the temperature of the fluid.
+
+Whether a particular convection coefficient should be considered large or small depends on the body to which it is applied.
+For a body of thickness $L$, the **Biot number**
+
+$$
+\mathrm{Bi} = \frac{h_c\,L}{\kappa}
+$$
+
+compares the resistance to conduction through the body, $L/\kappa$, with the resistance to heat transfer across its surface, $1/h_c$.
+When $\mathrm{Bi}$ is much greater than 1, the solution is close to that of a Dirichlet condition, and when $\mathrm{Bi}$ is much less than 1, it is close to that of a Neumann condition.
+The example later in this class shows this directly.
+
+## The strong form
+
+As before, consider a domain $\Omega\subset\mathbb{R}^{n_{sd}}$, now with its boundary divided into three parts, $\Gamma_g$, $\Gamma_h$, and $\Gamma_r$.
+These parts do not overlap, and together they make up the entire boundary $\Gamma$, so that every point of the boundary has exactly one boundary condition.
+Given $f:\Omega\to\mathbb{R}$, $g:\Gamma_g\to\mathbb{R}$, $h:\Gamma_h\to\mathbb{R}$, $\hat{a}:\Gamma_r\to\mathbb{R}$, $\hat{c}:\Gamma_r\to\mathbb{R}$, and a symmetric positive definite $\underline{\underline{\kappa}}:\Omega\to\mathbb{R}^{n_{sd}\times n_{sd}}$, find $u:\bar{\Omega}\to\mathbb{R}$ such that
+
+$$
+(\mathrm{S})\qquad
+\left\{
+\begin{aligned}
+-\nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right) &= f && \text{in } \Omega\\
+u &= g && \text{on } \Gamma_g\\
+\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} &= h && \text{on } \Gamma_h\\
+\hat{a}\,u + \left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} &= \hat{c} && \text{on } \Gamma_r
+\end{aligned}
+\right.
+$$
+
+```{python fig_domain}
+#| echo: false
+#| output: false
+fig, ax = plt.subplots(figsize=(6.6, 5.4))
+t = np.linspace(0, 2 * math.pi, 600)
+r = 2.3 + 0.28 * np.sin(3 * t) + 0.16 * np.cos(5 * t)
+X, Y = r * np.cos(t), r * np.sin(t)
+ax.fill(X, Y, color=DOMCLR, alpha=0.55, zorder=1)
+
+hmask = (t > 0.30 * math.pi) & (t < 0.70 * math.pi)
+rmask = (t > 1.30 * math.pi) & (t < 1.95 * math.pi)
+gmask = ~(hmask | rmask)
+for m, c, lw in ((gmask, BDRYCLR, 2.4), (hmask, FLUXCLR, 3.6), (rmask, ROBCLR, 3.6)):
+    idx = np.where(m)[0]
+    # draw each contiguous run separately so the curve does not jump across the gap
+    runs = np.split(idx, np.where(np.diff(idx) > 1)[0] + 1)
+    for run in runs:
+        ax.plot(X[run], Y[run], color=c, lw=lw, zorder=3, solid_capstyle="butt")
+
+ax.text(0.0, 0.0, r"$\Omega$", ha="center", va="center", fontsize=19, color=INK)
+ax.text(-0.15, 2.95, r"$\Gamma_h$: flux $h$ prescribed", ha="center", va="bottom",
+        fontsize=12.5, color=FLUXCLR)
+ax.text(-2.75, 0.3, r"$\Gamma_g$: value $g$" + "\nprescribed", ha="right", va="center",
+        fontsize=12.5, color=BDRYCLR)
+ax.text(1.75, -2.95, r"$\Gamma_r$: $\hat{a}\,u + (\kappa\nabla u)\cdot n = \hat{c}$",
+        ha="center", va="top", fontsize=12.5, color=ROBCLR)
+
+# the surrounding fluid along Gamma_r, drawn as a few short wavy lines
+for k, tt in enumerate(np.linspace(1.74 * math.pi, 1.90 * math.pi, 3)):
+    j = np.argmin(np.abs(t - tt))
+    nx, ny = math.cos(t[j]), math.sin(t[j])
+    tx, ty = -ny, nx
+    s = np.linspace(-0.32, 0.32, 40)
+    off = 0.55
+    xs = X[j] + off * nx + s * tx + 0.06 * np.sin(14 * s) * nx
+    ys = Y[j] + off * ny + s * ty + 0.06 * np.sin(14 * s) * ny
+    ax.plot(xs, ys, color=ROBCLR, lw=1.1, alpha=0.75, zorder=2)
+ax.text(2.95, -1.45, "surrounding\nfluid at $u_\\infty$", ha="left", va="center",
+        fontsize=11, color=ROBCLR)
+
+# outward normal on Gamma_r
+j = np.argmin(np.abs(t - 1.40 * math.pi))
+nx, ny = math.cos(t[j]), math.sin(t[j])
+ax.annotate("", xy=(X[j] + 0.95 * nx, Y[j] + 0.95 * ny), xytext=(X[j], Y[j]),
+            arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.5, mutation_scale=13), zorder=6)
+ax.text(X[j] + 1.05 * nx - 0.12, Y[j] + 1.05 * ny + 0.05, r"$\underline{n}$",
+        ha="right", va="center", fontsize=13, color=INK)
+
+tidy(ax)
+ax.set_xlim(-4.6, 4.4)
+ax.set_ylim(-3.6, 3.5)
+fig_domain_path = save(fig, "C22_Fig1_Domain.png")
+```
+
+![A domain whose boundary is divided into a Dirichlet part $\Gamma_g$, a Neumann part $\Gamma_h$, and a Robin part $\Gamma_r$. Every point of the boundary belongs to exactly one of the three parts. On $\Gamma_r$, the boundary exchanges heat with a surrounding fluid, so neither the temperature nor the flux is known in advance.](`{python} fig_domain_path`){#fig-c22-domain width=66%}
+
+## The weak form
+
+The weak form is derived in the same way as in [Class 4](4_Class.qmd).
+Multiplying the differential equation by a test function $w\in\mathcal{V}$ and integrating over $\Omega$ gives
+
+$$
+-\int_\Omega w\,\nabla\cdot\left(\underline{\underline{\kappa}}\nabla u\right)d\Omega = \int_\Omega w\,f\,d\Omega .
+$$
+
+Applying the product rule and the divergence theorem, exactly as in Class 4, moves one derivative onto $w$ and produces an integral over the boundary:
+
+$$
+\int_\Omega \nabla w\cdot\underline{\underline{\kappa}}\nabla u\;d\Omega
+- \int_\Gamma w\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\;d\Gamma
+= \int_\Omega w\,f\,d\Omega .
+$$
+
+The boundary now has three parts, so the boundary integral splits into three integrals, and each is simplified using the boundary condition on its part:
+
+$$
+\int_\Gamma w\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\;d\Gamma
+=
+\underbrace{\int_{\Gamma_g} w\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\;d\Gamma}_{0, \text{ since } w = 0 \text{ on } \Gamma_g}
++
+\underbrace{\int_{\Gamma_h} w\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\;d\Gamma}_{\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = h}
++
+\underbrace{\int_{\Gamma_r} w\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n}\;d\Gamma}_{\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = \hat{c} - \hat{a}\,u}
+=
+\int_{\Gamma_h} w\,h\;d\Gamma + \int_{\Gamma_r} w\left(\hat{c} - \hat{a}\,u\right)d\Gamma .
+$$
+
+On $\Gamma_r$, the Robin condition was solved for the flux, $\left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = \hat{c} - \hat{a}\,u$.
+Substituting this into the previous equation and moving the term that contains $u$ to the left side gives
+
+$$
+\boxed{\;
+\int_\Omega \nabla w\cdot\underline{\underline{\kappa}}\nabla u\;d\Omega
++ \int_{\Gamma_r} w\,\hat{a}\,u\;d\Gamma
+= \int_\Omega w\,f\,d\Omega + \int_{\Gamma_h} w\,h\;d\Gamma + \int_{\Gamma_r} w\,\hat{c}\;d\Gamma
+\;}
+$$
+
+or, in index notation,
+
+$$
+\int_\Omega w_{,i}\,\kappa_{ij}\,u_{,j}\;d\Omega
++ \int_{\Gamma_r} w\,\hat{a}\,u\;d\Gamma
+= \int_\Omega w\,f\,d\Omega + \int_{\Gamma_h} w\,h\;d\Gamma + \int_{\Gamma_r} w\,\hat{c}\;d\Gamma .
+$$
+
+The weak form is therefore: given the same data as the strong form, find $u\in\mathcal{S}$ such that the boxed equation holds for every $w\in\mathcal{V}$.
+The spaces $\mathcal{S}$ and $\mathcal{V}$ are the same as in Class 4, since only the Dirichlet boundary constrains them.
+Using the shorthand of earlier classes, $a(w,u) = \int_\Omega \nabla w\cdot\underline{\underline{\kappa}}\nabla u\,d\Omega$ and $(w,v)_{\Gamma_r} = \int_{\Gamma_r} w\,v\,d\Gamma$, the weak form is written as
+
+$$
+(\mathrm{W})\qquad
+a(w,u) + (w,\hat{a}\,u)_{\Gamma_r} = (w,f) + (w,h)_{\Gamma_h} + (w,\hat{c})_{\Gamma_r}
+\qquad \text{for all } w\in\mathcal{V} .
+$$
+
+Three observations about this result are worth noting.
+
+- A Robin condition, like a Neumann condition, is a **natural** boundary condition.
+  It appears in the integrals of the weak form, and not in the definitions of $\mathcal{S}$ and $\mathcal{V}$.
+  Consequently, the value of $u$ on $\Gamma_r$ is unknown, and the basis functions whose nodes lie on $\Gamma_r$ carry unknown coefficients, just as those on $\Gamma_h$ and in the interior do.
+  Only the nodes on $\Gamma_g$ are prescribed.
+- Unlike a Neumann condition, a Robin condition contributes a term to the left side of the weak form, since the flux on $\Gamma_r$ depends on the unknown $u$.
+  This term will add to the stiffness matrix.
+- The weak form also implies the strong form.
+  Following the argument of [Class 5](5_Class.qmd), choosing test functions that are nonzero only near $\Gamma_r$ recovers the Robin condition, in the same way that the Neumann condition was recovered on $\Gamma_h$.
+
+## The Galerkin form and the matrix equations
+
+As in [Class 7](7_Class.qmd), the trial solution is split into an unknown part and a known part, $u^h = v^h + g^h$, where
+
+$$
+w^h = \sum_{A \notin \Gamma_g} c_A\,N_A ,
+\qquad
+v^h = \sum_{B \notin \Gamma_g} d_B\,N_B ,
+\qquad
+g^h = \sum_{\hat{B} \in \Gamma_g} g_{\hat{B}}\,N_{\hat{B}} .
+$$
+
+Here $\hat{B}$ indexes the basis functions whose nodes lie on $\Gamma_g$.
+Substituting $u^h = v^h + g^h$ into the weak form, and moving the known terms that contain $g^h$ to the right side, gives the Galerkin form: find $v^h\in\mathcal{V}^h$ such that, for all $w^h\in\mathcal{V}^h$,
+
+$$
+a(w^h,v^h) + (w^h,\hat{a}\,v^h)_{\Gamma_r}
+= (w^h,f) + (w^h,h)_{\Gamma_h} + (w^h,\hat{c})_{\Gamma_r}
+- a(w^h,g^h) - (w^h,\hat{a}\,g^h)_{\Gamma_r} .
+$$
+
+The final term is new.
+Since the Robin term on the left side contains $u^h$, the known part $g^h$ contributes to it as well, and that contribution is moved to the right side in the same way as $a(w^h,g^h)$.
+
+Substituting the sums for $w^h$, $v^h$, and $g^h$, and choosing $w^h = N_A$ one basis function at a time, as in Class 7, gives the matrix equation $\underline{\underline{K}}\,\underline{d} = \underline{F}$, with
+
+$$
+K_{AB} = a(N_A,N_B) + (N_A,\hat{a}\,N_B)_{\Gamma_r}
+= \int_\Omega \nabla N_A\cdot\underline{\underline{\kappa}}\nabla N_B\;d\Omega
++ \int_{\Gamma_r} N_A\,\hat{a}\,N_B\;d\Gamma
+$$
+
+and
+
+$$
+F_A = (N_A,f) + (N_A,h)_{\Gamma_h} + (N_A,\hat{c})_{\Gamma_r}
+- \sum_{\hat{B}\in\Gamma_g} g_{\hat{B}}\left[\,a(N_A,N_{\hat{B}}) + (N_A,\hat{a}\,N_{\hat{B}})_{\Gamma_r}\right] .
+$$
+
+A Robin boundary condition therefore changes both the stiffness matrix and the force vector.
+
+- The stiffness matrix gains the integral $\int_{\Gamma_r} N_A\,\hat{a}\,N_B\,d\Gamma$.
+  This is nonzero only when both $N_A$ and $N_B$ are nonzero on $\Gamma_r$, which happens only when both of their nodes lie on a Robin face of the same element.
+- The force vector gains $\int_{\Gamma_r} N_A\,\hat{c}\,d\Gamma$, which is computed in exactly the same way as the Neumann term, with $\hat{c}$ in place of $h$.
+- The Dirichlet term in $F_A$ gains a Robin integral as well.
+  This is nonzero only where a node on $\Gamma_g$ also lies on a Robin face, which occurs at the points (or edges) where $\Gamma_g$ and $\Gamma_r$ meet.
+
+Since $\hat{a}\ge 0$ for physical problems such as convection, the Robin term adds nonnegative contributions to the stiffness matrix.
+[Class 23](23_Class.qmd) shows that these contributions can make the stiffness matrix invertible even when there is no Dirichlet boundary at all.
+
+## Example: a wall exposed to outside air
+
+The [1D heat appendix](Poisson1D_Heat.qmd) modeled a concrete wall of thickness $L$ = 0.30 m and conductivity $\kappa$ = 1.4 W/(m·K), heated internally by the hydration of the cement at $f$ = 500 W/m³.
+Its interior face, at $x = L$, was held at the room temperature $g$ = 20 °C, and its outer face, at $x = 0$, absorbed a solar heat flux of 50 W/m² as a Neumann condition.
+A more realistic model of the outer face also accounts for the heat that it exchanges with the outside air.
+Taking the outside air to be at $u_\infty$ = 0 °C and keeping the solar flux $q_s$ = 50 W/m², the outer face has the Robin condition
+
+$$
+h_c\,u(0) - \kappa\,u_{,x}(0) = h_c\,u_\infty + q_s ,
+$$
+
+since the outward normal at $x = 0$ is $n = -1$.
+This is a Robin condition with $\hat{a} = h_c$ and $\hat{c} = h_c\,u_\infty + q_s$.
+
+In one dimension, $\Gamma_r$ is a single point, and the boundary integrals reduce to evaluations at that point:
+
+$$
+(N_A,\hat{a}\,N_B)_{\Gamma_r} = h_c\,N_A(0)\,N_B(0),
+\qquad
+(N_A,\hat{c})_{\Gamma_r} = \hat{c}\,N_A(0) .
+$$
+
+With linear elements, the only basis function that is nonzero at $x = 0$ is the one belonging to the first node, so the Robin condition adds $h_c$ to the first diagonal entry of $\underline{\underline{K}}$ and adds $\hat{c}$ to the first entry of $\underline{F}$, and changes nothing else.
+
+Solving the strong form of this problem exactly shows that the temperature of the outer face is
+
+$$
+u(0) = u_\infty + \frac{u_N(0) - u_\infty}{1 + \mathrm{Bi}} ,
+$$
+
+where $u_N(0)$ = `{python} f"{uN0:.1f}"` °C is the temperature of the outer face in the Neumann problem of the appendix ($h_c = 0$).
+The Biot number alone therefore determines where the temperature of the outer face falls between the Dirichlet value $u_\infty$ and the Neumann value $u_N(0)$.
+For example, with $h_c$ = 10 W/(m²·K), which is typical of outdoor air, $\mathrm{Bi}$ = `{python} f"{bi10:.2f}"` and the outer face is at `{python} f"{u10:.1f}"` °C.
+The widget below solves this problem with linear finite elements and shows the resulting matrix equations.
+
+```{=html}
+<style>
+.rw{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;--acc:#b8322a;--rob:#0d9488;
+    --amb:#fff1c7;max-width:900px;margin:0 auto;color:var(--ink)}
+.rw .bar{display:flex;flex-wrap:wrap;gap:9px 20px;align-items:center;padding:11px 14px;
+  background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.rw .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey)}
+.rw input[type=range]{width:170px;vertical-align:middle}
+.rw label{font-size:13px;color:var(--grey)}
+.rw .val{font:600 13px ui-monospace,Menlo,monospace;color:var(--ink);display:inline-block;min-width:8.5em}
+.rw svg{display:block;width:100%;height:auto;border:1px solid var(--faint);border-radius:8px;background:#fff}
+.rw .nums{font:12.5px ui-monospace,Menlo,monospace;color:var(--ink);margin:9px 2px 4px;line-height:1.6}
+.rw .sys{overflow-x:auto;margin:6px 0 4px;padding:10px 12px;border:1px solid var(--faint);border-radius:8px;background:#fff}
+.rw .sys table{border-collapse:separate;border-spacing:0;font:12.5px ui-monospace,Menlo,monospace;color:var(--ink);margin:0 auto}
+.rw .sys td{padding:3px 8px;text-align:right;white-space:nowrap}
+.rw .sys td.lb{border-left:1.5px solid var(--ink)} .rw .sys td.rb{border-right:1.5px solid var(--ink)}
+.rw .sys td.op{border:0;padding:0 10px;color:var(--grey);text-align:center}
+.rw .sys td.hl{background:var(--amb);font-weight:700}
+.rw .sys .hdr td{border:0;color:var(--grey);font-size:11.5px;text-align:center;padding-bottom:4px}
+.rw .cap{font-size:13px;color:var(--grey);line-height:1.55;margin:9px 2px 22px}
+.rw .cap b{color:var(--ink)}
+</style>
+
+<div class="rw">
+  <div class="bar">
+    <b>CONVECTION COEFFICIENT</b>
+    <input type="range" id="r22h" min="-1" max="4" step="0.05" value="1">
+    <span class="val" id="r22hv"></span>
+    <b>ELEMENTS</b>
+    <input type="range" id="r22n" min="2" max="6" step="1" value="3" style="width:110px">
+    <span class="val" id="r22nv" style="min-width:1.2em"></span>
+    <label><input type="checkbox" id="r22lim" checked> show the Neumann and Dirichlet limits</label>
+  </div>
+  <svg id="r22svg" viewBox="0 0 880 330" role="img"
+       aria-label="Temperature through a concrete wall whose outer face exchanges heat with outside air, for a chosen convection coefficient"></svg>
+  <div class="nums" id="r22nums"></div>
+  <div class="sys" id="r22sys"></div>
+  <div class="cap" id="r22cap"></div>
+</div>
+
+<script>
+(function(){
+var INK='#18202b',GREY='#6b7684',FAINT='#dfe4ea',ACC='#b8322a',ROB='#0d9488',BLUE='#1e3a5f';
+var L=0.30,KAP=1.4,F0=500,QS=50,G=20,UINF=0;
+var GEFF=G+F0*L*L/(2*KAP);
+function exact(hc){ /* u(x) = -f x^2/(2k) + A x + B, with B = GEFF - A L */
+  var A=(isFinite(hc)? (hc*(GEFF-UINF)-QS)/(hc*L+KAP) : (GEFF-UINF)/L), B=GEFF-A*L;
+  return function(x){ return -F0*x*x/(2*KAP)+A*x+B; };
+}
+function solve(K,F){ /* Gaussian elimination; K is small, symmetric and positive definite */
+  var n=F.length,a=K.map(function(r){return r.slice();}),b=F.slice(),i,j,k;
+  for(k=0;k<n;k++){ for(i=k+1;i<n;i++){ var m=a[i][k]/a[k][k];
+      for(j=k;j<n;j++) a[i][j]-=m*a[k][j]; b[i]-=m*b[k]; } }
+  var x=new Array(n);
+  for(i=n-1;i>=0;i--){ var s=b[i]; for(j=i+1;j<n;j++) s-=a[i][j]*x[j]; x[i]=s/a[i][i]; }
+  return x;
+}
+function system(hc,ne){ /* nodes 0..ne; node ne (x = L) is Dirichlet, so ne unknowns */
+  var he=L/ne,n=ne,K=[],F=[],i,e,a,b;
+  for(i=0;i<n;i++){ K.push(new Array(n).fill(0)); F.push(0); }
+  for(e=0;e<ne;e++){
+    var ke=[[KAP/he,-KAP/he],[-KAP/he,KAP/he]], fe=[F0*he/2,F0*he/2];
+    for(a=0;a<2;a++){ var A=e+a; if(A>=n) continue; F[A]+=fe[a];
+      for(b=0;b<2;b++){ var B=e+b; if(B>=n) F[A]-=ke[a][b]*G; else K[A][B]+=ke[a][b]; } }
+  }
+  K[0][0]+=hc; F[0]+=hc*UINF+QS;          /* the Robin terms */
+  return {K:K,F:F,d:solve(K,F),he:he};
+}
+var svg=document.getElementById('r22svg');
+var X0=70,X1=640,Y0=26,Y1=290,XL=-0.045,XR=0.345,UL=-6,UH=52;
+function sx(x){return X0+(x-XL)/(XR-XL)*(X1-X0);}
+function sy(u){return Y1-(u-UL)/(UH-UL)*(Y1-Y0);}
+function el(n,at,txt){var e=document.createElementNS('http://www.w3.org/2000/svg',n);
+  for(var k in at) e.setAttribute(k,at[k]); if(txt!==undefined) e.textContent=txt; return e;}
+function T(x,y,s,o){o=o||{}; return el('text',{x:x,y:y,'font-size':o.fs||12,fill:o.f||GREY,
+  'text-anchor':o.a||'start','font-weight':o.w||400,'font-family':'system-ui, sans-serif'},s);}
+function TS(x,y,parts,o){ /* text with subscripts: parts = [[text, isSub], ...] */
+  var t=T(x,y,'',o), down=false;
+  parts.forEach(function(q){ var sp=el('tspan',{},q[0]);
+    if(q[1]&&!down){ sp.setAttribute('dy','3.5'); sp.setAttribute('font-size','80%'); down=true; }
+    else if(q[1]){ sp.setAttribute('font-size','80%'); }
+    else if(down){ sp.setAttribute('dy','-3.5'); down=false; }
+    t.appendChild(sp); });
+  return t;
+}
+function path(fn,col,wd,dash){var d='',k;for(k=0;k<=160;k++){var x=L*k/160;
+  d+=(k?'L':'M')+sx(x).toFixed(1)+' '+sy(fn(x)).toFixed(1);}
+  var p=el('path',{d:d,fill:'none',stroke:col,'stroke-width':wd}); if(dash) p.setAttribute('stroke-dasharray',dash); return p;}
+function fmt(v,d){ var s=v.toFixed(d); return (s==='-0.0'||s==='-0')?s.slice(1):s; }
+function draw(){
+  var lh=+document.getElementById('r22h').value, hc=Math.pow(10,lh);
+  var ne=+document.getElementById('r22n').value, lim=document.getElementById('r22lim').checked;
+  document.getElementById('r22hv').textContent=(hc<10?hc.toFixed(2):hc<100?hc.toFixed(1):hc.toFixed(0))+' W/(m²·K)';
+  document.getElementById('r22nv').textContent=ne;
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+  /* outside air, wall, room */
+  svg.appendChild(el('rect',{x:X0,y:Y0,width:sx(0)-X0,height:Y1-Y0,fill:'#eef8f6'}));
+  svg.appendChild(el('rect',{x:sx(0),y:Y0,width:sx(L)-sx(0),height:Y1-Y0,fill:'#f4f4f4'}));
+  svg.appendChild(el('rect',{x:sx(L),y:Y0,width:X1-sx(L),height:Y1-Y0,fill:'#eef3f9'}));
+  svg.appendChild(el('rect',{x:X0,y:Y0,width:X1-X0,height:Y1-Y0,fill:'none',stroke:FAINT}));
+  var u;
+  for(u=0;u<=50;u+=10){ svg.appendChild(el('line',{x1:X0,y1:sy(u),x2:X1,y2:sy(u),stroke:FAINT,'stroke-width':0.8}));
+    svg.appendChild(T(X0-8,sy(u)+4,String(u),{a:'end',fs:11})); }
+  svg.appendChild(T(26,(Y0+Y1)/2,'u (°C)',{fs:11.5}));
+  [0,0.1,0.2,0.3].forEach(function(x){ svg.appendChild(T(sx(x),Y1+16,x.toFixed(1),{a:'middle',fs:11})); });
+  svg.appendChild(T((sx(0)+sx(L))/2,Y1+31,'x (m)',{a:'middle',fs:11.5}));
+  svg.appendChild(T((sx(0)+sx(L))/2,Y1-8,'concrete wall',{a:'middle',fs:11}));
+  /* the fluid and room temperatures */
+  svg.appendChild(el('line',{x1:X0,y1:sy(UINF),x2:sx(0),y2:sy(UINF),stroke:ROB,'stroke-width':1.6,'stroke-dasharray':'5 3'}));
+  svg.appendChild(T(X0+3,sy(UINF)-6,'air, 0 °C',{fs:10.5,f:ROB}));
+  svg.appendChild(el('line',{x1:sx(L),y1:sy(G),x2:X1,y2:sy(G),stroke:BLUE,'stroke-width':1.6,'stroke-dasharray':'5 3'}));
+  svg.appendChild(T(sx(L)+4,sy(G)-6,'room, 20 °C',{fs:10.5,f:BLUE}));
+  /* the two limits */
+  if(lim){
+    svg.appendChild(path(exact(0),GREY,1.3,'6 4'));
+    svg.appendChild(path(exact(Infinity),GREY,1.3,'2 3'));
+    svg.appendChild(TS(sx(0.12),sy(43),[['h',0],['c',1],[' = 0 (Neumann)',0]],{fs:10.5}));
+    svg.appendChild(TS(sx(0.12),sy(7),[['h',0],['c',1],[' → ∞ (Dirichlet)',0]],{fs:10.5}));
+  }
+  /* exact solution and the finite element solution */
+  var ex=exact(hc); svg.appendChild(path(ex,INK,2.2));
+  var S=system(hc,ne), d=S.d.concat([G]), xs=[], i;
+  for(i=0;i<=ne;i++) xs.push(i*S.he);
+  var pd='';
+  for(i=0;i<=ne;i++) pd+=(i?'L':'M')+sx(xs[i]).toFixed(1)+' '+sy(d[i]).toFixed(1);
+  svg.appendChild(el('path',{d:pd,fill:'none',stroke:ACC,'stroke-width':1.6}));
+  for(i=0;i<=ne;i++) svg.appendChild(el('circle',{cx:sx(xs[i]),cy:sy(d[i]),r:i===ne?3.6:4.2,
+      fill:i===ne?'#fff':ACC,stroke:i===ne?BLUE:'none','stroke-width':1.6}));
+  /* legend */
+  var lx=X1+16, ly=Y0+18;
+  svg.appendChild(el('line',{x1:lx,y1:ly,x2:lx+26,y2:ly,stroke:INK,'stroke-width':2.2}));
+  svg.appendChild(T(lx+32,ly+4,'exact solution',{fs:11.5,f:INK}));
+  svg.appendChild(el('line',{x1:lx,y1:ly+22,x2:lx+26,y2:ly+22,stroke:ACC,'stroke-width':1.6}));
+  svg.appendChild(el('circle',{cx:lx+13,cy:ly+22,r:4,fill:ACC}));
+  svg.appendChild(T(lx+32,ly+26,'finite elements',{fs:11.5,f:INK}));
+  svg.appendChild(el('circle',{cx:lx+13,cy:ly+44,r:3.6,fill:'#fff',stroke:BLUE,'stroke-width':1.6}));
+  svg.appendChild(T(lx+32,ly+48,'Dirichlet node',{fs:11.5,f:INK}));
+  var Bi=hc*L/KAP, u0=ex(0);
+  svg.appendChild(T(lx,ly+92,'outer face',{fs:11,w:700}));
+  svg.appendChild(T(lx,ly+110,'u(0) = '+u0.toFixed(1)+' °C',{fs:12,f:INK}));
+  svg.appendChild(T(lx,ly+130,'Bi = '+(Bi<10?Bi.toFixed(2):Bi.toFixed(0)),{fs:12,f:INK}));
+  svg.appendChild(T(lx,ly+150,'heat to the air:',{fs:11}));
+  svg.appendChild(T(lx,ly+168,(hc*(u0-UINF)).toFixed(0)+' W/m²',{fs:12,f:INK}));
+  /* numbers and the matrix system */
+  document.getElementById('r22nums').innerHTML=
+    'h<sub>c</sub> = '+(hc<10?hc.toFixed(2):hc.toFixed(1))+' W/(m²·K) &nbsp; Bi = h<sub>c</sub>L/κ = '+Bi.toFixed(3)+
+    ' &nbsp; u(0) = u<sub>∞</sub> + (u<sub>N</sub>(0) − u<sub>∞</sub>)/(1 + Bi) = '+u0.toFixed(2)+' °C';
+  var n=ne, html='<tab'+'le><tr class="hdr"><td colspan="'+n+'">K &nbsp;(W/(m²·K))</td><td></td><td>d (°C)</td><td></td><td>F &nbsp;(W/m²)</td></tr>';
+  for(i=0;i<n;i++){
+    html+='<tr>';
+    for(var j=0;j<n;j++){
+      var cls=(j===0?'lb ':'')+(j===n-1?'rb ':'')+(i===0&&j===0?'hl':'');
+      html+='<td class="'+cls+'">'+fmt(S.K[i][j],1)+'</td>';
+    }
+    html+='<td class="op">'+(i===Math.floor((n-1)/2)?'×':'')+'</td>';
+    html+='<td class="lb rb">'+S.d[i].toFixed(2)+'</td>';
+    html+='<td class="op">'+(i===Math.floor((n-1)/2)?'=':'')+'</td>';
+    html+='<td class="lb rb'+(i===0?' hl':'')+'">'+fmt(S.F[i],1)+'</td></tr>';
+  }
+  html+='</tab'+'le>';
+  document.getElementById('r22sys').innerHTML=html;
+  document.getElementById('r22cap').innerHTML=
+    '<b>The highlighted entries are the only ones that contain the Robin terms:</b> '+
+    'K<sub>00</sub> = κ/h<sub>e</sub> + h<sub>c</sub> = '+fmt(KAP/S.he,1)+' + '+(hc<10?hc.toFixed(2):hc.toFixed(1))+
+    ', and F<sub>0</sub> includes h<sub>c</sub>u<sub>∞</sub> + q<sub>s</sub>. '+
+    'The last entry of F also includes the Dirichlet term κg/h<sub>e</sub>, from the room temperature at x = L. '+
+    'The finite element solution matches the exact solution at every node, as expected in one dimension (Class 18).';
+}
+['r22h','r22n','r22lim'].forEach(function(id){
+  document.getElementById(id).addEventListener('input',draw); });
+draw();
+})();
+</script>
+```
+
+Things to try:
+
+1. **Make $h_c$ as small as possible.** The solution approaches the Neumann solution of the appendix, and the outer face approaches `{python} f"{uN0:.1f}"` °C.
+   The Robin term adds almost nothing to $K_{00}$.
+2. **Set $h_c$ near 10 W/(m²·K).** This is typical of outdoor air.
+   The outer face is now much colder than in the Neumann problem, and most of the heat generated in the wall leaves through the outer face rather than into the room.
+3. **Make $h_c$ as large as possible.** The outer face approaches the air temperature, as for a Dirichlet condition with $g = u_\infty$.
+   The entry $K_{00}$ becomes much larger than the rest of the matrix, which forces $d_0$ toward $F_0/K_{00} \approx u_\infty$.
+4. **Change the number of elements.** Only the first row of $\underline{\underline{K}}$ and the first entry of $\underline{F}$ contain the Robin terms, regardless of how many elements are used.
+
+## Computing the Robin terms on an element
+
+In two dimensions, $\Gamma_r$ is made up of element faces, and the Robin integrals are computed face by face, using the face quadrature of [Class 20](20_Class.qmd).
+For an element $e$ with a face on $\Gamma_r$, for example the face $\xi = 1$, the Robin contributions to the element stiffness matrix and force vector are
+
+$$
+k^{e}_{ab} \mathrel{+}= \int_{\Gamma^e_r} N_a\,\hat{a}\,N_b\;d\Gamma
+\approx \sum_{g} w_g\,N_a(1,\eta_g)\,\hat{a}\big(\underline{x}(1,\eta_g)\big)\,N_b(1,\eta_g)\,\big\|\underline{t}(1,\eta_g)\big\| ,
+$$
+
+$$
+f^{e}_{a} \mathrel{+}= \int_{\Gamma^e_r} N_a\,\hat{c}\;d\Gamma
+\approx \sum_{g} w_g\,N_a(1,\eta_g)\,\hat{c}\big(\underline{x}(1,\eta_g)\big)\,\big\|\underline{t}(1,\eta_g)\big\| ,
+$$
+
+where $\underline{t} = \partial\underline{x}/\partial\eta$ is the tangent to the face, and $\|\underline{t}\|$ is the arc-length Jacobian of Class 20.
+These are the same face integrals used for the Neumann term, with a second basis function in the stiffness term.
+
+```{python fig_face}
+#| echo: false
+#| output: false
+fig, (axL, axR) = plt.subplots(1, 2, figsize=(10.4, 4.6),
+                               gridspec_kw=dict(width_ratios=[1.0, 1.25]))
+# (a) a biquadratic parent element with its xi = 1 face on Gamma_r
+axL.add_patch(Rectangle((-1, -1), 2, 2, facecolor="#f4f6fa", edgecolor=INK, lw=1.4))
+axL.plot([1, 1], [-1, 1], color=ROBCLR, lw=4.5, solid_capstyle="butt", zorder=3)
+face_nodes = [2, 5, 8]
+for a in range(9):
+    i, j = a % 3, a // 3
+    x, y = -1 + i, -1 + j
+    on = a in face_nodes
+    axL.plot(x, y, "o", ms=11 if on else 9, color=ROBCLR if on else INK,
+             mec="white", mew=1.2, zorder=5)
+    axL.text(x - 0.13, y + 0.13, str(a), ha="right", va="bottom", fontsize=11.5,
+             color=ROBCLR if on else INK, zorder=6)
+for eg in (-math.sqrt(3 / 5), 0.0, math.sqrt(3 / 5)):
+    axL.plot(1, eg, marker="x", ms=8, mew=2, color=INK, zorder=6)
+axL.text(1.22, 0.0, "face $\\xi = 1$\non $\\Gamma_r$\n(3 Gauss points)", ha="left",
+         va="center", fontsize=11, color=ROBCLR)
+axL.text(0.0, -1.42, "$\\xi$", ha="center", va="top", fontsize=13)
+axL.text(-1.42, 0.0, "$\\eta$", ha="right", va="center", fontsize=13)
+
+tidy(axL)
+axL.set_xlim(-1.7, 2.6)
+axL.set_ylim(-1.7, 1.55)
+
+# (b) which entries of the 9 x 9 element matrix and 9-entry vector the face changes
+n = 9
+for a in range(n):
+    for b in range(n):
+        on = (a in face_nodes) and (b in face_nodes)
+        axR.add_patch(Rectangle((b, n - 1 - a), 1, 1, facecolor=ROBCLR if on else "#e9edf2",
+                                edgecolor="white", lw=1.6))
+    on = a in face_nodes
+    axR.add_patch(Rectangle((n + 0.9, n - 1 - a), 1, 1, facecolor=ROBCLR if on else "#e9edf2",
+                            edgecolor="white", lw=1.6))
+    axR.text(-0.25, n - 0.5 - a, str(a), ha="right", va="center", fontsize=10.5,
+             color=ROBCLR if on else INK)
+    axR.text(a + 0.5, n + 0.2, str(a), ha="center", va="bottom", fontsize=10.5,
+             color=ROBCLR if a in face_nodes else INK)
+axR.text(n / 2, -0.55, "$k^e_{ab}$", ha="center", va="top", fontsize=13)
+axR.text(n + 1.4, -0.55, "$f^e_a$", ha="center", va="top", fontsize=13)
+axR.text(-1.25, n / 2, "$a$", ha="right", va="center", fontsize=13)
+axR.text(n / 2, n + 0.95, "$b$", ha="center", va="bottom", fontsize=13)
+
+tidy(axR)
+axR.set_xlim(-1.9, n + 2.3)
+axR.set_ylim(-1.4, n + 1.6)
+fig.subplots_adjust(wspace=0.12, top=0.86)
+fig.text(0.27, 0.95, "(a) A biquadratic element, $p = 2$", ha="center", fontsize=12, color=INK)
+fig.text(0.715, 0.95, "(b) Entries changed by the Robin face", ha="center", fontsize=12, color=INK)
+fig_face_path = save(fig, "C22_Fig2_RobinFace.png")
+```
+
+![(a) A biquadratic element in its parent domain, with local nodes numbered as in Homework 16 and its face $\xi = 1$ on $\Gamma_r$. Only the basis functions of nodes 2, 5, and 8 are nonzero on that face. (b) The entries of the element stiffness matrix and element force vector to which the Robin face contributes are shaded. The face integrals change only the $3\times 3$ block for the nodes on the face, and only the three corresponding entries of the force vector. Every entry, shaded or not, also contains the integral over the element interior.](`{python} fig_face_path`){#fig-c22-face width=94%}
+
+Several practical points follow from these formulas.
+
+- Only the basis functions whose nodes lie on the face are nonzero there, as noted in Class 20.
+  For an element of degree $p$, the Robin face therefore contributes to a $(p+1)\times(p+1)$ block of the element stiffness matrix, as shown in @fig-c22-face.
+- For a straight face and a constant $\hat{a}$, the integrand of the stiffness term is a polynomial of degree $2p$ in the face coordinate, so $p+1$ Gauss points integrate it exactly.
+- These contributions are assembled into $\underline{\underline{K}}$ and $\underline{F}$ in the same way as the interior contributions, using the IEN and ID arrays.
+  If a node on the Robin face is a Dirichlet node, which can occur at an end of the face where $\Gamma_r$ meets $\Gamma_g$, its column is not assembled into $\underline{\underline{K}}$.
+  Instead, $k^e_{ab}\,g_b$ is subtracted from $f^e_a$, exactly as is done for the interior terms.
+  This is the term $-(N_A,\hat{a}\,N_{\hat{B}})_{\Gamma_r}\,g_{\hat{B}}$ in $F_A$.
+- In Homework 16, these integrals are computed by the functions `LocalStiffnessBoundaryTerms` and `LocalForceBoundaryTerms`.
+
+## Summary
+
+- A **Robin boundary condition**, $\hat{a}\,u + \left(\underline{\underline{\kappa}}\nabla u\right)\cdot\underline{n} = \hat{c}$ on $\Gamma_r$, relates the value of the solution to its flux.
+  For convection, $\hat{a} = h_c$ and $\hat{c} = h_c\,u_\infty$, plus any absorbed flux.
+- The Robin condition becomes a Neumann condition when $\hat{a} = 0$, and approaches a Dirichlet condition with $g = \hat{c}/\hat{a}$ as $\hat{a}$ becomes large.
+  The Biot number indicates which of these a particular convection coefficient is closer to.
+- A Robin condition is a **natural** boundary condition: it does not change $\mathcal{S}$ or $\mathcal{V}$, and the nodes on $\Gamma_r$ carry unknowns.
+- It adds $(N_A,\hat{a}\,N_B)_{\Gamma_r}$ to the stiffness matrix and $(N_A,\hat{c})_{\Gamma_r}$ to the force vector, together with a Dirichlet term where $\Gamma_r$ meets $\Gamma_g$.
+- These integrals are computed with the face quadrature of Class 20, and each Robin face contributes to a $(p+1)\times(p+1)$ block of the element stiffness matrix.
+- [Class 23](23_Class.qmd) shows why the stiffness matrix, including these Robin terms, is invertible, and when it is not.
