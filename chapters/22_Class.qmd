@@ -27,7 +27,7 @@ IMGDIR = use_chapter("Class22")
 ROBCLR = "#0d9488"   # Robin boundary (Gamma_r)
 
 # the concrete wall of the 1D heat appendix, with its outer face exposed to air
-L, kappa, f0, qs, g0, u_inf = 0.30, 1.4, 500.0, 50.0, 20.0, 0.0
+L, kappa, f0, qs, g0, u_inf = 0.30, 1.4, 500.0, 50.0, 20.0, 5.0
 g_eff = g0 + f0 * L**2 / (2 * kappa)
 
 
@@ -502,7 +502,7 @@ Since $\hat{a}\ge 0$ in physical problems, such as convection ($\hat{a} = h_c$) 
 The [1D heat appendix](Poisson1D_Heat.qmd) modeled a concrete wall of thickness $L$ = 0.30 m and conductivity $\kappa$ = 1.4 W/(m·K), heated internally by the hydration of the cement at $f$ = 500 W/m³.
 Its interior face, at $x = L$, was held at the room temperature $g$ = 20 °C, and its outer face, at $x = 0$, absorbed a solar heat flux of 50 W/m² as a Neumann condition.
 A more realistic model of the outer face also accounts for the heat that it exchanges with the outside air.
-Taking the outside air to be at $u_\infty$ = 0 °C and keeping the solar flux $q_s$ = 50 W/m², the outer face has the Robin condition
+Taking the outside air to be at $u_\infty$ = `{python} f"{u_inf:.0f}"` °C and keeping the solar flux $q_s$ = 50 W/m², the outer face has the Robin condition
 
 $$
 h_c\,u(0) - \kappa\,u_{,x}(0) = h_c\,u_\infty + q_s ,
@@ -519,7 +519,9 @@ $$
 (N_A,\hat{c})_{\Gamma_r} = \hat{c}\,N_A(0) .
 $$
 
-With linear elements, the only basis function that is nonzero at $x = 0$ is the one belonging to the first node, so the Robin condition adds $h_c$ to the first diagonal entry of $\underline{\underline{K}}$ and adds $\hat{c}$ to the first entry of $\underline{F}$, and changes nothing else.
+With linear elements, the only basis function that is nonzero at $x = 0$ is the one belonging to the first node, so the Robin condition adds $h_c$ to the first diagonal entry of $\underline{\underline{K}}$ and adds $\hat{c} = h_c\,u_\infty + q_s$ to the first entry of $\underline{F}$, and changes nothing else.
+Note that the convection coefficient appears in both places: in $K_{00}$ by itself, and in $F_0$ multiplied by the air temperature.
+If the air were at 0 °C, the convective part of $F_0$ would vanish, and only $K_{00}$ would change with $h_c$.
 
 Solving the strong form of this problem exactly shows that the temperature of the outer face is
 
@@ -557,12 +559,15 @@ The widget below solves this problem with linear finite elements and shows the r
 
 <div class="rw">
   <div class="bar">
-    <b>CONVECTION COEFFICIENT</b>
+    <span style="white-space:nowrap"><b>CONVECTION COEFFICIENT</b>
     <input type="range" id="r22h" min="-1" max="4" step="0.05" value="1">
-    <span class="val" id="r22hv"></span>
-    <b>ELEMENTS</b>
+    <span class="val" id="r22hv"></span></span>
+    <span style="white-space:nowrap"><b>OUTSIDE AIR</b>
+    <input type="range" id="r22t" min="-10" max="30" step="1" value="5" style="width:120px">
+    <span class="val" id="r22tv" style="min-width:3.6em"></span></span>
+    <span style="white-space:nowrap"><b>ELEMENTS</b>
     <input type="range" id="r22n" min="2" max="6" step="1" value="3" style="width:110px">
-    <span class="val" id="r22nv" style="min-width:1.2em"></span>
+    <span class="val" id="r22nv" style="min-width:1.2em"></span></span>
     <label><input type="checkbox" id="r22lim" checked> show the Neumann and Dirichlet limits</label>
   </div>
   <svg id="r22svg" viewBox="0 0 880 330" role="img"
@@ -575,7 +580,7 @@ The widget below solves this problem with linear finite elements and shows the r
 <script>
 (function(){
 var INK='#18202b',GREY='#6b7684',FAINT='#dfe4ea',ACC='#b8322a',ROB='#0d9488',BLUE='#1e3a5f';
-var L=0.30,KAP=1.4,F0=500,QS=50,G=20,UINF=0;
+var L=0.30,KAP=1.4,F0=500,QS=50,G=20,UINF=5;
 var GEFF=G+F0*L*L/(2*KAP);
 function exact(hc){ /* u(x) = -f x^2/(2k) + A x + B, with B = GEFF - A L */
   var A=(isFinite(hc)? (hc*(GEFF-UINF)-QS)/(hc*L+KAP) : (GEFF-UINF)/L), B=GEFF-A*L;
@@ -601,7 +606,7 @@ function system(hc,ne){ /* nodes 0..ne; node ne (x = L) is Dirichlet, so ne unkn
   return {K:K,F:F,d:solve(K,F),he:he};
 }
 var svg=document.getElementById('r22svg');
-var X0=70,X1=640,Y0=26,Y1=290,XL=-0.045,XR=0.345,UL=-6,UH=52;
+var X0=70,X1=640,Y0=26,Y1=290,XL=-0.045,XR=0.345,UL=-13,UH=52;
 function sx(x){return X0+(x-XL)/(XR-XL)*(X1-X0);}
 function sy(u){return Y1-(u-UL)/(UH-UL)*(Y1-Y0);}
 function el(n,at,txt){var e=document.createElementNS('http://www.w3.org/2000/svg',n);
@@ -624,6 +629,8 @@ function fmt(v,d){ var s=v.toFixed(d); return (s==='-0.0'||s==='-0')?s.slice(1):
 function draw(){
   var lh=+document.getElementById('r22h').value, hc=Math.pow(10,lh);
   var ne=+document.getElementById('r22n').value, lim=document.getElementById('r22lim').checked;
+  UINF=+document.getElementById('r22t').value;
+  document.getElementById('r22tv').textContent=UINF+' °C';
   document.getElementById('r22hv').textContent=(hc<10?hc.toFixed(2):hc<100?hc.toFixed(1):hc.toFixed(0))+' W/(m²·K)';
   document.getElementById('r22nv').textContent=ne;
   while(svg.firstChild) svg.removeChild(svg.firstChild);
@@ -633,15 +640,15 @@ function draw(){
   svg.appendChild(el('rect',{x:sx(L),y:Y0,width:X1-sx(L),height:Y1-Y0,fill:'#eef3f9'}));
   svg.appendChild(el('rect',{x:X0,y:Y0,width:X1-X0,height:Y1-Y0,fill:'none',stroke:FAINT}));
   var u;
-  for(u=0;u<=50;u+=10){ svg.appendChild(el('line',{x1:X0,y1:sy(u),x2:X1,y2:sy(u),stroke:FAINT,'stroke-width':0.8}));
+  for(u=-10;u<=50;u+=10){ svg.appendChild(el('line',{x1:X0,y1:sy(u),x2:X1,y2:sy(u),stroke:FAINT,'stroke-width':0.8}));
     svg.appendChild(T(X0-8,sy(u)+4,String(u),{a:'end',fs:11})); }
-  svg.appendChild(T(26,(Y0+Y1)/2,'u (°C)',{fs:11.5}));
+  svg.appendChild(T(X0-8,Y0-10,'u (°C)',{a:'end',fs:11.5}));
   [0,0.1,0.2,0.3].forEach(function(x){ svg.appendChild(T(sx(x),Y1+16,x.toFixed(1),{a:'middle',fs:11})); });
   svg.appendChild(T((sx(0)+sx(L))/2,Y1+31,'x (m)',{a:'middle',fs:11.5}));
   svg.appendChild(T((sx(0)+sx(L))/2,Y1-8,'concrete wall',{a:'middle',fs:11}));
   /* the fluid and room temperatures */
   svg.appendChild(el('line',{x1:X0,y1:sy(UINF),x2:sx(0),y2:sy(UINF),stroke:ROB,'stroke-width':1.6,'stroke-dasharray':'5 3'}));
-  svg.appendChild(T(X0+3,sy(UINF)-6,'air, 0 °C',{fs:10.5,f:ROB}));
+  svg.appendChild(T(X0+3,sy(UINF)-6,'air, '+UINF+' °C',{fs:10.5,f:ROB}));
   svg.appendChild(el('line',{x1:sx(L),y1:sy(G),x2:X1,y2:sy(G),stroke:BLUE,'stroke-width':1.6,'stroke-dasharray':'5 3'}));
   svg.appendChild(T(sx(L)+4,sy(G)-6,'room, 20 °C',{fs:10.5,f:BLUE}));
   /* the two limits */
@@ -649,7 +656,8 @@ function draw(){
     svg.appendChild(path(exact(0),GREY,1.3,'6 4'));
     svg.appendChild(path(exact(Infinity),GREY,1.3,'2 3'));
     svg.appendChild(TS(sx(0.12),sy(43),[['h',0],['c',1],[' = 0 (Neumann)',0]],{fs:10.5}));
-    svg.appendChild(TS(sx(0.12),sy(7),[['h',0],['c',1],[' → ∞ (Dirichlet)',0]],{fs:10.5}));
+    var yD=exact(Infinity)(0.12);
+    svg.appendChild(TS(sx(0.12),sy(yD)+(yD<24?14:-8),[['h',0],['c',1],[' → ∞ (Dirichlet)',0]],{fs:10.5}));
   }
   /* exact solution and the finite element solution */
   var ex=exact(hc); svg.appendChild(path(ex,INK,2.2));
@@ -677,7 +685,7 @@ function draw(){
   svg.appendChild(T(lx,ly+168,(hc*(u0-UINF)).toFixed(0)+' W/m²',{fs:12,f:INK}));
   /* numbers and the matrix system */
   document.getElementById('r22nums').innerHTML=
-    'h<sub>c</sub> = '+(hc<10?hc.toFixed(2):hc.toFixed(1))+' W/(m²·K) &nbsp; Bi = h<sub>c</sub>L/κ = '+Bi.toFixed(3)+
+    'h<sub>c</sub> = '+(hc<10?hc.toFixed(2):hc.toFixed(1))+' W/(m²·K) &nbsp; u<sub>∞</sub> = '+UINF+' °C &nbsp; Bi = h<sub>c</sub>L/κ = '+Bi.toFixed(3)+
     ' &nbsp; u(0) = u<sub>∞</sub> + (u<sub>N</sub>(0) − u<sub>∞</sub>)/(1 + Bi) = '+u0.toFixed(2)+' °C';
   var n=ne, html='<tab'+'le><tr class="hdr"><td colspan="'+n+'">K &nbsp;(W/(m²·K))</td><td></td><td>d (°C)</td><td></td><td>F &nbsp;(W/m²)</td></tr>';
   for(i=0;i<n;i++){
@@ -693,14 +701,17 @@ function draw(){
   }
   html+='</tab'+'le>';
   document.getElementById('r22sys').innerHTML=html;
+  var hcs=(hc<10?hc.toFixed(2):hc.toFixed(1));
   document.getElementById('r22cap').innerHTML=
-    '<b>The highlighted entries are the only ones that contain the Robin terms:</b> '+
-    'K<sub>00</sub> = κ/h<sub>e</sub> + h<sub>c</sub> = '+fmt(KAP/S.he,1)+' + '+(hc<10?hc.toFixed(2):hc.toFixed(1))+
-    ', and F<sub>0</sub> includes h<sub>c</sub>u<sub>∞</sub> + q<sub>s</sub>. '+
+    '<b>The highlighted entries are the only ones that contain the Robin terms:</b><br>'+
+    'K<sub>00</sub> = κ/h<sub>e</sub> + h<sub>c</sub> = '+fmt(KAP/S.he,1)+' + '+hcs+' = '+fmt(S.K[0][0],1)+'<br>'+
+    'F<sub>0</sub> = f h<sub>e</sub>/2 + h<sub>c</sub>u<sub>∞</sub> + q<sub>s</sub> = '+fmt(F0*S.he/2,1)+' + '+hcs+' × '+UINF+
+    ' + '+QS+' = '+fmt(S.F[0],1)+'<br>'+
+    'The convection coefficient enters K<sub>00</sub> directly and F<sub>0</sub> only through h<sub>c</sub>u<sub>∞</sub>, so F<sub>0</sub> changes with h<sub>c</sub> only when the air is not at 0 °C. '+
     'The last entry of F also includes the Dirichlet term κg/h<sub>e</sub>, from the room temperature at x = L. '+
     'The finite element solution matches the exact solution at every node, as expected in one dimension (Class 18).';
 }
-['r22h','r22n','r22lim'].forEach(function(id){
+['r22h','r22t','r22n','r22lim'].forEach(function(id){
   document.getElementById(id).addEventListener('input',draw); });
 draw();
 })();
@@ -714,8 +725,10 @@ Things to try:
 2. **Set $h_c$ near 10 W/(m²·K).** This is typical of outdoor air.
    The outer face is now much colder than in the Neumann problem, and most of the heat generated in the wall leaves through the outer face rather than into the room.
 3. **Make $h_c$ as large as possible.** The outer face approaches the air temperature, as for a Dirichlet condition with $g = u_\infty$.
-   The entry $K_{00}$ becomes much larger than the rest of the matrix, which forces $d_0$ toward $F_0/K_{00} \approx u_\infty$.
-4. **Change the number of elements.** Only the first row of $\underline{\underline{K}}$ and the first entry of $\underline{F}$ contain the Robin terms, regardless of how many elements are used.
+   Both $K_{00}$ and $F_0$ grow in proportion to $h_c$, and they dominate the first equation, which forces $d_0$ toward $F_0/K_{00} \approx h_c u_\infty/h_c = u_\infty$.
+4. **Change the outside air temperature.** The temperatures in the wall change, but in the matrix equations only $F_0$ changes, by $h_c$ times the change in $u_\infty$, since the air temperature is part of the data $\hat{c}$ and not of the coefficient $\hat{a}$.
+   Set the air to 0 °C: the convective part of $F_0$ is then zero, so $F_0$ no longer changes as $h_c$ is varied, while $K_{00}$ still does.
+5. **Change the number of elements.** Only the first row of $\underline{\underline{K}}$ and the first entry of $\underline{F}$ contain the Robin terms, regardless of how many elements are used.
 
 ## Computing the Robin terms on an element
 
