@@ -47,7 +47,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-5a6c5cd077c1ead4086784ad1389866e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-e98545d696c0c4756cb81f8950af150c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -291,15 +291,56 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Class 23: Minimization, Symmetry, and Positive Definiteness</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./chapters/24_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Class 24: Applications and Interpretation</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
- <span class="menu-text">Appendices</span></a>
+ <span class="menu-text">Class 24 applications</span></a>
           <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
       <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./chapters/24_Seepage.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Groundwater Seepage Under a Dam</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./chapters/24_Torsion.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Torsion of an I-Beam, and the Membrane Analogy</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./chapters/24_Membrane.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deflection of a Pressurized Membrane</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./chapters/24_Diffusion.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Diffusion Through a Damaged Landfill Liner</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
@@ -342,6 +383,12 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./chapters/Beam_Frame_Formulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">H</span>&nbsp; <span class="chapter-title">Beams and Frames from Three-Dimensional Elasticity</span></span></a>
+  </div>
+</li>
       </ul>
   </li>
     </ul>
@@ -357,7 +404,8 @@ window.Quarto = {
   <li><a href="#welcome" id="toc-welcome" class="nav-link active" data-scroll-target="#welcome">Welcome</a>
   <ul class="collapse">
   <li><a href="#chapters" id="toc-chapters" class="nav-link" data-scroll-target="#chapters"><span class="header-section-number">0.0.1</span> Chapters</a></li>
-  <li><a href="#support-material" id="toc-support-material" class="nav-link" data-scroll-target="#support-material"><span class="header-section-number">0.0.2</span> Support material</a></li>
+  <li><a href="#class-24-applications" id="toc-class-24-applications" class="nav-link" data-scroll-target="#class-24-applications"><span class="header-section-number">0.0.2</span> Class 24 applications</a></li>
+  <li><a href="#support-material" id="toc-support-material" class="nav-link" data-scroll-target="#support-material"><span class="header-section-number">0.0.3</span> Support material</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -492,11 +540,38 @@ window.Quarto = {
 <td><a href="./chapters/23_Class.html">Class 23</a></td>
 <td>The minimization form and its equivalence to the weak form, uniqueness of the solution, and why the stiffness matrix is symmetric and positive definite, with an interactive energy landscape</td>
 </tr>
+<tr class="odd">
+<td><a href="./chapters/24_Class.html">Class 24</a></td>
+<td>Applications and interpretation: the same equation in heat conduction, groundwater seepage, electrostatics, torsion, membranes, and diffusion; quantities of interest, their accuracy, and checking a result without an exact solution</td>
+</tr>
 </tbody>
 </table>
 </section>
-<section id="support-material" class="level3" data-number="0.0.2">
-<h3 data-number="0.0.2" class="anchored" data-anchor-id="support-material"><span class="header-section-number">0.0.2</span> Support material</h3>
+<section id="class-24-applications" class="level3" data-number="0.0.2">
+<h3 data-number="0.0.2" class="anchored" data-anchor-id="class-24-applications"><span class="header-section-number">0.0.2</span> Class 24 applications</h3>
+<table class="caption-top table">
+<tbody>
+<tr class="odd">
+<td><a href="./chapters/24_Seepage.html">Groundwater Seepage Under a Dam</a></td>
+<td>Flow nets, seepage, uplift, and piping beneath a concrete dam with a cutoff wall</td>
+</tr>
+<tr class="even">
+<td><a href="./chapters/24_Torsion.html">Torsion of an I-Beam, and the Membrane Analogy</a></td>
+<td>The torsion constant and shear stresses of a steel I-beam, and Prandtl’s soap film</td>
+</tr>
+<tr class="odd">
+<td><a href="./chapters/24_Membrane.html">Deflection of a Pressurized Membrane</a></td>
+<td>A pressure-sensor diaphragm with a rigid boss: sensitivity, force on the frame, and how the membrane relates to torsion</td>
+</tr>
+<tr class="even">
+<td><a href="./chapters/24_Diffusion.html">Diffusion Through a Damaged Landfill Liner</a></td>
+<td>Contaminant flux through a tear in a geomembrane, and the tear’s effective width</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="support-material" class="level3" data-number="0.0.3">
+<h3 data-number="0.0.3" class="anchored" data-anchor-id="support-material"><span class="header-section-number">0.0.3</span> Support material</h3>
 <table class="caption-top table">
 <tbody>
 <tr class="odd">
@@ -526,6 +601,10 @@ window.Quarto = {
 <tr class="odd">
 <td><a href="./chapters/Poisson2D_Heat_FEM.html">2D Poisson II: The Battery Cell, by Galerkin’s Method</a></td>
 <td>Quadrilateral basis functions, the isoparametric map and its Jacobian, and assembly in 2D, with an explorer that shows which rows and columns the Dirichlet nodes cut out</td>
+</tr>
+<tr class="even">
+<td><a href="./chapters/Beam_Frame_Formulation.html">Beams and Frames from Three-Dimensional Elasticity</a></td>
+<td>The Timoshenko frame equations derived from 3D elasticity (Hughes 5.4), with dynamics, damping, and assembly of members into a frame</td>
 </tr>
 </tbody>
 </table>

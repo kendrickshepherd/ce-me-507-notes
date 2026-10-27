@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Finite Element Methods">
+
+<title>Torsion of an I-Beam, and the Membrane Analogy – CE/ME 507 — Class Notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/24_Membrane.html" rel="next">
+<link href="../chapters/24_Seepage.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-e98545d696c0c4756cb81f8950af150c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script>
+window.MathJax = {
+  tex: {
+    tags: 'ams',
+    macros: {
+      RR: '{\\mathbb{R}}',
+      Om: '{\\Omega}'
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/24_Seepage.html">Class 24 applications</a></li><li class="breadcrumb-item"><a href="../chapters/24_Torsion.html">Torsion of an I-Beam, and the Membrane Analogy</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">CE/ME 507 — Class Notes</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">CE/ME 507 — Class Notes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/2_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Class 2: Linear FEM</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Class 3: Index Notation, Function Spaces, and the Weak Form</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/4_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Class 4: Strong and Weak Forms of the Boundary Value Problem</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/5_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/6_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Class 6: Basis Functions and Lagrange Polynomials</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/7_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Class 7: From Galerkin to a Matrix Equation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/8_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Class 8: Assembly, Sparsity, and the Road to Quadrature</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/9_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Class 9: The Isoparametric Map and the Jacobian</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Class 10: Assembly with the IEN Array, and Quadrature on an Element</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Class 11: Tensor-Product Basis Functions in 2D</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Class 12: The Spatial Mapping</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Class 13: The Jacobian Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Class 14: The ID and IEN Arrays</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Class 15: Unidimensional Finite Element Code</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Class 16: Derivatives of the Solution</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Class 20: Quadrature in 2D, and Integrating Over a Face</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Class 21: CAD, Meshing, and Discretization Choice</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/22_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Class 22: Robin Boundary Conditions</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/23_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Class 23: Minimization, Symmetry, and Positive Definiteness</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Class 24: Applications and Interpretation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Class 24 applications</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Seepage.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Groundwater Seepage Under a Dam</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Torsion.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Torsion of an I-Beam, and the Membrane Analogy</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Membrane.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deflection of a Pressurized Membrane</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Diffusion.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Diffusion Through a Damaged Landfill Liner</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">1D Poisson I: Heat Conduction Through a Wall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">1D Poisson II: The Wall, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">1D Poisson III: An Axially Loaded Rod</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Beam_Frame_Formulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">H</span>&nbsp; <span class="chapter-title">Beams and Frames from Three-Dimensional Elasticity</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#the-physical-problem" id="toc-the-physical-problem" class="nav-link active" data-scroll-target="#the-physical-problem">The physical problem</a></li>
+  <li><a href="#the-quantities-and-their-units" id="toc-the-quantities-and-their-units" class="nav-link" data-scroll-target="#the-quantities-and-their-units">The quantities and their units</a></li>
+  <li><a href="#the-governing-equation" id="toc-the-governing-equation" class="nav-link" data-scroll-target="#the-governing-equation">The governing equation</a></li>
+  <li><a href="#boundary-conditions" id="toc-boundary-conditions" class="nav-link" data-scroll-target="#boundary-conditions">Boundary conditions</a></li>
+  <li><a href="#the-solution" id="toc-the-solution" class="nav-link" data-scroll-target="#the-solution">The solution</a></li>
+  <li><a href="#quantities-of-interest" id="toc-quantities-of-interest" class="nav-link" data-scroll-target="#quantities-of-interest">Quantities of interest</a>
+  <ul class="collapse">
+  <li><a href="#what-j-is" id="toc-what-j-is" class="nav-link" data-scroll-target="#what-j-is">What the torsion constant is</a></li>
+  <li><a href="#computing-it-from-the-stress-function" id="toc-computing-it-from-the-stress-function" class="nav-link" data-scroll-target="#computing-it-from-the-stress-function">Computing it from the stress function</a></li>
+  <li><a href="#the-torsion-constant-of-this-section" id="toc-the-torsion-constant-of-this-section" class="nav-link" data-scroll-target="#the-torsion-constant-of-this-section">The torsion constant of this section</a></li>
+  <li><a href="#shear-stresses" id="toc-shear-stresses" class="nav-link" data-scroll-target="#shear-stresses">Shear stresses</a></li>
+  <li><a href="#the-re-entrant-corner" id="toc-the-re-entrant-corner" class="nav-link" data-scroll-target="#the-re-entrant-corner">The re-entrant corner</a></li>
+  </ul></li>
+  <li><a href="#checks" id="toc-checks" class="nav-link" data-scroll-target="#checks">Checks</a></li>
+  <li><a href="#the-membrane-analogy" id="toc-the-membrane-analogy" class="nav-link" data-scroll-target="#the-membrane-analogy">The membrane analogy</a></li>
+  <li><a href="#frame-elements" id="toc-frame-elements" class="nav-link" data-scroll-target="#frame-elements">Relation to beam and frame elements</a>
+  <ul class="collapse">
+  <li><a href="#warping" id="toc-warping" class="nav-link" data-scroll-target="#warping">The warping function</a></li>
+  </ul></li>
+  <li><a href="#limits-of-the-model" id="toc-limits-of-the-model" class="nav-link" data-scroll-target="#limits-of-the-model">Limits of the model</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/24_Seepage.html">Class 24 applications</a></li><li class="breadcrumb-item"><a href="../chapters/24_Torsion.html">Torsion of an I-Beam, and the Membrane Analogy</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Torsion of an I-Beam, and the Membrane Analogy</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>This page is one of the application pages for <a href="../chapters/24_Class.html">Class 24</a>. It applies the scalar boundary value problem of this course to a steel I-beam twisted about its axis, and computes the quantities a structural engineer needs: the torsion constant, which sets how much the beam twists, and the shear stresses produced by the twisting. The same equation also describes a membrane stretched over a frame, which gives a useful way to picture the result.</p>
+<section id="the-physical-problem" class="level2">
+<h2 class="anchored" data-anchor-id="the-physical-problem">The physical problem</h2>
+<div id="fig-tors-setting" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-tors-setting-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class24/C24_Tors_Fig1_Setting.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-tors-setting-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: (a) A steel I-beam twisted by equal and opposite torques <span class="math inline">\(T\)</span> at its ends. (b) Its cross-section: a 200 mm deep section with 100 mm wide flanges 12 mm thick and a web 8 mm thick. Real rolled sections have a curved fillet at each re-entrant corner where the web meets a flange; this one has sharp corners.
+</figcaption>
+</figure>
+</div>
+<p>I-beams are designed to resist bending, and they are weak in torsion compared to closed sections such as tubes. Torsion still arises, for example in a beam that carries a load that is not centered on its web, and the torsional stiffness of a beam controls its resistance to lateral-torsional buckling. The quantities of interest are</p>
+<ul>
+<li>the <strong>torsion constant</strong> <span class="math inline">\(J\)</span>, which relates the torque to the angle of twist per unit length, <span class="math inline">\(\theta = T/(GJ)\)</span>, where <span class="math inline">\(G\)</span> is the shear modulus, and which depends only on the shape of the cross-section; and</li>
+<li>the <strong>shear stresses</strong> in the cross-section, which must remain below the yield stress of the steel.</li>
+</ul>
+</section>
+<section id="the-quantities-and-their-units" class="level2">
+<h2 class="anchored" data-anchor-id="the-quantities-and-their-units">The quantities and their units</h2>
+<div id="tbl-tors-quantities" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-tors-quantities-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Quantities used on this page, with <span class="math inline">\(z\)</span> along the axis of the beam.
+</figcaption>
+<div aria-describedby="tbl-tors-quantities-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 16%">
+<col style="width: 13%">
+<col style="width: 11%">
+<col style="width: 59%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">quantity</th>
+<th style="text-align: center;">symbol</th>
+<th style="text-align: center;">units</th>
+<th style="text-align: left;">role in the boundary value problem</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Prandtl stress function</td>
+<td style="text-align: center;"><span class="math inline">\(\phi\)</span></td>
+<td style="text-align: center;">N/mm</td>
+<td style="text-align: left;">the unknown <span class="math inline">\(u\)</span>, as <span class="math inline">\(\Phi = \phi/(G\theta)\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">shear modulus</td>
+<td style="text-align: center;"><span class="math inline">\(G\)</span></td>
+<td style="text-align: center;">MPa</td>
+<td style="text-align: left;">79,300 for steel</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">twist per unit length</td>
+<td style="text-align: center;"><span class="math inline">\(\theta\)</span></td>
+<td style="text-align: center;">rad/mm</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">torque</td>
+<td style="text-align: center;"><span class="math inline">\(T\)</span></td>
+<td style="text-align: center;">N·mm</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">torsion constant</td>
+<td style="text-align: center;"><span class="math inline">\(J\)</span></td>
+<td style="text-align: center;">mm⁴</td>
+<td style="text-align: left;">a property of the shape of the section, computed as a domain integral</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">shear stresses</td>
+<td style="text-align: center;"><span class="math inline">\(\tau_{xz}\)</span>, <span class="math inline">\(\tau_{yz}\)</span></td>
+<td style="text-align: center;">MPa</td>
+<td style="text-align: left;">the components of <span class="math inline">\(\nabla\phi\)</span>, rotated by 90°</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="the-governing-equation" class="level2">
+<h2 class="anchored" data-anchor-id="the-governing-equation">The governing equation</h2>
+<p>In Saint-Venant’s theory of torsion, each cross-section of a long prismatic bar rotates about the axis and may warp out of its plane, but does not distort in its plane. The only stresses are the two shear stresses <span class="math inline">\(\tau_{xz}\)</span> and <span class="math inline">\(\tau_{yz}\)</span> acting on the cross-section. Prandtl showed that both can be written in terms of a single <strong>stress function</strong> <span class="math inline">\(\phi(x,y)\)</span>,</p>
+<p><span class="math display">\[
+\tau_{xz} = \frac{\partial\phi}{\partial y},
+\qquad
+\tau_{yz} = -\frac{\partial\phi}{\partial x}.
+\]</span></p>
+<p>With only these two stresses, which are the same at every cross-section, equilibrium reduces to a balance of forces along the bar, <span class="math inline">\(\partial\tau_{xz}/\partial x + \partial\tau_{yz}/\partial y = 0\)</span>, so that the shear stress behaves like the flow of an incompressible fluid in the cross-section: whatever flows into a small region also flows out. The stress function satisfies this for any <span class="math inline">\(\phi\)</span>, since the left side becomes <span class="math inline">\(\partial^2\phi/\partial x\,\partial y - \partial^2\phi/\partial y\,\partial x = 0\)</span>. Equilibrium alone is not enough, however, since not every set of stresses in equilibrium can occur in a real bar. The stresses deform the material according to Hooke’s law, which here gives the shear strains <span class="math inline">\(\gamma_{xz} = \tau_{xz}/G\)</span> and <span class="math inline">\(\gamma_{yz} = \tau_{yz}/G\)</span>, and these strains must come from an actual displacement of the bar, in which neighboring pieces of material stay joined, with no gaps or overlaps. This requirement is called <strong>compatibility</strong>. In Saint-Venant’s theory, each cross-section rotates by <span class="math inline">\(\theta\)</span> per unit length along the bar and warps out of its plane by an amount <span class="math inline">\(\theta\,\omega(x, y)\)</span>, where <span class="math inline">\(\omega\)</span> is the warping function described <a href="#what-j-is">under the quantities of interest</a>, so the shear strains are</p>
+<p><span class="math display">\[
+\gamma_{xz} = \theta\left(\frac{\partial\omega}{\partial x} - y\right),
+\qquad
+\gamma_{yz} = \theta\left(\frac{\partial\omega}{\partial y} + x\right).
+\]</span></p>
+<p>The warping is not known in advance, but it can be removed: differentiating the first strain with respect to <span class="math inline">\(y\)</span> and the second with respect to <span class="math inline">\(x\)</span>, and subtracting, gives</p>
+<p><span class="math display">\[
+\frac{\partial\gamma_{yz}}{\partial x} - \frac{\partial\gamma_{xz}}{\partial y} = 2\theta ,
+\]</span></p>
+<p>since the two mixed derivatives of <span class="math inline">\(\omega\)</span> are equal. Strains that do not satisfy this condition cannot be fitted together into one continuous displacement. Substituting the strains given by the stress function, <span class="math inline">\(\gamma_{xz} = (1/G)\,\partial\phi/\partial y\)</span> and <span class="math inline">\(\gamma_{yz} = -(1/G)\,\partial\phi/\partial x\)</span>, then gives</p>
+<p><span class="math display">\[
+-\nabla^2\phi = 2G\theta
+\qquad\Longleftrightarrow\qquad
+-\phi_{,ii} = 2G\theta \qquad \text{in the cross-section},
+\]</span></p>
+<p>and the condition that the outer surface of the bar carries no load gives <span class="math inline">\(\phi = 0\)</span> on the boundary of a solid cross-section; sections with holes are treated in <a href="#holes">a note under the quantities of interest</a>. The torque carried by the stresses is</p>
+<p><span class="math display">\[
+T = 2\int_A \phi\;dA ,
+\]</span></p>
+<p>which is derived below, under the quantities of interest.</p>
+<p>Since the problem is linear, <span class="math inline">\(\phi\)</span> is proportional to <span class="math inline">\(G\theta\)</span>, and it is convenient to solve it once with <span class="math inline">\(G\theta\)</span> removed. Writing <span class="math inline">\(\phi = G\theta\,\Phi\)</span>,</p>
+<p><span class="math display">\[
+-\nabla^2\Phi = 2 \ \text{ in } A,
+\qquad \Phi = 0 \ \text{ on the boundary}.
+\]</span></p>
+<p>The normalized stress function <span class="math inline">\(\Phi\)</span>, in mm², contains no torque, twist, or material property, so it depends only on the shape of the cross-section. This is the Poisson equation used throughout this course with <span class="math inline">\(u = \Phi\)</span>, <span class="math inline">\(\underline{\underline{\kappa}} = 1\)</span>, and <span class="math inline">\(f = 2\)</span>. Once <span class="math inline">\(\Phi\)</span> is known, the torsion constant and the shear stresses follow from it,</p>
+<p><span class="math display">\[
+J = 2\int_A \Phi\;dA,
+\qquad
+\tau = \frac{T}{J}\,|\nabla\Phi| ,
+\]</span></p>
+<p>where <span class="math inline">\(J\)</span> is defined, and the first formula derived, <a href="#what-j-is">under the quantities of interest</a>. The contours of <span class="math inline">\(\Phi\)</span> are the lines along which the shear stress acts, and the shear stress is largest where the contours are closest together.</p>
+</section>
+<section id="boundary-conditions" class="level2">
+<h2 class="anchored" data-anchor-id="boundary-conditions">Boundary conditions</h2>
+<div id="fig-tors-domain" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-tors-domain-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class24/C24_Tors_Fig2_Domain.png" class="img-fluid figure-img" style="width:82.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-tors-domain-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: (a) A quarter of the cross-section, with <span class="math inline">\(\Phi = 0\)</span> on the outer surface (blue) and zero normal derivative on the two axes of symmetry (orange). (b) The biquadratic mesh, graded toward the re-entrant corner where the web meets the flange.
+</figcaption>
+</figure>
+</div>
+<p>The section is symmetric about both of its axes, and so is <span class="math inline">\(\Phi\)</span>, so only a quarter is modeled, as shown in <a href="#fig-tors-domain" class="quarto-xref">Figure&nbsp;<span>2</span></a>.</p>
+<ul>
+<li><strong>The outer surface of the section</strong>, including the faces of the web and the flange and the end of the flange: <span class="math inline">\(\Phi = 0\)</span>, a Dirichlet condition.</li>
+<li><strong>The two axes of symmetry</strong>: <span class="math inline">\(\nabla\Phi\cdot\underline{n} = 0\)</span>, a Neumann condition with zero data, which requires nothing to be imposed.</li>
+</ul>
+</section>
+<section id="the-solution" class="level2">
+<h2 class="anchored" data-anchor-id="the-solution">The solution</h2>
+<div id="fig-tors-solution" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-tors-solution-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class24/C24_Tors_Fig3_Solution.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-tors-solution-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: (a) Contours of <span class="math inline">\(\Phi\)</span> over the whole section, which are the lines along which the shear stress acts. (b) The size of the shear stress for a torque of 1 kN·m, which is largest on the faces of the flanges and the web, and at the re-entrant corners. (c) <span class="math inline">\(\Phi\)</span> drawn as a surface over the section: the shape of a membrane stretched over an I-shaped opening and inflated by a uniform pressure.
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-tors-solution" class="quarto-xref">Figure&nbsp;<span>3</span></a> shows that, in each thin plate of the section, the contours of <span class="math inline">\(\Phi\)</span> run along the plate and turn around at its ends. The shear stress therefore flows around the edge of each plate, in one direction on one face and in the opposite direction on the other, and is largest on the faces. At the re-entrant corners, the contours crowd together and the stress becomes very large.</p>
+</section>
+<section id="quantities-of-interest" class="level2">
+<h2 class="anchored" data-anchor-id="quantities-of-interest">Quantities of interest</h2>
+<section id="what-j-is" class="level3">
+<h3 class="anchored" data-anchor-id="what-j-is">What the torsion constant is</h3>
+<p>The torsion constant is a property of the shape of the cross-section,</p>
+<p><span class="math display">\[
+J = \int_A \left(x^2 + y^2\right) dA - \int_A |\nabla\omega|^2\;dA ,
+\]</span></p>
+<p>where the first term is the polar moment of inertia and <span class="math inline">\(\omega(x, y)\)</span>, in mm², is the <strong>warping function</strong>, the solution of</p>
+<p><span class="math display">\[
+-\nabla^2\omega = 0 \ \text{ in } A,
+\qquad
+\nabla\omega\cdot\underline{n} = y\,n_x - x\,n_y \ \text{ on the boundary}.
+\]</span></p>
+<p>Only the shape of the section enters this problem, so <span class="math inline">\(J\)</span> involves no torque, twist, or material property. The polar moment is the torsion constant that the section would have if it could not warp out of its plane, which is the case for a circular shaft and is what the frame elements of the <a href="../chapters/Beam_Frame_Formulation.html">appendix</a> assume. The second term is the stiffness lost because the section is free to warp. For I-beams (typically called ‘’W-Sections’’), it removes a substantial amount of the stiffness, amounting to a 99.5% reduction of the polar moment for this particular geometry. Both <span class="math inline">\(\omega\)</span> and this formula are derived under <a href="#warping">the warping function</a>.</p>
+<p>The torsion constant is used through the stiffness of a bar in twisting,</p>
+<p><span class="math display">\[
+T = G\,J\,\theta ,
+\]</span></p>
+<p>or, equivalently, through the strain energy stored in each unit length of the twisted bar, <span class="math inline">\(U = \tfrac{1}{2}\,G\,J\,\theta^2\)</span>, in the same way that a bent beam stores <span class="math inline">\(\tfrac{1}{2}EI\kappa^2\)</span>. These relations are how <span class="math inline">\(J\)</span> is used and measured, not what it depends on: doubling the torque doubles the twist, and <span class="math inline">\(J = T/(G\theta)\)</span> is unchanged. In a frame model, each member resists twisting with a stiffness <span class="math inline">\(GJ\)</span>, as it resists bending with <span class="math inline">\(EI\)</span> and stretching with <span class="math inline">\(EA\)</span>, and the <span class="math inline">\(J\)</span> computed on this page is the value used there; see <a href="#frame-elements">the relation to beam and frame elements</a>.</p>
+<p>For a solid section, such as this one, the same number is computed more simply from the stress function, <span class="math inline">\(J = 2\int_A \Phi\,dA\)</span>, where <span class="math inline">\(\Phi\)</span> is also fixed by the shape of the section alone, through <span class="math inline">\(-\nabla^2\Phi = 2\)</span> with <span class="math inline">\(\Phi = 0\)</span> on the boundary. This formula is derived next, and the two ways of computing <span class="math inline">\(J\)</span> are compared in <a href="#tbl-tors-bounds" class="quarto-xref">Table&nbsp;<span>4</span></a>.</p>
+</section>
+<section id="computing-it-from-the-stress-function" class="level3">
+<h3 class="anchored" data-anchor-id="computing-it-from-the-stress-function">Computing it from the stress function</h3>
+<p>This subsection assumes a solid section, whose boundary is a single closed curve <span class="math inline">\(\Gamma\)</span>, as for the I-beam of this page. The extension to sections with holes is given in the note at the end of the subsection.</p>
+<p>The torque on a cross-section is the moment of the shear stresses about the axis of the bar,</p>
+<p><span class="math display">\[
+T = \int_A \left(x\,\tau_{yz} - y\,\tau_{xz}\right) dA .
+\]</span></p>
+<p>Substituting <span class="math inline">\(\tau_{xz} = \partial\phi/\partial y\)</span> and <span class="math inline">\(\tau_{yz} = -\partial\phi/\partial x\)</span> gives</p>
+<p><span class="math display">\[
+T = -\int_A \left(x\,\frac{\partial\phi}{\partial x} + y\,\frac{\partial\phi}{\partial y}\right) dA
+= -\int_A x_i\,\phi_{,i}\;dA .
+\]</span></p>
+<p>The product rule, <span class="math inline">\(\left(x_i\,\phi\right)_{,i} = x_{i,i}\,\phi + x_i\,\phi_{,i}\)</span>, and the divergence theorem then give</p>
+<p><span class="math display">\[
+\int_A x_i\,\phi_{,i}\;dA = \oint_{\Gamma} \left(\underline{x}\cdot\underline{n}\right)\phi\;d\Gamma - \int_A x_{i,i}\,\phi\;dA .
+\]</span></p>
+<p>On a free surface, the shear stress must be tangent to the surface, <span class="math inline">\(\tau_{xz}\,n_x + \tau_{yz}\,n_y = 0\)</span>, and with the stresses above this is <span class="math inline">\(\nabla\phi\cdot\underline{t} = 0\)</span>, where <span class="math inline">\(\underline{t} = (-n_y, n_x)\)</span> is the unit tangent to the boundary. Thus <span class="math inline">\(\phi\)</span> is constant along the boundary, and since only the derivatives of <span class="math inline">\(\phi\)</span> give stresses, that constant may be taken as zero. With <span class="math inline">\(\phi = 0\)</span> on <span class="math inline">\(\Gamma\)</span>, the boundary integral is zero. In two dimensions, <span class="math inline">\(x_{i,i} = \partial x/\partial x + \partial y/\partial y = 2\)</span>, so</p>
+<p><span class="math display">\[
+T = 2\int_A \phi\;dA .
+\]</span></p>
+<p>The factor of 2 is the divergence of the position vector in two dimensions, and is not related to the 2 on the right side of <span class="math inline">\(-\nabla^2\Phi = 2\)</span>. Since <span class="math inline">\(\phi = G\theta\,\Phi\)</span>, this gives <span class="math inline">\(T = G\theta \cdot 2\int_A \Phi\,dA\)</span>, and comparing with the definition <span class="math inline">\(T = G\,J\,\theta\)</span>,</p>
+<p><span class="math display">\[
+J = 2\int_A \Phi\;dA .
+\]</span></p>
+<p>The integrals <span class="math inline">\(T = 2\int_A\phi\,dA\)</span> and <span class="math inline">\(J = 2\int_A\Phi\,dA\)</span> look alike, but they are different quantities: <span class="math inline">\(\phi\)</span> carries the factor <span class="math inline">\(G\theta\)</span> and changes with the load, while <span class="math inline">\(\Phi\)</span> depends only on the shape of the section.</p>
+<p>Two checks confirm the formula.</p>
+<ul>
+<li><strong>A circular shaft</strong> of radius <span class="math inline">\(R\)</span> has <span class="math inline">\(\Phi = (R^2 - r^2)/2\)</span>, which satisfies <span class="math inline">\(-\nabla^2\Phi = 2\)</span> and is zero at <span class="math inline">\(r = R\)</span>. Then <span class="math inline">\(2\int_A\Phi\,dA = \pi R^4/2\)</span>, which is the polar moment of inertia, as expected.</li>
+<li><strong>A thin rectangle</strong> of length <span class="math inline">\(b\)</span> and thickness <span class="math inline">\(t\)</span> has <span class="math inline">\(\Phi \approx t^2/4 - y^2\)</span> across its thickness, away from its ends. Then <span class="math inline">\(2\int_A\Phi\,dA \approx 2\,b\,t^3/6 = b\,t^3/3\)</span>, which is the thin-walled formula used below.</li>
+</ul>
+<p>The derivation also shows how the torque is shared. The integral splits into a part from <span class="math inline">\(x\,\partial\phi/\partial x\)</span> and a part from <span class="math inline">\(y\,\partial\phi/\partial y\)</span>, and each contributes exactly <span class="math inline">\(\int_A\phi\,dA\)</span>, so the two stress components carry half of the torque each. In a thin rectangle, the large stresses along the long faces act with a short lever arm, of the order of <span class="math inline">\(t\)</span>. The small stresses that turn around at the short ends act with a long lever arm, of the order of <span class="math inline">\(b\)</span>, and they carry the other half of the torque.</p>
+<div id="holes" class="callout callout-style-default callout-note callout-titled" title="Sections with holes">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Sections with holes
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>For a section with holes, the boundary consists of the outer boundary <span class="math inline">\(\Gamma_0\)</span> and the edge <span class="math inline">\(\Gamma_k\)</span> of each hole <span class="math inline">\(k\)</span>. The stress function is still constant on each of these curves, but only one of the constants can be taken as zero, which is done on the outer boundary, so on the edge of hole <span class="math inline">\(k\)</span> it takes a value <span class="math inline">\(\phi_k\)</span> that is not, in general, zero. Each <span class="math inline">\(\phi_k\)</span> is fixed by an additional condition: the axial displacement must return to the same value after going once around the hole, which requires</p>
+<p><span class="math display">\[
+\oint_{\Gamma_k} \nabla\Phi\cdot\underline{n}\;d\Gamma = 2A_k ,
+\]</span></p>
+<p>where <span class="math inline">\(A_k\)</span> is the area of hole <span class="math inline">\(k\)</span>, <span class="math inline">\(\Phi = \phi/(G\theta)\)</span> as before, and <span class="math inline">\(\underline{n}\)</span> is the outward normal of the section, which points into the hole. The boundary integral in the derivation is then zero on <span class="math inline">\(\Gamma_0\)</span>, but not on <span class="math inline">\(\Gamma_k\)</span>, where</p>
+<p><span class="math display">\[
+\oint_{\Gamma_k} \left(\underline{x}\cdot\underline{n}\right)\phi\;d\Gamma
+= \phi_k \oint_{\Gamma_k} \underline{x}\cdot\underline{n}\;d\Gamma
+= -2\,\phi_k\,A_k ,
+\]</span></p>
+<p>since the divergence theorem applied to the hole, whose own outward normal is <span class="math inline">\(-\underline{n}\)</span>, gives <span class="math inline">\(\oint_{\Gamma_k} \underline{x}\cdot\underline{n}\,d\Gamma = -\int_{A_k} x_{i,i}\,dA = -2A_k\)</span>. The torque and the torsion constant are then</p>
+<p><span class="math display">\[
+T = 2\int_A \phi\;dA + 2\sum_k \phi_k\,A_k ,
+\qquad
+J = 2\int_A \Phi\;dA + 2\sum_k \Phi_k\,A_k .
+\]</span></p>
+<p>The extra terms are the volumes of flat lids at height <span class="math inline">\(\phi_k\)</span> over the holes, so the torque is twice the volume under <span class="math inline">\(\phi\)</span> with each hole covered by its lid.</p>
+<p>The constants <span class="math inline">\(\Phi_k\)</span> are found by superposition. Write</p>
+<p><span class="math display">\[
+\Phi = \Phi_0 + \sum_k \Phi_k\,\psi_k ,
+\]</span></p>
+<p>where <span class="math inline">\(\Phi_0\)</span> solves <span class="math inline">\(-\nabla^2\Phi_0 = 2\)</span> with <span class="math inline">\(\Phi_0 = 0\)</span> on every boundary curve, and <span class="math inline">\(\psi_k\)</span> solves <span class="math inline">\(-\nabla^2\psi_k = 0\)</span> with <span class="math inline">\(\psi_k = 1\)</span> on <span class="math inline">\(\Gamma_k\)</span> and <span class="math inline">\(\psi_k = 0\)</span> on every other boundary curve. Each of these is a problem of this course with Dirichlet conditions only, solved on the same mesh, and for any values of the constants the sum satisfies <span class="math inline">\(-\nabla^2\Phi = 2\)</span>, with <span class="math inline">\(\Phi = 0\)</span> on <span class="math inline">\(\Gamma_0\)</span> and <span class="math inline">\(\Phi = \Phi_k\)</span> on each <span class="math inline">\(\Gamma_k\)</span>. Substituting the sum into the condition for each hole <span class="math inline">\(j\)</span>, and using the weak forms of these problems to replace the boundary integrals by domain integrals,</p>
+<p><span class="math display">\[
+\oint_{\Gamma_j} \nabla\psi_k\cdot\underline{n}\;d\Gamma = \int_A \nabla\psi_j\cdot\nabla\psi_k\;dA ,
+\qquad
+\oint_{\Gamma_j} \nabla\Phi_0\cdot\underline{n}\;d\Gamma = -2\int_A \psi_j\;dA ,
+\]</span></p>
+<p>gives one linear equation for each hole,</p>
+<p><span class="math display">\[
+\sum_k \left(\int_A \nabla\psi_j\cdot\nabla\psi_k\;dA\right)\Phi_k = 2\left(A_j + \int_A \psi_j\;dA\right),
+\qquad j = 1, 2, \ldots
+\]</span></p>
+<p>The matrix of this system is symmetric and positive definite, and for a single hole it is one equation,</p>
+<p><span class="math display">\[
+\Phi_1 = \frac{2\left(A_1 + \int_A \psi_1\;dA\right)}{\int_A |\nabla\psi_1|^2\;dA} .
+\]</span></p>
+<p>For a thin-walled tube with wall thickness <span class="math inline">\(t\)</span>, enclosing an area <span class="math inline">\(A_1\)</span> with perimeter <span class="math inline">\(L\)</span>, <span class="math inline">\(\psi_1\)</span> varies linearly across the wall, so <span class="math inline">\(\int_A |\nabla\psi_1|^2\,dA \approx L/t\)</span> and <span class="math inline">\(\int_A \psi_1\,dA\)</span> is small compared with <span class="math inline">\(A_1\)</span>. This gives <span class="math inline">\(\Phi_1 \approx 2A_1 t/L\)</span> and <span class="math inline">\(J \approx 2\Phi_1 A_1 = 4A_1^2 t/L\)</span>, which is Bredt’s formula for a thin-walled tube.</p>
+<p>The <a href="../chapters/24_Membrane.html">membrane page</a> finds the constant in a second way, without superposition, which is why the torsion constant of a tube is computed there from the volume under both the membrane and the boss. The boss is a lid: the hole is filled with elements whose nodes all share one unknown, so that it stays flat, and the source acts on it as well. Adding the equations of the tied nodes gives the vertical equilibrium of the boss, in which the pressure on it balances the pull of the membrane around its edge, and this is the discrete form of the condition above. For the square tube of that page, the two ways give the same <span class="math inline">\(\Phi_1\)</span> and the same <span class="math inline">\(J\)</span>.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="the-torsion-constant-of-this-section" class="level3">
+<h3 class="anchored" data-anchor-id="the-torsion-constant-of-this-section">The torsion constant of this section</h3>
+<p>The torsion constant is computed as <span class="math inline">\(2\int_A \Phi\,dA\)</span>, with the same quadrature used to build the stiffness matrix and multiplied by 4 for the four quarters. With biquadratic elements, <span class="math inline">\(J\)</span> = 141,323 mm⁴, and refining the mesh twice more changes it by 0.03%. For a torque of 1 kN·m, the beam twists by <span class="math inline">\(\theta = T/(GJ)\)</span> = 5.1° per meter.</p>
+<p>For thin-walled open sections, a common approximation treats each plate as a thin rectangle,</p>
+<p><span class="math display">\[
+J \approx \sum \frac{b\,t^3}{3} = \frac{2\,b_f t_f^3 + (d - 2t_f)\,t_w^3}{3} = 145\,237\ \text{mm}^4 ,
+\]</span></p>
+<p>which is 2.8% larger than the finite element value. The approximation ignores the ends of each plate, where the stress must turn around and <span class="math inline">\(\Phi\)</span> falls to zero, which makes it slightly too large.</p>
+</section>
+<section id="shear-stresses" class="level3">
+<h3 class="anchored" data-anchor-id="shear-stresses">Shear stresses</h3>
+<p>The shear stress on the faces of a thin plate of thickness <span class="math inline">\(t\)</span> is approximately <span class="math inline">\(\tau = T\,t/J\)</span>, which gives <a href="#tbl-tors-stress" class="quarto-xref">Table&nbsp;<span>2</span></a>.</p>
+<div id="tbl-tors-stress" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-tors-stress-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Shear stresses for a torque of 1 kN·m, computed with <span class="math inline">\(J\)</span> from the finite element solution.
+</figcaption>
+<div aria-describedby="tbl-tors-stress-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">location</th>
+<th style="text-align: right;">finite elements (MPa)</th>
+<th style="text-align: right;">thin-walled estimate <span class="math inline">\(T\,t/J\)</span> (MPa)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">outer face of a flange, half way out</td>
+<td style="text-align: right;">84.9</td>
+<td style="text-align: right;">84.9</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">face of the web, half way between the axis and the flange</td>
+<td style="text-align: right;">56.6</td>
+<td style="text-align: right;">56.6</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">the re-entrant corner</td>
+<td style="text-align: right;">372, and growing with refinement</td>
+<td style="text-align: right;">—</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Away from the corners, the computed stresses agree with the thin-walled estimate to within a fraction of a percent, and the largest of them is on the faces of the flanges, which are the thickest plates.</p>
+</section>
+<section id="the-re-entrant-corner" class="level3">
+<h3 class="anchored" data-anchor-id="the-re-entrant-corner">The re-entrant corner</h3>
+<div id="fig-tors-corner" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-tors-corner-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class24/C24_Tors_Fig4_Corner.png" class="img-fluid figure-img" style="width:62.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-tors-corner-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: The shear stress at three locations as the mesh is refined toward the re-entrant corner. The stresses on the faces of the flange and the web do not change, while the stress at the corner keeps growing.
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-tors-corner" class="quarto-xref">Figure&nbsp;<span>4</span></a> shows that the computed stress at the re-entrant corner grows each time the mesh is refined, from 289 MPa to 601 MPa, while the stresses on the faces do not change. The sharp inside corner is a singular point of the exact solution, so the stress there is infinite, and no finite element value at the corner is meaningful. Real rolled sections have a fillet at this corner, with a radius comparable to the thickness of the web, and the stress there is then finite, though larger than on the faces by a factor that depends on the radius of the fillet. To estimate it, one would either include the fillet in the geometry and refine around it, or apply a stress concentration factor from a handbook to the face stress computed here.</p>
+</section>
+</section>
+<section id="checks" class="level2">
+<h2 class="anchored" data-anchor-id="checks">Checks</h2>
+<ul>
+<li><strong>A problem with a known answer.</strong> The torsion constant of a solid rectangle has an exact series solution. For a single 100 mm by 12 mm plate, the series gives <span class="math inline">\(J\)</span> = 53,244 mm⁴, and the same code gives 52,309 mm⁴ with bilinear elements and 53,242 mm⁴ with biquadratic elements, an error of 0.0034%.</li>
+<li><strong>Refinement.</strong> <span class="math inline">\(J\)</span> and the face stresses change by less than 0.1% when the mesh is refined, while the corner stress does not converge, as expected at a singular point. With bilinear elements on the coarsest mesh, <span class="math inline">\(J\)</span> = 136,013 mm⁴, 3.8% below the converged value.</li>
+<li><strong>The thin-walled approximation</strong> agrees with the computed <span class="math inline">\(J\)</span> and face stresses to within a few percent, which is the accuracy expected of it.</li>
+</ul>
+</section>
+<section id="the-membrane-analogy" class="level2">
+<h2 class="anchored" data-anchor-id="the-membrane-analogy">The membrane analogy</h2>
+<p>Consider a thin membrane, such as a soap film or a sheet of rubber, stretched with a uniform tension <span class="math inline">\(S\)</span> (force per unit length) over an opening in a flat plate, and pushed out of the plane by a small uniform pressure <span class="math inline">\(p\)</span>. Its deflection <span class="math inline">\(w\)</span> satisfies</p>
+<p><span class="math display">\[
+-S\,\nabla^2 w = p \quad\text{over the opening},
+\qquad w = 0 \quad\text{on its edge},
+\]</span></p>
+<p>which is the same problem as torsion, with <span class="math inline">\(w = \tfrac{p}{2S}\,\Phi\)</span>. Prandtl noticed this in 1903, and before computers, engineers measured the shapes of soap films blown over openings of the same shape as a cross-section to find torsion constants and stresses. <a href="#fig-tors-solution" class="quarto-xref">Figure&nbsp;<span>3</span></a> (c) is that soap film. The analogy gives a picture of the result:</p>
+<ul>
+<li>the <strong>torque</strong> is proportional to the <strong>volume</strong> under the membrane;</li>
+<li>the <strong>shear stress</strong> at a point is proportional to the <strong>slope</strong> of the membrane there; and</li>
+<li>the <strong>direction</strong> of the shear stress follows the <strong>contours</strong> of the membrane.</li>
+</ul>
+<p>A thin plate can only hold a low, narrow ridge of membrane, which is why an open section such as an I-beam is so much weaker in torsion than a tube of the same material, which covers a large area and holds a large volume.</p>
+<p>The membrane problem is also of interest in its own right. Drumheads, pressure-sensing diaphragms, and fabric roof panels under wind load are all described by the same equation, with the deflection, the volume enclosed, and the force per unit length along the supporting edge, <span class="math inline">\(S\,\nabla w\cdot\underline{n}\)</span>, as quantities of interest. That edge force is a boundary flux, and it can be computed from the reactions at the Dirichlet nodes along the edge.</p>
+</section>
+<section id="frame-elements" class="level2">
+<h2 class="anchored" data-anchor-id="frame-elements">Relation to beam and frame elements</h2>
+<p>The <a href="../chapters/Beam_Frame_Formulation.html">appendix on beams and frames</a> reduces three-dimensional elasticity to equations along the axis of each member, with <span class="math inline">\(x\)</span>, <span class="math inline">\(y\)</span>, <span class="math inline">\(z\)</span> here written as <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span>, <span class="math inline">\(x_3\)</span>. One of its unknowns is the twist <span class="math inline">\(\theta_3(x_3)\)</span> of each cross-section, governed by <span class="math inline">\(m_3' + C_3 = 0\)</span> with <span class="math inline">\(m_3 = \mu J\,\theta_3'\)</span>, where <span class="math inline">\(\mu = G\)</span>. Its twisting moment, <a href="../chapters/Beam_Frame_Formulation.html#stress-resultants-and-applied-loads">defined in the appendix</a> as <span class="math inline">\(m_3 = \int_A \left(\sigma_{23}\,x_1 - \sigma_{13}\,x_2\right) dA\)</span>, is the torque <span class="math inline">\(T\)</span> of this page, and <span class="math inline">\(\theta_3'\)</span> is the twist per unit length <span class="math inline">\(\theta\)</span>, so <span class="math inline">\(m_3 = \mu J\,\theta_3'\)</span> is <span class="math inline">\(T = G J \theta\)</span>. The two models describe the same rotation of the cross-section, and differ only in whether it warps.</p>
+<div id="tbl-tors-frame" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-tors-frame-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3: The twist of a member in the two models.
+</figcaption>
+<div aria-describedby="tbl-tors-frame-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">frame member (appendix)</th>
+<th style="text-align: left;">Saint-Venant torsion (this page)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">in-plane displacements</td>
+<td style="text-align: left;"><span class="math inline">\(u_1 = -x_2\,\theta_3\)</span>, <span class="math inline">\(u_2 = x_1\,\theta_3\)</span></td>
+<td style="text-align: left;">the same, with <span class="math inline">\(\theta_3 = \theta\,x_3\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">axial displacement due to twist</td>
+<td style="text-align: left;">none</td>
+<td style="text-align: left;"><span class="math inline">\(u_3 = \theta\,\omega(x_1, x_2)\)</span>, the warping</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">unknown</td>
+<td style="text-align: left;"><span class="math inline">\(\theta_3(x_3)\)</span> along the member</td>
+<td style="text-align: left;"><span class="math inline">\(\Phi(x_1, x_2)\)</span> over the cross-section</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">torsion constant</td>
+<td style="text-align: left;"><span class="math inline">\(J = \int_A \left(x_1^2 + x_2^2\right) dA = I_1 + I_2\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(J = 2\int_A \Phi\;dA\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">this I-section</td>
+<td style="text-align: left;">26,877,227 mm⁴</td>
+<td style="text-align: left;">141,323 mm⁴</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Without warping, the shear stresses <span class="math inline">\(\sigma_{13} = -\mu\,x_2\,\theta_3'\)</span> and <span class="math inline">\(\sigma_{23} = \mu\,x_1\,\theta_3'\)</span> act perpendicular to the radius. They are therefore not tangent to the faces of a non-circular section, and the faces are not free of load. Warping removes these stresses, and the polar moment overestimates the torsional stiffness of this I-section by a factor of about 190. The two constants agree only for a circular section, where <span class="math inline">\(\omega = 0\)</span>, as in the first check above.</p>
+<p>A frame model therefore uses the Saint-Venant constant: a two-dimensional finite element problem over the cross-section, such as this one, supplies <span class="math inline">\(J\)</span> to the one-dimensional elements along each member. In the other direction, the frame analysis gives the torque <span class="math inline">\(m_3\)</span> in each member, and this page turns it into shear stresses, <span class="math inline">\(\tau = (m_3/J)\,|\nabla\Phi|\)</span>. Assumption 2 of the appendix, <span class="math inline">\(\sigma_{\alpha\beta} = 0\)</span>, holds exactly here, since the only stresses are <span class="math inline">\(\tau_{xz}\)</span> and <span class="math inline">\(\tau_{yz}\)</span>.</p>
+<section id="warping" class="level3">
+<h3 class="anchored" data-anchor-id="warping">The warping function</h3>
+<p>In Saint-Venant’s theory, the displacements are</p>
+<p><span class="math display">\[
+u_1 = -\theta\,x_2\,x_3,
+\qquad
+u_2 = \theta\,x_1\,x_3,
+\qquad
+u_3 = \theta\,\omega(x_1, x_2),
+\]</span></p>
+<p>which are those of the appendix with <span class="math inline">\(\theta_3 = \theta\,x_3\)</span>, together with an axial displacement proportional to the <strong>warping function</strong> <span class="math inline">\(\omega\)</span>, in mm². The shear strains then give the stresses</p>
+<p><span class="math display">\[
+\tau_{xz} = G\theta\left(\frac{\partial\omega}{\partial x_1} - x_2\right),
+\qquad
+\tau_{yz} = G\theta\left(\frac{\partial\omega}{\partial x_2} + x_1\right).
+\]</span></p>
+<p>Equilibrium, <span class="math inline">\(\partial\tau_{xz}/\partial x_1 + \partial\tau_{yz}/\partial x_2 = 0\)</span>, and a load-free outer surface, <span class="math inline">\(\tau_{xz}\,n_1 + \tau_{yz}\,n_2 = 0\)</span>, then give</p>
+<p><span class="math display">\[
+-\nabla^2\omega = 0 \ \text{ in } A,
+\qquad
+\nabla\omega\cdot\underline{n} = x_2\,n_1 - x_1\,n_2 \ \text{ on the boundary}.
+\]</span></p>
+<p>This is again the same Poisson equation used in this course, now with <span class="math inline">\(f = 0\)</span> and Neumann data on the whole boundary. As in <a href="../chapters/23_Class.html">Class 23</a>, a pure Neumann problem determines <span class="math inline">\(\omega\)</span> only up to a constant, which here is a rigid axial movement of the section. Its data must also satisfy a compatibility condition, which they do, since <span class="math inline">\(\oint (x_2\,n_1 - x_1\,n_2)\,d\Gamma = \int_A \left(\partial x_2/\partial x_1 - \partial x_1/\partial x_2\right) dA = 0\)</span>. For this section, <span class="math inline">\(\omega\)</span> is odd in both <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span>, so the quarter model has <span class="math inline">\(\omega = 0\)</span> on the two axes of symmetry, which fixes the constant. <span class="math inline">\(\Phi\)</span> is even in both, which is why its quarter model has zero-flux conditions there instead.</p>
+<p>Comparing these stresses with <span class="math inline">\(\tau_{xz} = G\theta\,\partial\Phi/\partial x_2\)</span> and <span class="math inline">\(\tau_{yz} = -G\theta\,\partial\Phi/\partial x_1\)</span> gives</p>
+<p><span class="math display">\[
+\frac{\partial\Phi}{\partial x_2} = \frac{\partial\omega}{\partial x_1} - x_2,
+\qquad
+-\frac{\partial\Phi}{\partial x_1} = \frac{\partial\omega}{\partial x_2} + x_1 ,
+\]</span></p>
+<p>so <span class="math inline">\(\Phi\)</span> and <span class="math inline">\(\omega\)</span> describe the same stresses, one through a Dirichlet problem and the other through a Neumann problem.</p>
+<p>Substituting the stresses into the torque, <span class="math inline">\(T = \int_A \left(x_1\,\tau_{yz} - x_2\,\tau_{xz}\right) dA = G\,J\,\theta\)</span>, gives</p>
+<p><span class="math display">\[
+J = I_1 + I_2 + \int_A \left(x_1\,\frac{\partial\omega}{\partial x_2} - x_2\,\frac{\partial\omega}{\partial x_1}\right) dA
+= I_1 + I_2 - \int_A |\nabla\omega|^2\;dA .
+\]</span></p>
+<p>The second form follows from the weak form of the problem for <span class="math inline">\(\omega\)</span> with <span class="math inline">\(\omega\)</span> itself as the weight function, <span class="math inline">\(\int_A |\nabla\omega|^2\,dA = \oint \omega\left(x_2\,n_1 - x_1\,n_2\right) d\Gamma\)</span>, and the divergence theorem. Warping can therefore only reduce the torsion constant below the polar moment, and the polar moment of the appendix is the case <span class="math inline">\(\omega = 0\)</span>.</p>
+<div id="fig-tors-warping" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-tors-warping-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class24/C24_Tors_Fig5_Warping.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-tors-warping-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: (a) The warping function <span class="math inline">\(\omega\)</span> over the section, from the biquadratic solution on the quarter, which changes sign across each axis of symmetry. (b) The end of the beam seen from above, with the axial displacement <span class="math inline">\(u_3 = \theta\,\omega\)</span> at the mid-thickness of each flange, greatly exaggerated. Each flange rotates in its own plane, and the two flanges rotate in opposite directions.
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-tors-warping" class="quarto-xref">Figure&nbsp;<span>5</span></a> shows <span class="math inline">\(\omega\)</span> for this section. Along the mid-lines of the plates, <span class="math inline">\(\omega \approx x_1 x_2\)</span>, which is zero along the web, so the web hardly warps. Each flange instead rotates in its own plane: for a positive twist, one tip of the top flange moves along the beam and the other moves back, and the bottom flange does the opposite. Where this motion is prevented, as at a welded support, each flange must bend in its own plane, which is the source of the additional stiffness noted under the limits of the model.</p>
+<p>The two formulations also give a check on the finite element solutions. For each problem, the energy of the solution is <span class="math inline">\(\Pi = -\int_A \Phi\,dA\)</span> or <span class="math inline">\(\Pi = -\tfrac{1}{2}\int_A |\nabla\omega|^2\,dA\)</span>, and the energy of a finite element solution is never below the exact energy (<a href="../chapters/23_Class.html">Class 23</a>). Writing <span class="math inline">\(\Phi_h\)</span> and <span class="math inline">\(\omega_h\)</span> for the finite element solutions, this gives</p>
+<p><span class="math display">\[
+2\int_A \Phi_h\;dA \;\le\; J \;\le\; I_1 + I_2 - \int_A |\nabla\omega_h|^2\;dA ,
+\]</span></p>
+<p>and <a href="#tbl-tors-bounds" class="quarto-xref">Table&nbsp;<span>4</span></a> shows the two approaching the same value from opposite sides.</p>
+<div id="tbl-tors-bounds" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-tors-bounds-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;4: The torsion constant from the stress function and from the warping function, on the same biquadratic meshes.
+</figcaption>
+<div aria-describedby="tbl-tors-bounds-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">nodes in the quarter</th>
+<th style="text-align: right;"><span class="math inline">\(2\int_A \Phi_h\,dA\)</span> (mm⁴)</th>
+<th style="text-align: right;"><span class="math inline">\(I_1 + I_2 - \int_A \lvert\nabla\omega_h\rvert^2\,dA\)</span> (mm⁴)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">985</td>
+<td style="text-align: right;">141,107</td>
+<td style="text-align: right;">141,602</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3,761</td>
+<td style="text-align: right;">141,323</td>
+<td style="text-align: right;">141,400</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">14,689</td>
+<td style="text-align: right;">141,357</td>
+<td style="text-align: right;">141,369</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">58,049</td>
+<td style="text-align: right;">141,362</td>
+<td style="text-align: right;">141,365</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+</section>
+<section id="limits-of-the-model" class="level2">
+<h2 class="anchored" data-anchor-id="limits-of-the-model">Limits of the model</h2>
+<ul>
+<li><strong>Solid sections only.</strong> For a section with holes, such as a tube or a box girder, <span class="math inline">\(\Phi\)</span> takes a different constant value on each boundary, and the constants on the inner boundaries are unknown. They are found from additional conditions, one for each hole, given in <a href="#holes">the note on sections with holes</a>; a solver that sets <span class="math inline">\(\Phi = 0\)</span> on every boundary cannot impose them. The <a href="../chapters/24_Membrane.html">membrane page</a> shows one way to impose them, by filling each hole with elements whose nodes all share one unknown, which is Prandtl’s “lid” over the hole.</li>
+<li><strong>Uniform torsion.</strong> The theory assumes that the cross-sections are free to warp. Where warping is restrained, for example at a welded support, an I-beam carries additional stresses and is stiffer than this model predicts, because its flanges must bend in their own planes (<a href="#fig-tors-warping" class="quarto-xref">Figure&nbsp;<span>5</span></a>). The frame elements of the appendix do not include this either.</li>
+<li><strong>Linear elasticity.</strong> The stresses must remain below yield; beyond that, the stress distribution changes.</li>
+<li><strong>Sharp corners.</strong> The model has no fillets, so its corner stresses are not meaningful.</li>
+</ul>
+</section>
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
+<ul>
+<li>Saint-Venant torsion is represented using the Poisson equation with <span class="math inline">\(u = \Phi\)</span>, the normalized Prandtl stress function, <span class="math inline">\(\underline{\underline{\kappa}} = 1\)</span>, and <span class="math inline">\(f = 2\)</span>, with <span class="math inline">\(\Phi = 0\)</span> on the boundary of a solid section.</li>
+<li>The torsion constant is a property of the shape of the section, the polar moment less the stiffness lost to warping, <span class="math inline">\(J = \int_A (x^2 + y^2)\,dA - \int_A|\nabla\omega|^2\,dA\)</span>; for a solid section, it is computed most simply as <span class="math inline">\(2\int_A\Phi\,dA\)</span>, which converges quickly, and the shear stresses are proportional to <span class="math inline">\(|\nabla\Phi|\)</span>.</li>
+<li>Symmetry reduces the model to a quarter, with zero-flux conditions on the axes of symmetry.</li>
+<li>The stress at a sharp re-entrant corner is singular and keeps growing with refinement, while the stresses on the faces converge.</li>
+<li>A membrane stretched over the same shape and inflated by a uniform pressure takes the shape of <span class="math inline">\(\Phi\)</span>, which relates torque to volume and stress to slope; the <a href="../chapters/24_Membrane.html">membrane page</a> treats the membrane in its own right.</li>
+<li>Beam and frame elements twist each cross-section in the same way but do not let it warp, so their <span class="math inline">\(J\)</span> is the polar moment, which is far too stiff for an open section; the <span class="math inline">\(J\)</span> computed here is the one a frame model needs.</li>
+<li>The warping function <span class="math inline">\(\omega\)</span> solves the same equation with Neumann data, and gives <span class="math inline">\(J = I_1 + I_2 - \int_A|\nabla\omega|^2\,dA\)</span>; computed with finite elements, the two formulations bound <span class="math inline">\(J\)</span> from below and from above.</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/24_Seepage.html" class="pagination-link" aria-label="Groundwater Seepage Under a Dam">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Groundwater Seepage Under a Dam</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/24_Membrane.html" class="pagination-link" aria-label="Deflection of a Pressurized Membrane">
+        <span class="nav-page-text">Deflection of a Pressurized Membrane</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

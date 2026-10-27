@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Finite Element Methods">
+
+<title>Groundwater Seepage Under a Dam – CE/ME 507 — Class Notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/24_Torsion.html" rel="next">
+<link href="../chapters/24_Class.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-e98545d696c0c4756cb81f8950af150c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script>
+window.MathJax = {
+  tex: {
+    tags: 'ams',
+    macros: {
+      RR: '{\\mathbb{R}}',
+      Om: '{\\Omega}'
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/24_Seepage.html">Class 24 applications</a></li><li class="breadcrumb-item"><a href="../chapters/24_Seepage.html">Groundwater Seepage Under a Dam</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">CE/ME 507 — Class Notes</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">CE/ME 507 — Class Notes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/2_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Class 2: Linear FEM</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Class 3: Index Notation, Function Spaces, and the Weak Form</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/4_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Class 4: Strong and Weak Forms of the Boundary Value Problem</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/5_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/6_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Class 6: Basis Functions and Lagrange Polynomials</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/7_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Class 7: From Galerkin to a Matrix Equation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/8_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Class 8: Assembly, Sparsity, and the Road to Quadrature</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/9_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Class 9: The Isoparametric Map and the Jacobian</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Class 10: Assembly with the IEN Array, and Quadrature on an Element</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Class 11: Tensor-Product Basis Functions in 2D</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Class 12: The Spatial Mapping</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Class 13: The Jacobian Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Class 14: The ID and IEN Arrays</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Class 15: Unidimensional Finite Element Code</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Class 16: Derivatives of the Solution</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Class 20: Quadrature in 2D, and Integrating Over a Face</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Class 21: CAD, Meshing, and Discretization Choice</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/22_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Class 22: Robin Boundary Conditions</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/23_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Class 23: Minimization, Symmetry, and Positive Definiteness</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Class 24: Applications and Interpretation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Class 24 applications</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Seepage.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Groundwater Seepage Under a Dam</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Torsion.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Torsion of an I-Beam, and the Membrane Analogy</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Membrane.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deflection of a Pressurized Membrane</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Diffusion.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Diffusion Through a Damaged Landfill Liner</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Appendices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">1D Poisson I: Heat Conduction Through a Wall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">1D Poisson II: The Wall, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">1D Poisson III: An Axially Loaded Rod</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Beam_Frame_Formulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">H</span>&nbsp; <span class="chapter-title">Beams and Frames from Three-Dimensional Elasticity</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#the-physical-problem" id="toc-the-physical-problem" class="nav-link active" data-scroll-target="#the-physical-problem">The physical problem</a></li>
+  <li><a href="#the-quantities-and-their-units" id="toc-the-quantities-and-their-units" class="nav-link" data-scroll-target="#the-quantities-and-their-units">The quantities and their units</a></li>
+  <li><a href="#the-governing-equation" id="toc-the-governing-equation" class="nav-link" data-scroll-target="#the-governing-equation">The governing equation</a></li>
+  <li><a href="#boundary-conditions" id="toc-boundary-conditions" class="nav-link" data-scroll-target="#boundary-conditions">Boundary conditions</a></li>
+  <li><a href="#the-solution-flow-nets" id="toc-the-solution-flow-nets" class="nav-link" data-scroll-target="#the-solution-flow-nets">The solution: flow nets</a></li>
+  <li><a href="#quantities-of-interest" id="toc-quantities-of-interest" class="nav-link" data-scroll-target="#quantities-of-interest">Quantities of interest</a>
+  <ul class="collapse">
+  <li><a href="#seepage-rate" id="toc-seepage-rate" class="nav-link" data-scroll-target="#seepage-rate">Seepage rate</a></li>
+  <li><a href="#uplift-on-the-base" id="toc-uplift-on-the-base" class="nav-link" data-scroll-target="#uplift-on-the-base">Uplift on the base</a></li>
+  <li><a href="#exit-gradient-and-piping" id="toc-exit-gradient-and-piping" class="nav-link" data-scroll-target="#exit-gradient-and-piping">Exit gradient and piping</a></li>
+  <li><a href="#how-accurate-are-these-numbers" id="toc-how-accurate-are-these-numbers" class="nav-link" data-scroll-target="#how-accurate-are-these-numbers">How accurate are these numbers?</a></li>
+  </ul></li>
+  <li><a href="#when-the-soil-is-layered" id="toc-when-the-soil-is-layered" class="nav-link" data-scroll-target="#when-the-soil-is-layered">When the soil is layered</a></li>
+  <li><a href="#checks" id="toc-checks" class="nav-link" data-scroll-target="#checks">Checks</a></li>
+  <li><a href="#limits-of-the-model" id="toc-limits-of-the-model" class="nav-link" data-scroll-target="#limits-of-the-model">Limits of the model</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/24_Seepage.html">Class 24 applications</a></li><li class="breadcrumb-item"><a href="../chapters/24_Seepage.html">Groundwater Seepage Under a Dam</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Groundwater Seepage Under a Dam</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>This page is one of the application pages for <a href="../chapters/24_Class.html">Class 24</a>. It applies the scalar boundary value problem of this course to steady groundwater flow beneath a concrete dam, and computes the quantities that a geotechnical engineer would check: how much water passes beneath the dam, how hard the water pushes up on the dam, and whether the water emerging downstream could carry soil with it.</p>
+<section id="the-physical-problem" class="level2">
+<h2 class="anchored" data-anchor-id="the-physical-problem">The physical problem</h2>
+<div id="fig-seep-setting" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-seep-setting-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class24/C24_Seep_Fig1_Setting.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-seep-setting-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: A concrete gravity dam on a 20 m layer of sand, which rests on impermeable rock. The reservoir stands 12 m above the ground surface upstream, and the tailwater stands 2 m above it downstream. A cutoff wall 8 m deep is driven into the sand at the upstream edge of the dam (the heel). The blue lines are flow lines computed later on this page.
+</figcaption>
+</figure>
+</div>
+<p>Water in the reservoir seeps into the sand, passes beneath the dam, and emerges downstream, as shown in <a href="#fig-seep-setting" class="quarto-xref">Figure&nbsp;<span>1</span></a>. The concrete and the rock are effectively impermeable compared to the sand, so all of the flow is in the sand. Three consequences of this flow matter for the design of the dam.</p>
+<ul>
+<li><strong>Seepage loss.</strong> The water lost beneath the dam must be acceptable for the purpose of the reservoir.</li>
+<li><strong>Uplift.</strong> The water beneath the dam is under pressure, and this pressure pushes up on the base of the dam. The upward force reduces the dam’s resistance to sliding and overturning, and must be included in its stability analysis.</li>
+<li><strong>Piping.</strong> Where the water emerges upward at the ground surface downstream, it drags on the soil grains. If the upward gradient is large enough, it can lift the soil and carry it away, starting an erosion channel that grows back toward the reservoir beneath the dam. This process, called piping, has caused many dam failures.</li>
+</ul>
+<p>A <strong>cutoff wall</strong>, such as a line of sheet piles or a wall of concrete or grout, lengthens the path that the water must travel. This page compares a dam with no cutoff, with a cutoff at the heel (upstream), and with a cutoff at the toe (downstream).</p>
+</section>
+<section id="the-quantities-and-their-units" class="level2">
+<h2 class="anchored" data-anchor-id="the-quantities-and-their-units">The quantities and their units</h2>
+<div id="tbl-seep-quantities" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-seep-quantities-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Quantities used on this page.
+</figcaption>
+<div aria-describedby="tbl-seep-quantities-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 11%">
+<col style="width: 9%">
+<col style="width: 15%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">quantity</th>
+<th style="text-align: center;">symbol</th>
+<th style="text-align: center;">units</th>
+<th style="text-align: left;">value here</th>
+<th style="text-align: left;">role in the boundary value problem</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">total head</td>
+<td style="text-align: center;"><span class="math inline">\(h\)</span></td>
+<td style="text-align: center;">m</td>
+<td style="text-align: left;">2 to 12</td>
+<td style="text-align: left;">the unknown <span class="math inline">\(u\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">elevation above the ground surface</td>
+<td style="text-align: center;"><span class="math inline">\(z\)</span></td>
+<td style="text-align: center;">m</td>
+<td style="text-align: left;"><span class="math inline">\(-20\)</span> to 0</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">water pressure</td>
+<td style="text-align: center;"><span class="math inline">\(p\)</span></td>
+<td style="text-align: center;">kPa</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><span class="math inline">\(p = \gamma_w\,(h - z)\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">unit weight of water</td>
+<td style="text-align: center;"><span class="math inline">\(\gamma_w\)</span></td>
+<td style="text-align: center;">kN/m³</td>
+<td style="text-align: left;">9.81</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">hydraulic conductivity</td>
+<td style="text-align: center;"><span class="math inline">\(K\)</span></td>
+<td style="text-align: center;">m/s</td>
+<td style="text-align: left;">2 × 10⁻⁵</td>
+<td style="text-align: left;">the coefficient <span class="math inline">\(\kappa\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Darcy flux (discharge per unit area)</td>
+<td style="text-align: center;"><span class="math inline">\(\underline{v}\)</span></td>
+<td style="text-align: center;">m/s</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">the flux <span class="math inline">\(-\kappa\nabla u\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">seepage rate per meter of dam</td>
+<td style="text-align: center;"><span class="math inline">\(q\)</span></td>
+<td style="text-align: center;">m³/s per m</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">a boundary flux</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">hydraulic gradient</td>
+<td style="text-align: center;"><span class="math inline">\(i\)</span></td>
+<td style="text-align: center;">–</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"><span class="math inline">\(-\nabla h\cdot\underline{n}\)</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The hydraulic conductivity used here, 2 × 10⁻⁵ m/s, is typical of a fine to medium sand. Hydraulic conductivities of natural soils range over many orders of magnitude, from about <span class="math inline">\(10^{-2}\)</span> m/s for clean gravel to below <span class="math inline">\(10^{-9}\)</span> m/s for clay, and the value for a particular site is rarely known more precisely than within a factor of a few.</p>
+</section>
+<section id="the-governing-equation" class="level2">
+<h2 class="anchored" data-anchor-id="the-governing-equation">The governing equation</h2>
+<p>The <strong>total head</strong> combines the elevation of a point and the pressure of the water there, expressed as a height of water:</p>
+<p><span class="math display">\[
+h = z + \frac{p}{\gamma_w} .
+\]</span></p>
+<p>Water flows from high total head to low total head. <strong>Darcy’s law</strong> states that the discharge per unit area is proportional to the gradient of the head,</p>
+<p><span class="math display">\[
+\underline{v} = -K\,\nabla h
+\qquad\Longleftrightarrow\qquad
+v_i = -K_{ij}\,h_{,j} ,
+\]</span></p>
+<p>where, for a layered soil, <span class="math inline">\(K_{ij}\)</span> is a symmetric positive definite matrix rather than a single number. For steady flow of water through a rigid soil, the volume of water entering any small region equals the volume leaving it, so</p>
+<p><span class="math display">\[
+\nabla\cdot\underline{v} = 0 .
+\]</span></p>
+<p>Substituting Darcy’s law gives</p>
+<p><span class="math display">\[
+-\nabla\cdot\left(K\,\nabla h\right) = 0
+\qquad\Longleftrightarrow\qquad
+-\left(K_{ij}\,h_{,j}\right)_{,i} = 0 ,
+\]</span></p>
+<p>which is the Poisson Equation with <span class="math inline">\(u = h\)</span>, <span class="math inline">\(\underline{\underline{\kappa}} = K\)</span>, and <span class="math inline">\(f = 0\)</span>. A well that injects or extracts water would appear as a source term <span class="math inline">\(f\)</span>. Note that on this page, following the convention of groundwater engineering, <span class="math inline">\(h\)</span> denotes the total head, not the Neumann flux; the flux entering through a boundary is written <span class="math inline">\(-\underline{v}\cdot\underline{n} = (K\nabla h)\cdot\underline{n}\)</span>.</p>
+</section>
+<section id="boundary-conditions" class="level2">
+<h2 class="anchored" data-anchor-id="boundary-conditions">Boundary conditions</h2>
+<div id="fig-seep-domain" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-seep-domain-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class24/C24_Seep_Fig2_Domain.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-seep-domain-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: (a) The sand layer as a two-dimensional domain, per meter of length along the dam. Blue boundaries have a known head; orange boundaries carry no flow. The cutoff wall is a slit in the domain, and both of its faces carry no flow. (b) The biquadratic mesh, with smaller elements near the heel, the toe, and the bottom of the cutoff wall, where the head changes most rapidly.
+</figcaption>
+</figure>
+</div>
+<p>Each part of the boundary of the sand layer in <a href="#fig-seep-domain" class="quarto-xref">Figure&nbsp;<span>2</span></a> receives one condition.</p>
+<ul>
+<li><strong>The floor of the reservoir</strong> (<span class="math inline">\(z = 0\)</span>, upstream of the dam): the water pressure is hydrostatic, <span class="math inline">\(p = \gamma_w H_1\)</span>, so <span class="math inline">\(h = 0 + H_1 = 12\)</span> m. This is a Dirichlet condition.</li>
+<li><strong>The floor of the tailwater</strong> (<span class="math inline">\(z = 0\)</span>, downstream of the dam): similarly, <span class="math inline">\(h = H_2 = 2\)</span> m.</li>
+<li><strong>The base of the dam, both faces of the cutoff wall, and the top of the rock</strong>: no water crosses them, so <span class="math inline">\(\underline{v}\cdot\underline{n} = 0\)</span>, which is the Neumann condition with zero flux.</li>
+<li><strong>The two far ends of the model</strong>: the real sand layer continues further upstream and downstream. The model is cut off 40 m from the dam, and these boundaries are assumed to carry no flow. This assumption is checked later on this page.</li>
+</ul>
+<p>The cutoff wall needs special treatment in the mesh. It is thin, so it is modeled as a line, but the head on its upstream face is very different from the head on its downstream face. Along the wall, the elements on the two sides therefore do not share nodes, so that each face has its own values of <span class="math inline">\(h\)</span>, and the wall becomes a part of the boundary on each side. Below the bottom of the wall, the elements share nodes again as usual.</p>
+<p>The solver therefore receives <span class="math inline">\(\underline{\underline{\kappa}} = K\)</span>, <span class="math inline">\(f = 0\)</span>, <span class="math inline">\(g = 12\)</span> m on the reservoir floor and <span class="math inline">\(g = 2\)</span> m on the tailwater floor, and zero Neumann data on every other boundary.</p>
+</section>
+<section id="the-solution-flow-nets" class="level2">
+<h2 class="anchored" data-anchor-id="the-solution-flow-nets">The solution: flow nets</h2>
+<div id="fig-seep-nets" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-seep-nets-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class24/C24_Seep_Fig3_FlowNets.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-seep-nets-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: The head (shading, dark where it is high), with dashed equipotentials every meter of head and solid flow lines, for the three arrangements of the cutoff wall. The flow lines are spaced so that the same discharge passes between each neighboring pair, and the cells between equipotentials and flow lines are approximately square. The ratio <span class="math inline">\(N_f/N_d\)</span> in each title is the number of flow channels for 10 head drops of 1 m.
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-seep-nets" class="quarto-xref">Figure&nbsp;<span>3</span></a> shows the computed head beneath the dam. The dashed lines are <strong>equipotentials</strong>, along which the head is constant, drawn every meter from 11 m to 3 m. The solid lines are <strong>flow lines</strong>, the paths followed by the water. In an isotropic soil, the flow is perpendicular to the equipotentials, and the two families of lines together form a <strong>flow net</strong>.</p>
+<p>The flow lines were computed with a second solution on the same mesh, for the <strong>stream function</strong> <span class="math inline">\(\psi\)</span>. The stream function is constant along every flow line, and the difference in <span class="math inline">\(\psi\)</span> between two flow lines is the discharge between them. The base of the dam and the cutoff wall form one flow line, so <span class="math inline">\(\psi = 0\)</span> there, and the rock and the far ends form another, with <span class="math inline">\(\psi = q\)</span>, the total seepage rate. Along the reservoir and tailwater floors, where the flow enters and leaves, <span class="math inline">\(\nabla\psi\cdot\underline{n} = 0\)</span>. This is again a problem of the same form, with the types of the boundary conditions exchanged, which is solved with the same code.</p>
+<p>Before computers, flow nets were sketched by hand, and the seepage was estimated from the number of flow channels <span class="math inline">\(N_f\)</span> and head drops <span class="math inline">\(N_d\)</span> as <span class="math inline">\(q = K\,\Delta H\,N_f/N_d\)</span>, where <span class="math inline">\(\Delta H = H_1 - H_2\)</span>. The computed flow nets give the same estimate: with no cutoff, there are 5.33 flow channels for 10 head drops of 1 m, so that <span class="math inline">\(q = K \times 10\text{ m} \times\)</span> 0.533.</p>
+</section>
+<section id="quantities-of-interest" class="level2">
+<h2 class="anchored" data-anchor-id="quantities-of-interest">Quantities of interest</h2>
+<section id="seepage-rate" class="level3">
+<h3 class="anchored" data-anchor-id="seepage-rate">Seepage rate</h3>
+<p>The seepage rate per meter of dam is the total flow entering through the reservoir floor. It is computed from the reactions at the Dirichlet nodes there, as described on the <a href="../chapters/24_Class.html">Class 24 page</a>, and is listed in <a href="#tbl-seep-results" class="quarto-xref">Table&nbsp;<span>2</span></a>. With no cutoff, <span class="math inline">\(q\)</span> = 9.21 m³ per day for each meter of dam, so a dam 200 m long would lose about 1842 m³ per day. A cutoff 8 m deep, at either end of the dam, reduces this by about 24%. The dimensionless ratio <span class="math inline">\(q/(K\,\Delta H)\)</span>, which depends only on the geometry, is 0.533 without a cutoff and 0.407 with one.</p>
+</section>
+<section id="uplift-on-the-base" class="level3">
+<h3 class="anchored" data-anchor-id="uplift-on-the-base">Uplift on the base</h3>
+<p>Along the base of the dam, <span class="math inline">\(z = 0\)</span>, so the water pressure is <span class="math inline">\(p = \gamma_w\,h\)</span>, and the total upward force per meter of dam is</p>
+<p><span class="math display">\[
+U = \int_0^B \gamma_w\,h(x,0)\;dx ,
+\]</span></p>
+<p>which is computed with one-dimensional quadrature along the element faces that form the base.</p>
+<div id="fig-seep-uplift" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-seep-uplift-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class24/C24_Seep_Fig4_Uplift.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-seep-uplift-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: (a) The water pressure on the base of the dam for the three arrangements, compared with the common design assumption that it varies linearly from the heel to the toe. (b) The upward gradient at the ground surface downstream of the toe. The gradient is singular at the toe, so the average over the first 2 m (shaded) is used to judge the risk of piping.
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-seep-uplift" class="quarto-xref">Figure&nbsp;<span>4</span></a> (a) shows the pressure along the base. Without a cutoff, the uplift force is 1373 kN per meter, which equals the value from the common linear assumption (1373 kN/m) because the layer is symmetric about the middle of the dam, although the distribution is not linear. A cutoff at the heel takes most of the head loss across the wall, and reduces the uplift to 1033 kN/m. A cutoff at the toe does the opposite: it holds the water beneath the dam at a higher head, and increases the uplift to 1714 kN/m.</p>
+</section>
+<section id="exit-gradient-and-piping" class="level3">
+<h3 class="anchored" data-anchor-id="exit-gradient-and-piping">Exit gradient and piping</h3>
+<p>Soil at the ground surface downstream begins to lift when the upward gradient <span class="math inline">\(i = -\partial h/\partial z\)</span> reaches the <strong>critical gradient</strong></p>
+<p><span class="math display">\[
+i_c = \frac{G_s - 1}{1 + e} ,
+\]</span></p>
+<p>where <span class="math inline">\(G_s\)</span> is the specific gravity of the soil grains and <span class="math inline">\(e\)</span> is the void ratio. For a sand with <span class="math inline">\(G_s\)</span> = 2.65 and <span class="math inline">\(e\)</span> = 0.65, <span class="math inline">\(i_c\)</span> = 1.0.</p>
+<p><a href="#fig-seep-uplift" class="quarto-xref">Figure&nbsp;<span>4</span></a> (b) shows that the gradient increases without bound toward the toe of the dam when there is no cutoff there. This is a singular point, where a no-flow boundary (the base) meets a fixed-head boundary (the ground surface) on a straight line. As described on the Class 24 page, the gradient at such a point does not converge with refinement and should not be reported. Instead, the gradient is averaged over a short length, here the first 2 m downstream of the toe. This average equals the flow leaving through those 2 m, divided by <span class="math inline">\(K\)</span> and by 2 m, and the flow is simply the value of the stream function at the end of the window. <a href="#tbl-seep-results" class="quarto-xref">Table&nbsp;<span>2</span></a> lists the average gradient and the corresponding factor of safety <span class="math inline">\(F_s = i_c/i_{avg}\)</span>.</p>
+<div id="tbl-seep-results" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-seep-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;2: Quantities of interest for the three arrangements of the cutoff wall, computed with biquadratic elements.
+</figcaption>
+<div aria-describedby="tbl-seep-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">no cutoff</th>
+<th style="text-align: right;">cutoff at the heel</th>
+<th style="text-align: right;">cutoff at the toe</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">seepage rate <span class="math inline">\(q\)</span> (m³/day per m)</td>
+<td style="text-align: right;">9.21</td>
+<td style="text-align: right;">7.03</td>
+<td style="text-align: right;">7.03</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(q/(K\,\Delta H)\)</span></td>
+<td style="text-align: right;">0.533</td>
+<td style="text-align: right;">0.407</td>
+<td style="text-align: right;">0.407</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">uplift force <span class="math inline">\(U\)</span> (kN/m)</td>
+<td style="text-align: right;">1373</td>
+<td style="text-align: right;">1033</td>
+<td style="text-align: right;">1714</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">average exit gradient, first 2 m</td>
+<td style="text-align: right;">0.93</td>
+<td style="text-align: right;">0.70</td>
+<td style="text-align: right;">0.26</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">factor of safety against piping, <span class="math inline">\(i_c/i_{avg}\)</span></td>
+<td style="text-align: right;">1.1</td>
+<td style="text-align: right;">1.4</td>
+<td style="text-align: right;">3.8</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The two positions of the cutoff wall reduce the seepage equally, but they affect the other two quantities in opposite ways. A cutoff at the heel reduces the uplift by 25% but improves the factor of safety against piping only modestly, to 1.4. A cutoff at the toe raises the factor of safety to 3.8, but increases the uplift by 25%. Since factors of safety of 3 or more against piping are commonly required, neither the dam without a cutoff nor the dam with only an upstream cutoff would be acceptable as drawn. In practice, dams often combine an upstream cutoff with a filter at the toe, which lets the water leave without carrying soil, or with drains beneath the base that relieve the uplift.</p>
+</section>
+<section id="how-accurate-are-these-numbers" class="level3">
+<h3 class="anchored" data-anchor-id="how-accurate-are-these-numbers">How accurate are these numbers?</h3>
+<p><a href="#tbl-seep-convergence" class="quarto-xref">Table&nbsp;<span>3</span></a> lists the quantities for the dam with an upstream cutoff on four meshes.</p>
+<div id="tbl-seep-convergence" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-seep-convergence-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3: The dam with an upstream cutoff, on successively finer meshes.
+</figcaption>
+<div aria-describedby="tbl-seep-convergence-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 21%">
+<col style="width: 15%">
+<col style="width: 15%">
+<col style="width: 15%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">mesh</th>
+<th style="text-align: right;">nodes</th>
+<th style="text-align: right;"><span class="math inline">\(q\)</span> (m³/day per m)</th>
+<th style="text-align: right;"><span class="math inline">\(U\)</span> (kN/m)</th>
+<th style="text-align: right;"><span class="math inline">\(i_{avg}\)</span> from <span class="math inline">\(\psi\)</span></th>
+<th style="text-align: right;"><span class="math inline">\(i_{avg}\)</span> by integrating <span class="math inline">\(\partial h/\partial z\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">bilinear</td>
+<td style="text-align: right;">827</td>
+<td style="text-align: right;">7.093</td>
+<td style="text-align: right;">1033.0</td>
+<td style="text-align: right;">0.692</td>
+<td style="text-align: right;">0.500</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">biquadratic</td>
+<td style="text-align: right;">3165</td>
+<td style="text-align: right;">7.044</td>
+<td style="text-align: right;">1032.9</td>
+<td style="text-align: right;">0.697</td>
+<td style="text-align: right;">0.600</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">biquadratic, refined once</td>
+<td style="text-align: right;">12377</td>
+<td style="text-align: right;">7.035</td>
+<td style="text-align: right;">1032.9</td>
+<td style="text-align: right;">0.698</td>
+<td style="text-align: right;">0.630</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">biquadratic, refined twice</td>
+<td style="text-align: right;">48945</td>
+<td style="text-align: right;">7.030</td>
+<td style="text-align: right;">1032.9</td>
+<td style="text-align: right;">0.699</td>
+<td style="text-align: right;">0.650</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The seepage rate and the uplift, which are a sum of reactions and an integral of <span class="math inline">\(h\)</span>, change only in the third or fourth digit. The average exit gradient computed from the stream function converges almost as quickly. The same average computed by integrating the gradient of <span class="math inline">\(h\)</span> along the surface converges much more slowly toward the same value, because it uses the derivative of the solution right next to the singular point. This is the general rule of the Class 24 page in a concrete case: quantities computed from values and integrals of the solution are more accurate than quantities computed from its derivatives.</p>
+</section>
+</section>
+<section id="when-the-soil-is-layered" class="level2">
+<h2 class="anchored" data-anchor-id="when-the-soil-is-layered">When the soil is layered</h2>
+<p>Natural soils are often deposited in layers, which makes the horizontal conductivity larger than the vertical conductivity. In that case <span class="math inline">\(\underline{\underline{\kappa}}\)</span> is the matrix <span class="math inline">\(\mathrm{diag}(k_h, k_v)\)</span>, which the solver accepts without any other change.</p>
+<div id="fig-seep-aniso" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-seep-aniso-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class24/C24_Seep_Fig5_Anisotropic.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-seep-aniso-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: The head beneath the dam with an upstream cutoff, when the horizontal conductivity is four times the vertical conductivity. The arrows show the direction of flow, which is no longer perpendicular to the equipotentials.
+</figcaption>
+</figure>
+</div>
+<p><a href="#fig-seep-aniso" class="quarto-xref">Figure&nbsp;<span>5</span></a> shows the result for <span class="math inline">\(k_h = 4k_v\)</span>, with <span class="math inline">\(k_v\)</span> equal to the conductivity used above. The water now prefers to travel horizontally, and the flow is no longer perpendicular to the equipotentials, so a flow net drawn by hand with square cells would be wrong. The seepage rate rises to 16.5 m³/day per m, the uplift falls to 843 kN/m, and the average exit gradient rises to 1.15, which exceeds the critical gradient. Assuming an isotropic soil when the real soil is layered would therefore be unconservative for piping.</p>
+</section>
+<section id="checks" class="level2">
+<h2 class="anchored" data-anchor-id="checks">Checks</h2>
+<ul>
+<li><p><strong>Balance of flow.</strong> The flow entering through the reservoir floor equals the flow leaving through the tailwater floor to within a relative difference of 10⁻¹¹, since no water is created or destroyed inside the sand.</p></li>
+<li><p><strong>Size of the model.</strong> Doubling the distance from the dam to the far ends of the model, from 40 m to 80 m, changes the seepage rate by 0.2% and the uplift by 0.06%, so the assumption of no flow at the far ends does not affect the results.</p></li>
+<li><p><strong>A problem with a known answer.</strong> For a dam with no cutoff on sand of unlimited depth, the head along the base has the closed form</p>
+<p><span class="math display">\[
+h(x) = H_2 + \frac{H_1 - H_2}{\pi}\,\arccos\!\left(\frac{2x - B}{B}\right),
+\]</span></p>
+<p>where <span class="math inline">\(x\)</span> is measured from the heel. Solving the same code with sand 200 m deep and extending 200 m on each side gives the head along the base in <a href="#fig-seep-bench" class="quarto-xref">Figure&nbsp;<span>6</span></a>, which agrees with this formula to within 0.042 m over the middle 90% of the base, out of a head drop of 10 m.</p></li>
+</ul>
+<div id="fig-seep-bench" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-seep-bench-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class24/C24_Seep_Fig6_Benchmark.png" class="img-fluid figure-img" style="width:62.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-seep-bench-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: The head along the base of a dam on very deep sand: the closed-form solution for sand of unlimited depth, and the finite element solution with sand 200 m deep.
+</figcaption>
+</figure>
+</div>
+<ul>
+<li><strong>Hand estimate.</strong> The ratio <span class="math inline">\(N_f/N_d\)</span> counted from the computed flow nets reproduces the computed seepage rate, as it must, and a flow net sketched by hand should give a similar ratio.</li>
+</ul>
+</section>
+<section id="limits-of-the-model" class="level2">
+<h2 class="anchored" data-anchor-id="limits-of-the-model">Limits of the model</h2>
+<ul>
+<li><strong>Confined flow only.</strong> The sand here is fully saturated and covered by water or by the dam. Seepage through an earth dam, or toward a well in an unconfined aquifer, has a free water surface whose position is not known in advance, which makes the problem nonlinear.</li>
+<li><strong>Steady state.</strong> The reservoir level is held constant; filling or drawdown requires a time-dependent analysis.</li>
+<li><strong>Uniform soil.</strong> Real foundations contain layers and lenses of different conductivity. Since the hydraulic conductivity is uncertain, it is useful to note which results depend on it: the seepage rate is proportional to <span class="math inline">\(K\)</span>, but in a uniform soil the head, the uplift, and the exit gradient do not depend on <span class="math inline">\(K\)</span> at all.</li>
+<li><strong>Piping is a local process.</strong> The factor of safety computed here is a screening value. Whether erosion actually starts depends on the grain sizes and on any filters, which the model does not include.</li>
+</ul>
+</section>
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
+<ul>
+<li>Steady groundwater flow is modeled by the Poisson Equation with <span class="math inline">\(u = h\)</span>, the total head, <span class="math inline">\(\underline{\underline{\kappa}} = K\)</span>, and <span class="math inline">\(f = 0\)</span>. Reservoir floors are Dirichlet boundaries, and impermeable surfaces are Neumann boundaries with zero flux.</li>
+<li>A thin impermeable wall is represented by a slit in the mesh, along which neighboring elements do not share nodes.</li>
+<li>The seepage rate is a sum of reactions; the uplift is an integral of the head along the base; the flow lines come from a second solve for the stream function.</li>
+<li>The exit gradient is singular at the toe of the dam, so it is averaged over a short distance, and that average is computed most accurately from the stream function.</li>
+<li>A cutoff at the heel reduces seepage and uplift, a cutoff at the toe reduces the exit gradient, and layering of the soil can make piping more likely than an isotropic analysis suggests.</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/24_Class.html" class="pagination-link" aria-label="Class 24: Applications and Interpretation">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Class 24: Applications and Interpretation</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/24_Torsion.html" class="pagination-link" aria-label="Torsion of an I-Beam, and the Membrane Analogy">
+        <span class="nav-page-text">Torsion of an I-Beam, and the Membrane Analogy</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
