@@ -43,6 +43,16 @@ computed on the page so that the text and the drawings always agree.
 | [Class 21](chapters/21_Class.qmd) | CAD, meshing and discretization choice: element types, where meshes come from, and isogeometric analysis |
 | [Class 22](chapters/22_Class.qmd) | Robin boundary conditions: where they come from, their weak and Galerkin forms, and the face integrals they add to the stiffness matrix and force vector, with an interactive wall example |
 | [Class 23](chapters/23_Class.qmd) | The minimization form and its equivalence to the weak form, uniqueness of the solution, and why the stiffness matrix is symmetric and positive definite, with an interactive energy landscape |
+| [Class 24](chapters/24_Class.qmd) | Applications and interpretation: the same equation in heat conduction, groundwater seepage, electrostatics, torsion, membranes, and diffusion; quantities of interest, their accuracy, and checking a result without an exact solution |
+
+### Class 24 applications
+
+| | |
+|---|---|
+| [Groundwater Seepage Under a Dam](chapters/24_Seepage.qmd) | Flow nets, seepage, uplift, and piping beneath a concrete dam with a cutoff wall |
+| [Torsion of an I-Beam, and the Membrane Analogy](chapters/24_Torsion.qmd) | The torsion constant and shear stresses of a steel I-beam, and Prandtl's soap film |
+| [Deflection of a Pressurized Membrane](chapters/24_Membrane.qmd) | A pressure-sensor diaphragm with a rigid boss: sensitivity, force on the frame, and how the membrane relates to torsion |
+| [Diffusion Through a Damaged Landfill Liner](chapters/24_Diffusion.qmd) | Contaminant flux through a tear in a geomembrane, and the tear's effective width |
 
 ### Support material
 
@@ -55,3 +65,4 @@ computed on the page so that the text and the drawings always agree.
 | [1D Poisson IV: The Rod, by Galerkin's Method](chapters/Poisson1D_Rod_FEM.qmd) | The same steps read as virtual work, with the pile as the worked example |
 | [2D Poisson I: Heat Flow in a Battery Cell](chapters/Poisson2D_Heat.qmd) | The strong form in two dimensions: gradient, divergence, Laplacian, and a boundary split into $\Gamma_g$ and $\Gamma_h$, in vector and index notation |
 | [2D Poisson II: The Battery Cell, by Galerkin's Method](chapters/Poisson2D_Heat_FEM.qmd) | Quadrilateral basis functions, the isoparametric map and its Jacobian, and assembly in 2D, with an explorer that shows which rows and columns the Dirichlet nodes cut out |
+| [Beams and Frames from Three-Dimensional Elasticity](chapters/Beam_Frame_Formulation.qmd) | The Timoshenko frame equations derived from 3D elasticity (Hughes 5.4), with dynamics, damping, and assembly of members into a frame |

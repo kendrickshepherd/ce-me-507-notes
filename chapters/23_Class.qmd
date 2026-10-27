@@ -178,7 +178,7 @@ In mechanics, $w$ is a virtual displacement, and the weak form is the principle 
 #| echo: false
 #| output: false
 # the wall of Class 22, with its outer face exchanging heat with air (h_c = 10)
-L, kappa, f0, qs, g0, u_inf, hc = 0.30, 1.4, 500.0, 50.0, 20.0, 0.0, 10.0
+L, kappa, f0, qs, g0, u_inf, hc = 0.30, 1.4, 500.0, 50.0, 20.0, 5.0, 10.0
 chat = hc * u_inf + qs
 g_eff = g0 + f0 * L**2 / (2 * kappa)
 A = (hc * (g_eff - u_inf) - qs) / (hc * L + kappa)
@@ -212,7 +212,7 @@ for (lab, w, dw), c in zip(dirs, BASISCLRS):
     curv.append(np.trapezoid(kappa * dw**2, x) + hc * w[0]**2)
 axL.plot([], [], color="0.4", lw=1.2, label=r"$u \pm 8\,w_i$")
 axL.set_xlim(0, L)
-axL.set_ylim(5, 36)
+axL.set_ylim(np.floor(u.min() - 10), np.ceil(u.max() + 16))
 plot_axes(axL, "$x$ (m)", "temperature (°C)")
 axL.legend(frameon=False, fontsize=10, loc="upper left", ncol=2)
 axL.set_title("(a) The solution and six other candidates", fontsize=12, color=INK)

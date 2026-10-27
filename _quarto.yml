@@ -30,6 +30,13 @@ book:
       - chapters/21_Class.qmd
       - chapters/22_Class.qmd
       - chapters/23_Class.qmd
+      - chapters/24_Class.qmd
+      - section: "Class 24 applications"
+        contents:
+          - chapters/24_Seepage.qmd
+          - chapters/24_Torsion.qmd
+          - chapters/24_Membrane.qmd
+          - chapters/24_Diffusion.qmd
       - section: "The 1D Poisson Problem"
         contents:
           - chapters/Poisson1D_Heat.qmd
@@ -40,6 +47,9 @@ book:
         contents:
           - chapters/Poisson2D_Heat.qmd
           - chapters/Poisson2D_Heat_FEM.qmd
+      - section: "Beams and Frames"
+        contents:
+          - chapters/Beam_Frame_Formulation.qmd
 
   bread-crumbs: true
   back-to-top-navigation: true
@@ -67,6 +77,13 @@ book:
     - chapters/21_Class.qmd
     - chapters/22_Class.qmd
     - chapters/23_Class.qmd
+    - chapters/24_Class.qmd
+    - part: "Class 24 applications"
+      chapters:
+        - chapters/24_Seepage.qmd
+        - chapters/24_Torsion.qmd
+        - chapters/24_Membrane.qmd
+        - chapters/24_Diffusion.qmd
 
   appendices:
     - chapters/3_Support_FunctionSpaces.qmd
@@ -76,6 +93,7 @@ book:
     - chapters/Poisson1D_Rod_FEM.qmd
     - chapters/Poisson2D_Heat.qmd
     - chapters/Poisson2D_Heat_FEM.qmd
+    - chapters/Beam_Frame_Formulation.qmd
 
 format:
   html:
