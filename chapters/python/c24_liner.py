@@ -43,10 +43,11 @@ def _count(length, h0, ratio, nmin):
     return max(nmin, math.ceil(math.log(1 + length * (ratio - 1) / h0) / math.log(ratio)))
 
 
-def build(p=2, nref=1, a=A_TEAR, x1=X1, r0=1.35):
+def make_mesh(p=2, nref=1, a=A_TEAR, x1=X1, r0=1.35):
     """The elements next to the edge of the tear are scaled with its width:
     about a/8 tall (at most 3 mm) at the top of the clay, and half that wide
-    beside the tear, so that narrow tears are resolved as well as wide ones."""
+    beside the tear, so that narrow tears are resolved as well as wide ones.
+    (c24_proj2_alt_liner.py builds the same mesh with p = 1 for Project 2.)"""
     r = r0 ** (1.0 / nref)
     n = lambda k: max(1, int(round(k * nref)))
     h_top = min(a / 8, 0.003)
@@ -56,7 +57,11 @@ def build(p=2, nref=1, a=A_TEAR, x1=X1, r0=1.35):
     else:
         xs = F.graded(0, x1, n(12), 1.0, "a")
     ys = F.graded(0, LCLAY, n(_count(LCLAY, h_top, r0, 14)), r, "b")
-    mesh = F.Mesh(xs, ys, p=p)
+    return F.Mesh(xs, ys, p=p)
+
+
+def build(p=2, nref=1, a=A_TEAR, x1=X1, r0=1.35):
+    mesh = make_mesh(p, nref, a, x1, r0)
     tear = mesh.sides_where(lambda x, y, nn: abs(y - LCLAY) < 1e-9 and x < a / 2 and nn[1] > 0)
     drain = mesh.sides_where(lambda x, y, nn: abs(y) < 1e-9 and nn[1] < 0)
     sol = F.solve(mesh, kappa=NDIFF, dirichlet=[(tear, C0), (drain, 0.0)])

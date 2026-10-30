@@ -1,0 +1,25 @@
+---
+title: "Plane Elasticity Explorer"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+---
+
+This page solves two-dimensional linear elasticity problems by the finite element method, in the browser.
+It uses Galerkin's method with Q4 or Q9 elements: two displacement unknowns at each node, element stiffness matrices $\mathbf{k}^e = \int \mathbf{B}^T\mathbf{D}\,\mathbf{B}\;t\,d\Omega$, assembly through the ID and LM arrays, and a Cholesky solve.
+Three bodies are available: a steel plate with a hole, pulled at one end; the cross-section of a W250×73 (W10×49) steel shape, loaded across its top flange; and a steel cantilever whose exact solution (Timoshenko and Goodier) is known, so that the error can be measured.
+Units are millimeters, newtons, and megapascals.
+
+## Things to try
+
+- **Shear locking.** Choose the cantilever, Q4 elements, and the coarsest mesh: the tip deflects only about two-thirds of the exact value. Then switch to Q9 elements, or refine the mesh.
+- **A stress concentration.** On the plate with a hole, refine the mesh and watch $\sigma_{11}$ at the top of the hole settle near 163 MPa, a little above Heywood's estimate of 161.5 MPa for this plate.
+- **A singular corner.** On the W-shape, refine the mesh: the flange tip deflection settles down, but the largest von Mises stress, at the corners where the web meets the flanges, keeps rising.
+- **Where a support matters.** On the W-shape, add supports to the bottom flange and read "Reactions by supported side": they carry almost nothing. Then free the bottom face, hold the top face instead, and push down on the top of the bottom flange with a traction of 0.1 MPa (−0.1 in direction $x_2$).
+- **Rigid-body motion.** Remove supports until the explorer reports that $\mathbf{K}$ is singular, and read which motion is left free.
+
+## The explorer
+
+{{< include _elasticity_explorer.qmd >}}

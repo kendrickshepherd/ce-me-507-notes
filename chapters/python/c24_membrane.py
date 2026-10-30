@@ -32,14 +32,20 @@ SILICON, NITRIDE = "#b9bec6", "#7c5cb8"
 TOL = 1e-12
 
 
-def build(p=2, nref=1, b=B_BOSS, a=A_SIDE, S=TENSION, pr=PRESS, r0=1.15):
+def make_mesh(p=2, nref=1, b=B_BOSS, a=A_SIDE, r0=1.15):
+    """The mesh of the quarter membrane, with grid lines on the edges of the boss.
+    (c24_proj2_alt_membrane.py builds the same mesh with p = 1 for Project 2.)"""
     r = r0 ** (1.0 / nref)
     n = lambda k: max(1, int(round(k * nref)))
     if b > 0:
         xs = F.join(F.graded(0, b / 2, n(6), r, "b"), F.graded(b / 2, a / 2, 2 * n(8), r, "both"))
     else:
         xs = F.graded(0, a / 2, n(16), 1.0, "a")
-    mesh = F.Mesh(xs, xs, p=p)
+    return F.Mesh(xs, xs, p=p)
+
+
+def build(p=2, nref=1, b=B_BOSS, a=A_SIDE, S=TENSION, pr=PRESS, r0=1.15):
+    mesh = make_mesh(p, nref, b, a, r0)
     frame = mesh.sides_where(lambda x, y, nn: abs(x - a / 2) < TOL or abs(y - a / 2) < TOL)
     boss = [A for A in range(mesh.nnp) if mesh.X[A, 0] <= b / 2 + TOL and mesh.X[A, 1] <= b / 2 + TOL] if b > 0 else []
     sol = F.solve(mesh, kappa=S, f=pr, dirichlet=[(frame, 0.0)], tied=[boss] if boss else [])

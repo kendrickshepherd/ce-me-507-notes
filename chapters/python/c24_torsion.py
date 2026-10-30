@@ -45,7 +45,9 @@ def rectangle_J(a, b):
     return a * b ** 3 / 3 * (1 - 192 / math.pi ** 5 * (b / a) * s)
 
 
-def _quarter_mesh(p, nref, bf, d, tf, tw, r0):
+def quarter_mesh(p, nref, bf, d, tf, tw, r0):
+    """The mesh of the quarter section and its re-entrant corner (xw, yf).
+    (c24_proj2_alt_torsion.py builds the same mesh with p = 1 for Project 2.)"""
     r = r0 ** (1.0 / nref)
     n = lambda k: max(1, int(round(k * nref)))
     xw, yf = tw / 2, d / 2 - tf                     # the re-entrant corner (xw, yf)
@@ -56,7 +58,7 @@ def _quarter_mesh(p, nref, bf, d, tf, tw, r0):
 
 
 def build(p=2, nref=1, bf=BF, d=DEPTH, tf=TF, tw=TW, r0=1.3):
-    mesh, xw, yf = _quarter_mesh(p, nref, bf, d, tf, tw, r0)
+    mesh, xw, yf = quarter_mesh(p, nref, bf, d, tf, tw, r0)
     edge = mesh.sides_where(lambda x, y, nn: not (abs(x) < TOL or abs(y) < TOL))
     sol = F.solve(mesh, kappa=1.0, f=2.0, dirichlet=[(edge, 0.0)])
     out = dict(mesh=mesh, sol=sol, corner=(xw, yf), dims=(bf, d, tf, tw))
@@ -71,7 +73,7 @@ def warping(p=2, nref=1, bf=BF, d=DEPTH, tf=TF, tw=TW, r0=1.3):
     omega = 0 on the axes of symmetry (omega is odd in x1 and in x2).
     J = I1 + I2 - int |grad omega|^2, which is an upper bound when computed
     from the finite element solution (2 int Phi is a lower bound)."""
-    mesh, xw, yf = _quarter_mesh(p, nref, bf, d, tf, tw, r0)
+    mesh, xw, yf = quarter_mesh(p, nref, bf, d, tf, tw, r0)
     on_axis = lambda x, y: abs(x) < TOL or abs(y) < TOL
     axes = mesh.sides_where(lambda x, y, nn: on_axis(x, y))
     neumann = []
@@ -92,12 +94,17 @@ def omega_at(model, x, y):
     return float(np.sign(x) * np.sign(y) * F.value(model["sol"], e, xi, eta)[0])
 
 
-def build_rectangle(a, b, p=2, nref=1):
-    """Quarter of an a x b rectangle, for the benchmark."""
+def rectangle_mesh(a, b, p=2, nref=1):
+    """The mesh of a quarter of an a x b rectangle."""
     n = lambda k: max(1, int(round(k * nref)))
     xs = np.linspace(0, a / 2, n(16) + 1)
     ys = np.linspace(0, b / 2, n(4) + 1)
-    mesh = F.Mesh(xs, ys, p=p)
+    return F.Mesh(xs, ys, p=p)
+
+
+def build_rectangle(a, b, p=2, nref=1):
+    """Quarter of an a x b rectangle, for the benchmark."""
+    mesh = rectangle_mesh(a, b, p, nref)
     edge = mesh.sides_where(lambda x, y, nn: abs(x - a / 2) < TOL or abs(y - b / 2) < TOL)
     sol = F.solve(mesh, kappa=1.0, f=2.0, dirichlet=[(edge, 0.0)])
     return dict(mesh=mesh, sol=sol, J=4 * 2 * F.integrate(sol))

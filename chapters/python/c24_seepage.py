@@ -33,8 +33,9 @@ HEADMAP = "Blues"
 TOL = 1e-9
 
 
-def build(p=2, nref=1, cut=None, kappa=None, depth=D, side=LSIDE, r0=1.2):
-    """Solve for the head.  cut is None, 'up', or 'down'."""
+def make_mesh(p=2, nref=1, cut=None, depth=D, side=LSIDE, r0=1.2):
+    """The mesh of the sand layer, with a slit along the cutoff if there is one.
+    (c24_proj2_alt_seepage.py builds the same mesh with p = 1 for Project 2.)"""
     r = r0 ** (1.0 / nref)
     n = lambda k: max(1, int(round(k * nref)))
     xs = F.join(F.graded(-side, 0, n(12), r, "b"), F.graded(0, B, 2 * n(8), r, "both"),
@@ -44,7 +45,12 @@ def build(p=2, nref=1, cut=None, kappa=None, depth=D, side=LSIDE, r0=1.2):
     else:
         ys = F.graded(-depth, 0, n(14), r, "b")
     xcut = {"up": 0.0, "down": B}.get(cut)
-    mesh = F.Mesh(xs, ys, p=p, slits=[("v", xcut, -DCUT, 0.0)] if cut else [])
+    return F.Mesh(xs, ys, p=p, slits=[("v", xcut, -DCUT, 0.0)] if cut else [])
+
+
+def build(p=2, nref=1, cut=None, kappa=None, depth=D, side=LSIDE, r0=1.2):
+    """Solve for the head.  cut is None, 'up', or 'down'."""
+    mesh = make_mesh(p, nref, cut, depth, side, r0)
     up = mesh.sides_where(lambda x, y, nn: abs(y) < TOL and x < 0 and nn[1] > 0)
     dn = mesh.sides_where(lambda x, y, nn: abs(y) < TOL and x > B and nn[1] > 0)
     base = mesh.sides_where(lambda x, y, nn: abs(y) < TOL and 0 < x < B and nn[1] > 0)
@@ -213,7 +219,7 @@ def fig_flownets(models):
         ax.tricontour(tri, sol.u, levels=np.arange(H2 + 1, H1, 1.0), colors="#1e3a5f", linewidths=0.8,
                       linestyles="--")
         qK = md["q"] / K                                  # psi in meters of head
-        ax.tricontour(tri, md["psi"].u / K, levels=np.arange(1.0, qK, 1.0), colors=INK, linewidths=1.0)
+        ax.tricontour(tri, md["psi"].u / K, levels=np.arange(0.5, qK, 1.0), colors=INK, linewidths=1.0)
         ax.add_patch(Rectangle((0, 0), B, 1.6, facecolor=CONC, edgecolor=INK, lw=1.0))
         if md["cut"]:
             xc = 0.0 if md["cut"] == "up" else B

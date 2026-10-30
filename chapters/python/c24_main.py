@@ -22,10 +22,15 @@ def exact_square(a=1.0):
     return J, tau
 
 
-def square(p, n):
+def square_mesh(p, n):
     """Quarter of the unit square with n x n elements of degree p."""
     xs = np.linspace(0, 0.5, n + 1)
-    mesh = F.Mesh(xs, xs, p=p)
+    return F.Mesh(xs, xs, p=p)
+
+
+def square(p, n):
+    """Torsion of the unit square, from a quarter with n x n elements of degree p."""
+    mesh = square_mesh(p, n)
     edge = mesh.sides_where(lambda x, y, nn: abs(x - 0.5) < 1e-12 or abs(y - 0.5) < 1e-12)
     sol = F.solve(mesh, kappa=1.0, f=2.0, dirichlet=[(edge, 0.0)])
     J = 8 * F.integrate(sol)

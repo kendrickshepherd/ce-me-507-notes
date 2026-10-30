@@ -17,7 +17,7 @@ format:
 #| echo: false
 #| output: false
 import sys
-sys.path.append('.')
+sys.path.append('python')
 from notes_style import use_chapter, save
 IMGDIR = use_chapter("Class24")
 import c24_main as C24M

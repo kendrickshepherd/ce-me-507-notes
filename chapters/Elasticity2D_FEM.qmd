@@ -1,0 +1,410 @@
+---
+title: "Linear Elasticity II: Plane Elasticity, by Galerkin's Method"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+
+import sys
+
+sys.path.append('python')
+
+import numpy as np
+
+from notes_style import use_chapter, save
+import elast2d as EL
+import elast_figs as EF
+
+IMGDIR = use_chapter("Elasticity2D_FEM")
+
+E, NU = EF.E_STEEL, EF.NU_STEEL
+PL, WS, CL = EL.PLATE, EL.WSHAPE, EL.CANTILEVER
+
+# ---- the three studies on this page ------------------------------------------
+CS = EF.cantilever_study()
+PS = EF.plate_study()
+WSTUDY = EF.wshape_study()
+KT, PEAK = EL.heywood(2 * PL["a"], PL["W"], PL["s"])
+KE, KX, MODES = EF.ke_modes()
+
+f2 = lambda v: "%.2f" % v
+f1 = lambda v: "%.1f" % v
+pct = lambda v: "%.0f" % (100 * v)
+```
+
+This page solves the plane elasticity problem of [Linear Elasticity I](Elasticity2D.qmd) by Galerkin's method.
+If stress, strain, Hooke's law, or the boundary conditions need review, that page develops each of them with pictures and widgets.
+The finite element machinery is the one built for heat flow in [2D Poisson II](Poisson2D_Heat_FEM.qmd): the same quadrilateral elements, isoparametric map, Gauss quadrature, and assembly.
+This page concentrates on what changes when the unknown is a vector.
+
+| | Heat flow ([2D Poisson II](Poisson2D_Heat_FEM.qmd)) | Plane elasticity (this page) |
+|---|---|---|
+| unknowns at each node | 1, the temperature | 2, the displacements $u_1$ and $u_2$ |
+| equation numbers | $\mathrm{ID}(A)$ | $\mathrm{ID}(i, A)$, one for each direction |
+| derivatives of a basis function | $\nabla N_a$, a 2-vector | $\mathbf{B}_a$, a $3 \times 2$ matrix |
+| material | $\kappa$, a number | $\mathbf{D}$, a $3 \times 3$ matrix |
+| one entry of $\mathbf{k}^e$ per pair of nodes | $\int \nabla N_a \cdot \kappa\,\nabla N_b\,d\Omega$ | a $2 \times 2$ block $\int \mathbf{B}_a^T\mathbf{D}\,\mathbf{B}_b\,t\,d\Omega$ |
+| size of $\mathbf{k}^e$, Q4 and Q9 | $4 \times 4$ and $9 \times 9$ | $8 \times 8$ and $18 \times 18$ |
+| motions with no energy | one: a constant temperature | three: two translations and a rotation |
+| after the solve | the heat flux $-\kappa\nabla u^h$ | the stresses $\mathbf{D}\mathbf{B}\mathbf{d}$, the von Mises stress, the reactions |
+
+## The Galerkin form
+
+The weak form from [the previous page](Elasticity2D.qmd#the-weak-form-read-as-virtual-work) is the principle of virtual work.
+In Voigt notation, the strain of a displacement field is the 3-vector $\{\varepsilon(\underline{u})\} = (u_{1,1},\ u_{2,2},\ u_{1,2} + u_{2,1})^T$, and the bilinear form is
+
+::: {.derivation}
+$$
+a(\underline{w}, \underline{u}) = \int_\Omega w_{(i,j)}\,c_{ijkl}\,u_{(k,l)}\,d\Omega
+= \int_\Omega \{\varepsilon(\underline{w})\}^T\,\mathbf{D}\,\{\varepsilon(\underline{u})\}\;t\,d\Omega
+$$
+:::
+
+with $\mathbf{D}$ the plane stress or plane strain matrix, and $t$ the plate thickness in plane stress ($t = 1$ in plane strain, where everything is per unit length).
+Galerkin's method looks for $\underline{u}^h = \underline{v}^h + \underline{g}^h$, where $\underline{g}^h$ takes the prescribed values $g_i$ on $\Gamma_{g_i}$, and $v^h_i$ and every weighting function $w^h_i$ vanish there:
+
+::: {.derivation}
+$$
+(\mathrm{G}) \qquad
+a(\underline{w}^h, \underline{v}^h) = (\underline{w}^h, \underline{f}) + (\underline{w}^h, \underline{h})_\Gamma - a(\underline{w}^h, \underline{g}^h)
+\qquad \forall\, w^h_i \in \mathcal{V}^h_i
+$$
+:::
+
+Every term is a virtual work, exactly as for the [rod](Poisson1D_Rod_FEM.qmd).
+What is new is that each function has two components, and that the conditions on $\Gamma_{g_i}$ apply to one component at a time.
+
+## Two unknowns at each node
+
+```{python fig_basis}
+#| echo: false
+#| output: false
+fig_basis_path = save(EF.fig_vector_basis(), "E2F_Fig1_VectorBasis.png")
+```
+
+![(a) The scalar basis function $N_A$ of an interior node, the same function as for heat flow. (b, c) The two vector basis functions built from it. Each is a displacement field: node $A$ moves by one unit in one direction, the other nodes do not move, and the four elements around $A$ deform.](`{python} fig_basis_path`){#fig-e2f-basis width=100%}
+
+The scalar basis functions $N_A$ are those of [2D Poisson II](Poisson2D_Heat_FEM.qmd).
+Each component of the displacement uses them:
+
+::: {.derivation}
+$$
+u^h_i(\underline{x}) = \sum_{A} N_A(\underline{x})\,d_{iA}
+\qquad\Longleftrightarrow\qquad
+\underline{u}^h(\underline{x}) = \sum_{A} \sum_{i=1}^{2} d_{iA}\,N_A(\underline{x})\,\underline{e}_i
+$$
+:::
+
+::: {.step .notes}
+- $d_{iA}$ is the displacement of node $A$ in direction $i$, in mm.
+  Each node carries two of them, $d_{1A}$ and $d_{2A}$.
+- $N_A\,\underline{e}_i$ is a **vector basis function** (@fig-e2f-basis b and c): the displacement field in which node $A$ moves one unit along $x_i$ and every other node stays put.
+  A mesh with $n_{np}$ nodes has $2n_{np}$ of them.
+- Galerkin's method uses each vector basis function in turn as the virtual displacement $\underline{w}^h$.
+  The equation it produces is the balance of forces at node $A$ in direction $i$.
+- A component that is prescribed, $u_i = g_i$ at node $A$, has no equation: its virtual displacement must be zero there.
+  The other component at the same node may still be unknown.
+:::
+
+```{python fig_id}
+#| echo: false
+#| output: false
+fig_id, sol_id = EF.fig_id_lm()
+fig_id_path = save(fig_id, "E2F_Fig2_IDLM.png")
+```
+
+![(a) Equation numbers on a small mesh whose left side sits on rollers that fix $u_1$ and whose bottom sits on rollers that fix $u_2$, the supports of the quarter plate with a hole. A 0 marks a prescribed component. The corner node has both components prescribed; the other nodes on the supported sides keep one unknown each. (b) The local arrays of one element: its four nodes give eight local equations, $p = 1, \ldots, 8$.](`{python} fig_id_path`){#fig-e2f-id width=100%}
+
+The bookkeeping of [Class 14](14_Class.qmd) gains a direction index:
+
+::: {.derivation}
+$$
+P = \mathrm{ID}(i, A), \qquad
+p = 2(a - 1) + i, \qquad
+\mathrm{LM}(p, e) = \mathrm{ID}\big(i,\ \mathrm{IEN}(a, e)\big)
+$$
+:::
+
+::: {.step .notes}
+- $\mathrm{ID}(i, A)$ is the global equation number of the displacement of node $A$ in direction $i$, or 0 if that component is prescribed (@fig-e2f-id a).
+  The ID array has two rows, one for each direction.
+- The equations are numbered node by node: the unknowns of node 1 first, $\mathrm{ID}(1, 1)$ and $\mathrm{ID}(2, 1)$, then node 2, and so on, skipping the prescribed components.
+  Numbering this way keeps the two unknowns of a node next to each other, so the matrix stays banded when the nodes are well ordered.
+- Within an element, the local equation $p = 2(a - 1) + i$ runs through the local nodes in the same way: $(i, a) = (1, 1), (2, 1), (1, 2), (2, 2), \ldots$ (@fig-e2f-id b).
+  Hughes writes $p = n_{ed}(a - 1) + i$, with $n_{ed} = 2$ unknowns per node.
+- $\mathrm{LM}(p, e)$ tells assembly where row $p$ of $\mathbf{k}^e$ goes in $\mathbf{K}$, and a 0 tells it not to put it anywhere.
+  The assembly loop is the one from the heat problem, with $p$ and $q$ running to $2n_{en}$ instead of $n_{en}$.
+:::
+
+In the example, the left side fixes only $u_1$.
+Its nodes keep their $u_2$ unknowns, and their $x_2$ equations hold the traction $h_2 = 0$: the rollers let them slide.
+This is the boundary of the [previous page](Elasticity2D.qmd#boundary-conditions-one-direction-at-a-time) split once for each direction, turned into bookkeeping.
+
+## Strain from the nodal displacements: the $\mathbf{B}$ matrix
+
+Inside element $e$, the displacement is $\underline{u}^h = \sum_a N_a\,\underline{d}_a$, where $\underline{d}_a = (d_{1a}, d_{2a})$ holds the displacements of local node $a$.
+Differentiating each component gives the strain as a matrix times the nodal displacements:
+
+::: {.derivation}
+$$
+\{\varepsilon(\underline{u}^h)\} =
+\begin{pmatrix} u^h_{1,1} \\ u^h_{2,2} \\ u^h_{1,2} + u^h_{2,1} \end{pmatrix}
+= \sum_{a=1}^{n_{en}} \mathbf{B}_a\,\underline{d}_a,
+\qquad
+\mathbf{B}_a =
+\begin{bmatrix} N_{a,1} & 0 \\ 0 & N_{a,2} \\ N_{a,2} & N_{a,1} \end{bmatrix}
+$$
+:::
+
+Placing the $n_{en}$ blocks side by side gives $\mathbf{B} = [\,\mathbf{B}_1\ \mathbf{B}_2\ \cdots\ \mathbf{B}_{n_{en}}\,]$, a $3 \times 2n_{en}$ matrix, and $\{\varepsilon\} = \mathbf{B}\,\mathbf{d}^e$ with $\mathbf{d}^e = (d_{11}, d_{21}, d_{12}, d_{22}, \ldots)^T$.
+
+::: {.step .notes}
+- The derivatives $N_{a,1}$ and $N_{a,2}$ are the ones the heat problem already needed, computed through the isoparametric map: $\nabla_x N_a = DF^{-T}\,\nabla_\xi N_a$.
+- The first row of $\mathbf{B}_a$ gives the stretch along $x_1$ from the $x_1$ displacement; the second, the stretch along $x_2$ from the $x_2$ displacement.
+- The third row mixes them: the change of angle $\gamma_{12}$ comes from how $u_1$ varies with $x_2$ and how $u_2$ varies with $x_1$.
+  This row is where the two directions meet.
+- $\mathbf{B}$ depends on the point: it is evaluated at each Gauss point, like $\nabla N_a$.
+:::
+
+## The element stiffness matrix
+
+Substituting $\{\varepsilon(\underline{w}^h)\} = \mathbf{B}\,\mathbf{c}^e$ and $\{\varepsilon(\underline{v}^h)\} = \mathbf{B}\,\mathbf{d}^e$ into $a(\underline{w}^h, \underline{v}^h)$ restricted to one element gives $\mathbf{c}^{eT}\,\mathbf{k}^e\,\mathbf{d}^e$, with
+
+::: {.derivation}
+$$
+\mathbf{k}^e = \int_{\Omega^e} \mathbf{B}^T\,\mathbf{D}\,\mathbf{B}\;t\,d\Omega
+\approx \sum_{l=1}^{n_{int}} W_l\;\mathbf{B}^T\mathbf{D}\,\mathbf{B}\;t\;j\,\Big|_{\tilde{\underline{\xi}}_l}
+\qquad\Longleftrightarrow\qquad
+\mathbf{k}^e_{ab} = \int_{\Omega^e} \mathbf{B}_a^T\,\mathbf{D}\,\mathbf{B}_b\;t\,d\Omega \quad (2 \times 2)
+$$
+:::
+
+::: {.step .notes}
+- $\mathbf{k}^e$ is $2n_{en} \times 2n_{en}$: $8 \times 8$ for Q4 and $18 \times 18$ for Q9.
+  Its entry $k^e_{pq}$, with $p = 2(a - 1) + i$ and $q = 2(b - 1) + j$, is the force at local node $a$ in direction $i$ caused by a unit displacement of local node $b$ in direction $j$, with every other displacement held at zero.
+- The quadrature is the one from the heat problem, $(p + 1) \times (p + 1)$ Gauss points, with $j = \det(\partial\underline{x}/\partial\underline{\xi})$ the Jacobian determinant.
+- $\mathbf{k}^e$ is symmetric because $\mathbf{D}$ is.
+:::
+
+Writing out one $2 \times 2$ block for an isotropic material shows how the directions couple:
+
+::: {.derivation}
+$$
+\mathbf{k}^e_{ab} = \int_{\Omega^e}
+\begin{bmatrix}
+D_{11}\,N_{a,1}N_{b,1} + D_{33}\,N_{a,2}N_{b,2} & D_{12}\,N_{a,1}N_{b,2} + D_{33}\,N_{a,2}N_{b,1} \\
+D_{12}\,N_{a,2}N_{b,1} + D_{33}\,N_{a,1}N_{b,2} & D_{22}\,N_{a,2}N_{b,2} + D_{33}\,N_{a,1}N_{b,1}
+\end{bmatrix} t\,d\Omega
+$$
+:::
+
+::: {.step .notes}
+- Compare the heat problem's $\int \kappa\,(N_{a,1}N_{b,1} + N_{a,2}N_{b,2})\,d\Omega$.
+  Each diagonal entry of the block has the same form, but with a different "conductivity" in each direction: $D_{11}$ along the direction of the displacement and the shear modulus $D_{33}$ across it.
+- The off-diagonal entries are new.
+  They are the forces in one direction caused by a displacement in the other: pulling a node along $x_1$ pushes its neighbors along $x_2$, through Poisson's effect ($D_{12}$) and through shear ($D_{33}$).
+  This is the coupling term $(\lambda + \mu)\,u_{j,ji}$ of Navier's equations, seen from inside one element.
+:::
+
+## The element force vector
+
+The right-hand side of $(\mathrm{G})$ restricted to one element gives the force vector, with one entry for each local equation $p = 2(a - 1) + i$:
+
+::: {.derivation}
+$$
+f^e_p
+= \int_{\Omega^e} N_a\,f_i\;t\,d\Omega
++ \int_{\Gamma^e \cap \Gamma_{h_i}} N_a\,h_i\;t\,d\Gamma
+- \sum_{q=1}^{2n_{en}} k^e_{pq}\,g^e_q
+$$
+:::
+
+::: {.step .notes}
+- The first term is the body force, which is zero in the examples here.
+- The second is the traction, integrated along each element side that lies on $\Gamma_{h_i}$, with one-dimensional Gauss points along the side, as for the heat flux in [2D Poisson II](Poisson2D_Heat_FEM.qmd).
+  It is the work of the applied traction through the virtual displacement $N_a\,\underline{e}_i$: the share of the load that goes to node $a$.
+- The last term moves the prescribed displacements to the right-hand side, as for the heat problem: $g^e_q$ is the prescribed value of the local equation $q$, or 0 if that component is unknown.
+- The test for $\Gamma_{h_i}$ is made **one direction at a time**.
+  A side on rollers that fix $u_1$ still receives its $h_2$ term.
+:::
+
+## Three motions cost nothing
+
+```{python fig_modes}
+#| echo: false
+#| output: false
+fig_modes_path = save(EF.fig_ke_modes(), "E2F_Fig3_ElementModes.png")
+```
+
+![The eight modes of the stiffness matrix of a square Q4 element of steel in plane stress, and the stiffness $\lambda$ of each (the eigenvalue of $\mathbf{k}^e$, for an element of thickness $t$; it does not depend on the size of the square). Three modes move the element without straining it.](`{python} fig_modes_path`){#fig-e2f-modes width=100%}
+
+The eigenvectors of $\mathbf{k}^e$ are the element's natural ways of deforming, and each eigenvalue $\lambda$ is the stiffness of its mode: the energy stored is $\tfrac{1}{2}\lambda$ for a mode of unit size.
+@fig-e2f-modes shows all eight for a square Q4.
+
+::: {.step .notes}
+- **Three eigenvalues are zero.**
+  The two translations and the rotation strain nothing, so they store no energy, and $\mathbf{k}^e\,\mathbf{d} = \mathbf{0}$ for each.
+  The heat problem had one such mode, a uniform temperature.
+- The same is true of the assembled matrix of a whole body: if the supports do not stop every rigid-body motion, $\mathbf{K}$ is singular, and the solution is not unique.
+  In 2D, the supports must prevent two translations and one rotation.
+  A body pulled at one end and held only by rollers that fix $u_1$ can still slide along $x_2$.
+  The explorer below reports this when it happens.
+- **The constant-strain modes** stretch, shear, or expand the element uniformly.
+  A uniform expansion is the stiffest, with $\lambda = E\,t/(1 - \nu)$ here, because it fights both normal stiffnesses at once.
+- **The bending modes** are the softest.
+  A Q4 element's sides stay straight, so it cannot curve the way a bending beam does.
+  Instead, its bending mode also shears it: the right angles at the corners change.
+  That extra shear strain costs energy that the real beam does not store, which makes Q4 elements too stiff in bending.
+  This is **shear locking**, and the cantilever below measures it.
+:::
+
+## Assembly and the global stiffness matrix
+
+Assembly follows [2D Poisson II](Poisson2D_Heat_FEM.qmd) unchanged, with $\mathrm{LM}$ in place of the heat problem's single-row array:
+
+::: {.derivation}
+$$
+\mathbf{K} = \mathop{\mathsf{A}}_{e=1}^{n_{el}} \mathbf{k}^e, \qquad
+\mathbf{F} = \mathop{\mathsf{A}}_{e=1}^{n_{el}} \mathbf{f}^e, \qquad
+K_{PQ} \mathrel{+}= k^e_{pq} \ \text{ with } P = \mathrm{LM}(p, e),\ Q = \mathrm{LM}(q, e) \text{ both nonzero}
+$$
+:::
+
+::: {.step .notes}
+- $\mathbf{K}$ is $n_{eq} \times n_{eq}$, where $n_{eq}$ is twice the number of nodes, less the prescribed components.
+- It is symmetric, and **positive definite** once the supports stop every rigid-body motion (Class 23).
+  So $\mathbf{K}\mathbf{d} = \mathbf{F}$ has exactly one solution, and the explorer solves it by Cholesky factorization.
+- It is sparse, and its nonzeros come in $2 \times 2$ blocks: two nodes that share an element interact in both directions.
+  A row of an interior Q4 node has up to 18 nonzeros, twice the heat problem's 9.
+- Numbering the nodes well keeps the nonzeros near the diagonal.
+  The explorer numbers them by the reverse Cuthill–McKee algorithm before assigning equation numbers.
+:::
+
+## After the solve: stresses, reactions, and checks
+
+Solving gives the nodal displacements.
+Everything else is computed from them, element by element.
+
+**Stresses.**
+At any point of element $e$, $\{\sigma\} = \mathbf{D}\,\mathbf{B}\,\mathbf{d}^e$.
+The displacements are continuous between elements, but their derivatives are not, so the stress jumps across element boundaries.
+A common remedy for plotting is to **average** the stresses that the elements sharing a node give at that node.
+The size of the jumps is itself a useful measure of the error: where they are large, the mesh is too coarse.
+In plane strain, $\sigma_{33} = \nu(\sigma_{11} + \sigma_{22})$ is computed afterward.
+
+**The von Mises stress** combines the components into the single number that ductile metals yield on:
+
+::: {.derivation}
+$$
+\sigma_{vm} = \sqrt{\tfrac{1}{2}\left[(\sigma_{11} - \sigma_{22})^2 + (\sigma_{22} - \sigma_{33})^2 + (\sigma_{33} - \sigma_{11})^2\right] + 3\,\sigma_{12}^2}
+$$
+:::
+
+It is $\sigma$ for a bar in tension, and $\sqrt{3}\,\tau$ under pure shear.
+Steel with a yield stress of 345 MPa, a common grade for rolled shapes, yields where $\sigma_{vm}$ reaches 345 MPa.
+
+**Reactions.**
+The force a support exerts in direction $i$ at node $A$ is $R_{iA} = \sum_e \left(\mathbf{k}^e\,\mathbf{d}^e - \mathbf{f}^e_{\text{applied}}\right)$ at the prescribed components, the out-of-balance force that the support must supply.
+Because the basis functions add up to 1, a rigid translation is one of the finite element displacement fields, and it strains nothing.
+So the internal forces of every element add up to zero, and the sum of the reactions balances the sum of the applied loads **exactly**, on any mesh.
+The explorer reports this check.
+
+## Three test problems
+
+The same code solves the three problems introduced on the [previous page](Elasticity2D.qmd#two-problems-without-a-closed-form-solution), on four levels of refinement and with both element types.
+
+### The cantilever: an exact answer, and shear locking
+
+```{python fig_cconv}
+#| echo: false
+#| output: false
+fig_cconv_path = save(EF.fig_cantilever_conv(CS), "E2F_Fig4_CantileverConvergence.png")
+```
+
+![(a) The cantilever on four elements, one through the depth. The Q4 mesh deflects far less than the exact solution; the Q9 mesh matches it. (b) The tip deflection as the mesh is refined, with four elements along the beam for each one through the depth. (c) The relative error in the energy norm against the element size.](`{python} fig_cconv_path`){#fig-e2f-cconv width=100%}
+
+The end conditions of the exact solution of [Timoshenko and Goodier](Elasticity2D.qmd#a-problem-with-an-exact-solution-the-end-loaded-cantilever) are applied as data: the exact displacements on the left end, and the parabolic shear traction on the right.
+So the only error is the discretization error.
+
+::: {.step .notes}
+- **Q4 locks.**
+  With one element through the depth, the Q4 tip deflects `{python} pct(CS[(1, 1)]["ratio"])`% of the exact value; with two, `{python} pct(CS[(1, 2)]["ratio"])`%; with eight, `{python} pct(CS[(1, 8)]["ratio"])`%.
+  The bending modes of @fig-e2f-modes cannot bend without shearing, so the mesh is too stiff until the elements are small.
+- **Q9 does not.**
+  A biquadratic element can bend its sides, and one element through the depth already gives `{python} "%.1f" % (100 * CS[(2, 1)]["ratio"])`% of the tip deflection.
+- **The error in the energy norm** falls at the rates of the heat problem: slope 1 for Q4 and slope 2 for Q9, $h^p$ for a smooth solution.
+  Locking does not change the rate; it inflates the error at every mesh size.
+- Locking is not specific to elasticity, but elasticity is where it is met first.
+  Hughes Chapter 4 treats remedies for both shear locking and the volumetric locking that occurs as $\nu \to \tfrac{1}{2}$; the explorer below caps $\nu$ at 0.45 to stay clear of the latter.
+:::
+
+### The plate with a hole: a stress concentration
+
+```{python fig_plate}
+#| echo: false
+#| output: false
+fig_plate_path = save(EF.fig_plate_results(PS), "E2F_Fig5_Plate.png")
+```
+
+![(a) The axial stress in the plate. The hole concentrates it above and below, and relieves it to either side. (b) The stress at the top of the hole as the mesh is refined, for the whole plate and for the quarter model, against Heywood's empirical estimate.](`{python} fig_plate_path`){#fig-e2f-plate width=100%}
+
+::: {.step .notes}
+- The peak stress converges: with Q9 elements, the whole plate gives `{python} f1(PS[(False, 2, 1)]["peak"])` MPa on the coarsest mesh and `{python} f1(PS[(False, 2, 4)]["peak"])` MPa on the finest, `{python} f2(PS[(False, 2, 4)]["peak"] / PL["s"])` times the applied 50 MPa.
+- Q4 elements approach from below, from `{python} f1(PS[(False, 1, 1)]["peak"])` MPa on the coarsest mesh to `{python} f1(PS[(False, 1, 4)]["peak"])` MPa on the finest.
+- Heywood's estimate is `{python} f1(PEAK)` MPa.
+  The converged finite element value is `{python} "%.1f" % (100 * (PS[(False, 2, 4)]["peak"] / PEAK - 1))`% higher.
+- The quarter model and the whole plate converge to slightly different values, `{python} f1(PS[(True, 2, 4)]["peak"])` and `{python} f1(PS[(False, 2, 4)]["peak"])` MPa.
+  They are different problems.
+  The whole plate is held at its left end, which stops the end from narrowing; the quarter model, by its symmetry, represents a plate pulled equally at both ends.
+  The difference is the end restraint, felt weakly at the hole.
+- The quarter model needs a quarter of the equations.
+  Its symmetry conditions, $u_1 = 0$ on the vertical cut and $u_2 = 0$ on the horizontal cut, are the [direction-by-direction supports](Elasticity2D.qmd#boundary-conditions-one-direction-at-a-time) of the previous page.
+:::
+
+### The W-shape: a singular corner
+
+```{python fig_w}
+#| echo: false
+#| output: false
+fig_w_path = save(EF.fig_wshape_results(WSTUDY), "E2F_Fig6_WShape.png")
+```
+
+![(a) The von Mises stress in the W-shape under 1 MPa across its top flange, in plane strain. The flange outstands bend about the web. (b) A close view of the corner where the web meets the top flange. (c) The deflection of the flange tip converges. (d) The largest von Mises stress, at the re-entrant corners, does not.](`{python} fig_w_path`){#fig-e2f-w width=100%}
+
+::: {.step .notes}
+- Each flange outstand bends like a short cantilever, 123 mm long and 14.2 mm thick, under 1 MPa.
+  Beam theory puts its bending stress near the web at about 225 MPa, and the finite element solution agrees in the flange away from the corner.
+- The flange tip deflects `{python} "%.3f" % -WSTUDY[(2, 4)]["tip"]` mm on the finest Q9 mesh.
+  The four Q9 meshes agree to within `{python} "%.1f" % (100 * abs(WSTUDY[(2, 1)]["tip"] / WSTUDY[(2, 4)]["tip"] - 1))`%: displacements converge.
+- The largest von Mises stress keeps rising as the mesh is refined: `{python} ", ".join("%.0f" % WSTUDY[(2, l)]["vm"] for l in (1, 2, 3, 4))` MPa on the four Q9 meshes.
+  It sits at the re-entrant corners, where the exact linear elastic stress is infinite.
+  No mesh converges to an infinite value; each refinement simply finds more of it.
+- The real rolled shape has fillets at these corners, and its stress there is finite.
+  A model with sharp corners can still be trusted for displacements, reactions, and stresses away from the corners.
+  For the stress at a corner, the fillet has to be modeled.
+:::
+
+## Explore plane elasticity
+
+{{< include _elasticity_explorer.qmd >}}
+
+::: {.callout-note collapse="true"}
+## Hughes' notation and the code
+
+| Hughes | The code ([python/elast2d.py](python/elast2d.py) and [elast2d.js](elast2d.js)) | |
+|---|---|---|
+| $n_{sd} = n_{ed} = 2$ | two directions, two unknowns per node | |
+| $\mathrm{ID}(i, A)$ | `ID[i-1][A-1]` (JavaScript), `ID[i-1, A]` (Python, 0-based nodes) | 0 marks a prescribed component |
+| $\mathrm{IEN}(a, e)$ | `IEN[e-1][a-1]` | the same local order as the heat code |
+| $\mathrm{LM}(i, a, e)$, or $\mathrm{LM}(p, e)$ with $p = 2(a-1)+i$ | `LM[e-1][2*(a-1) + i-1]` | |
+| $\mathbf{B}_a$, $\mathbf{D}$ | `bmatrix`, `dmatrix` | engineering shear strain in the third row |
+| $\mathbf{k}^e$, $\mathbf{f}^e$ | `elementArrays`, `sideIntegral` (`element_arrays`, `side_load` in Python) | |
+| $\Gamma_{g_i}$, $\Gamma_{h_i}$ | `dirichlet = {side: {i-1: g}}`, `traction = {side: [h1, h2]}` | a side can be in $\Gamma_{g_1}$ and $\Gamma_{h_2}$ at once |
+:::

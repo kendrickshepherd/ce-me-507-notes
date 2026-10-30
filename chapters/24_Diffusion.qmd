@@ -16,7 +16,7 @@ format:
 #| echo: false
 #| output: false
 import sys, math
-sys.path.append('.')
+sys.path.append('python')
 import numpy as np
 from notes_style import use_chapter, save
 IMGDIR = use_chapter("Class24")
