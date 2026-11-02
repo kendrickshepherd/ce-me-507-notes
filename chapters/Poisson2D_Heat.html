@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.19">
+<meta name="generator" content="quarto-1.11.9">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -76,14 +76,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../chapters/Poisson1D_Rod_FEM.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-e98545d696c0c4756cb81f8950af150c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-bd990e089991ec7d162b92b5e37a2dc1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -157,17 +158,17 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar floating quarto-light">
+<body class="nav-sidebar floating quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
-  <nav class="quarto-secondary-nav">
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
     <div class="container-fluid d-flex">
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/Poisson2D_Heat.html"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></a></li></ol></nav>
-        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/Poisson2D_Heat.html"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
         <i class="bi bi-search"></i>
@@ -178,7 +179,7 @@ window.Quarto = {
 <!-- content -->
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
 <!-- sidebar -->
-  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Site">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
       <a href="../">CE/ME 507 — Class Notes</a> 
@@ -337,13 +338,10 @@ window.Quarto = {
 </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
- <span class="menu-text">Class 24 applications</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
-            <i class="bi bi-chevron-right ms-2"></i>
-          </a> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">Class 24 applications</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
       </div>
-      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/24_Seepage.html" class="sidebar-item-text sidebar-link">
@@ -372,13 +370,10 @@ window.Quarto = {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
- <span class="menu-text">Appendices</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
-            <i class="bi bi-chevron-right ms-2"></i>
-          </a> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">Appendices</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
       </div>
-      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
@@ -423,8 +418,20 @@ window.Quarto = {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../chapters/Elasticity2D.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">H</span>&nbsp; <span class="chapter-title">Linear Elasticity I: Stress, Strain, and the Strong Form</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Elasticity2D_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">I</span>&nbsp; <span class="chapter-title">Linear Elasticity II: Plane Elasticity, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../chapters/Beam_Frame_Formulation.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">H</span>&nbsp; <span class="chapter-title">Beams and Frames from Three-Dimensional Elasticity</span></span></a>
+ <span class="menu-text"><span class="chapter-number">J</span>&nbsp; <span class="chapter-title">Beams and Frames from Three-Dimensional Elasticity</span></span></a>
   </div>
 </li>
       </ul>
@@ -435,7 +442,7 @@ window.Quarto = {
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
@@ -473,9 +480,9 @@ window.Quarto = {
 </nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
+<main class="content" id="quarto-document-content" tabindex="-1">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/Poisson2D_Heat.html"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/Poisson2D_Heat.html"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Appendix F — 2D Poisson I: Heat Flow in a Battery Cell</h1>
 </div>
@@ -1707,7 +1714,7 @@ Figure&nbsp;F.13: The solution of the worked example. (a) The temperature, with 
 
 </section>
 
-</main> <!-- /main -->
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
 <script type="ojs-module-contents">
 eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6ImltcG9ydCB7c29sdmVHcmlkLCB0YWJGbHV4LCBuaWNlTGV2ZWxzfSBmcm9tIFwiLi9oZWF0MmQuanNcIlxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC0yIiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoidmlld29mIHhDb29sID0gSW5wdXRzLmNoZWNrYm94KG5ldyBNYXAoW1xuICBbXCJsZWZ0LCB44oKBID0gMFwiLCBcImxlZnRcIl0sIFtcInJpZ2h0LCB44oKBID0gV1wiLCBcInJpZ2h0XCJdLFxuICBbXCJib3R0b20sIHjigoIgPSAwXCIsIFwiYm90dG9tXCJdLCBbXCJ0b3AsIHjigoIgPSBIIChjb3ZlcnMgdGhlIHRhYnMpXCIsIFwidG9wXCJdXG5dKSwge3ZhbHVlOiBbXCJsZWZ0XCJdLCBsYWJlbDogXCJDb29sZWQgZWRnZXMgKM6TZylcIn0pXG52aWV3b2YgeEYgICA9IElucHV0cy5yYW5nZShbLTEwMDAwLCAxMDAwMDBdLCB7dmFsdWU6IDI1MDAwLCBzdGVwOiAxMDAwLCBsYWJlbDogXCJmIChXL23CsylcIn0pXG52aWV3b2YgeEh0ICA9IElucHV0cy5yYW5nZShbLTEwMDAwLCAyMDAwMF0sICB7dmFsdWU6IDUwMDAsICBzdGVwOiA1MDAsICBsYWJlbDogXCJoIG9uIHRoZSB0YWJzIChXL23CsilcIn0pXG52aWV3b2YgeEhvICA9IElucHV0cy5yYW5nZShbLTIwMDAsIDIwMDBdLCAgICB7dmFsdWU6IDAsICAgICBzdGVwOiAxMDAsICBsYWJlbDogXCJoIG9uIHRoZSByZXN0IG9mIM6TaCAoVy9twrIpXCJ9KVxudmlld29mIHhLICAgPSBJbnB1dHMucmFuZ2UoWzEsIDUwXSwgICAgICAgICAge3ZhbHVlOiAyNSwgICAgc3RlcDogMSwgICAgbGFiZWw6IFwizrogKFcvKG3Ct0spKVwifSlcbnZpZXdvZiB4RyAgID0gSW5wdXRzLnJhbmdlKFswLCA0MF0sICAgICAgICAgIHt2YWx1ZTogMjUsICAgIHN0ZXA6IDEsICAgIGxhYmVsOiBcImcgYXQgeOKCgiA9IDAgKMKwQylcIn0pXG52aWV3b2YgeERnICA9IElucHV0cy5yYW5nZShbLTUsIDVdLCAgICAgICAgICB7dmFsdWU6IDAsICAgICBzdGVwOiAwLjUsICBsYWJlbDogXCJyaXNlIGluIGcgdXAgdG8geOKCgiA9IEggKMKwQylcIn0pXG52aWV3b2YgeFNob3cgPSBJbnB1dHMuY2hlY2tib3goW1wiaXNvdGhlcm1zXCIsIFwiaGVhdC1mbHV4IGFycm93c1wiXSxcbiAge3ZhbHVlOiBbXCJpc290aGVybXNcIiwgXCJoZWF0LWZsdXggYXJyb3dzXCJdLCBsYWJlbDogXCJTaG93XCJ9KVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC0zIiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoiY2VsbDJkID0ge1xuICBjb25zdCBXID0gMC4xMCwgSCA9IDAuMjAsIHRhYnMgPSBbWzAuMDE1LCAwLjAzNV0sIFswLjA2NSwgMC4wODVdXTtcbiAgY29uc3QgcmVzID0gc29sdmVHcmlkKHtXLCBILCBueDogNDAsIG55OiA4MCwga2FwcGE6IHhLLCBmOiB4RixcbiAgICBnOiAoeCwgeSkgPT4geEcgKyB4RGcgKiB5IC8gSCwgZGlyaWNobGV0OiB4Q29vbCxcbiAgICBoOiAoZWRnZSwgcykgPT4gKGVkZ2UgPT09IFwidG9wXCIgJiYgdGFiRmx1eChzLCAxLCB0YWJzKSkgPyB4SHQgOiB4SG99KTtcbiAgcmV0dXJuIE9iamVjdC5hc3NpZ24ocmVzLCB7dGFic30pO1xufVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC00IiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoie1xuICBjb25zdCByID0gY2VsbDJkLCBXID0gci5XLCBIID0gci5IO1xuICBjb25zdCBOQVZZID0gXCIjMWUzYTVmXCIsIEFNQkVSID0gXCIjZDk3NzA2XCIsIFZJT0xFVCA9IFwiIzZkMjhkOVwiLCBJTksgPSBcIiMxYTFhMWFcIjtcbiAgY29uc3QgZm10ID0gKHYsIGQgPSAwKSA9PiAodiA8IDAgPyBcIuKIklwiIDogXCJcIikgKyBNYXRoLmFicyh2KS50b0ZpeGVkKGQpO1xuICBjb25zdCBuYW1lcyA9IHtsZWZ0OiBcImxlZnRcIiwgcmlnaHQ6IFwicmlnaHRcIiwgYm90dG9tOiBcImJvdHRvbVwiLCB0b3A6IFwidG9wXCJ9O1xuICBjb25zdCBsZW5PZiA9IGUgPT4gKGUgPT09IFwibGVmdFwiIHx8IGUgPT09IFwicmlnaHRcIikgPyBIIDogVztcbiAgY29uc3QgZ0VkZ2VzID0gW1wibGVmdFwiLCBcInJpZ2h0XCIsIFwiYm90dG9tXCIsIFwidG9wXCJdLmZpbHRlcihlID0+IHhDb29sLmluY2x1ZGVzKGUpKTtcbiAgY29uc3QgaEVkZ2VzID0gW1wibGVmdFwiLCBcInJpZ2h0XCIsIFwiYm90dG9tXCIsIFwidG9wXCJdLmZpbHRlcihlID0+ICF4Q29vbC5pbmNsdWRlcyhlKSk7XG4gIGNvbnN0IGxlbkcgPSBkMy5zdW0oZ0VkZ2VzLCBsZW5PZiksIGxlbkggPSBkMy5zdW0oaEVkZ2VzLCBsZW5PZik7XG4gIGNvbnN0IGFzU2V0ID0gZXMgPT4gZXMubGVuZ3RoID8gYHske2VzLmpvaW4oXCIsIFwiKX19YCA6IFwi4oiFXCI7XG4gIGNvbnN0IHBhcnRpdGlvbiA9IGh0bWxgPGI+UGFydGl0aW9uLjwvYj4gzpM8c3ViPmc8L3N1Yj4gPSAke2FzU2V0KGdFZGdlcyl9XG4gICAgKCR7bGVuRy50b0ZpeGVkKDIpfSBtKSwgzpM8c3ViPmg8L3N1Yj4gPSAke2FzU2V0KGhFZGdlcyl9ICgke2xlbkgudG9GaXhlZCgyKX0gbSk6XG4gICAgdG9nZXRoZXIgJHsobGVuRyArIGxlbkgpLnRvRml4ZWQoMil9IG0sIGFsbCBvZiDOky5gO1xuXG4gIGlmICghci5oYXNEaXJpY2hsZXQpIHtcbiAgICBjb25zdCBuZXQgPSByLm1hZGUgKyByLmhlYXRJbjtcbiAgICByZXR1cm4gaHRtbGA8ZGl2IHN0eWxlPVwiYm9yZGVyLWxlZnQ6IDRweCBzb2xpZCAke1ZJT0xFVH07IHBhZGRpbmc6IDAuN3JlbSAxcmVtO1xuICAgICAgYmFja2dyb3VuZDogI2ZmZjdlZDsgbWF4LXdpZHRoOiA0NnJlbTsgbGluZS1oZWlnaHQ6IDEuNjtcIj5cbiAgICAgICR7cGFydGl0aW9ufTxicj5cbiAgICAgIDxiPs6TPHN1Yj5nPC9zdWI+ID0g4oiFOiBldmVyeSBlZGdlIGNhcnJpZXMgYSBmbHV4IGNvbmRpdGlvbi48L2I+XG4gICAgICBIZWF0IG1hZGUgaW5zaWRlLCDiiKtmIGTOqSA9ICR7Zm10KHIubWFkZSl9IFcvbSwgcGx1cyBoZWF0IGluIHRocm91Z2ggdGhlIGJvdW5kYXJ5LFxuICAgICAg4oiraCBkzpMgPSAke2ZtdChyLmhlYXRJbil9IFcvbSwgZ2l2ZXMgJHtmbXQobmV0KX0gVy9tLjxicj5cbiAgICAgICR7TWF0aC5hYnMobmV0KSA8IDAuNVxuICAgICAgICA/IFwiVGhlIGRhdGEgYmFsYW5jZSwgc28gYSBzdGVhZHkgc3RhdGUgZXhpc3RzIOKAlCBidXQgb25seSB1cCB0byBhbiBhZGRlZCBjb25zdGFudDogaWYgdSBzb2x2ZXMgdGhlIHByb2JsZW0sIHNvIGRvZXMgdSArIEMgZm9yIGV2ZXJ5IEMuIFRoZSB0ZW1wZXJhdHVyZSBsZXZlbCBpcyBuZXZlciBwaW5uZWQgZG93bi5cIlxuICAgICAgICA6IG5ldCA+IDBcbiAgICAgICAgICA/IFwiTW9yZSBoZWF0IGNvbWVzIGluIHRoYW4gY2FuIGxlYXZlLCBzbyB0aGVyZSBpcyBubyBzdGVhZHkgc3RhdGU6IHRoZSBjZWxsJ3MgdGVtcGVyYXR1cmUgcmlzZXMgZm9yZXZlci4gQ2hlY2sgYW4gZWRnZSB0byBnaXZlIHRoZSBoZWF0IGEgd2F5IG91dC5cIlxuICAgICAgICAgIDogXCJNb3JlIGhlYXQgbGVhdmVzIHRoYW4gaXMgc3VwcGxpZWQsIHNvIHRoZXJlIGlzIG5vIHN0ZWFkeSBzdGF0ZTogdGhlIGNlbGwgY29vbHMgZm9yZXZlci4gQ2hlY2sgYW4gZWRnZSB0byBob2xkIGl0cyB0ZW1wZXJhdHVyZS5cIn1cbiAgICA8L2Rpdj5gO1xuICB9XG5cbiAgY29uc3Qge2xldmVsc30gPSBuaWNlTGV2ZWxzKHIudW1pbiwgci51bWF4LCAxMik7XG4gIGNvbnN0IG1hcmtzID0gW1xuICAgIFBsb3QucmFzdGVyKHt4MTogMCwgeTE6IDAsIHgyOiBXLCB5MjogSCwgZmlsbDogKHgsIHkpID0+IHIuYXQoeCwgeSksXG4gICAgICAgICAgICAgICAgIHBpeGVsU2l6ZTogMn0pXG4gIF07XG4gIGlmICh4U2hvdy5pbmNsdWRlcyhcImlzb3RoZXJtc1wiKSAmJiBsZXZlbHMubGVuZ3RoID4gMCkge1xuICAgIG1hcmtzLnB1c2goUGxvdC5jb250b3VyKHt4MTogMCwgeTE6IDAsIHgyOiBXLCB5MjogSCxcbiAgICAgIHZhbHVlOiAoeCwgeSkgPT4gci5hdCh4LCB5KSwgdGhyZXNob2xkczogbGV2ZWxzLCBzdHJva2U6IElOSyxcbiAgICAgIHN0cm9rZU9wYWNpdHk6IDAuNiwgc3Ryb2tlV2lkdGg6IDAuOCwgcGl4ZWxTaXplOiAyfSkpO1xuICB9XG4gIGlmICh4U2hvdy5pbmNsdWRlcyhcImhlYXQtZmx1eCBhcnJvd3NcIikpIHtcbiAgICBjb25zdCBwdHMgPSBbXTtcbiAgICBmb3IgKGxldCBpID0gMDsgaSA8IDY7IGkrKykgZm9yIChsZXQgaiA9IDA7IGogPCAxMjsgaisrKSB7XG4gICAgICBjb25zdCB4ID0gVyAqIChpICsgMC41KSAvIDYsIHkgPSBIICogKGogKyAwLjUpIC8gMTI7XG4gICAgICBjb25zdCBbZzEsIGcyXSA9IHIuZ3JhZCh4LCB5KTtcbiAgICAgIHB0cy5wdXNoKHt4LCB5LCBxMTogLXhLICogZzEsIHEyOiAteEsgKiBnMn0pO1xuICAgIH1cbiAgICBjb25zdCBxbWF4ID0gZDMubWF4KHB0cywgcCA9PiBNYXRoLmh5cG90KHAucTEsIHAucTIpKSB8fCAxO1xuICAgIGNvbnN0IExtYXggPSAwLjg1ICogVyAvIDY7XG4gICAgY29uc3QgYXJyID0gcHRzLm1hcChwID0+IHtcbiAgICAgIGNvbnN0IG0gPSBNYXRoLmh5cG90KHAucTEsIHAucTIpIC8gcW1heCAqIExtYXgsIGEgPSBNYXRoLmF0YW4yKHAucTIsIHAucTEpO1xuICAgICAgcmV0dXJuIHt4MTogcC54IC0gMC41ICogbSAqIE1hdGguY29zKGEpLCB5MTogcC55IC0gMC41ICogbSAqIE1hdGguc2luKGEpLFxuICAgICAgICAgICAgICB4MjogcC54ICsgMC41ICogbSAqIE1hdGguY29zKGEpLCB5MjogcC55ICsgMC41ICogbSAqIE1hdGguc2luKGEpLCBtfTtcbiAgICB9KS5maWx0ZXIoYSA9PiBhLm0gPiAwLjE1ICogTG1heCk7XG4gICAgbWFya3MucHVzaChQbG90LmFycm93KGFyciwge3gxOiBcIngxXCIsIHkxOiBcInkxXCIsIHgyOiBcIngyXCIsIHkyOiBcInkyXCIsXG4gICAgICBzdHJva2U6IElOSywgc3Ryb2tlV2lkdGg6IDEuNSwgaGVhZExlbmd0aDogNn0pKTtcbiAgfVxuICBjb25zdCBzZWcgPSB7bGVmdDogWzAsIDAsIDAsIEhdLCByaWdodDogW1csIDAsIFcsIEhdLCBib3R0b206IFswLCAwLCBXLCAwXSwgdG9wOiBbMCwgSCwgVywgSF19O1xuICBjb25zdCBhc0xpbmsgPSBlID0+IHsgY29uc3QgW3gxLCB5MSwgeDIsIHkyXSA9IHNlZ1tlXTsgcmV0dXJuIHt4MSwgeTEsIHgyLCB5Mn07IH07XG4gIGNvbnN0IGxrID0ge3gxOiBcIngxXCIsIHkxOiBcInkxXCIsIHgyOiBcIngyXCIsIHkyOiBcInkyXCJ9O1xuICBtYXJrcy5wdXNoKFBsb3QubGluayhbXCJsZWZ0XCIsIFwicmlnaHRcIiwgXCJib3R0b21cIiwgXCJ0b3BcIl0ubWFwKGFzTGluayksXG4gICAgICAgICAgICAgICAgICAgICAgIHsuLi5saywgc3Ryb2tlOiBcIndoaXRlXCIsIHN0cm9rZVdpZHRoOiAxMH0pKTtcbiAgbWFya3MucHVzaChQbG90LmxpbmsoaEVkZ2VzLm1hcChhc0xpbmspLCB7Li4ubGssIHN0cm9rZTogQU1CRVIsIHN0cm9rZVdpZHRoOiA0fSkpO1xuICBpZiAoIXhDb29sLmluY2x1ZGVzKFwidG9wXCIpKSB7XG4gICAgbWFya3MucHVzaChQbG90Lmxpbmsoci50YWJzLm1hcCgoW2EsIGJdKSA9PiAoe3gxOiBhLCB5MTogSCwgeDI6IGIsIHkyOiBIfSkpLFxuICAgICAgICAgICAgICAgICAgICAgICAgIHsuLi5saywgc3Ryb2tlOiBWSU9MRVQsIHN0cm9rZVdpZHRoOiA3fSkpO1xuICB9XG4gIG1hcmtzLnB1c2goUGxvdC5saW5rKGdFZGdlcy5tYXAoYXNMaW5rKSwgey4uLmxrLCBzdHJva2U6IE5BVlksIHN0cm9rZVdpZHRoOiA2fSkpO1xuICBtYXJrcy5wdXNoKFBsb3QuZG90KFt7eDogci54bWF4LCB5OiByLnltYXh9XSwge3g6IFwieFwiLCB5OiBcInlcIiwgcjogNSwgZmlsbDogXCJ3aGl0ZVwiLFxuICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBzdHJva2U6IElOSywgc3Ryb2tlV2lkdGg6IDEuNX0pKTtcbiAgY29uc3QgcGxvdCA9IFBsb3QucGxvdCh7XG4gICAgd2lkdGg6IE1hdGgubWluKHdpZHRoLCAzMzApLCBhc3BlY3RSYXRpbzogMSxcbiAgICBtYXJnaW5MZWZ0OiA1MCwgbWFyZ2luUmlnaHQ6IDE0LCBtYXJnaW5Ub3A6IDE2LCBtYXJnaW5Cb3R0b206IDQwLFxuICAgIHg6IHtkb21haW46IFswLCBXXSwgbGFiZWw6IFwieOKCgSAobSkg4oaSXCIsIHRpY2tzOiBbMCwgMC4wNSwgMC4xXX0sXG4gICAgeToge2RvbWFpbjogWzAsIEhdLCBsYWJlbDogXCLihpEgeOKCgiAobSlcIiwgdGlja3M6IFswLCAwLjA1LCAwLjEsIDAuMTUsIDAuMl19LFxuICAgIGNvbG9yOiB7dHlwZTogXCJsaW5lYXJcIiwgc2NoZW1lOiBcIlJkWWxCdVwiLCByZXZlcnNlOiB0cnVlLCBsZWdlbmQ6IHRydWUsXG4gICAgICAgICAgICBsYWJlbDogXCJ1ICjCsEMpXCJ9LFxuICAgIG1hcmtzXG4gIH0pO1xuXG4gIGNvbnN0IG91dHMgPSBPYmplY3QuZW50cmllcyhyLmhlYXRPdXQpO1xuICBjb25zdCB0b3RhbE91dCA9IGQzLnN1bShvdXRzLCBkID0+IGRbMV0pO1xuICBjb25zdCByZWFkb3V0ID0gaHRtbGA8ZGl2IHN0eWxlPVwiZm9udC1zaXplOiAwLjk1cmVtOyBsaW5lLWhlaWdodDogMS42NTtcIj5cbiAgICAke3BhcnRpdGlvbn08YnI+XG4gICAgPGI+RW5lcmd5IGJhbGFuY2U8L2I+IChwZXIgbWV0ZXIgb2YgZGVwdGgpOjxicj5cbiAgICAmbmJzcDsmbmJzcDttYWRlIGluc2lkZSwg4oirZiBkzqkgPSAke2ZtdChyLm1hZGUpfSBXL208YnI+XG4gICAgJm5ic3A7Jm5ic3A7aW4gdGhyb3VnaCDOkzxzdWI+aDwvc3ViPiwg4oiraCBkzpMgPSAke2ZtdChyLmhlYXRJbil9IFcvbTxicj5cbiAgICAmbmJzcDsmbmJzcDtvdXQgdGhyb3VnaCDOkzxzdWI+Zzwvc3ViPiA9ICR7Zm10KHRvdGFsT3V0KX0gVy9tXG4gICAgICAoJHtvdXRzLm1hcCgoW2UsIHZdKSA9PiBgJHtuYW1lc1tlXX06ICR7Zm10KHYpfWApLmpvaW4oXCIsIFwiKX0pPGJyPlxuICAgIDxiPkhvdHRlc3QgcG9pbnQ6PC9iPiAke2ZtdChyLnVtYXgsIDEpfSDCsEMgYXRcbiAgICAgICgke3IueG1heC50b0ZpeGVkKDMpfSwgJHtyLnltYXgudG9GaXhlZCgzKX0pIG08YnI+XG4gICAgPGI+Q29sZGVzdCBwb2ludDo8L2I+ICR7Zm10KHIudW1pbiwgMSl9IMKwQzxicj5cbiAgICA8Yj5PbmUgMjcgbW0gY2VsbDwvYj4gJHt0b3RhbE91dCA+PSAwXG4gICAgICA/IGBzZW5kcyAke2ZtdCh0b3RhbE91dCAqIDAuMDI3LCAxKX0gVyBpbnRvIHRoZSBjb29sYW50LmBcbiAgICAgIDogYGRyYXdzICR7Zm10KC10b3RhbE91dCAqIDAuMDI3LCAxKX0gVyBmcm9tIHRoZSBjb29sYW50LmB9XG4gIDwvZGl2PmA7XG4gIHJldHVybiBodG1sYDxkaXYgc3R5bGU9XCJkaXNwbGF5OiBmbGV4OyBmbGV4LXdyYXA6IHdyYXA7IGdhcDogMS41cmVtO1xuICAgIGFsaWduLWl0ZW1zOiBmbGV4LXN0YXJ0O1wiPiR7cGxvdH08ZGl2IHN0eWxlPVwiZmxleDogMTsgbWluLXdpZHRoOiAxNHJlbTtcIj4ke3JlYWRvdXR9PC9kaXY+PC9kaXY+YDtcbn1cbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgneENvb2wnKSJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgneEYnKSJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgneEh0JykifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InNoaW55SW5wdXQoJ3hIbycpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCd4SycpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCd4RycpIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCd4RGcnKSJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgneFNob3cnKSJ9XX0=
 </script>
@@ -1797,7 +1804,8 @@ window._ojs.runtime.interpretFromScriptTags();
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
       // Inspect non-navigation links and adorn them if external
-     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
       for (var i=0; i<links.length; i++) {
         const link = links[i];
         if (!isInternal(link.href)) {
@@ -1806,8 +1814,69 @@ window._ojs.runtime.interpretFromScriptTags();
           if (link.dataset.originalHref !== undefined) {
             link.href = link.dataset.originalHref;
           }
+          if (!link.classList.contains('no-external-icon')) {
+          }
         }
       }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
     function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
       const config = {
         allowHTML: true,
@@ -1821,6 +1890,7 @@ window._ojs.runtime.interpretFromScriptTags();
         interactiveBorder: 10,
         theme: 'quarto',
         placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
       };
       if (contentFn) {
         config.content = contentFn;
@@ -1983,44 +2053,54 @@ window._ojs.runtime.interpretFromScriptTags();
           const lineIds = lines.map((line) => {
             return targetCell + "-" + line;
           })
-          let top = null;
-          let height = null;
-          let parent = null;
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
           if (lineIds.length > 0) {
-              //compute the position of the single el (top and bottom and make a div)
-              const el = window.document.getElementById(lineIds[0]);
-              top = el.offsetTop;
-              height = el.offsetHeight;
-              parent = el.parentElement.parentElement;
-            if (lineIds.length > 1) {
-              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-              height = bottom - top;
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
             }
-            if (top !== null && height !== null && parent !== null) {
-              // cook up a div (if necessary) and position it 
-              let div = window.document.getElementById("code-annotation-line-highlight");
-              if (div === null) {
-                div = window.document.createElement("div");
-                div.setAttribute("id", "code-annotation-line-highlight");
-                div.style.position = 'absolute';
-                parent.appendChild(div);
-              }
-              div.style.top = top - 2 + "px";
-              div.style.height = height + 4 + "px";
-              div.style.left = 0;
-              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-              if (gutterDiv === null) {
-                gutterDiv = window.document.createElement("div");
-                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-                gutterDiv.style.position = 'absolute';
-                const codeCell = window.document.getElementById(targetCell);
-                const gutter = codeCell.querySelector('.code-annotation-gutter');
-                gutter.appendChild(gutterDiv);
-              }
-              gutterDiv.style.top = top - 2 + "px";
-              gutterDiv.style.height = height + 4 + "px";
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
             }
+            placeBand(gutterDiv, el, lastEl);
             selectedAnnoteEl = annoteEl;
           }
         };
@@ -2119,7 +2199,10 @@ window._ojs.runtime.interpretFromScriptTags();
     }
   });
   </script>
-<nav class="page-navigation">
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+<nav class="page-navigation" aria-label="Page">
   <div class="nav-page nav-page-previous">
       <a href="../chapters/Poisson1D_Rod_FEM.html" class="pagination-link" aria-label="1D Poisson IV: The Rod, by Galerkin's Method">
         <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span>

@@ -2,13 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.19">
+<meta name="generator" content="quarto-1.11.9">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="description" content="Finite Element Methods">
 
-<title>Appendix H — Beams and Frames from Three-Dimensional Elasticity – CE/ME 507 — Class Notes</title>
+<title>Appendix J — Beams and Frames from Three-Dimensional Elasticity – CE/ME 507 — Class Notes</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -37,17 +37,18 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../chapters/Poisson2D_Heat_FEM.html" rel="prev">
+<link href="../chapters/Elasticity2D_FEM.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-e98545d696c0c4756cb81f8950af150c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-bd990e089991ec7d162b92b5e37a2dc1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -119,17 +120,17 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar floating quarto-light">
+<body class="nav-sidebar floating quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
-  <nav class="quarto-secondary-nav">
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
     <div class="container-fluid d-flex">
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/Beam_Frame_Formulation.html"><span class="chapter-number">H</span>&nbsp; <span class="chapter-title">Beams and Frames from Three-Dimensional Elasticity</span></a></li></ol></nav>
-        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/Beam_Frame_Formulation.html"><span class="chapter-number">J</span>&nbsp; <span class="chapter-title">Beams and Frames from Three-Dimensional Elasticity</span></a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
         <i class="bi bi-search"></i>
@@ -140,7 +141,7 @@ window.Quarto = {
 <!-- content -->
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
 <!-- sidebar -->
-  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Site">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
       <a href="../">CE/ME 507 — Class Notes</a> 
@@ -299,13 +300,10 @@ window.Quarto = {
 </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
- <span class="menu-text">Class 24 applications</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
-            <i class="bi bi-chevron-right ms-2"></i>
-          </a> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">Class 24 applications</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
       </div>
-      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/24_Seepage.html" class="sidebar-item-text sidebar-link">
@@ -334,13 +332,10 @@ window.Quarto = {
   </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
-            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
- <span class="menu-text">Appendices</span></a>
-          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
-            <i class="bi bi-chevron-right ms-2"></i>
-          </a> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">Appendices</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
       </div>
-      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
@@ -385,8 +380,20 @@ window.Quarto = {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="../chapters/Elasticity2D.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">H</span>&nbsp; <span class="chapter-title">Linear Elasticity I: Stress, Strain, and the Strong Form</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Elasticity2D_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">I</span>&nbsp; <span class="chapter-title">Linear Elasticity II: Plane Elasticity, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="../chapters/Beam_Frame_Formulation.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text"><span class="chapter-number">H</span>&nbsp; <span class="chapter-title">Beams and Frames from Three-Dimensional Elasticity</span></span></a>
+ <span class="menu-text"><span class="chapter-number">J</span>&nbsp; <span class="chapter-title">Beams and Frames from Three-Dimensional Elasticity</span></span></a>
   </div>
 </li>
       </ul>
@@ -397,36 +404,36 @@ window.Quarto = {
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#assumptions" id="toc-assumptions" class="nav-link active" data-scroll-target="#assumptions"><span class="header-section-number">H.1</span> Assumptions</a></li>
-  <li><a href="#consequences-for-the-stresses-and-strains" id="toc-consequences-for-the-stresses-and-strains" class="nav-link" data-scroll-target="#consequences-for-the-stresses-and-strains"><span class="header-section-number">H.2</span> Consequences for the stresses and strains</a></li>
-  <li><a href="#virtual-work" id="toc-virtual-work" class="nav-link" data-scroll-target="#virtual-work"><span class="header-section-number">H.3</span> Virtual work</a></li>
-  <li><a href="#stress-resultants-and-applied-loads" id="toc-stress-resultants-and-applied-loads" class="nav-link" data-scroll-target="#stress-resultants-and-applied-loads"><span class="header-section-number">H.4</span> Stress resultants and applied loads</a></li>
-  <li><a href="#the-strong-form" id="toc-the-strong-form" class="nav-link" data-scroll-target="#the-strong-form"><span class="header-section-number">H.5</span> The strong form</a></li>
-  <li><a href="#constitutive-relations" id="toc-constitutive-relations" class="nav-link" data-scroll-target="#constitutive-relations"><span class="header-section-number">H.6</span> Constitutive relations</a></li>
-  <li><a href="#time-dependent-terms" id="toc-time-dependent-terms" class="nav-link" data-scroll-target="#time-dependent-terms"><span class="header-section-number">H.7</span> Time-dependent terms</a></li>
-  <li><a href="#the-weak-form-of-a-timoshenko-frame" id="toc-the-weak-form-of-a-timoshenko-frame" class="nav-link" data-scroll-target="#the-weak-form-of-a-timoshenko-frame"><span class="header-section-number">H.8</span> The weak form of a Timoshenko frame</a></li>
-  <li><a href="#the-bernoullieuler-frame" id="toc-the-bernoullieuler-frame" class="nav-link" data-scroll-target="#the-bernoullieuler-frame"><span class="header-section-number">H.9</span> The Bernoulli–Euler frame</a></li>
-  <li><a href="#rayleigh-damping" id="toc-rayleigh-damping" class="nav-link" data-scroll-target="#rayleigh-damping"><span class="header-section-number">H.10</span> Rayleigh damping</a></li>
-  <li><a href="#from-members-to-a-frame" id="toc-from-members-to-a-frame" class="nav-link" data-scroll-target="#from-members-to-a-frame"><span class="header-section-number">H.11</span> From members to a frame</a>
+  <li><a href="#assumptions" id="toc-assumptions" class="nav-link active" data-scroll-target="#assumptions"><span class="header-section-number">J.1</span> Assumptions</a></li>
+  <li><a href="#consequences-for-the-stresses-and-strains" id="toc-consequences-for-the-stresses-and-strains" class="nav-link" data-scroll-target="#consequences-for-the-stresses-and-strains"><span class="header-section-number">J.2</span> Consequences for the stresses and strains</a></li>
+  <li><a href="#virtual-work" id="toc-virtual-work" class="nav-link" data-scroll-target="#virtual-work"><span class="header-section-number">J.3</span> Virtual work</a></li>
+  <li><a href="#stress-resultants-and-applied-loads" id="toc-stress-resultants-and-applied-loads" class="nav-link" data-scroll-target="#stress-resultants-and-applied-loads"><span class="header-section-number">J.4</span> Stress resultants and applied loads</a></li>
+  <li><a href="#the-strong-form" id="toc-the-strong-form" class="nav-link" data-scroll-target="#the-strong-form"><span class="header-section-number">J.5</span> The strong form</a></li>
+  <li><a href="#constitutive-relations" id="toc-constitutive-relations" class="nav-link" data-scroll-target="#constitutive-relations"><span class="header-section-number">J.6</span> Constitutive relations</a></li>
+  <li><a href="#time-dependent-terms" id="toc-time-dependent-terms" class="nav-link" data-scroll-target="#time-dependent-terms"><span class="header-section-number">J.7</span> Time-dependent terms</a></li>
+  <li><a href="#the-weak-form-of-a-timoshenko-frame" id="toc-the-weak-form-of-a-timoshenko-frame" class="nav-link" data-scroll-target="#the-weak-form-of-a-timoshenko-frame"><span class="header-section-number">J.8</span> The weak form of a Timoshenko frame</a></li>
+  <li><a href="#the-bernoullieuler-frame" id="toc-the-bernoullieuler-frame" class="nav-link" data-scroll-target="#the-bernoullieuler-frame"><span class="header-section-number">J.9</span> The Bernoulli–Euler frame</a></li>
+  <li><a href="#rayleigh-damping" id="toc-rayleigh-damping" class="nav-link" data-scroll-target="#rayleigh-damping"><span class="header-section-number">J.10</span> Rayleigh damping</a></li>
+  <li><a href="#from-members-to-a-frame" id="toc-from-members-to-a-frame" class="nav-link" data-scroll-target="#from-members-to-a-frame"><span class="header-section-number">J.11</span> From members to a frame</a>
   <ul class="collapse">
-  <li><a href="#local-and-global-axes" id="toc-local-and-global-axes" class="nav-link" data-scroll-target="#local-and-global-axes"><span class="header-section-number">H.11.1</span> Local and global axes</a></li>
-  <li><a href="#basis-functions-along-a-member" id="toc-basis-functions-along-a-member" class="nav-link" data-scroll-target="#basis-functions-along-a-member"><span class="header-section-number">H.11.2</span> Basis functions along a member</a></li>
-  <li><a href="#the-element-and-global-systems" id="toc-the-element-and-global-systems" class="nav-link" data-scroll-target="#the-element-and-global-systems"><span class="header-section-number">H.11.3</span> The element and global systems</a></li>
+  <li><a href="#local-and-global-axes" id="toc-local-and-global-axes" class="nav-link" data-scroll-target="#local-and-global-axes"><span class="header-section-number">J.11.1</span> Local and global axes</a></li>
+  <li><a href="#basis-functions-along-a-member" id="toc-basis-functions-along-a-member" class="nav-link" data-scroll-target="#basis-functions-along-a-member"><span class="header-section-number">J.11.2</span> Basis functions along a member</a></li>
+  <li><a href="#the-element-and-global-systems" id="toc-the-element-and-global-systems" class="nav-link" data-scroll-target="#the-element-and-global-systems"><span class="header-section-number">J.11.3</span> The element and global systems</a></li>
   </ul></li>
-  <li><a href="#steps-for-a-frame-analysis-code" id="toc-steps-for-a-frame-analysis-code" class="nav-link" data-scroll-target="#steps-for-a-frame-analysis-code"><span class="header-section-number">H.12</span> Steps for a frame analysis code</a></li>
+  <li><a href="#steps-for-a-frame-analysis-code" id="toc-steps-for-a-frame-analysis-code" class="nav-link" data-scroll-target="#steps-for-a-frame-analysis-code"><span class="header-section-number">J.12</span> Steps for a frame analysis code</a></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
+<main class="content" id="quarto-document-content" tabindex="-1">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/Beam_Frame_Formulation.html"><span class="chapter-number">H</span>&nbsp; <span class="chapter-title">Beams and Frames from Three-Dimensional Elasticity</span></a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/3_Support_FunctionSpaces.html">Appendices</a></li><li class="breadcrumb-item"><a href="../chapters/Beam_Frame_Formulation.html"><span class="chapter-number">J</span>&nbsp; <span class="chapter-title">Beams and Frames from Three-Dimensional Elasticity</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title">Appendix H — Beams and Frames from Three-Dimensional Elasticity</h1>
+<h1 class="title">Appendix J — Beams and Frames from Three-Dimensional Elasticity</h1>
 </div>
 
 
@@ -444,15 +451,15 @@ window.Quarto = {
 
 
 <p>Derivation of the time-dependent Timoshenko frame, following Section 5.4 of Hughes.</p>
-<section id="assumptions" class="level2" data-number="H.1">
-<h2 data-number="H.1" class="anchored" data-anchor-id="assumptions"><span class="header-section-number">H.1</span> Assumptions</h2>
+<section id="assumptions" class="level2" data-number="J.1">
+<h2 data-number="J.1" class="anchored" data-anchor-id="assumptions"><span class="header-section-number">J.1</span> Assumptions</h2>
 <div id="fig-bf-member" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-bf-member-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="generated_images/BeamFrame/BF_Fig1_Member.png" class="img-fluid figure-img" style="width:100.0%">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bf-member-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;H.1: (a) A member with length <span class="math inline">\(h^e\)</span> and cross-section <span class="math inline">\(A^e\)</span>, in its local principal axes <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span>, <span class="math inline">\(x_3\)</span>. (b) Members meeting at a node. Each member has its own local axes <span class="math inline">\(\underline{e}^e_j\)</span>, and the nodes are described in the global axes <span class="math inline">\(\underline{e}_i\)</span>.
+Figure&nbsp;J.1: (a) A member with length <span class="math inline">\(h^e\)</span> and cross-section <span class="math inline">\(A^e\)</span>, in its local principal axes <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span>, <span class="math inline">\(x_3\)</span>. (b) Members meeting at a node. Each member has its own local axes <span class="math inline">\(\underline{e}^e_j\)</span>, and the nodes are described in the global axes <span class="math inline">\(\underline{e}_i\)</span>.
 </figcaption>
 </figure>
 </div>
@@ -471,7 +478,7 @@ u_1(x_1, x_2, x_3) &amp;= w_1(x_3) - x_2\,\theta_3(x_3), \\
 u_2(x_1, x_2, x_3) &amp;= w_2(x_3) + x_1\,\theta_3(x_3), \\
 u_3(x_1, x_2, x_3) &amp;= w_3(x_3) - x_1\,\theta_2(x_3) + x_2\,\theta_1(x_3),
 \end{aligned}
-\]</span> that is, there is no warping of the cross-section (<a href="#fig-bf-disp" class="quarto-xref">Figure&nbsp;<span>H.2</span></a>). This is a modeling decision, and it can be relaxed by adding a warping term <span class="math inline">\(\omega(x_1, x_2)\,\theta_3'(x_3)\)</span> to <span class="math inline">\(u_3\)</span>, where <span class="math inline">\(\omega\)</span> is Saint-Venant’s warping function of the cross-section. If the twist is uniform, so that <span class="math inline">\(\theta_3''\)</span> is neglected, the derivation below is unchanged except that <span class="math inline">\(J = I_1 + I_2\)</span> in <span class="math inline">\(m_3 = \mu J\,\theta_3'\)</span> becomes the Saint-Venant torsion constant <span class="math inline">\(J = I_1 + I_2 - \int_A |\nabla\omega|^2\,dA\)</span>, computed in the <a href="../chapters/24_Torsion.html#warping">torsion example</a> of Class 24. If <span class="math inline">\(\theta_3''\)</span> is kept, as where warping is restrained at a support, the result is Vlasov’s theory of non-uniform torsion, with axial warping stresses <span class="math inline">\(E\,\omega\,\theta_3''\)</span>, a fourth-order torsion equation <span class="math inline">\(E\,C_w\,\theta_3'''' - \mu J\,\theta_3'' = C_3\)</span> with <span class="math inline">\(C_w = \int_A \omega^2\,dA\)</span> (and <span class="math inline">\(\omega\)</span> measured from the shear center), and a seventh degree of freedom, the warping, at each node.</li>
+\]</span> that is, there is no warping of the cross-section (<a href="#fig-bf-disp" class="quarto-xref">Figure&nbsp;<span>J.2</span></a>). This is a modeling decision, and it can be relaxed by adding a warping term <span class="math inline">\(\omega(x_1, x_2)\,\theta_3'(x_3)\)</span> to <span class="math inline">\(u_3\)</span>, where <span class="math inline">\(\omega\)</span> is Saint-Venant’s warping function of the cross-section. If the twist is uniform, so that <span class="math inline">\(\theta_3''\)</span> is neglected, the derivation below is unchanged except that <span class="math inline">\(J = I_1 + I_2\)</span> in <span class="math inline">\(m_3 = \mu J\,\theta_3'\)</span> becomes the Saint-Venant torsion constant <span class="math inline">\(J = I_1 + I_2 - \int_A |\nabla\omega|^2\,dA\)</span>, computed in the <a href="../chapters/24_Torsion.html#warping">torsion example</a> of Class 24. If <span class="math inline">\(\theta_3''\)</span> is kept, as where warping is restrained at a support, the result is Vlasov’s theory of non-uniform torsion, with axial warping stresses <span class="math inline">\(E\,\omega\,\theta_3''\)</span>, a fourth-order torsion equation <span class="math inline">\(E\,C_w\,\theta_3'''' - \mu J\,\theta_3'' = C_3\)</span> with <span class="math inline">\(C_w = \int_A \omega^2\,dA\)</span> (and <span class="math inline">\(\omega\)</span> measured from the shear center), and a seventh degree of freedom, the warping, at each node.</li>
 <li>The displacements are small.</li>
 <li>The deformation is elastic (not plastic), and, for simplicity, the material is homogeneous and isotropic, so that <span class="math inline">\(\sigma_{ij} = \lambda\,\varepsilon_{kk}\,\delta_{ij} + 2\mu\,\varepsilon_{ij}\)</span>.</li>
 </ol>
@@ -481,7 +488,7 @@ u_3(x_1, x_2, x_3) &amp;= w_3(x_3) - x_1\,\theta_2(x_3) + x_2\,\theta_1(x_3),
 <img src="generated_images/BeamFrame/BF_Fig2_Displacements.png" class="img-fluid figure-img" style="width:100.0%">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bf-disp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;H.2: The displacements of assumption 3 (exaggerated). Each cross-section translates by <span class="math inline">\((w_1, w_2, w_3)\)</span> and rotates as a rigid body by small angles <span class="math inline">\((\theta_1, \theta_2, \theta_3)\)</span>, so that <span class="math inline">\(\underline{u} = \underline{w} + \underline{\theta} \times \left(x_1\,\underline{e}_1 + x_2\,\underline{e}_2\right)\)</span>. (a) The twist <span class="math inline">\(\theta_3\)</span> moves the point <span class="math inline">\((x_1, x_2)\)</span> within the plane of the section. (b), (c) The rotations <span class="math inline">\(\theta_1\)</span> and <span class="math inline">\(\theta_2\)</span>, positive by the right-hand rule about <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span>, move it along the member, which gives the signs of <span class="math inline">\(x_2\,\theta_1\)</span> and <span class="math inline">\(-x_1\,\theta_2\)</span>. Dashed: undeformed; dotted: translated only; solid: translated and rotated.
+Figure&nbsp;J.2: The displacements of assumption 3 (exaggerated). Each cross-section translates by <span class="math inline">\((w_1, w_2, w_3)\)</span> and rotates as a rigid body by small angles <span class="math inline">\((\theta_1, \theta_2, \theta_3)\)</span>, so that <span class="math inline">\(\underline{u} = \underline{w} + \underline{\theta} \times \left(x_1\,\underline{e}_1 + x_2\,\underline{e}_2\right)\)</span>. (a) The twist <span class="math inline">\(\theta_3\)</span> moves the point <span class="math inline">\((x_1, x_2)\)</span> within the plane of the section. (b), (c) The rotations <span class="math inline">\(\theta_1\)</span> and <span class="math inline">\(\theta_2\)</span>, positive by the right-hand rule about <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span>, move it along the member, which gives the signs of <span class="math inline">\(x_2\,\theta_1\)</span> and <span class="math inline">\(-x_1\,\theta_2\)</span>. Dashed: undeformed; dotted: translated only; solid: translated and rotated.
 </figcaption>
 </figure>
 </div>
@@ -500,8 +507,8 @@ u_i = g_i \text{ on } \Gamma_{g_i},
 \sigma_{ij}\,n_j = h_i \text{ on } \Gamma_{h_i} .
 \]</span></p>
 </section>
-<section id="consequences-for-the-stresses-and-strains" class="level2" data-number="H.2">
-<h2 data-number="H.2" class="anchored" data-anchor-id="consequences-for-the-stresses-and-strains"><span class="header-section-number">H.2</span> Consequences for the stresses and strains</h2>
+<section id="consequences-for-the-stresses-and-strains" class="level2" data-number="J.2">
+<h2 data-number="J.2" class="anchored" data-anchor-id="consequences-for-the-stresses-and-strains"><span class="header-section-number">J.2</span> Consequences for the stresses and strains</h2>
 <p>From assumption 2,</p>
 <p><span class="math display">\[
 0 = \sigma_{\alpha\beta} = \lambda\,\varepsilon_{kk}\,\delta_{\alpha\beta} + 2\mu\,\varepsilon_{\alpha\beta}
@@ -530,8 +537,8 @@ u_i = g_i \text{ on } \Gamma_{g_i},
 \]</span></p>
 <p>where a prime denotes <span class="math inline">\(d/dx_3\)</span>.</p>
 </section>
-<section id="virtual-work" class="level2" data-number="H.3">
-<h2 data-number="H.3" class="anchored" data-anchor-id="virtual-work"><span class="header-section-number">H.3</span> Virtual work</h2>
+<section id="virtual-work" class="level2" data-number="J.3">
+<h2 data-number="J.3" class="anchored" data-anchor-id="virtual-work"><span class="header-section-number">J.3</span> Virtual work</h2>
 <p>Multiplying the equation of motion by a virtual displacement <span class="math inline">\(\hat{u}_i\)</span> and integrating,</p>
 <p><span class="math display">\[
 \int_\Omega \sigma_{ij,j}\,\hat{u}_i\;d\Omega + \int_\Omega f_i\,\hat{u}_i\;d\Omega = \int_\Omega \rho\,u_{i,tt}\,\hat{u}_i\;d\Omega .
@@ -556,13 +563,13 @@ u_i = g_i \text{ on } \Gamma_{g_i},
 \end{aligned}
 \]</span></p>
 </section>
-<section id="stress-resultants-and-applied-loads" class="level2" data-number="H.4">
-<h2 data-number="H.4" class="anchored" data-anchor-id="stress-resultants-and-applied-loads"><span class="header-section-number">H.4</span> Stress resultants and applied loads</h2>
+<section id="stress-resultants-and-applied-loads" class="level2" data-number="J.4">
+<h2 data-number="J.4" class="anchored" data-anchor-id="stress-resultants-and-applied-loads"><span class="header-section-number">J.4</span> Stress resultants and applied loads</h2>
 <p>Now let</p>
 <div id="tbl-bf-resultants" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-bf-resultants-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;H.1: Stress resultants and loads per unit length of a member.
+Table&nbsp;J.1: Stress resultants and loads per unit length of a member.
 </figcaption>
 <div aria-describedby="tbl-bf-resultants-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -660,8 +667,8 @@ C_3 = \int_{\partial A^e} \left(h_2\,x_1 - h_1\,x_2\right) d(\partial A^e) + \ba
 \]</span></p>
 <p>where the nodal terms collect the end values <span class="math inline">\(\hat{w}_i\,q_i\)</span>, <span class="math inline">\(\hat{\theta}_1\,m_1\)</span>, <span class="math inline">\(\hat{\theta}_2\,m_2\)</span>, <span class="math inline">\(\hat{\theta}_3\,m_3\)</span> of each member together with the applied end forces and moments. When looking at the nodes, the sign of the end loads reverses, and the contributions of all of the members that meet at a node are transformed into the global axes and added, <span class="math inline">\(\sum_e \underline{t}^e\,\underline{q}^e_A\)</span> and <span class="math inline">\(\sum_e \underline{t}^e\,\underline{m}^e_A\)</span>.</p>
 </section>
-<section id="the-strong-form" class="level2" data-number="H.5">
-<h2 data-number="H.5" class="anchored" data-anchor-id="the-strong-form"><span class="header-section-number">H.5</span> The strong form</h2>
+<section id="the-strong-form" class="level2" data-number="J.5">
+<h2 data-number="J.5" class="anchored" data-anchor-id="the-strong-form"><span class="header-section-number">J.5</span> The strong form</h2>
 <p>In the static case, the variational formulation gives rise to the following strong system along each member:</p>
 <p><span class="math display">\[
 \begin{aligned}
@@ -693,8 +700,8 @@ m_3' + C_3 &amp;= 0 &amp;&amp; \text{torsion (with no warping)}
 \]</span></p>
 <p>where <span class="math inline">\(\mathcal{E}_A\)</span> is the set of members that meet at node <span class="math inline">\(A\)</span>, and <span class="math inline">\(\underline{t}^e\)</span> is the transformation from the local axes of member <span class="math inline">\(e\)</span> to the global axes (see below).</p>
 </section>
-<section id="constitutive-relations" class="level2" data-number="H.6">
-<h2 data-number="H.6" class="anchored" data-anchor-id="constitutive-relations"><span class="header-section-number">H.6</span> Constitutive relations</h2>
+<section id="constitutive-relations" class="level2" data-number="J.6">
+<h2 data-number="J.6" class="anchored" data-anchor-id="constitutive-relations"><span class="header-section-number">J.6</span> Constitutive relations</h2>
 <p>The following constitutive laws also hold. Using the strains above and assumption 1,</p>
 <p><span class="math display">\[
 \begin{aligned}
@@ -712,8 +719,8 @@ m_3 &amp;= \int_A \left(\sigma_{23}\,x_1 - \sigma_{13}\,x_2\right) dA
 \]</span></p>
 <p>where <span class="math inline">\(I_1 = \int_A x_2^2\,dA\)</span>, <span class="math inline">\(I_2 = \int_A x_1^2\,dA\)</span>, and <span class="math inline">\(J = \int_A \left(x_1^2 + x_2^2\right) dA = I_1 + I_2\)</span>. If the cross-section is allowed to warp, <span class="math inline">\(J\)</span> is instead the Saint-Venant torsion constant, computed in the <a href="../chapters/24_Torsion.html#frame-elements">torsion example</a> of Class 24. There, <span class="math inline">\(m_3\)</span> is the torque <span class="math inline">\(T\)</span> and <span class="math inline">\(\psi = \theta_3'\)</span> is the twist per unit length <span class="math inline">\(\theta\)</span>, so that <span class="math inline">\(m_3 = \mu J\,\psi\)</span> reads <span class="math inline">\(T = G J \theta\)</span>. In the shear forces, <span class="math inline">\(A\)</span> is usually replaced by an effective shear area <span class="math inline">\(A^s_\alpha\)</span>, so that <span class="math inline">\(q_\alpha = \mu\,A^s_\alpha\,\gamma_\alpha\)</span>, where <span class="math inline">\(\mu\)</span> is the second Lamé constant (the shear modulus <span class="math inline">\(G\)</span>).</p>
 </section>
-<section id="time-dependent-terms" class="level2" data-number="H.7">
-<h2 data-number="H.7" class="anchored" data-anchor-id="time-dependent-terms"><span class="header-section-number">H.7</span> Time-dependent terms</h2>
+<section id="time-dependent-terms" class="level2" data-number="J.7">
+<h2 data-number="J.7" class="anchored" data-anchor-id="time-dependent-terms"><span class="header-section-number">J.7</span> Time-dependent terms</h2>
 <p>Looking at the left-hand side,</p>
 <p><span class="math display">\[
 \begin{aligned}
@@ -782,8 +789,8 @@ m_3' + C_3 &amp;= \hat{J}\,\theta_{3,tt}, &amp;&amp; m_3 = \mu\,J\,\theta_3',
 \underline{t}^e\,\underline{\theta}^e_A = \underline{\Theta}_A .
 \]</span></p>
 </section>
-<section id="the-weak-form-of-a-timoshenko-frame" class="level2" data-number="H.8">
-<h2 data-number="H.8" class="anchored" data-anchor-id="the-weak-form-of-a-timoshenko-frame"><span class="header-section-number">H.8</span> The weak form of a Timoshenko frame</h2>
+<section id="the-weak-form-of-a-timoshenko-frame" class="level2" data-number="J.8">
+<h2 data-number="J.8" class="anchored" data-anchor-id="the-weak-form-of-a-timoshenko-frame"><span class="header-section-number">J.8</span> The weak form of a Timoshenko frame</h2>
 <p>Alternatively, in weak form, the equations are</p>
 <p><span class="math display">\[
 \begin{aligned}
@@ -804,8 +811,8 @@ m_3' + C_3 &amp;= \hat{J}\,\theta_{3,tt}, &amp;&amp; m_3 = \mu\,J\,\theta_3',
 \]</span></p>
 <p>Every member needs six sets of basis functions: axial, major shear, minor shear, major moment, minor moment, and torsion.</p>
 </section>
-<section id="the-bernoullieuler-frame" class="level2" data-number="H.9">
-<h2 data-number="H.9" class="anchored" data-anchor-id="the-bernoullieuler-frame"><span class="header-section-number">H.9</span> The Bernoulli–Euler frame</h2>
+<section id="the-bernoullieuler-frame" class="level2" data-number="J.9">
+<h2 data-number="J.9" class="anchored" data-anchor-id="the-bernoullieuler-frame"><span class="header-section-number">J.9</span> The Bernoulli–Euler frame</h2>
 <p>If shear deformation is neglected, the rotations are no longer independent: setting the shear strains <span class="math inline">\(\gamma_1 = w_1' - \theta_2\)</span> and <span class="math inline">\(\gamma_2 = w_2' + \theta_1\)</span> to zero gives <span class="math inline">\(\theta_2 = w_1'\)</span> and <span class="math inline">\(\theta_1 = -w_2'\)</span>, so that</p>
 <p><span class="math display">\[
 \begin{aligned}
@@ -841,8 +848,8 @@ m_3' + C_3 = s_3 .
 \]</span></p>
 <p>for <span class="math inline">\(x \in \Omega\)</span> and <span class="math inline">\(t \in [0, T]\)</span>, with initial and boundary conditions.</p>
 </section>
-<section id="rayleigh-damping" class="level2" data-number="H.10">
-<h2 data-number="H.10" class="anchored" data-anchor-id="rayleigh-damping"><span class="header-section-number">H.10</span> Rayleigh damping</h2>
+<section id="rayleigh-damping" class="level2" data-number="J.10">
+<h2 data-number="J.10" class="anchored" data-anchor-id="rayleigh-damping"><span class="header-section-number">J.10</span> Rayleigh damping</h2>
 <p>The semi-discrete equations of motion are</p>
 <p><span class="math display">\[
 \underline{\underline{M}}\,\ddot{\underline{d}} + \underline{\underline{C}}\,\dot{\underline{d}} + \underline{\underline{K}}\,\underline{d} = \underline{F} ,
@@ -876,11 +883,11 @@ q_3' + b\,q_{3,t}' + F_3 &amp;= r_3 + a\,\tilde{r}_3 &amp;&amp; \text{axial}
 \]</span></p>
 <p>where <span class="math inline">\(m\)</span>, <span class="math inline">\(q\)</span>, <span class="math inline">\(r\)</span>, <span class="math inline">\(s\)</span>, <span class="math inline">\(C\)</span>, and <span class="math inline">\(F\)</span> are as before.</p>
 </section>
-<section id="from-members-to-a-frame" class="level2" data-number="H.11">
-<h2 data-number="H.11" class="anchored" data-anchor-id="from-members-to-a-frame"><span class="header-section-number">H.11</span> From members to a frame</h2>
-<section id="local-and-global-axes" class="level3" data-number="H.11.1">
-<h3 data-number="H.11.1" class="anchored" data-anchor-id="local-and-global-axes"><span class="header-section-number">H.11.1</span> Local and global axes</h3>
-<p>Each member is described in its own local axes, while the nodes, where members meet, are described in global axes (<a href="#fig-bf-member" class="quarto-xref">Figure&nbsp;<span>H.1</span></a> (b)). The <span class="math inline">\(x^e_j\)</span> direction of member <span class="math inline">\(e\)</span> is represented by a unit vector <span class="math inline">\(\underline{e}^e_j\)</span>, and the global <span class="math inline">\(x_i\)</span> direction by a unit vector <span class="math inline">\(\underline{e}_i\)</span>. The transformation from local to global coordinates is</p>
+<section id="from-members-to-a-frame" class="level2" data-number="J.11">
+<h2 data-number="J.11" class="anchored" data-anchor-id="from-members-to-a-frame"><span class="header-section-number">J.11</span> From members to a frame</h2>
+<section id="local-and-global-axes" class="level3" data-number="J.11.1">
+<h3 data-number="J.11.1" class="anchored" data-anchor-id="local-and-global-axes"><span class="header-section-number">J.11.1</span> Local and global axes</h3>
+<p>Each member is described in its own local axes, while the nodes, where members meet, are described in global axes (<a href="#fig-bf-member" class="quarto-xref">Figure&nbsp;<span>J.1</span></a> (b)). The <span class="math inline">\(x^e_j\)</span> direction of member <span class="math inline">\(e\)</span> is represented by a unit vector <span class="math inline">\(\underline{e}^e_j\)</span>, and the global <span class="math inline">\(x_i\)</span> direction by a unit vector <span class="math inline">\(\underline{e}_i\)</span>. The transformation from local to global coordinates is</p>
 <p><span class="math display">\[
 \underline{t}^e = \left[t^e_{ij}\right],
 \qquad
@@ -911,12 +918,12 @@ t^e_{ij} = \underline{e}_i \cdot \underline{e}^e_j .
 \]</span></p>
 <p>where <span class="math inline">\(\lambda_x\)</span>, <span class="math inline">\(\lambda_y\)</span>, <span class="math inline">\(\lambda_z\)</span> are the direction cosines of the member.</p>
 </section>
-<section id="basis-functions-along-a-member" class="level3" data-number="H.11.2">
-<h3 data-number="H.11.2" class="anchored" data-anchor-id="basis-functions-along-a-member"><span class="header-section-number">H.11.2</span> Basis functions along a member</h3>
+<section id="basis-functions-along-a-member" class="level3" data-number="J.11.2">
+<h3 data-number="J.11.2" class="anchored" data-anchor-id="basis-functions-along-a-member"><span class="header-section-number">J.11.2</span> Basis functions along a member</h3>
 <p>For one member and one set of basis functions numbered 0 to 8, only functions 0 and 8 contribute to the behavior at the nodes. Contributions from multiple members, as well as point forces, act on the nodes, where local behavior interacts with global behavior. This informs the ID and IEN arrays: the ends of the members have the last indices in the global ID array.</p>
 </section>
-<section id="the-element-and-global-systems" class="level3" data-number="H.11.3">
-<h3 data-number="H.11.3" class="anchored" data-anchor-id="the-element-and-global-systems"><span class="header-section-number">H.11.3</span> The element and global systems</h3>
+<section id="the-element-and-global-systems" class="level3" data-number="J.11.3">
+<h3 data-number="J.11.3" class="anchored" data-anchor-id="the-element-and-global-systems"><span class="header-section-number">J.11.3</span> The element and global systems</h3>
 <p>For a member <span class="math inline">\(e\)</span>, the stiffness matrix is partitioned into the interior degrees of freedom (subscript 1) and the end (nodal) degrees of freedom (subscript 2). Only the nodal degrees of freedom are rotated into the global axes, so that, with <span class="math inline">\(\underline{\underline{\bar{T}}}^e = \begin{bmatrix} \underline{\underline{I}} &amp; 0 \\ 0 &amp; \underline{\underline{T}}^e \end{bmatrix}\)</span>,</p>
 <p><span class="math display">\[
 \underline{\underline{\hat{k}}}^e
@@ -947,8 +954,8 @@ t^e_{ij} = \underline{e}_i \cdot \underline{e}^e_j .
 <p>and then the interior unknowns of every member are found independently (in parallel) from <span class="math inline">\(\underline{\underline{k}}^e_{11}\,\underline{d}^e = \underline{f}^e_1 - \underline{\underline{k}}^e_{12}\,\underline{\underline{T}}^{e\,T}\,\underline{D}\)</span>.</p>
 </section>
 </section>
-<section id="steps-for-a-frame-analysis-code" class="level2" data-number="H.12">
-<h2 data-number="H.12" class="anchored" data-anchor-id="steps-for-a-frame-analysis-code"><span class="header-section-number">H.12</span> Steps for a frame analysis code</h2>
+<section id="steps-for-a-frame-analysis-code" class="level2" data-number="J.12">
+<h2 data-number="J.12" class="anchored" data-anchor-id="steps-for-a-frame-analysis-code"><span class="header-section-number">J.12</span> Steps for a frame analysis code</h2>
 <ol type="1">
 <li>Import the frame: sticks and dots with appended data (an IFC file contains information about cross-sections and materials, as well as orientations).</li>
 <li>Extract material and section parameters for the beams and columns: material <span class="math inline">\(E\)</span>, <span class="math inline">\(G\)</span>; section <span class="math inline">\(I_x\)</span>, <span class="math inline">\(I_y\)</span>, <span class="math inline">\(A\)</span>, the effective shear area, <span class="math inline">\(J\)</span>, <span class="math inline">\(\rho\)</span>.</li>
@@ -966,7 +973,7 @@ t^e_{ij} = \underline{e}_i \cdot \underline{e}^e_j .
 
 </section>
 
-</main> <!-- /main -->
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";
@@ -1045,7 +1052,8 @@ t^e_{ij} = \underline{e}_i \cdot \underline{e}^e_j .
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
       // Inspect non-navigation links and adorn them if external
-     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
       for (var i=0; i<links.length; i++) {
         const link = links[i];
         if (!isInternal(link.href)) {
@@ -1054,8 +1062,69 @@ t^e_{ij} = \underline{e}_i \cdot \underline{e}^e_j .
           if (link.dataset.originalHref !== undefined) {
             link.href = link.dataset.originalHref;
           }
+          if (!link.classList.contains('no-external-icon')) {
+          }
         }
       }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
     function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
       const config = {
         allowHTML: true,
@@ -1069,6 +1138,7 @@ t^e_{ij} = \underline{e}_i \cdot \underline{e}^e_j .
         interactiveBorder: 10,
         theme: 'quarto',
         placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
       };
       if (contentFn) {
         config.content = contentFn;
@@ -1231,44 +1301,54 @@ t^e_{ij} = \underline{e}_i \cdot \underline{e}^e_j .
           const lineIds = lines.map((line) => {
             return targetCell + "-" + line;
           })
-          let top = null;
-          let height = null;
-          let parent = null;
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
           if (lineIds.length > 0) {
-              //compute the position of the single el (top and bottom and make a div)
-              const el = window.document.getElementById(lineIds[0]);
-              top = el.offsetTop;
-              height = el.offsetHeight;
-              parent = el.parentElement.parentElement;
-            if (lineIds.length > 1) {
-              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-              height = bottom - top;
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
             }
-            if (top !== null && height !== null && parent !== null) {
-              // cook up a div (if necessary) and position it 
-              let div = window.document.getElementById("code-annotation-line-highlight");
-              if (div === null) {
-                div = window.document.createElement("div");
-                div.setAttribute("id", "code-annotation-line-highlight");
-                div.style.position = 'absolute';
-                parent.appendChild(div);
-              }
-              div.style.top = top - 2 + "px";
-              div.style.height = height + 4 + "px";
-              div.style.left = 0;
-              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-              if (gutterDiv === null) {
-                gutterDiv = window.document.createElement("div");
-                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-                gutterDiv.style.position = 'absolute';
-                const codeCell = window.document.getElementById(targetCell);
-                const gutter = codeCell.querySelector('.code-annotation-gutter');
-                gutter.appendChild(gutterDiv);
-              }
-              gutterDiv.style.top = top - 2 + "px";
-              gutterDiv.style.height = height + 4 + "px";
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
             }
+            placeBand(gutterDiv, el, lastEl);
             selectedAnnoteEl = annoteEl;
           }
         };
@@ -1367,10 +1447,13 @@ t^e_{ij} = \underline{e}_i \cdot \underline{e}^e_j .
     }
   });
   </script>
-<nav class="page-navigation">
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+<nav class="page-navigation" aria-label="Page">
   <div class="nav-page nav-page-previous">
-      <a href="../chapters/Poisson2D_Heat_FEM.html" class="pagination-link" aria-label="2D Poisson II: The Battery Cell, by Galerkin's Method">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span>
+      <a href="../chapters/Elasticity2D_FEM.html" class="pagination-link" aria-label="Linear Elasticity II: Plane Elasticity, by Galerkin's Method">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">I</span>&nbsp; <span class="chapter-title">Linear Elasticity II: Plane Elasticity, by Galerkin’s Method</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
