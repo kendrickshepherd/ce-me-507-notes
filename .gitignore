@@ -3,6 +3,8 @@
 _book/
 generated_images/
 **/*_files/
+# a page rendered on its own, outside the book, lands next to its source
+chapters/*.html
 __pycache__/
 .DS_Store
 Class_PDFs/

@@ -393,7 +393,400 @@ fig_w_path = save(EF.fig_wshape_results(WSTUDY), "E2F_Fig6_WShape.png")
 
 ## Explore plane elasticity
 
-{{< include _elasticity_explorer.qmd >}}
+Choose a body, a mesh, and a material, and set the boundary conditions by clicking on the sides of the body.
+For each side and each direction, choose whether it is free, carries a traction (Neumann), or has a prescribed displacement (Dirichlet).
+The solution updates as you move the sliders.
+Then look through the tabs.
+**Solution** shows the deformed body, colored by the quantity you choose, with the checks of equilibrium.
+**Element arrays** shows $\mathrm{IEN}$, $\mathrm{LM}$, $\mathbf{D}$, $\mathbf{B}$, and $\mathbf{k}^e$ for one element, and the eigenvalues of $\mathbf{k}^e$.
+**Matrices** shows the $\mathrm{ID}$ array and the pattern of $\mathbf{K}$.
+**Check** compares the solution with what is known about each problem.
+
+```{ojs}
+//| echo: false
+import {CANTILEVER, PLATE, WSHAPE, GEOMETRIES, createSolver, bcToData, bcEditor, planeGraphic,
+        deformedCanvas, drawDeformed, drawDeformedMesh, drawOutline, drawGlyphs, evaluate, nodalStress,
+        fieldValue, vonMises, locate, cantileverExact, heywood, kEntries, sideNodes}
+  from "./elast2d.js"
+import {drawSpy} from "./fem2d.js"
+import {texMatrix, num} from "./fem1d.js"
+```
+
+```{ojs}
+//| echo: false
+fmt = (v, d = 2) => (v < -0.5 * 10 ** -d ? "−" : "") + Math.abs(v).toFixed(d)
+solver = createSolver()
+```
+
+**The body and the mesh**
+
+```{ojs}
+//| echo: false
+viewof geom = Inputs.radio(new Map([
+  ["a plate with a hole", "plate"],
+  ["a quarter of the plate, by symmetry", "quarter"],
+  [`the cross-section of a ${WSHAPE.name}`, "wshape"],
+  ["the cantilever (exact solution known)", "cantilever"]]), {value: "plate", label: "Body"})
+viewof pdeg = Inputs.radio(new Map([["Q4: bilinear", 1], ["Q9: biquadratic", 2]]), {value: 2, label: "Elements"})
+viewof lev = Inputs.range([1, 4], {value: 2, step: 1, label: "Mesh: 1 coarse … 4 fine"})
+```
+
+**Plane stress or plane strain**
+
+```{ojs}
+//| echo: false
+viewof plane = Inputs.radio(new Map([["plane stress: a thin plate", "stress"], ["plane strain: a long body", "strain"]]),
+  {value: GEOMETRIES[geom].plane, label: "Model"})
+```
+
+```{ojs}
+//| echo: false
+planeGraphic(geom, plane, {width: Math.min(width, 380)})
+```
+
+**The material**
+
+```{ojs}
+//| echo: false
+MATERIALS = new Map([["steel", [200, 0.3]], ["aluminum", [70, 0.33]], ["concrete", [30, 0.2]]])
+viewof mat = Inputs.select(MATERIALS, {label: "Start from"})
+```
+
+```{ojs}
+//| echo: false
+viewof EG = Inputs.range([1, 300], {value: mat[0], step: 1, label: "E (GPa)"})
+viewof nu = Inputs.range([0, 0.45], {value: mat[1], step: 0.01, label: "ν"})
+```
+
+**The boundary conditions**
+
+```{ojs}
+//| echo: false
+viewof bc = geom === "cantilever"
+  ? Inputs.form({
+      end: Inputs.radio(new Map([["the exact displacements", "exact"], ["clamped: u₁ = u₂ = 0", "clamp"]]),
+                        {value: "exact", label: "Left end"}),
+      P: Inputs.range([-20, 20], {value: 8, step: 0.5, label: "End load P (kN, downward)"})})
+  : bcEditor(geom)
+```
+
+```{ojs}
+//| echo: false
+G = GEOMETRIES[geom]
+mesh = G.make(pdeg, lev)
+E = 1000 * EG
+tPlate = plane === "stress" ? G.t : 1
+cantEx = {
+  // the exact solution with the same end tractions in either model (per mm of length in plane strain)
+  if (geom !== "cantilever") return null;
+  const P = 1000 * bc.P * (plane === "stress" ? 1 : 1 / CANTILEVER.t);
+  return (x, y) => cantileverExact(x, y, E, nu, plane, {P});
+}
+bcState = geom === "cantilever"
+  ? {left: {x: ["disp", 0], y: ["disp", 0]}, right: {x: ["free", 0], y: ["traction", -bc.P]}}
+  : bc
+bcData = geom === "cantilever"
+  ? {dirichlet: bc.end === "exact" ? {left: {0: (x, y) => cantEx(x, y).u1, 1: (x, y) => cantEx(x, y).u2}} : {left: {0: 0, 1: 0}},
+     traction: {right: (x, y) => [0, cantEx(x, y).s12]}}
+  : bcToData(bc, geom)
+sol = solver(mesh, {E, nu, plane, t: G.t, dirichlet: bcData.dirichlet, traction: bcData.traction})
+nodal = sol.ok ? nodalStress(sol) : null
+```
+
+```{ojs}
+//| echo: false
+viewof eSel = Inputs.range([1, mesh.nel], {value: Math.min(1, mesh.nel), step: 1, label: "Highlight element e"})
+```
+
+```{ojs}
+//| echo: false
+{
+  const why = () => {
+    if (sol.reason === "an element is folded") return "an element is folded (J ≤ 0).";
+    if (sol.reason === "every displacement component is prescribed") return "every displacement is prescribed, so there is nothing to solve for.";
+    const fx = sol.fixed[0].some(v => v), fy = sol.fixed[1].some(v => v);
+    const what = !fx && !fy ? "nothing holds the body"
+      : !fx ? "nothing stops it from sliding along x₁"
+      : !fy ? "nothing stops it from sliding along x₂"
+      : "the supports cannot stop it from rotating";
+    return `K is singular: ${what}. Prescribe more displacement components, so that no rigid-body motion is left.`;
+  };
+  const nPres = sol.fixed[0].filter(v => v).length + sol.fixed[1].filter(v => v).length;
+  return html`<div style="font-size:0.95rem; margin:0.3rem 0 0.6rem 0; padding:0.5rem 0.8rem; background:#fff; border-left:4px solid #1e3a5f;">
+    <b>${mesh.nel}</b> ${pdeg === 1 ? "Q4" : "Q9"} elements, <b>${mesh.nnp}</b> nodes, <b>${2 * mesh.nnp}</b> displacement components,
+    of which <b>${nPres}</b> are prescribed &rarr; <b>${sol.neq}</b> equations.
+    ${plane === "stress" ? `Plane stress, thickness t = ${G.t} mm.` : "Plane strain: forces per mm of length along x₃."}
+    ${sol.rebuilt ? "K was assembled and factored again." : "K was reused: only the loads or prescribed values changed, or E, which scales K."}
+    (${sol.ms.toFixed(0)} ms)
+    ${sol.ok ? "" : html`<br><span style="color:#c0392b"><b>No solution:</b> ${why()}</span>`}
+  </div>`;
+}
+```
+
+::: {.panel-tabset}
+
+### Solution
+
+```{ojs}
+//| echo: false
+viewof field = Inputs.select(new Map([
+  ["von Mises stress", "vm"], ["σ₁₁", "s11"], ["σ₂₂", "s22"], ["σ₁₂", "s12"], ["σ₃₃", "s33"],
+  ["|u|, the size of the displacement", "|u|"], ["u₁", "u1"], ["u₂", "u2"]]), {value: "vm", label: "Color by"})
+viewof magMul = Inputs.range([0, 3], {value: 1, step: 0.1, label: "Exaggerate the displacements (× automatic)"})
+viewof show = Inputs.checkbox(["the mesh", "supports and loads", "average the stresses at the nodes"],
+  {value: ["the mesh", "supports and loads", "average the stresses at the nodes"], label: "Show"})
+```
+
+```{ojs}
+//| echo: false
+{
+  if (!sol.ok) return html`<div style="color:#c0392b">Nothing to draw until the problem has a unique solution.</div>`;
+  const avg = show.includes("average the stresses at the nodes");
+  const xs = mesh.X.map(p => p[0]), ys = mesh.X.map(p => p[1]);
+  const span = Math.max(d3.max(xs) - d3.min(xs), d3.max(ys) - d3.min(ys));
+  const umax = d3.max(sol.U, u => Math.hypot(u[0], u[1]));
+  const auto = umax > 0 ? 0.07 * span / umax : 0, scale = magMul * auto;
+  const k = mesh.nel > 500 ? 2 : 3, memo = new Map();
+  const val = (e, xi, eta) => {
+    const key = `${e},${xi.toFixed(4)},${eta.toFixed(4)}`;
+    if (!memo.has(key)) memo.set(key, fieldValue(sol, field, e, xi, eta, avg ? nodal : null));
+    return memo.get(key);
+  };
+  let lo = Infinity, hi = -Infinity;
+  for (let e = 1; e <= mesh.nel; e++) for (let i = 0; i < k; i++) for (let j = 0; j < k; j++) {
+    const v = val(e, -1 + 2 * (i + 0.5) / k, -1 + 2 * (j + 0.5) / k);
+    lo = Math.min(lo, v); hi = Math.max(hi, v);
+  }
+  const signed = !["vm", "|u|"].includes(field);
+  let color, legend;
+  const labels = {vm: "von Mises stress (MPa)", s11: "σ₁₁ (MPa)", s22: "σ₂₂ (MPa)", s12: "σ₁₂ (MPa)", s33: "σ₃₃ (MPa)",
+                  "|u|": "|u| (mm)", u1: "u₁ (mm)", u2: "u₂ (mm)"};
+  if (signed) {
+    const m = Math.max(Math.abs(lo), Math.abs(hi), 1e-12);
+    color = d3.scaleDiverging([-m, 0, m], t => d3.interpolateRdBu(1 - t));
+    legend = Plot.legend({color: {type: "diverging", domain: [-m, m], scheme: "RdBu", reverse: true, label: labels[field]}, width: 320});
+  } else {
+    color = d3.scaleSequential([0, Math.max(hi, 1e-12)], d3.interpolateYlOrRd);
+    legend = Plot.legend({color: {type: "linear", domain: [0, Math.max(hi, 1e-12)], scheme: "YlOrRd", label: labels[field]}, width: 320});
+  }
+  const cv = deformedCanvas(Math.min(width, 640), mesh, sol, scale);
+  drawOutline(cv, G.outline());
+  drawDeformed(cv, mesh, sol, val, color, scale, k);
+  if (show.includes("the mesh")) drawDeformedMesh(cv, mesh, sol, scale, {highlight: eSel, color: "rgba(26,26,26,0.35)", width: 0.6});
+  if (show.includes("supports and loads")) {
+    const tMax = Math.max(...Object.values(bcState).flatMap(s => ["x", "y"].map(d => s[d] && s[d][0] === "traction" ? Math.abs(s[d][1]) : 0)), 1e-9);
+    drawGlyphs(cv, G.sides(), bcState, {tMax, uMax: Math.abs(G.uRange[1]), size: 0.06 * span, maxArrow: 1.6});
+  }
+  // readouts
+  let iu = 0;
+  sol.U.forEach((u, A) => { if (Math.hypot(...u) > Math.hypot(...sol.U[iu])) iu = A; });
+  const vmN = nodal.map(([a, b, c]) => vonMises(a, b, c, plane === "strain" ? nu * (a + b) : 0));
+  let iv = 0;
+  vmN.forEach((v, A) => { if (v > vmN[iv]) iv = A; });
+  const sumR = [0, 1].map(i => d3.sum(sol.R, r => r[i])), sumF = [0, 1].map(i => d3.sum(sol.Ffull[i]));
+  // the reaction carried by each supported side; a node on two supported sides counts once, for the first
+  const claimed = new Set(), bySide = [];
+  for (const sd of G.sides()) {
+    if (!bcData.dirichlet[sd.name]) continue;
+    let r1 = 0, r2 = 0;
+    for (const A of sideNodes(mesh, sd.name)) {
+      if (claimed.has(A)) continue;
+      claimed.add(A); r1 += sol.R[A - 1][0]; r2 += sol.R[A - 1][1];
+    }
+    bySide.push(`&nbsp; ${sd.label}: (${fmt(r1, 1)}, ${fmt(r2, 1)})`);
+  }
+  const unitF = plane === "stress" ? "N" : "N/mm";
+  let extra = "";
+  if (geom === "plate" || geom === "quarter") {
+    const loc = locate(mesh, 0, PLATE.a);
+    if (loc) {
+      const s11 = evaluate(sol, ...loc).sig[0];
+      const st = bcState.right && bcState.right.x && bcState.right.x[0] === "traction" ? bcState.right.x[1] : null;
+      extra = `<b>At the top of the hole:</b> σ₁₁ = ${fmt(s11, 1)} MPa` + (st ? `, ${fmt(s11 / st, 2)} times the applied ${fmt(st, 0)} MPa. Heywood's estimate for this plate: ${fmt(heywood(2 * PLATE.a, PLATE.W, st).peak, 1)} MPa.` : ".");
+    }
+  } else if (geom === "wshape") {
+    let it = 0;
+    mesh.X.forEach(([x, y], A) => { if (Math.hypot(x + WSHAPE.bf / 2, y - WSHAPE.d) < Math.hypot(mesh.X[it][0] + WSHAPE.bf / 2, mesh.X[it][1] - WSHAPE.d)) it = A; });
+    extra = `<b>Left tip of the top flange:</b> u = (${fmt(sol.U[it][0], 4)}, ${fmt(sol.U[it][1], 4)}) mm.`;
+  } else {
+    const loc = locate(mesh, CANTILEVER.L, 0), uh = evaluate(sol, ...loc).u[1], ue = cantEx(CANTILEVER.L, 0).u2;
+    extra = `<b>Tip deflection</b> at mid-depth: u₂ = ${fmt(uh, 4)} mm; exact ${fmt(ue, 4)} mm (${(100 * uh / ue).toFixed(1)}%)` +
+            (bc.end === "clamp" ? ". The exact value assumes the warped end of the exact solution, not a clamp." : ".");
+  }
+  return html`<div style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start">
+    <div>${legend}${cv.canvas}
+      <div style="font-size:0.85rem; color:#555; max-width:640px">Displacements magnified ${scale.toFixed(0)} times. The dashed outline is the undeformed body; the orange outline is element ${eSel}.
+      Navy hatching marks a side held in both directions; navy triangles mark a side held in one direction only, free to slide in the other (filled when the prescribed value is zero).
+      Navy arrows are prescribed nonzero displacements; red arrows are applied tractions.</div></div>
+    <div style="flex:1; min-width:16rem; font-size:0.93rem; line-height:1.6">
+      <b>Largest displacement:</b> ${fmt(Math.hypot(...sol.U[iu]), 4)} mm at node ${iu + 1}, (${mesh.X[iu].map(v => v.toFixed(1)).join(", ")}) mm<br>
+      <b>Largest von Mises stress</b> (nodal average): ${fmt(vmN[iv], 1)} MPa at node ${iv + 1}, (${mesh.X[iv].map(v => v.toFixed(1)).join(", ")}) mm<br><br>
+      ${html([extra])}<br><br>
+      <b>Equilibrium</b>, summed over the whole body:<br>
+      &nbsp; applied loads: (${fmt(sumF[0], 1)}, ${fmt(sumF[1], 1)}) ${unitF}<br>
+      &nbsp; support reactions: (${fmt(sumR[0], 1)}, ${fmt(sumR[1], 1)}) ${unitF}<br>
+      <span style="color:#555">The applied loads include any traction on a prescribed component, which the support absorbs directly.
+      The two rows cancel on every mesh: the basis functions add up to 1, so a rigid translation is a finite element displacement field, and it strains nothing.</span><br><br>
+      <b>Reactions by supported side</b> (${unitF}):<br>
+      ${html([bySide.join("<br>")])}<br>
+      <span style="color:#555">A node on two supported sides is counted once, for the side listed first.
+      A support whose reaction is near zero does almost nothing, because the body would hardly have moved there anyway.
+      Supports added to the clamped bottom flange of the W-shape are an example.</span>
+    </div></div>`;
+}
+```
+
+### Element arrays
+
+```{ojs}
+//| echo: false
+viewof gpSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Gauss point l"})
+```
+
+```{ojs}
+//| echo: false
+{
+  const e = Math.min(eSel, mesh.nel), ien = mesh.IEN[e - 1], lm = sol.LM[e - 1], nen = mesh.nen;
+  const ke = sol.ke(e), gp = sol.gp(e)[Math.min(gpSel, (pdeg + 1) ** 2) - 1];
+  const Dg = sol.D.map(r => r.map(v => v / 1000));
+  const cell = (v, red) => `<td style="padding:1px 6px; text-align:center; ${red ? "color:#c0392b; font-weight:700" : ""}">${v}</td>`;
+  const rowA = ien.map((A, a) => cell(a + 1)).join(""), rowIEN = ien.map(A => cell(A)).join("");
+  const rowP = lm.map((_, p) => cell(p + 1)).join(""), rowIA = lm.map((_, p) => cell(`${(p % 2) + 1},${(p >> 1) + 1}`)).join("");
+  const rowLM = lm.map(P => cell(P === 0 ? "0" : P, P === 0)).join("");
+  const table = `<table style="font-size:0.85rem; white-space:nowrap; margin:0.3rem 0 0.6rem 0">
+    <tr><th style="text-align:left; padding-right:8px; font-weight:normal">local node a</th>${rowA}</tr>
+    <tr><th style="text-align:left; padding-right:8px; font-weight:normal">IEN(a, ${e})</th>${rowIEN}</tr></table>
+    <div style="overflow-x:auto"><table style="font-size:0.85rem; white-space:nowrap; margin:0 0 0.6rem 0">
+    <tr><th style="text-align:left; padding-right:8px; font-weight:normal">p = 2(a − 1) + i</th>${rowP}</tr>
+    <tr><th style="text-align:left; padding-right:8px; font-weight:normal; color:#777">(i, a)</th>${rowIA}</tr>
+    <tr><th style="text-align:left; padding-right:8px; font-weight:normal">LM(p, ${e})</th>${rowLM}</tr></table></div>`;
+  // eigenvalues of k^e by Jacobi rotations
+  const n = ke.length, A = ke.map(r => r.slice());
+  for (let sweep = 0; sweep < 60; sweep++) {
+    let off = 0;
+    for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++) off += A[p][q] ** 2;
+    if (off < 1e-22 * d3.sum(A.map((r, i) => r[i] ** 2))) break;
+    for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++) {
+      if (Math.abs(A[p][q]) < 1e-300) continue;
+      const th = 0.5 * Math.atan2(2 * A[p][q], A[q][q] - A[p][p]), c = Math.cos(th), s = Math.sin(th);
+      for (let k = 0; k < n; k++) { const akp = A[k][p], akq = A[k][q]; A[k][p] = c * akp - s * akq; A[k][q] = s * akp + c * akq; }
+      for (let k = 0; k < n; k++) { const apk = A[p][k], aqk = A[q][k]; A[p][k] = c * apk - s * aqk; A[q][k] = s * apk + c * aqk; }
+    }
+  }
+  const eig = A.map((r, i) => r[i]).sort((a, b) => a - b), emax = eig[eig.length - 1];
+  const nZero = eig.filter(v => Math.abs(v) < 1e-9 * emax).length;
+  const sc = x => html`<div style="overflow-x:auto; max-width:100%; font-size:${pdeg === 2 ? 0.8 : 1}em">${x}</div>`;
+  const kScale = 10 ** Math.floor(Math.log10(emax));
+  return html`<div style="font-size:0.93rem; line-height:1.55">
+    <b>Element ${e}</b>: ${nen} nodes, ${2 * nen} local equations. A red 0 in LM is a prescribed component.
+    ${html([table])}
+    ${sc(tex.block`\mathbf{D} = ${texMatrix(Dg, {sig: 4})}\ \text{GPa}\qquad (\text{plane ${plane}},\ E = ${EG}\ \text{GPa},\ \nu = ${nu})`)}
+    At Gauss point ${gpSel}, (ξ, η) = (${fmt(gp.xi, 4)}, ${fmt(gp.eta, 4)}), x = (${gp.x.map(v => v.toFixed(2)).join(", ")}) mm, j = ${fmt(gp.J, 3)} mm², W = ${fmt(gp.w, 4)}:
+    ${sc(tex.block`\mathbf{B} = ${texMatrix(gp.B, {sig: 3, maxn: 18, show: 6})}\ \text{mm}^{-1}`)}
+    ${sc(tex.block`\mathbf{k}^e = ${texMatrix(ke, {sig: 3, maxn: 10, show: 4, scale: kScale})} \times 10^{${Math.round(Math.log10(kScale))}}\ \text{N/mm}`)}
+    <b>Eigenvalues of k<sup>e</sup></b> (N/mm): ${eig.map(v => Math.abs(v) < 1e-9 * emax ? "<b>0</b>" : v.toExponential(2)).join(", ")}.<br>
+    <span style="color:#555">${nZero === 3 ? "Three are zero: the two translations and the rotation, which strain nothing." : `${nZero} are zero.`}
+    The rest are positive: k<sup>e</sup> is positive semidefinite, and the supports of the body make the assembled K positive definite.</span>
+  </div>`;
+}
+```
+
+### Matrices
+
+```{ojs}
+//| echo: false
+{
+  const nShow = Math.min(mesh.nnp, 40), lm = sol.LM[Math.min(eSel, mesh.nel) - 1], ien = mesh.IEN[Math.min(eSel, mesh.nel) - 1];
+  const first = Math.max(1, Math.min(d3.min(ien) - 4, mesh.nnp - nShow + 1));
+  const cell = (v, on, red) => `<td style="padding:1px 6px; text-align:center; ${on ? "background:#fde9d2;" : ""} ${red ? "color:#c0392b; font-weight:700" : ""}">${v}</td>`;
+  const nodes = d3.range(first, first + nShow);
+  const idTable = `<div style="overflow-x:auto"><table style="font-size:0.84rem; white-space:nowrap">
+    <tr><th style="text-align:left; padding-right:8px">A</th>${first > 1 ? "<td>…</td>" : ""}${nodes.map(A => cell(A, ien.includes(A))).join("")}${first + nShow - 1 < mesh.nnp ? "<td>…</td>" : ""}</tr>
+    <tr><th style="text-align:left; padding-right:8px; font-weight:normal">ID(1, A)</th>${first > 1 ? "<td></td>" : ""}${nodes.map(A => cell(sol.ID[0][A - 1], ien.includes(A), sol.ID[0][A - 1] === 0)).join("")}</tr>
+    <tr><th style="text-align:left; padding-right:8px; font-weight:normal">ID(2, A)</th>${first > 1 ? "<td></td>" : ""}${nodes.map(A => cell(sol.ID[1][A - 1], ien.includes(A), sol.ID[1][A - 1] === 0)).join("")}</tr>
+  </table></div>`;
+  let spy;
+  if (sol.neq <= 3000 && sol.neq > 0) {
+    const ent = kEntries(sol), hi = [];
+    for (const P of lm) if (P) for (const Q of lm) if (Q) hi.push([P - 1, Q - 1]);
+    spy = drawSpy(Math.min(width, 420), sol.neq, ent, {highlight: hi, title: `K: ${sol.neq} × ${sol.neq}, ${ent.length} nonzeros (${(100 * ent.length / sol.neq ** 2).toFixed(2)}%)`});
+  } else spy = html`<div style="color:#555">K has ${sol.neq} equations, too many to draw here: choose a coarser mesh or Q4 elements.</div>`;
+  const nnzRow = sol.neq ? (kEntries(sol).length / sol.neq).toFixed(1) : 0;
+  return html`<div style="font-size:0.93rem; line-height:1.55">
+    <b>The ID array</b>${mesh.nnp > nShow ? ` (nodes ${first} to ${first + nShow - 1} of ${mesh.nnp})` : ""}: a red 0 is a prescribed component. The nodes of element ${eSel} are shaded.
+    ${html([idTable])}
+    <div style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start; margin-top:0.6rem">
+      <div>${spy}</div>
+      <div style="flex:1; min-width:15rem">
+        Each dark square is a nonzero entry of K; the red ones receive a contribution from element ${eSel}.
+        The nonzeros come in 2 × 2 blocks, one for each pair of nodes that share an element, and they hug the diagonal because the nodes are numbered by reverse Cuthill–McKee.<br><br>
+        On average a row has ${nnzRow} nonzeros. The factorization stores ${sol.profile ?? "—"} numbers, the profile of K below its diagonal: far fewer than the ${sol.neq ** 2} of a full matrix.
+      </div></div>
+  </div>`;
+}
+```
+
+### Check
+
+```{ojs}
+//| echo: false
+{
+  if (!sol.ok) return html`<div style="color:#c0392b">Nothing to check until the problem has a unique solution.</div>`;
+  const avg = show.includes("average the stresses at the nodes");
+  const at = (x, y, kind) => { const loc = locate(mesh, x, y); return loc ? fieldValue(sol, kind, ...loc, avg ? nodal : null) : null; };
+  if (geom === "cantilever") {
+    const L = CANTILEVER.L, Dd = CANTILEVER.D, dx = 0.01;
+    const xs = d3.range(0, 81).map(k => k * L / 80), ys = d3.range(0, 41).map(k => -Dd / 2 + k * Dd / 40);
+    const dfl = xs.map(x => ({x, fe: at(x, 0, "u2"), ex: cantEx(x, 0).u2}));
+    // x1 = L/2 is an edge between elements: without averaging, show the stress on both sides of it
+    const sides = avg ? [["fe", 0]] : [["left", -dx], ["right", dx]];
+    const prof = kind => ys.map(y => Object.assign({y, ex: cantEx(L / 2, y)[kind]},
+      ...sides.map(([k, o]) => ({[k]: at(L / 2 + o, y, kind)}))));
+    const s11 = prof("s11"), s12 = prof("s12");
+    const fe = data => sides.map(([k], j) => Plot.line(data, {x: k, y: "y", stroke: j ? "#e67e22" : "#c0392b", strokeWidth: 2}));
+    const w = Math.min(width, 330);
+    const p1 = Plot.plot({width: w, height: 220, x: {label: "x₁ (mm)"}, y: {label: "u₂ along x₂ = 0 (mm)"}, marks: [
+      Plot.line(dfl, {x: "x", y: "ex", stroke: "#1a1a1a", strokeDasharray: "5,4"}), Plot.line(dfl, {x: "x", y: "fe", stroke: "#c0392b", strokeWidth: 2})]});
+    const p2 = Plot.plot({width: w, height: 220, x: {label: "σ₁₁ at x₁ = L/2 (MPa)"}, y: {label: "x₂ (mm)"}, marks: [
+      Plot.line(s11, {x: "ex", y: "y", stroke: "#1a1a1a", strokeDasharray: "5,4"}), ...fe(s11)]});
+    const p3 = Plot.plot({width: w, height: 220, x: {label: "σ₁₂ at x₁ = L/2 (MPa)"}, y: {label: "x₂ (mm)"}, marks: [
+      Plot.line(s12, {x: "ex", y: "y", stroke: "#1a1a1a", strokeDasharray: "5,4"}), ...fe(s12)]});
+    return html`<div style="font-size:0.93rem; line-height:1.55">The finite element solution (red) against the exact solution (dashed).
+      ${bc.end === "clamp" ? "With a clamped end the problem differs from the exact one near the support, so the two need not agree there." : "With the exact end displacements prescribed, the difference is the discretization error alone."}
+      ${avg ? "The stresses are averaged at the nodes. Turn the averaging off in the Solution tab to see each element's own stresses."
+            : html`The line x₁ = L/2 is an edge between two elements, and the stresses jump across it: red is the element on the left, orange the element on the right.
+               With Q4 elements, σ₁₂ on the two sides differs widely, and one side may even have the wrong sign.
+               That is the spurious shear strain of the bending modes, the cause of shear locking. With Q9 elements the two sides nearly agree.`}
+      <div style="display:flex; flex-wrap:wrap; gap:0.8rem">${p1}${p2}${p3}</div></div>`;
+  }
+  if (geom === "plate" || geom === "quarter") {
+    const a = PLATE.a, Wh = PLATE.W / 2;
+    const st = bcState.right && bcState.right.x && bcState.right.x[0] === "traction" ? bcState.right.x[1] : 0;
+    const ys = d3.range(0, 61).map(k => a + k * (Wh - a) / 60);
+    const kir = y => { const q = (a / y) ** 2; return st * (1 + 0.5 * q + 1.5 * q * q); };
+    const data = ys.map(y => ({y, fe: at(0, y, "s11"), ex: kir(y)}));
+    const p = Plot.plot({width: Math.min(width, 520), height: 260, x: {label: "x₂, along the line x₁ = 0 above the hole (mm)"}, y: {label: "σ₁₁ (MPa)"}, marks: [
+      Plot.line(data, {x: "y", y: "ex", stroke: "#1a1a1a", strokeDasharray: "5,4"}), Plot.line(data, {x: "y", y: "fe", stroke: "#c0392b", strokeWidth: 2}),
+      Plot.ruleY([st], {stroke: "#999"})]});
+    return html`<div style="font-size:0.93rem; line-height:1.55">σ₁₁ above the hole: the finite element solution (red) and Kirsch's solution for a hole in an <i>infinite</i> plate under the same remote stress (dashed).
+      Both peak at the hole and fall off within a few radii.
+      The finite plate's peak is higher, because the material beside the hole carries the whole load across a narrower section, and its stress at the free edge is lower.
+      ${st ? html`Heywood's estimate of the peak for this width: ${fmt(heywood(2 * a, PLATE.W, st).peak, 1)} MPa.` : "Apply a traction along x₁ on the right end to compare with Kirsch's solution."}
+      ${p}</div>`;
+  }
+  // the W-shape: von Mises along the underside of the top flange, from the web to the tip
+  const {d, bf, tf, tw} = WSHAPE, yv = d - tf;
+  const xs = d3.range(0, 121).map(k => tw / 2 + 0.01 + k * (bf / 2 - tw / 2 - 0.02) / 120);
+  const data = xs.map(x => ({x, vm: at(x, yv, "vm")}));
+  const p = Plot.plot({width: Math.min(width, 520), height: 260, x: {label: "x₁ along the underside of the top flange (mm)"}, y: {label: "von Mises stress (MPa)", zero: true}, marks: [
+    Plot.line(data, {x: "x", y: "vm", stroke: "#c0392b", strokeWidth: 2}), Plot.ruleX([tw / 2], {stroke: "#999", strokeDasharray: "4,3"})]});
+  return html`<div style="font-size:0.93rem; line-height:1.55">The von Mises stress along the underside of the top flange, from the face of the web (dashed line) to the flange tip${avg ? ", averaged at the nodes" : ", element by element"}.
+    Refine the mesh and watch the value at the corner: it keeps rising, because the exact stress there is infinite, while the stress a little way along the flange settles down.
+    ${p}</div>`;
+}
+```
+
+:::
 
 ::: {.callout-note collapse="true"}
 ## Hughes' notation and the code

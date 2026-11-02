@@ -93,7 +93,8 @@ book:
     - chapters/Poisson1D_Rod_FEM.qmd
     - chapters/Poisson2D_Heat.qmd
     - chapters/Poisson2D_Heat_FEM.qmd
-    - chapters/Elasticity2D_Explorer.qmd
+    - chapters/Elasticity2D.qmd
+    - chapters/Elasticity2D_FEM.qmd
     - chapters/Beam_Frame_Formulation.qmd
 
 format:
