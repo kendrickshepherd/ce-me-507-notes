@@ -31,12 +31,15 @@ book:
       - chapters/22_Class.qmd
       - chapters/23_Class.qmd
       - chapters/24_Class.qmd
-      - section: "Class 24 applications"
+      - section: "Classes 24 and 25 applications"
         contents:
           - chapters/24_Seepage.qmd
           - chapters/24_Torsion.qmd
           - chapters/24_Membrane.qmd
           - chapters/24_Diffusion.qmd
+      - chapters/25_Class.qmd
+      - chapters/26_Class.qmd
+      - chapters/27_Class.qmd
       - section: "The 1D Poisson Problem"
         contents:
           - chapters/Poisson1D_Heat.qmd
@@ -78,12 +81,15 @@ book:
     - chapters/22_Class.qmd
     - chapters/23_Class.qmd
     - chapters/24_Class.qmd
-    - part: "Class 24 applications"
+    - part: "Classes 24 and 25 applications"
       chapters:
         - chapters/24_Seepage.qmd
         - chapters/24_Torsion.qmd
         - chapters/24_Membrane.qmd
         - chapters/24_Diffusion.qmd
+    - chapters/25_Class.qmd
+    - chapters/26_Class.qmd
+    - chapters/27_Class.qmd
 
   appendices:
     - chapters/3_Support_FunctionSpaces.qmd

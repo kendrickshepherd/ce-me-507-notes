@@ -51,7 +51,7 @@ dU_wide = 100 * (wide["U"] / M["up"]["U"] - 1)
 nn = [md["mesh"].nnp for md in conv]
 ```
 
-This page is one of the application pages for [Class 24](24_Class.qmd).
+This page is one of the application pages for [Classes 24 and 25](24_Class.qmd).
 It applies the scalar boundary value problem of this course to steady groundwater flow beneath a concrete dam, and computes the quantities that a geotechnical engineer would check: how much water passes beneath the dam, how hard the water pushes up on the dam, and whether the water emerging downstream could carry soil with it.
 
 ## The physical problem

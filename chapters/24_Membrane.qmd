@@ -49,7 +49,7 @@ fig_edge_path = save(Mb.fig_edge(plain, boss), "C24_Memb_Fig4_Edge.png")
 fig_sweep_path = save(Mb.fig_sweep(fracs, w_sweep), "C24_Memb_Fig5_Sweep.png")
 ```
 
-This page is one of the application pages for [Class 24](24_Class.qmd).
+This page is one of the application pages for [Classes 24 and 25](24_Class.qmd).
 It applies the scalar boundary value problem of this course to a **membrane**: a sheet so thin that it carries load only by being stretched, without any resistance to bending.
 Drumheads, soap films, fabric roofs, and the thin films in many pressure sensors and microphones behave in this way.
 The example is the diaphragm of a pressure sensor, and the page ends by explaining how the membrane problem relates to the torsion problem of the [torsion page](24_Torsion.qmd).

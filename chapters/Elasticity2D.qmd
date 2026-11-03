@@ -796,6 +796,7 @@ As for the [rod](Poisson1D_Rod_FEM.qmd), the weak form is the **principle of vir
 ::: {.step .notes}
 - **The virtual displacement** $\underline{w}$ is an imagined, small displacement of the body that respects the supports: $w_i = 0$ wherever $u_i$ is prescribed.
   It need not be the real displacement, or related to it in any way.
+  Some texts write it as $\hat{\underline{u}}$, $\delta\underline{u}$, or $\bar{\underline{u}}$; these pages follow Hughes and write it as $\underline{w}$, the symbol used for the test functions of the Poisson Equation.
 - **The internal virtual work** is the work the real stresses $\sigma_{ij} = c_{ijkl}\,u_{(k,l)}$ do through the virtual strains $w_{(i,j)}$, summed over the body.
 - **The external virtual work** is the work the real body forces and tractions do as their points move through $\underline{w}$.
 - **The support reactions do no virtual work**, because $\underline{w}$ is zero in each direction in which a support acts.

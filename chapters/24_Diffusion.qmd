@@ -43,7 +43,7 @@ fig_sol_path = save(D.fig_solution(main), "C24_Diff_Fig3_Solution.png")
 fig_width_path = save(D.fig_width(widths, eff), "C24_Diff_Fig4_Width.png")
 ```
 
-This page is one of the application pages for [Class 24](24_Class.qmd).
+This page is one of the application pages for [Classes 24 and 25](24_Class.qmd).
 It applies the scalar boundary value problem of this course to the diffusion of a contaminant through the clay liner beneath a landfill, at a place where the geomembrane above the clay is torn, and computes the quantity an environmental engineer would check: how much contaminant reaches the groundwater each year.
 
 ## The physical problem

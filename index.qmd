@@ -43,9 +43,12 @@ computed on the page so that the text and the drawings always agree.
 | [Class 21](chapters/21_Class.qmd) | CAD, meshing and discretization choice: element types, where meshes come from, and isogeometric analysis |
 | [Class 22](chapters/22_Class.qmd) | Robin boundary conditions: where they come from, their weak and Galerkin forms, and the face integrals they add to the stiffness matrix and force vector, with an interactive wall example |
 | [Class 23](chapters/23_Class.qmd) | The minimization form and its equivalence to the weak form, uniqueness of the solution, and why the stiffness matrix is symmetric and positive definite, with an interactive energy landscape |
-| [Class 24](chapters/24_Class.qmd) | Applications and interpretation: the same equation in heat conduction, groundwater seepage, electrostatics, torsion, membranes, and diffusion; quantities of interest, their accuracy, and checking a result without an exact solution |
+| [Classes 24 and 25](chapters/24_Class.qmd) | Applications and interpretation: the same equation in heat conduction, groundwater seepage, electrostatics, torsion, membranes, and diffusion; quantities of interest, their accuracy, and checking a result without an exact solution |
+| [Class 25](chapters/25_Class.qmd) | A continuation of Class 24, whose page holds the notes for both class periods |
+| [Class 26](chapters/26_Class.qmd) | Linear elasticity: displacement, strain, stress, and the elasticity tensor and its symmetries; boundary conditions in each direction; the strong form, and the weak form as the principle of virtual work |
+| [Class 27](chapters/27_Class.qmd) | Voigt notation: the strain and virtual strain vectors, the elasticity matrix and its isotropic entries, the weak form as a product of vectors and matrices, and the plane strain and plane stress assumptions |
 
-### Class 24 applications
+### Classes 24 and 25 applications
 
 | | |
 |---|---|

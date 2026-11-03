@@ -1,5 +1,5 @@
 ---
-title: "Class 24: Applications and Interpretation"
+title: "Classes 24 and 25: Applications and Interpretation"
 subtitle: "One equation in many fields: setting up a problem, choosing what to compute, and checking the result"
 execute:
   echo: false
@@ -34,7 +34,7 @@ r16 = {p: [r for r in rows if r[0] == p and r[1] == 16][0] for p in (1, 2)}
 
 Every problem in this course so far has used the same boundary value problem, the Poisson Equation, with different interpretations.
 Heat conduction has been the running example, but the same equation describes many other physical problems, in which the unknown, the coefficient, and the boundary conditions have different names and meanings.
-This class describes how to recognize such a problem, set it up for a solver, decide what to compute from the solution, and check that the result can be trusted.
+These two classes describe how to recognize such a problem, set it up for a solver, decide what to compute from the solution, and check that the result can be trusted.
 Five application pages accompany it, listed in @tbl-c24-pages, and each follows the same structure: the physical problem, the governing equation, the boundary conditions, the solution, the quantities of interest, checks, and the limits of the model.
 
 | page | the problem | quantities of interest | finite element points it illustrates |

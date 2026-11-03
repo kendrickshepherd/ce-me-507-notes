@@ -1,0 +1,675 @@
+---
+title: "Class 26: Linear Elasticity and the Principle of Virtual Work"
+subtitle: "The strong form of linear elasticity, and its weak form"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+format:
+  html:
+    page-layout: full
+    toc: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+import sys
+sys.path.append('python')
+import numpy as np
+import matplotlib.pyplot as plt
+from notes_style import use_chapter, save, INK, DOMCLR, BDRYCLR, FLUXCLR
+IMGDIR = use_chapter("Class26")
+
+# steel, for the isotropic example
+E_st, nu_st = 200.0, 0.3                                     # GPa
+mu_st = E_st / (2 * (1 + nu_st))
+lam_st = nu_st * E_st / ((1 + nu_st) * (1 - 2 * nu_st))
+```
+
+To this point, the unknown in every problem has been a scalar, such as a temperature.
+In linear elasticity, the unknown is the displacement $\underline{u}$ of each point of a solid body, which is a vector with one component for each spatial direction.
+In this class, we state the boundary value problem of linear elasticity and convert it into a weak form, following the same steps that were used for the Poisson Equation in [Class 4](4_Class.qmd).
+In elasticity, the weak form has a physical meaning: it is the principle of virtual work.
+
+The appendix [Linear Elasticity I](Elasticity2D.qmd) describes stress, strain, and the elasticity tensor in more detail, with interactive figures, and [Linear Elasticity II](Elasticity2D_FEM.qmd) carries the problem through the finite element method.
+
+## Displacement, strain, and stress
+
+Four quantities appear in the problem.
+
+- $\underline{u}$ is the **displacement**, the distance that each point of the body moves, with components in the $x$, $y$, and (in three dimensions) $z$ directions.
+- $\underline{\underline{\varepsilon}}$ is the **strain tensor**, which describes how the material is stretched and sheared.
+- $\underline{\underline{\sigma}}$ is the **stress tensor**, which describes the forces per unit area that act within the body.
+  Its component $\sigma_{ij}$ is the $i$-component of the force per unit area on a surface whose outward normal points in the $j$ direction.
+- $\underline{\underline{\underline{\underline{C}}}}$ is the **elasticity tensor**, a property of the material that relates the stress to the strain.
+
+The strain is computed from the gradient of the displacement, and the stress is computed from the strain:
+
+$$
+\underline{\underline{\varepsilon}} = \frac{1}{2}\left(\nabla\underline{u} + \nabla\underline{u}^T\right),
+\qquad
+\underline{\underline{\sigma}} = \underline{\underline{\underline{\underline{C}}}}\;\underline{\underline{\varepsilon}} .
+$$
+
+The second relation is called the **generalized Hooke's law**.
+It is the elasticity counterpart of Fourier's law, $\underline{q} = -\underline{\underline{\kappa}}\nabla u$, which related the heat flux to the temperature gradient.
+
+These relations are clearer in index notation:
+
+$$
+\varepsilon_{ij} = u_{(i,j)} := \frac{u_{i,j} + u_{j,i}}{2},
+\qquad
+\sigma_{ij} = c_{ijkl}\,\varepsilon_{kl} .
+$$
+
+The parentheses in $u_{(i,j)}$ denote the **symmetric part** of $u_{i,j}$.
+The strain uses only the symmetric part of the displacement gradient, because for small deformation strain the remaining part describes a rotation of the material, which does not stretch or shear it.
+In $\sigma_{ij} = c_{ijkl}\,\varepsilon_{kl}$, the indices $k$ and $l$ are repeated, so the expression is summed over both of them.
+Each stress component therefore depends on every strain component.
+The elasticity tensor has four indices, so it has $3^4 = 81$ components in three dimensions, where the conductivity $\kappa_{ij}$ had only $3^2 = 9$.
+
+Finally, note that for the one-dimensional case, the equations of linear elasticity are the same as the Poisson equation.
+
+## Properties of the elastic coefficients
+
+The elastic coefficients have two properties.
+
+**(1) Symmetry.**
+
+$$
+\begin{aligned}
+c_{ijkl} &= c_{klij} && \text{(major symmetry)} \\
+c_{ijkl} &= c_{jikl}, \quad c_{ijkl} = c_{ijlk} && \text{(minor symmetries)}
+\end{aligned}
+$$
+
+**(2) Positive definiteness.** For every symmetric $\psi_{ij}$,
+
+$$
+c_{ijkl}\,\psi_{ij}\,\psi_{kl} \ge 0,
+\qquad\text{and}\qquad
+c_{ijkl}\,\psi_{ij}\,\psi_{kl} = 0 \;\Longrightarrow\; \psi_{ij} = 0 .
+$$
+
+These properties ensure that the stress tensor $\underline{\underline{\sigma}}$ is symmetric, and that the stiffness matrix $\underline{\underline{K}}$ is symmetric and positive definite.
+
+- The first minor symmetry, $c_{ijkl} = c_{jikl}$, gives $\sigma_{ij} = \sigma_{ji}$.
+  The second, $c_{ijkl} = c_{ijlk}$, is consistent with the strain being symmetric.
+  Together, the minor symmetries reduce the 81 components to 36.
+- The major symmetry plays the role that $\kappa_{ij} = \kappa_{ji}$ played in [Class 23](23_Class.qmd): it makes the bilinear form, and therefore the stiffness matrix, symmetric.
+  It reduces the number of independent coefficients to 21.
+- Positive definiteness plays the role of a positive definite conductivity.
+  The quantity $\tfrac{1}{2}\,c_{ijkl}\,\varepsilon_{ij}\,\varepsilon_{kl}$ is the strain energy stored in a unit volume of the material, and positive definiteness states that any deformation of the material stores energy.
+
+## Boundary conditions in each direction
+
+```{python fig_bcs}
+#| echo: false
+#| output: false
+th = np.linspace(0, 2 * np.pi, 400)
+r = 1 + 0.18 * np.cos(2 * th - 0.6) + 0.08 * np.sin(3 * th)
+X, Y = 1.35 * r * np.cos(th), r * np.sin(th)
+
+def arc(t0, t1):
+    k = (th >= t0) & (th <= t1)
+    return X[k], Y[k]
+
+def tick(t):
+    k = int(np.argmin(abs(th - t)))
+    nx, ny = Y[(k + 1) % len(th)] - Y[k - 1], -(X[(k + 1) % len(th)] - X[k - 1])
+    n = np.hypot(nx, ny)
+    return [X[k] - 0.09 * nx / n, X[k] + 0.09 * nx / n], [Y[k] - 0.09 * ny / n, Y[k] + 0.09 * ny / n]
+
+fig, axes = plt.subplots(1, 2, figsize=(10.0, 4.0))
+for ax, (t0, t1), i, (gx, gy), (hx, hy) in (
+        (axes[0], (0.25 * np.pi, 0.95 * np.pi), 1, (-0.55, 1.28), (1.25, -1.05)),
+        (axes[1], (1.15 * np.pi, 1.75 * np.pi), 2, (-0.2, -1.38), (1.45, 0.95))):
+    ax.fill(X, Y, color=DOMCLR, zorder=0)
+    ax.plot(X, Y, color=FLUXCLR, lw=3, zorder=1)
+    ax.plot(*arc(t0, t1), color=BDRYCLR, lw=4, solid_capstyle="butt", zorder=2)
+    for t in (t0, t1):
+        ax.plot(*tick(t), color=INK, lw=1.5, zorder=3)
+    ax.text(0, 0, r"$\Omega$", fontsize=18, ha="center", va="center")
+    ax.text(gx, gy, r"$\Gamma_{g_%d}$" % i, fontsize=15, color=BDRYCLR, ha="center", va="center")
+    ax.text(hx, hy, r"$\Gamma_{h_%d}$" % i, fontsize=15, color=FLUXCLR, ha="center", va="center")
+    ax.set_title("direction %d: $u_%d$ is prescribed on $\\Gamma_{g_%d}$,\nand $h_%d$ is prescribed on $\\Gamma_{h_%d}$" % (i, i, i, i, i),
+                 fontsize=11)
+    ax.set_xlim(-1.9, 1.9)
+    ax.set_ylim(-1.6, 1.6)
+    ax.set_aspect("equal")
+    ax.axis("off")
+fig.tight_layout(w_pad=2.0)
+fig_bcs_path = save(fig, "C26_Fig1_BoundaryParts.png")
+```
+
+In the Poisson Equation, the boundary was divided once, into $\Gamma_g$ and $\Gamma_h$.
+In elasticity, each component of the displacement has its own boundary condition, so the boundary is divided once for each direction.
+For each $i = 1, \dots, n_{sd}$ (number of spatial dimensions),
+
+$$
+\Gamma = \overline{\Gamma_{g_i}\cup\Gamma_{h_i}},
+\qquad
+\Gamma_{g_i}\cap\Gamma_{h_i} = \emptyset ,
+$$
+
+where the displacement component $u_i$ is prescribed on $\Gamma_{g_i}$, and the traction component $h_i$, a force per unit area, is prescribed on $\Gamma_{h_i}$.
+As in @fig-c26-bcs, the division can be different for each direction.
+
+![The same body with its boundary divided for each direction. Each division covers the whole boundary, and the two divisions need not agree.](`{python} fig_bcs_path`){#fig-c26-bcs width=85%}
+
+A roller support is a common example.
+A roller on a horizontal surface prevents a point from moving vertically, but allows it to slide horizontally without resistance.
+At such a point, $u_2$ is prescribed, so the point belongs to $\Gamma_{g_2}$, and the horizontal traction is zero, $h_1 = 0$, so the same point belongs to $\Gamma_{h_1}$.
+A free surface carries no load in either direction, so it belongs to both $\Gamma_{h_1}$ and $\Gamma_{h_2}$, with $h_1 = h_2 = 0$.
+
+## The strong form
+
+The boundary value problem of linear elasticity is then
+
+$$
+(\mathrm{S})\qquad
+\begin{aligned}
+&\text{Given } f_i:\Omega\to\mathbb{R},\; g_i:\Gamma_{g_i}\to\mathbb{R},\; h_i:\Gamma_{h_i}\to\mathbb{R}, \text{ and } c_{ijkl}:\Omega\to\mathbb{R}, \\
+&\text{find } u_i:\bar{\Omega}\to\mathbb{R} \text{ such that} \\[2pt]
+&\qquad \sigma_{ij,j} + f_i = 0 \quad \text{in } \Omega \\
+&\qquad u_i = g_i \quad \text{on } \Gamma_{g_i} \\
+&\qquad \sigma_{ij}\,n_j = h_i \quad \text{on } \Gamma_{h_i} \\[2pt]
+&\text{where } \sigma_{ij} = c_{ijkl}\,\varepsilon_{kl} \text{ and } \varepsilon_{kl} = u_{(k,l)} = \tfrac{1}{2}\left(u_{k,l} + u_{l,k}\right) .
+\end{aligned}
+$$
+
+Here $c_{ijkl}$ is symmetric and positive definite, $f_i$ is the body force per unit volume (for example, the weight of the material), $g_i$ is a prescribed displacement, $h_i$ is a prescribed traction, and $n_j$ is the outward unit normal.
+In vector notation, the differential equation is $\nabla\cdot\underline{\underline{\sigma}} + \underline{f} = \underline{0}$.
+It states that the forces on every small piece of the body are in balance.
+Since $i$ is a free index, (S) contains one equation for each direction, so a two-dimensional problem has two coupled differential equations, and a three-dimensional problem has three.
+
+### The balance of forces on a small box
+
+The differential equation $\sigma_{ij,j} + f_i = 0$ is a balance of the forces on a small box of material, divided by the volume of the box.
+The widget below shows this balance for two stress fields that satisfy it exactly.
+The first is the exact solution for a steel cantilever, described in the appendix [Linear Elasticity I](Elasticity2D.qmd#a-problem-with-an-exact-solution-the-end-loaded-cantilever).
+The cantilever is $L$ = 400 mm long, $D$ = 100 mm deep, and $t$ = 10 mm thick, and it has a downward load $P$ = 8 kN at its free end.
+With $x_1$ measured from the support and $x_2$ from the mid-depth, its stresses are $\sigma_{11} = P(L - x_1)\,x_2/I$, $\sigma_{12} = -P\left(D^2/4 - x_2^2\right)/(2I)$, and $\sigma_{22} = 0$, where $I = t D^3/12$, and it has no body force, $f_1 = f_2 = 0$.
+The second is a concrete column, 1 m wide, 1 m deep, and 4 m tall, under its own weight, so that the body force is $f_2 = -\rho g$, with $\rho g \approx$ 23.5 kN/m³.
+Drag the box to any point of the body, and change its size with the slider.
+The enlarged view shows the average traction on each face of the box, and the table lists the force on each face, which is the average traction multiplied by the area of the face.
+
+::: {html-table-processing="none"}
+```{=html}
+<style>
+.dv{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;
+    max-width:900px;margin:0 auto;color:var(--ink)}
+.dv .bar{display:flex;flex-wrap:wrap;gap:9px 18px;align-items:center;padding:11px 14px;
+  background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.dv .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey)}
+.dv .seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--faint);border-radius:6px;overflow:hidden;background:#fff}
+.dv .seg button{border:0;background:#fff;padding:5px 11px;font:inherit;font-size:13px;cursor:pointer;
+  color:var(--grey);border-right:1px solid var(--faint)}
+.dv .seg button:last-child{border-right:0}
+.dv .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.dv input[type=range]{width:150px;vertical-align:middle}
+.dv .val{font:600 13px ui-monospace,Menlo,monospace;color:var(--ink);display:inline-block;min-width:4.5em}
+.dv .row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;margin-bottom:10px}
+.dv svg{display:block;width:100%;height:auto;border:1px solid var(--faint);border-radius:8px;background:#fff}
+.dv .body{flex:1 1 400px;max-width:520px}
+.dv .body svg{touch-action:none;cursor:grab}
+.dv .zoom{flex:1 1 260px;max-width:330px}
+.dv .tabwrap{flex:1 1 100%;overflow-x:auto;font-size:13px;line-height:1.5}
+.dv table.eqs td,.dv table.eqs th{font-size:12px;padding:2px 6px}
+.dv table.eqs td:nth-child(2){text-align:left;font-family:system-ui,sans-serif;white-space:normal;min-width:150px}
+.dv table.eqs tr.dir td{text-align:left;font:700 13px system-ui,sans-serif;padding-top:10px}
+.dv table.eqs tr.sum td{border-top:1px solid var(--faint);font-weight:700}
+.dv .chart{flex:1 1 100%}
+.dv .scale{color:var(--grey);margin:2px 0 4px}
+.dv table{border-collapse:collapse;font:12.5px ui-monospace,Menlo,monospace;margin-bottom:6px}
+.dv th,.dv td{padding:2px 9px;text-align:right;white-space:nowrap}
+.dv th{color:var(--grey);font-weight:600}
+.dv td:first-child,.dv th:first-child{text-align:left}
+.dv tr.sum td{border-top:1px solid var(--grey);font-weight:700}
+.dv .cap{font-size:13px;color:var(--grey);line-height:1.55;margin:4px 2px 22px}
+</style>
+
+<div class="dv">
+  <div class="bar">
+    <span class="seg" id="c26mode">
+      <button data-m="cant" aria-pressed="true">Cantilever with an end load</button>
+      <button data-m="col" aria-pressed="false">Column under its own weight</button>
+    </span>
+    <b>BOX SIZE h</b> <input type="range" id="c26h" min="0.05" max="1" step="0.01" value="0.65">
+    <span class="val" id="c26hv"></span>
+  </div>
+  <div class="row">
+    <div class="body"><svg id="c26body" viewBox="0 0 440 330" role="img" aria-label="The body, shaded by stress, with a small box that can be dragged"></svg></div>
+    <div class="zoom"><svg id="c26zoom" viewBox="0 0 300 330" role="img" aria-label="The box, enlarged, with the average traction on each face"></svg></div>
+  </div>
+  <div class="row">
+    <div class="tabwrap" id="c26tab"></div>
+  </div>
+  <div class="row">
+    <div class="tabwrap" id="c26eqs"></div>
+  </div>
+  <div class="row">
+    <div class="chart"><svg id="c26chart" viewBox="0 0 720 180" role="img" aria-label="Bar chart of the terms of the balance of forces, per unit volume, in each direction"></svg></div>
+  </div>
+  <div class="cap">
+    Left: the body, shaded by the stress that varies the most (red for tension, blue for compression); drag the box to move it.
+    Middle: the box, enlarged, with arrows for the average traction on each face (red and blue: normal traction; green: shear traction; purple: the weight of the box, per unit area of a face).
+    The arrows are drawn to one scale within the box, and each points the way its traction acts, so its label is the size of the traction; the tables below give the components along the axes, with signs.
+    Below: the force on each face of the box, and the terms of the balance, which are the forces in each direction divided by the volume of the box.
+    These are the terms of σ<sub>ij,j</sub> + f<sub>i</sub> = 0, and in each direction they add up to zero.
+  </div>
+</div>
+
+<script>
+(function(){
+var INK='#18202b', GREY='#6b7684', FAINT='#dfe4ea';
+var C11='#c0392b', C22='#1f6feb', C12='#0d9488', CF='#7c3aed';
+var NS='http://www.w3.org/2000/svg';
+function el(n, at, txt){ var e=document.createElementNS(NS,n); for(var k in at) e.setAttribute(k,at[k]); if(txt!==undefined) e.textContent=txt; return e; }
+function T(x,y,s,o){ o=o||{}; return el('text',{x:x,y:y,'font-size':o.fs||12,fill:o.f||GREY,'text-anchor':o.a||'start',
+  'font-weight':o.w||400,'font-family':'system-ui, sans-serif','dominant-baseline':o.b||'auto'},s); }
+function arrow(g, x1,y1,x2,y2, col, w){
+  var a=Math.atan2(y2-y1,x2-x1), L=Math.hypot(x2-x1,y2-y1); if(L<1.5) return;
+  var h=Math.min(8,0.6*L), hx=x2-h*Math.cos(a), hy=y2-h*Math.sin(a);
+  g.appendChild(el('line',{x1:x1,y1:y1,x2:hx,y2:hy,stroke:col,'stroke-width':w||2.2}));
+  g.appendChild(el('polygon',{points:x2+','+y2+' '+(x2-h*Math.cos(a-0.4))+','+(y2-h*Math.sin(a-0.4))+' '+(x2-h*Math.cos(a+0.4))+','+(y2-h*Math.sin(a+0.4)),fill:col}));
+}
+function sup(v){ return String(v).replace(/-/g,'⁻').replace(/[0-9]/g,function(d){return '⁰¹²³⁴⁵⁶⁷⁸⁹'[+d];}); }
+function num(v, d){
+  if(Math.abs(v)<1e-15) return '0';
+  var a=Math.abs(v), s=v<0?'−':'';
+  if(a>=0.01 && a<1e5) return s+a.toFixed(d===undefined?(a>=100?1:a>=1?2:3):d);
+  var e=Math.floor(Math.log10(a)), m=a/Math.pow(10,e);
+  return s+m.toFixed(2)+'×10'+sup(e);
+}
+
+// the two stress fields, in N, mm, and MPa; x2 is measured from the mid-depth of the cantilever, and up from the base of the column
+var P=8000, Lc=400, Dc=100, tc=10, Ic=tc*Dc*Dc*Dc/12;
+var rg=2.35e-5, Hc=4000, Bc=1000, Tc=1000;
+var MODES={
+  cant:{x0:0,x1:Lc,y0:-Dc/2,y1:Dc/2,t:tc,hmax:60,c:[200,25],
+        sig:function(x,y){ return [P*(Lc-x)*y/Ic, 0, -P/(2*Ic)*(Dc*Dc/4-y*y)]; }, f:[0,0],
+        shade:function(x,y){ return P*(Lc-x)*y/Ic; }, smax:P*Lc*(Dc/2)/Ic, shadeName:'σ₁₁',
+        divmax:P*(Dc/2)/Ic, nx:40, ny:10},
+  col:{x0:0,x1:Bc,y0:0,y1:Hc,t:Tc,hmax:900,c:[500,1500],
+       sig:function(x,y){ return [0, -rg*(Hc-y), 0]; }, f:[0,-rg],
+       shade:function(x,y){ return -rg*(Hc-y); }, smax:rg*Hc, shadeName:'σ₂₂',
+       divmax:rg, nx:5, ny:20}
+};
+var mode='cant', M=MODES[mode], hfrac=0.65, c=M.c.slice();
+function hsize(){ return Math.max(1, hfrac*M.hmax); }
+
+// forces on the faces of the box by three-point Gauss quadrature, exact for these fields
+var GS=[-Math.sqrt(0.6),0,Math.sqrt(0.6)], GW=[5/9,8/9,5/9];
+function faceForces(){
+  var h=hsize(), a=h/2, xc=c[0], yc=c[1], t=M.t, F={};
+  function along(fn){ var s=[0,0]; for(var q=0;q<3;q++){ var v=fn(GS[q]); s[0]+=GW[q]*v[0]; s[1]+=GW[q]*v[1]; } return [s[0]*a*t, s[1]*a*t]; }
+  F.right=along(function(s){ var S=M.sig(xc+a,yc+a*s); return [S[0],S[2]]; });
+  F.left=along(function(s){ var S=M.sig(xc-a,yc+a*s); return [-S[0],-S[2]]; });
+  F.top=along(function(s){ var S=M.sig(xc+a*s,yc+a); return [S[2],S[1]]; });
+  F.bottom=along(function(s){ var S=M.sig(xc+a*s,yc-a); return [-S[2],-S[1]]; });
+  F.body=[M.f[0]*h*h*t, M.f[1]*h*h*t];
+  return F;
+}
+
+// ---- (a) the body
+var sb=document.getElementById('c26body'), view={};
+function layoutBody(){
+  var W=440, H=330, mx=34, mt=40, mb=38, w=M.x1-M.x0, hgt=M.y1-M.y0;
+  var s=Math.min((W-2*mx)/w, (H-mt-mb)/hgt);
+  view={s:s, ox:(W-s*w)/2, oy:mt+(H-mt-mb-s*hgt)/2};
+}
+function X(x){ return view.ox+(x-M.x0)*view.s; }
+function Y(y){ return view.oy+(M.y1-y)*view.s; }
+function shadeColor(v){
+  var r=Math.max(-1,Math.min(1,v/M.smax)), a=Math.abs(r);
+  var base=r>=0?[192,57,43]:[31,111,235];
+  var m=function(k){ return Math.round(255+(base[k]-255)*0.75*a); };
+  return 'rgb('+m(0)+','+m(1)+','+m(2)+')';
+}
+function drawBody(){
+  while(sb.firstChild) sb.removeChild(sb.firstChild);
+  var g=el('g',{});
+  var dx=(M.x1-M.x0)/M.nx, dy=(M.y1-M.y0)/M.ny;
+  for(var i=0;i<M.nx;i++) for(var j=0;j<M.ny;j++){
+    var x=M.x0+(i+0.5)*dx, y=M.y0+(j+0.5)*dy;
+    g.appendChild(el('rect',{x:X(M.x0+i*dx)-0.3,y:Y(M.y0+(j+1)*dy)-0.3,width:dx*view.s+0.6,height:dy*view.s+0.6,fill:shadeColor(M.shade(x,y))}));
+  }
+  sb.appendChild(g);
+  sb.appendChild(el('rect',{x:X(M.x0),y:Y(M.y1),width:(M.x1-M.x0)*view.s,height:(M.y1-M.y0)*view.s,fill:'none',stroke:INK,'stroke-width':1.4}));
+  if(mode==='cant'){
+    sb.appendChild(el('line',{x1:X(0),y1:Y(M.y1)-8,x2:X(0),y2:Y(M.y0)+8,stroke:'#1e3a5f','stroke-width':4}));
+    for(var k=0;k<7;k++){ var yy=Y(M.y1)-6+k*((Y(M.y0)-Y(M.y1)+12)/6); sb.appendChild(el('line',{x1:X(0),y1:yy,x2:X(0)-8,y2:yy+7,stroke:'#1e3a5f','stroke-width':1})); }
+    arrow(sb, X(Lc)+12, Y(0)-28, X(Lc)+12, Y(0)+28, '#c0392b', 2.2);
+    sb.appendChild(T(X(Lc)+4, Y(0)+46, 'P = 8 kN', {f:'#c0392b', fs:12.5, a:'end'}));
+    sb.appendChild(T(220, 22, 'the cantilever, with P = 8 kN at its free end, shaded by σ₁₁', {a:'middle', fs:12.5, f:INK}));
+  } else {
+    sb.appendChild(el('line',{x1:X(0)-14,y1:Y(0),x2:X(Bc)+14,y2:Y(0),stroke:'#1e3a5f','stroke-width':4}));
+    for(var k=0;k<8;k++){ var xx=X(0)-10+k*((X(Bc)-X(0)+20)/7); sb.appendChild(el('line',{x1:xx,y1:Y(0),x2:xx-7,y2:Y(0)+8,stroke:'#1e3a5f','stroke-width':1})); }
+    arrow(sb, X(Bc)+60, Y(Hc*0.7), X(Bc)+60, Y(Hc*0.7)+40, CF, 2.2);
+    sb.appendChild(T(X(Bc)+66, Y(Hc*0.7)+28, 'ρg = 23.5 kN/m³', {f:CF, fs:12.5}));
+    sb.appendChild(T(220, 22, 'the column, carrying its own weight, shaded by σ₂₂', {a:'middle', fs:12.5, f:INK}));
+  }
+  var h=hsize();
+  sb.appendChild(el('rect',{x:X(c[0]-h/2),y:Y(c[1]+h/2),width:Math.max(3,h*view.s),height:Math.max(3,h*view.s),
+    fill:'rgba(230,126,34,0.18)',stroke:'#e67e22','stroke-width':2}));
+  sb.appendChild(T(220, 322, 'drag the box to move it', {a:'middle', fs:11.5}));
+}
+function clampCenter(){
+  var a=hsize()/2;
+  c[0]=Math.max(M.x0+a, Math.min(M.x1-a, c[0]));
+  c[1]=Math.max(M.y0+a, Math.min(M.y1-a, c[1]));
+}
+function toWorld(ev){
+  var pt=sb.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY;
+  var q=pt.matrixTransform(sb.getScreenCTM().inverse());
+  return [M.x0+(q.x-view.ox)/view.s, M.y1-(q.y-view.oy)/view.s];
+}
+var dragging=false;
+sb.addEventListener('pointerdown', function(ev){ dragging=true; try{ sb.setPointerCapture(ev.pointerId); }catch(e){} c=toWorld(ev); clampCenter(); render(); });
+sb.addEventListener('pointermove', function(ev){ if(!dragging) return; c=toWorld(ev); clampCenter(); render(); });
+sb.addEventListener('pointerup', function(){ dragging=false; });
+sb.addEventListener('pointercancel', function(){ dragging=false; });
+
+// ---- (b) the box, enlarged
+var sz=document.getElementById('c26zoom');
+function drawZoom(F){
+  while(sz.firstChild) sz.removeChild(sz.firstChild);
+  var h=hsize(), A=h*M.t, cx=150, cy=172, S=96, half=S/2;
+  var tr={right:[F.right[0]/A,F.right[1]/A], left:[F.left[0]/A,F.left[1]/A], top:[F.top[0]/A,F.top[1]/A], bottom:[F.bottom[0]/A,F.bottom[1]/A]};
+  var fb=[F.body[0]/A, F.body[1]/A];
+  var mx=Math.max(Math.abs(fb[0]),Math.abs(fb[1]));
+  for(var k in tr){ mx=Math.max(mx, Math.abs(tr[k][0]), Math.abs(tr[k][1])); }
+  var sc=mx>0?48/mx:0;
+  sz.appendChild(T(150, 22, 'the box, enlarged', {a:'middle', fs:12.5, f:INK}));
+  sz.appendChild(T(150, 40, 'h = '+num(h,1)+' mm, centered at ('+num(c[0],1)+', '+num(c[1],1)+') mm', {a:'middle', fs:11}));
+  sz.appendChild(el('rect',{x:cx-half,y:cy-half,width:S,height:S,fill:'rgba(230,126,34,0.12)',stroke:'#e67e22','stroke-width':2}));
+  var faces=[['right',[1,0],[0,1]],['left',[-1,0],[0,1]],['top',[0,1],[1,0]],['bottom',[0,-1],[1,0]]];
+  faces.forEach(function(f){
+    var n=f[1], s=f[2], tv=tr[f[0]];
+    var tn=tv[0]*n[0]+tv[1]*n[1], ts=tv[0]*s[0]+tv[1]*s[1];
+    var mxp=cx+n[0]*(half+6), myp=cy-n[1]*(half+6);
+    var colN=n[0]!==0?C11:C22, L=sc*Math.abs(tn);
+    if(L>1.5){
+      if(tn>=0) arrow(sz, mxp, myp, mxp+n[0]*L, myp-n[1]*L, colN, 2.4);
+      else arrow(sz, mxp+n[0]*L, myp-n[1]*L, mxp, myp, colN, 2.4);
+      // label beside the middle of the arrow: above a horizontal one, to the right of a vertical one
+      // the arrow already points the way the traction acts, so its label is the size of the traction
+      if(n[0]!==0) sz.appendChild(T(mxp+n[0]*L/2, myp-7, num(Math.abs(tn)), {f:colN, fs:10.5, a:'middle'}));
+      else sz.appendChild(T(mxp+7, myp-n[1]*L/2+4, num(Math.abs(tn)), {f:colN, fs:10.5}));
+    }
+    var Ls=sc*Math.abs(ts), ox=cx+n[0]*(half+4), oy=cy-n[1]*(half+4), sg=ts>=0?1:-1;
+    if(Ls>1.5){
+      arrow(sz, ox-sg*s[0]*Ls/2, oy+sg*s[1]*Ls/2, ox+sg*s[0]*Ls/2, oy-sg*s[1]*Ls/2, C12, 2.4);
+      var e=Math.max(Ls/2,8);
+      // label past the lower end of a vertical shear arrow, or to the left of a horizontal one
+      if(n[0]!==0) sz.appendChild(T(ox+n[0]*4, oy+e+13, num(Math.abs(ts)), {f:C12, fs:10.5, a:n[0]<0?'end':'start'}));
+      else sz.appendChild(T(ox-e-6, oy+(n[1]>0?-4:12), num(Math.abs(ts)), {f:C12, fs:10.5, a:'end'}));
+    }
+  });
+  var Lb=sc*Math.hypot(fb[0],fb[1]);
+  if(Lb>1.5){ arrow(sz, cx, cy, cx+sc*fb[0], cy-sc*fb[1], CF, 2.4); sz.appendChild(T(cx+8, cy+sc*Math.abs(fb[1])/2+4, 'weight', {f:CF, fs:10.5})); }
+  sz.appendChild(T(150, 312, 'average traction on each face (MPa); each', {a:'middle', fs:11}));
+  sz.appendChild(T(150, 326, 'arrow points the way the traction acts', {a:'middle', fs:11}));
+}
+
+// ---- the balance per unit volume, and the table of forces
+var tab=document.getElementById('c26tab');
+function big(v, mind){ if(Math.abs(v)<1e-12) return '0'; return (v<0?'−':'')+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:mind===undefined?1:mind,maximumFractionDigits:1}); }
+function amt(v){ return big(v, 0); }
+function sig(v){ if(Math.abs(v)<1e-12) return '0'; var a=Math.abs(v); return a<1e-3||a>=1e5 ? num(v) : (v<0?'−':'')+String(Number(a.toPrecision(5))); }
+function plus(a, b){ return b.charAt(0)==='−' ? a+' − '+b.slice(1) : a+' + '+b; }
+function drawTable(F){
+  var h=hsize(), A=h*M.t, V=h*h*M.t;
+  var rows=[['left face',F.left,A],['right face',F.right,A],['bottom face',F.bottom,A],['top face',F.top,A],['body force',F.body,V]];
+  var s=[0,0]; rows.forEach(function(r){ s[0]+=r[1][0]; s[1]+=r[1][1]; });
+  var bigF=Math.max.apply(null, rows.map(function(r){ return Math.max(Math.abs(r[1][0]),Math.abs(r[1][1])); }));
+  var clean=function(v){ return Math.abs(v)<1e-9*Math.max(bigF,1e-30)?0:v; };
+  var cell=function(Fi, a){ return sig(Fi/a)+' × '+amt(a)+' = '+big(Fi); };
+  var html='<table><tr><th>force on the box</th><th>direction x₁</th><th>direction x₂</th></tr>'
+    +'<tr><th></th><th>traction × area = force</th><th>traction × area = force</th></tr>';
+  rows.slice(0, 4).forEach(function(r){ html+='<tr><td>'+r[0]+'</td><td>'+cell(r[1][0], A)+'</td><td>'+cell(r[1][1], A)+'</td></tr>'; });
+  html+='<tr><td>body force</td><td>'+cell(F.body[0], V)+'</td><td>'+cell(F.body[1], V)+'</td></tr>';
+  html+='<tr class="sum"><td>sum</td><td>'+big(clean(s[0]))+'</td><td>'+big(clean(s[1]))+'</td></tr></table>';
+  html+='<div class="scale">Tractions in MPa, areas in mm², and forces in N. Signs in this table refer to the axes: a negative traction or force points in the −x₁ or −x₂ direction. With h = '+big(h)+' mm and t = '+amt(M.t)+' mm, each face has area h × t = '+amt(A)+' mm², and the box has volume h × h × t = '+amt(V)+' mm³; the body force row is f (N/mm³) × volume. '
+    +'Each face force grows in proportion to h. The difference between the forces on opposite faces, and the body force, grow in proportion to h², like the volume.</div>';
+  tab.innerHTML=html;
+}
+var eqs=document.getElementById('c26eqs'), chart=document.getElementById('c26chart');
+function terms(F){
+  return [
+    ['direction 1:  σ₁₁,₁ + σ₁₂,₂ + f₁ = 0', [['σ₁₁,₁','(F<sub>left</sub> + F<sub>right</sub>) / <span style="white-space:nowrap">(h × h × t)</span>',[F.left[0],F.right[0]],C11],['σ₁₂,₂','(F<sub>bottom</sub> + F<sub>top</sub>) / <span style="white-space:nowrap">(h × h × t)</span>',[F.bottom[0],F.top[0]],C12],['f₁','(body force) / <span style="white-space:nowrap">(h × h × t)</span>',[F.body[0]],CF]]],
+    ['direction 2:  σ₂₁,₁ + σ₂₂,₂ + f₂ = 0', [['σ₂₁,₁','(F<sub>left</sub> + F<sub>right</sub>) / <span style="white-space:nowrap">(h × h × t)</span>',[F.left[1],F.right[1]],C12],['σ₂₂,₂','(F<sub>bottom</sub> + F<sub>top</sub>) / <span style="white-space:nowrap">(h × h × t)</span>',[F.bottom[1],F.top[1]],C22],['f₂','(body force) / <span style="white-space:nowrap">(h × h × t)</span>',[F.body[1]],CF]]]
+  ];
+}
+function value(r, V){ var tot=r[2].reduce(function(a, b){ return a+b; }, 0); return Math.abs(tot)<1e-9*M.divmax*V ? 0 : tot/V; }
+function drawEqs(F){
+  var h=hsize(), V=h*h*M.t;
+  var html='<div class="scale">The forces in each direction, from the table above, divided by the volume of the box, h × h × t = '+amt(V)+' mm³. '
+    +'Because the differences and the volume both grow like h², these ratios do not change as h changes.</div>';
+  html+='<table class="eqs"><tr><th>term</th><th></th><th>sum of the forces (N)</th><th>÷ volume (N/mm³)</th></tr>';
+  terms(F).forEach(function(g){
+    html+='<tr class="dir"><td colspan="4">'+g[0]+'</td></tr>';
+    var vals=[];
+    g[1].forEach(function(r){
+      var v=value(r, V); vals.push(v);
+      // the sum is formed from the forces as displayed, so each line can be checked by hand
+      var shown=r[2].reduce(function(acc, f){ return acc+Math.round(f*10)/10; }, 0), sh=big(Math.abs(shown)<0.05?0:shown);
+      var forces=r[2].length===2 ? plus(big(r[2][0]), big(r[2][1]))+' = '+sh : sh;
+      html+='<tr><td><b style="color:'+r[3]+'">'+r[0]+'</b></td><td>= '+r[1]+'</td><td>'+forces+'</td><td>'+sh+' ÷ '+amt(V)+' = '+num(v)+'</td></tr>';
+    });
+    var total=vals[0]+vals[1]+vals[2];
+    html+='<tr class="sum"><td>sum</td><td></td><td></td><td>'+plus(plus(num(vals[0]), num(vals[1])), num(vals[2]))+' = '+num(Math.abs(total)<1e-9*M.divmax?0:total)+'</td></tr>';
+  });
+  eqs.innerHTML=html+'</table>';
+}
+function drawChart(F){
+  while(chart.firstChild) chart.removeChild(chart.firstChild);
+  var V=hsize()*hsize()*M.t;
+  chart.appendChild(T(360, 18, 'The terms of σᵢⱼ,ⱼ + fᵢ = 0 for the box, per unit volume (N/mm³)', {a:'middle', fs:12.5, f:INK, w:600}));
+  terms(F).forEach(function(g, k){
+    var ox=12+k*360, x0=ox+160, half=92, y=48;
+    chart.appendChild(T(ox, y, g[0], {fs:12, f:INK}));
+    chart.appendChild(el('line', {x1:x0, y1:y+10, x2:x0, y2:y+98, stroke:GREY, 'stroke-width':1}));
+    var sum=0;
+    g[1].forEach(function(r, i){
+      var v=value(r, V), yy=y+24+28*i; sum+=v;
+      chart.appendChild(T(ox+6, yy+5, r[0], {fs:13, f:r[3], w:600}));
+      var w=Math.max(-1, Math.min(1, v/M.divmax))*half;
+      if(Math.abs(w)>0.5) chart.appendChild(el('rect', {x:Math.min(x0, x0+w), y:yy-7, width:Math.abs(w), height:14, fill:r[3], rx:2}));
+      chart.appendChild(T(ox+340, yy+5, num(v), {fs:11.5, f:INK, a:'end'}));
+    });
+    chart.appendChild(T(ox+340, y+120, 'sum = '+num(Math.abs(sum)<1e-9*M.divmax?0:sum), {fs:11.5, f:INK, a:'end', w:600}));
+  });
+}
+
+// ---- controls
+var hs=document.getElementById('c26h'), hv=document.getElementById('c26hv');
+function render(){
+  hv.textContent=num(hsize(),1)+' mm';
+  var F=faceForces();
+  drawBody(); drawZoom(F); drawTable(F); drawEqs(F); drawChart(F);
+}
+hs.addEventListener('input', function(){ hfrac=+hs.value; clampCenter(); render(); });
+document.querySelectorAll('#c26mode button').forEach(function(b){
+  b.addEventListener('click', function(){
+    document.querySelectorAll('#c26mode button').forEach(function(o){ o.setAttribute('aria-pressed', o===b?'true':'false'); });
+    mode=b.dataset.m; M=MODES[mode]; c=M.c.slice(); layoutBody(); clampCenter(); render();
+  });
+});
+layoutBody(); clampCenter(); render();
+})();
+</script>
+```
+:::
+
+In the cantilever, the bending stress $\sigma_{11}$ changes along the beam, so the forces on the left and right faces of the box do not balance.
+Above the middle of the beam, where $\sigma_{11}$ is tension, the left face pulls harder than the right face, because it is closer to the support.
+The shear stress $\sigma_{12}$ changes through the depth, and the shear forces on the top and bottom faces supply exactly the difference.
+For this solution, $\sigma_{11,1} = -P\,x_2/I$ and $\sigma_{12,2} = P\,x_2/I$, which cancel at every point, although neither is zero on its own.
+
+The column shows a different balance, because its body force is not zero.
+There, the forces on the faces of the box balance the weight of the box.
+The compression $\sigma_{22}$ increases toward the base, so the bottom face of the box pushes up harder than the top face pushes down, and the difference carries the weight of the box: $\sigma_{22,2} = \rho g = -f_2$.
+
+As the box shrinks, the forces on its faces shrink in proportion to $h$, and the differences between opposite faces shrink in proportion to $h^2$, so only the differences divided by the volume remain finite.
+These are the derivatives in $\sigma_{ij,j}$.
+For these two stress fields, which vary at most quadratically, the bars do not change with the size of the box, but for a general stress field, they approach the derivatives at the center of the box as the box shrinks.
+
+## Isotropic materials
+
+Often, we assume that the material is **isotropic**, meaning that it responds to a load in the same way regardless of the direction in which the load is applied.
+The elastic coefficients then take the form
+
+$$
+c_{ijkl}(\underline{x}) = \mu(\underline{x})\left(\delta_{ik}\,\delta_{jl} + \delta_{il}\,\delta_{jk}\right) + \lambda(\underline{x})\,\delta_{ij}\,\delta_{kl} ,
+$$
+
+where $\lambda$ is the first Lamé parameter and $\mu$ is the second Lamé parameter.
+They are related to Young's modulus $E$ and Poisson's ratio $\nu$ by
+
+$$
+\lambda = \frac{\nu E}{(1+\nu)(1-2\nu)},
+\qquad
+\mu = \frac{E}{2(1+\nu)} ,
+$$
+
+and $\mu$ is equal to $G$, the shear modulus.
+For steel, with $E$ = 200 GPa and $\nu$ = 0.3, these give $\lambda$ = `{python} "%.1f" % lam_st` GPa and $\mu$ = `{python} "%.1f" % mu_st` GPa.
+
+Substituting the isotropic coefficients into Hooke's law, and using the symmetry of the strain, gives a compact form of the law:
+
+$$
+\sigma_{ij}
+= \mu\left(\varepsilon_{ij} + \varepsilon_{ji}\right) + \lambda\,\delta_{ij}\,\varepsilon_{kk}
+= 2\mu\,\varepsilon_{ij} + \lambda\,\varepsilon_{kk}\,\delta_{ij} ,
+$$
+
+where $\varepsilon_{kk} = \varepsilon_{11} + \varepsilon_{22} + \varepsilon_{33}$ is the change in volume per unit volume.
+
+## The weak form: the principle of virtual work
+
+The weak form of (S) is called the **principle of virtual work**.
+To obtain it, we multiply the strong form by a "virtual" displacement and integrate, as in [Class 4](4_Class.qmd).
+The result pairs a virtual strain with the real stress, and since stress multiplied by strain is work per unit volume, each term of the result is a work.
+
+Texts differ in how they write the virtual displacement.
+Some write it as $\hat{\underline{u}}$, $\delta\underline{u}$, or $\bar{\underline{u}}$, which marks it as a displacement of the same kind as $\underline{u}$.
+These notes follow Hughes and write it as $\underline{w}$, the same symbol used for the test functions of the Poisson Equation, so that the weak forms of the two problems can be compared directly.
+
+Let
+
+$$
+\mathcal{S}_i = \left\{\, u_i \;\middle|\; u_i\in H^1(\Omega),\; u_i = g_i \text{ on } \Gamma_{g_i} \right\},
+\qquad
+\mathcal{V}_i = \left\{\, w_i \;\middle|\; w_i\in H^1(\Omega),\; w_i = 0 \text{ on } \Gamma_{g_i} \right\} .
+$$
+
+There are $n_{sd}$ of each of these spaces, one for each direction, since each direction has its own $\Gamma_{g_i}$.
+The weak form is
+
+$$
+(\mathrm{W})\qquad
+\begin{aligned}
+&\text{Given } f_i,\; g_i,\; h_i, \text{ and } c_{ijkl} \text{ as before, find } u_i\in\mathcal{S}_i \text{ such that for all } w_i\in\mathcal{V}_i, \\[2pt]
+&\qquad \int_\Omega w_{(i,j)}\,\sigma_{ij}\;d\Omega = \int_\Omega w_i\,f_i\;d\Omega + \sum_{i=1}^{n_{sd}}\left(\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma\right) .
+\end{aligned}
+$$
+
+Here, $w_i$ is a **virtual displacement**: an imagined displacement of the body that is zero wherever the displacement is prescribed.
+The sum over $i$ in the last term is written out explicitly, because the boundary of integration, $\Gamma_{h_i}$, changes with $i$.
+
+## From the strong form to the weak form
+
+We begin by multiplying the differential equation of (S) by $w_i$, summing over $i$, and integrating over the domain:
+
+::: {.derivation}
+$$
+\int_\Omega w_i\,\sigma_{ij,j}\;d\Omega + \int_\Omega w_i\,f_i\;d\Omega = 0 .
+$$
+:::
+
+As before, the product rule gives $\left(w_i\,\sigma_{ij}\right)_{,j} = w_{i,j}\,\sigma_{ij} + w_i\,\sigma_{ij,j}$, and the Divergence Theorem converts the integral of $\left(w_i\,\sigma_{ij}\right)_{,j}$ into an integral over the boundary.
+Therefore,
+
+::: {.derivation}
+$$
+-\int_\Omega w_{i,j}\,\sigma_{ij}\;d\Omega + \sum_{i=1}^{n_{sd}}\int_\Gamma w_i\,\sigma_{ij}\,n_j\;d\Gamma + \int_\Omega w_i\,f_i\;d\Omega = 0 .
+$$
+:::
+
+::: {.step}
+For each $i$, $w_i = 0$ on $\Gamma_{g_i}$, and $\Gamma = \Gamma_{g_i}\cup\Gamma_{h_i}$ with $\Gamma_{g_i}\cap\Gamma_{h_i} = \emptyset$.
+So, for each direction, the boundary integral only remains nonzero over $\Gamma_{h_i}$, where the Neumann boundary condition gives $\sigma_{ij}\,n_j = h_i$:
+:::
+
+::: {.derivation}
+$$
+\sum_{i=1}^{n_{sd}}\int_\Gamma w_i\,\sigma_{ij}\,n_j\;d\Gamma
+= \sum_{i=1}^{n_{sd}}\int_{\Gamma_{h_i}} w_i\,\sigma_{ij}\,n_j\;d\Gamma
+= \sum_{i=1}^{n_{sd}}\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma .
+$$
+:::
+
+The remaining step replaces $w_{i,j}$ in the first integral with its symmetric part, $w_{(i,j)}$.
+This uses a property of tensors that holds for any rank two tensor $s_{ij}$.
+Every such tensor can be split into a symmetric part and an antisymmetric part:
+
+$$
+s_{ij}
+= \underbrace{\frac{s_{ij} + s_{ji}}{2}}_{s_{(ij)}}
++ \underbrace{\frac{s_{ij} - s_{ji}}{2}}_{s_{[ij]}} ,
+\qquad
+s_{(ij)} = s_{(ji)},
+\qquad
+s_{[ij]} = -s_{[ji]} .
+$$
+
+If $s_{ij}$ multiplies a symmetric tensor $t_{ij} = t_{ji}$, then the antisymmetric part contributes nothing:
+
+$$
+s_{[ij]}\,t_{ij}
+= -s_{[ji]}\,t_{ij}
+= -s_{[ji]}\,t_{ji}
+= -s_{[ij]}\,t_{ij}
+\quad\Longrightarrow\quad
+s_{[ij]}\,t_{ij} = 0 .
+$$
+
+The first step uses the antisymmetry of $s_{[ij]}$, and the second uses the symmetry of $t_{ij}$.
+The third renames the indices, exchanging $i$ and $j$, which is allowed because both indices are summed over, so their names do not matter.
+A quantity that equals its own negative is zero.
+Therefore $s_{ij}\,t_{ij} = s_{(ij)}\,t_{ij}$.
+
+Since the stress is symmetric, this result applies with $s_{ij} = w_{i,j}$ and $t_{ij} = \sigma_{ij}$, so that $w_{i,j}\,\sigma_{ij} = w_{(i,j)}\,\sigma_{ij}$.
+Combining the steps gives
+
+::: {.derivation}
+$$
+\boxed{\;
+\int_\Omega \underbrace{w_{(i,j)}}_{\substack{\text{virtual}\\ \text{strain}}}\;\underbrace{\sigma_{ij}}_{\substack{\text{real}\\ \text{stress}}}\;d\Omega
+= \int_\Omega w_i\,f_i\;d\Omega + \sum_{i=1}^{n_{sd}}\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma
+\;}
+$$
+:::
+
+which is the weak form (W).
+
+The left side is the **internal virtual work**: the work done by the real stresses as the material undergoes the virtual strains.
+The right side is the **external virtual work**: the work done by the body forces and the applied tractions as their points move through the virtual displacement.
+The supports do no virtual work, because the virtual displacement is zero wherever a displacement is prescribed.
+The principle of virtual work states that a body is in equilibrium when these two quantities are equal for every virtual displacement that the supports allow.
+As shown in [Class 23](23_Class.qmd) for the Poisson Equation, this is also the condition for the solution to minimize the total potential energy, and here that energy is the physical strain energy of the body minus the work of the applied loads.
+
+## Summary
+
+- The unknown in linear elasticity is the displacement, a vector, so the problem has one differential equation and one set of boundary conditions for each direction.
+- The strain is the symmetric part of the displacement gradient, $\varepsilon_{ij} = u_{(i,j)}$, and the stress follows from the generalized Hooke's law, $\sigma_{ij} = c_{ijkl}\,\varepsilon_{kl}$.
+- The elastic coefficients have major and minor symmetries and are positive definite, which makes the stress symmetric and the stiffness matrix symmetric and positive definite.
+- For an isotropic material, the coefficients depend only on the two Lamé parameters $\lambda$ and $\mu$, or equivalently on $E$ and $\nu$.
+- The boundary is divided into $\Gamma_{g_i}$ and $\Gamma_{h_i}$ separately for each direction $i$.
+- The weak form is the principle of virtual work: the internal virtual work of the real stresses through the virtual strains equals the external virtual work of the loads through the virtual displacements.
+- Replacing $w_{i,j}$ with its symmetric part $w_{(i,j)}$ in the weak form is allowed because the stress is symmetric.

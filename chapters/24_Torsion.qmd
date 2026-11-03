@@ -42,7 +42,7 @@ wlev = [T.warping(2, nr) for nr in (1, 2, 4, 8)]
 fig_warp_path = save(T.fig_warping(wlev[1]), "C24_Tors_Fig5_Warping.png")
 ```
 
-This page is one of the application pages for [Class 24](24_Class.qmd).
+This page is one of the application pages for [Classes 24 and 25](24_Class.qmd).
 It applies the scalar boundary value problem of this course to a steel I-beam twisted about its axis, and computes the quantities a structural engineer needs: the torsion constant, which sets how much the beam twists, and the shear stresses produced by the twisting.
 The same equation also describes a membrane stretched over a frame, which gives a useful way to picture the result.
 

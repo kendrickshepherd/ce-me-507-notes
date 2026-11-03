@@ -1,0 +1,11 @@
+---
+title: "Class 25: Applications and Interpretation, Continued"
+---
+
+Class 25 continues the material of Class 24.
+The notes for both class periods are on the [Classes 24 and 25](24_Class.qmd) page, together with its application pages:
+
+- [Groundwater seepage under a dam](24_Seepage.qmd)
+- [Torsion of an I-beam, and the membrane analogy](24_Torsion.qmd)
+- [Deflection of a pressurized membrane](24_Membrane.qmd)
+- [Diffusion through a damaged landfill liner](24_Diffusion.qmd)
