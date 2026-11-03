@@ -84,7 +84,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-bd990e089991ec7d162b92b5e37a2dc1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-25d60f11bf0350d4acb1bb2c5c0bf5d1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -333,13 +333,13 @@ window.Quarto = {
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/24_Class.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Class 24: Applications and Interpretation</span></span></a>
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Classes 24 and 25: Applications and Interpretation</span></span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
- <span class="menu-text" id="quarto-sidebar-section-1-label">Class 24 applications</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+ <span class="menu-text" id="quarto-sidebar-section-1-label">Classes 24 and 25 applications</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
       </div>
       <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
@@ -368,6 +368,24 @@ window.Quarto = {
 </li>
       </ul>
   </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/25_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Class 25: Applications and Interpretation, Continued</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/26_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Class 26: Linear Elasticity and the Principle of Virtual Work</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/27_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Class 27: Voigt Notation and the Elasticity Matrix</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
@@ -1429,7 +1447,7 @@ Figure&nbsp;H.9: The quarter of the plate with a hole that symmetry allows us to
 <p>As for the <a href="../chapters/Poisson1D_Rod_FEM.html">rod</a>, the weak form is the <strong>principle of virtual work</strong>.</p>
 <div class="step notes">
 <ul>
-<li><strong>The virtual displacement</strong> <span class="math inline">\(\underline{w}\)</span> is an imagined, small displacement of the body that respects the supports: <span class="math inline">\(w_i = 0\)</span> wherever <span class="math inline">\(u_i\)</span> is prescribed. It need not be the real displacement, or related to it in any way.</li>
+<li><strong>The virtual displacement</strong> <span class="math inline">\(\underline{w}\)</span> is an imagined, small displacement of the body that respects the supports: <span class="math inline">\(w_i = 0\)</span> wherever <span class="math inline">\(u_i\)</span> is prescribed. It need not be the real displacement, or related to it in any way. Some texts write it as <span class="math inline">\(\hat{\underline{u}}\)</span>, <span class="math inline">\(\delta\underline{u}\)</span>, or <span class="math inline">\(\bar{\underline{u}}\)</span>; these pages follow Hughes and write it as <span class="math inline">\(\underline{w}\)</span>, the symbol used for the test functions of the Poisson Equation.</li>
 <li><strong>The internal virtual work</strong> is the work the real stresses <span class="math inline">\(\sigma_{ij} = c_{ijkl}\,u_{(k,l)}\)</span> do through the virtual strains <span class="math inline">\(w_{(i,j)}\)</span>, summed over the body.</li>
 <li><strong>The external virtual work</strong> is the work the real body forces and tractions do as their points move through <span class="math inline">\(\underline{w}\)</span>.</li>
 <li><strong>The support reactions do no virtual work</strong>, because <span class="math inline">\(\underline{w}\)</span> is zero in each direction in which a support acts. That is why the unknown reactions never enter <span class="math inline">\((\mathrm{W})\)</span>, and why <span class="math inline">\(\mathcal{V}_i\)</span> is defined one direction at a time: a roller’s reaction is normal to the surface, and the virtual displacement may slide along it.</li>

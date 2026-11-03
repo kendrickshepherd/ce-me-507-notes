@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Finite Element Methods">
+
+<title>26&nbsp; Class 26: Linear Elasticity and the Principle of Virtual Work – CE/ME 507 — Class Notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/27_Class.html" rel="next">
+<link href="../chapters/25_Class.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-25d60f11bf0350d4acb1bb2c5c0bf5d1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script>
+window.MathJax = {
+  tex: {
+    tags: 'ams',
+    macros: {
+      RR: '{\\mathbb{R}}',
+      Om: '{\\Omega}'
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/26_Class.html"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Class 26: Linear Elasticity and the Principle of Virtual Work</span></a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Site">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">CE/ME 507 — Class Notes</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">CE/ME 507 — Class Notes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/2_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Class 2: Linear FEM</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Class 3: Index Notation, Function Spaces, and the Weak Form</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/4_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Class 4: Strong and Weak Forms of the Boundary Value Problem</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/5_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/6_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Class 6: Basis Functions and Lagrange Polynomials</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/7_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Class 7: From Galerkin to a Matrix Equation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/8_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Class 8: Assembly, Sparsity, and the Road to Quadrature</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/9_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Class 9: The Isoparametric Map and the Jacobian</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Class 10: Assembly with the IEN Array, and Quadrature on an Element</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Class 11: Tensor-Product Basis Functions in 2D</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Class 12: The Spatial Mapping</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Class 13: The Jacobian Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Class 14: The ID and IEN Arrays</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Class 15: Unidimensional Finite Element Code</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Class 16: Derivatives of the Solution</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Class 20: Quadrature in 2D, and Integrating Over a Face</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Class 21: CAD, Meshing, and Discretization Choice</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/22_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Class 22: Robin Boundary Conditions</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/23_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Class 23: Minimization, Symmetry, and Positive Definiteness</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Classes 24 and 25: Applications and Interpretation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">Classes 24 and 25 applications</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Seepage.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Groundwater Seepage Under a Dam</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Torsion.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Torsion of an I-Beam, and the Membrane Analogy</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Membrane.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deflection of a Pressurized Membrane</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Diffusion.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Diffusion Through a Damaged Landfill Liner</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/25_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Class 25: Applications and Interpretation, Continued</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/26_Class.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Class 26: Linear Elasticity and the Principle of Virtual Work</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/27_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Class 27: Voigt Notation and the Elasticity Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">Appendices</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">1D Poisson I: Heat Conduction Through a Wall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">1D Poisson II: The Wall, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">1D Poisson III: An Axially Loaded Rod</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Elasticity2D.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">H</span>&nbsp; <span class="chapter-title">Linear Elasticity I: Stress, Strain, and the Strong Form</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Elasticity2D_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">I</span>&nbsp; <span class="chapter-title">Linear Elasticity II: Plane Elasticity, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Beam_Frame_Formulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">J</span>&nbsp; <span class="chapter-title">Beams and Frames from Three-Dimensional Elasticity</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#displacement-strain-and-stress" id="toc-displacement-strain-and-stress" class="nav-link active" data-scroll-target="#displacement-strain-and-stress"><span class="header-section-number">26.1</span> Displacement, strain, and stress</a></li>
+  <li><a href="#properties-of-the-elastic-coefficients" id="toc-properties-of-the-elastic-coefficients" class="nav-link" data-scroll-target="#properties-of-the-elastic-coefficients"><span class="header-section-number">26.2</span> Properties of the elastic coefficients</a></li>
+  <li><a href="#boundary-conditions-in-each-direction" id="toc-boundary-conditions-in-each-direction" class="nav-link" data-scroll-target="#boundary-conditions-in-each-direction"><span class="header-section-number">26.3</span> Boundary conditions in each direction</a></li>
+  <li><a href="#the-strong-form" id="toc-the-strong-form" class="nav-link" data-scroll-target="#the-strong-form"><span class="header-section-number">26.4</span> The strong form</a>
+  <ul class="collapse">
+  <li><a href="#the-balance-of-forces-on-a-small-box" id="toc-the-balance-of-forces-on-a-small-box" class="nav-link" data-scroll-target="#the-balance-of-forces-on-a-small-box"><span class="header-section-number">26.4.1</span> The balance of forces on a small box</a></li>
+  </ul></li>
+  <li><a href="#isotropic-materials" id="toc-isotropic-materials" class="nav-link" data-scroll-target="#isotropic-materials"><span class="header-section-number">26.5</span> Isotropic materials</a></li>
+  <li><a href="#the-weak-form-the-principle-of-virtual-work" id="toc-the-weak-form-the-principle-of-virtual-work" class="nav-link" data-scroll-target="#the-weak-form-the-principle-of-virtual-work"><span class="header-section-number">26.6</span> The weak form: the principle of virtual work</a></li>
+  <li><a href="#from-the-strong-form-to-the-weak-form" id="toc-from-the-strong-form-to-the-weak-form" class="nav-link" data-scroll-target="#from-the-strong-form-to-the-weak-form"><span class="header-section-number">26.7</span> From the strong form to the weak form</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">26.8</span> Summary</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content column-body" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Class 26: Linear Elasticity and the Principle of Virtual Work</span></h1>
+<p class="subtitle lead">The strong form of linear elasticity, and its weak form</p>
+</div>
+
+
+
+<div class="quarto-title-meta column-body">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>To this point, the unknown in every problem has been a scalar, such as a temperature. In linear elasticity, the unknown is the displacement <span class="math inline">\(\underline{u}\)</span> of each point of a solid body, which is a vector with one component for each spatial direction. In this class, we state the boundary value problem of linear elasticity and convert it into a weak form, following the same steps that were used for the Poisson Equation in <a href="../chapters/4_Class.html">Class 4</a>. In elasticity, the weak form has a physical meaning: it is the principle of virtual work.</p>
+<p>The appendix <a href="../chapters/Elasticity2D.html">Linear Elasticity I</a> describes stress, strain, and the elasticity tensor in more detail, with interactive figures, and <a href="../chapters/Elasticity2D_FEM.html">Linear Elasticity II</a> carries the problem through the finite element method.</p>
+<section id="displacement-strain-and-stress" class="level2" data-number="26.1">
+<h2 data-number="26.1" class="anchored" data-anchor-id="displacement-strain-and-stress"><span class="header-section-number">26.1</span> Displacement, strain, and stress</h2>
+<p>Four quantities appear in the problem.</p>
+<ul>
+<li><span class="math inline">\(\underline{u}\)</span> is the <strong>displacement</strong>, the distance that each point of the body moves, with components in the <span class="math inline">\(x\)</span>, <span class="math inline">\(y\)</span>, and (in three dimensions) <span class="math inline">\(z\)</span> directions.</li>
+<li><span class="math inline">\(\underline{\underline{\varepsilon}}\)</span> is the <strong>strain tensor</strong>, which describes how the material is stretched and sheared.</li>
+<li><span class="math inline">\(\underline{\underline{\sigma}}\)</span> is the <strong>stress tensor</strong>, which describes the forces per unit area that act within the body. Its component <span class="math inline">\(\sigma_{ij}\)</span> is the <span class="math inline">\(i\)</span>-component of the force per unit area on a surface whose outward normal points in the <span class="math inline">\(j\)</span> direction.</li>
+<li><span class="math inline">\(\underline{\underline{\underline{\underline{C}}}}\)</span> is the <strong>elasticity tensor</strong>, a property of the material that relates the stress to the strain.</li>
+</ul>
+<p>The strain is computed from the gradient of the displacement, and the stress is computed from the strain:</p>
+<p><span class="math display">\[
+\underline{\underline{\varepsilon}} = \frac{1}{2}\left(\nabla\underline{u} + \nabla\underline{u}^T\right),
+\qquad
+\underline{\underline{\sigma}} = \underline{\underline{\underline{\underline{C}}}}\;\underline{\underline{\varepsilon}} .
+\]</span></p>
+<p>The second relation is called the <strong>generalized Hooke’s law</strong>. It is the elasticity counterpart of Fourier’s law, <span class="math inline">\(\underline{q} = -\underline{\underline{\kappa}}\nabla u\)</span>, which related the heat flux to the temperature gradient.</p>
+<p>These relations are clearer in index notation:</p>
+<p><span class="math display">\[
+\varepsilon_{ij} = u_{(i,j)} := \frac{u_{i,j} + u_{j,i}}{2},
+\qquad
+\sigma_{ij} = c_{ijkl}\,\varepsilon_{kl} .
+\]</span></p>
+<p>The parentheses in <span class="math inline">\(u_{(i,j)}\)</span> denote the <strong>symmetric part</strong> of <span class="math inline">\(u_{i,j}\)</span>. The strain uses only the symmetric part of the displacement gradient, because for small deformation strain the remaining part describes a rotation of the material, which does not stretch or shear it. In <span class="math inline">\(\sigma_{ij} = c_{ijkl}\,\varepsilon_{kl}\)</span>, the indices <span class="math inline">\(k\)</span> and <span class="math inline">\(l\)</span> are repeated, so the expression is summed over both of them. Each stress component therefore depends on every strain component. The elasticity tensor has four indices, so it has <span class="math inline">\(3^4 = 81\)</span> components in three dimensions, where the conductivity <span class="math inline">\(\kappa_{ij}\)</span> had only <span class="math inline">\(3^2 = 9\)</span>.</p>
+<p>Finally, note that for the one-dimensional case, the equations of linear elasticity are the same as the Poisson equation.</p>
+</section>
+<section id="properties-of-the-elastic-coefficients" class="level2" data-number="26.2">
+<h2 data-number="26.2" class="anchored" data-anchor-id="properties-of-the-elastic-coefficients"><span class="header-section-number">26.2</span> Properties of the elastic coefficients</h2>
+<p>The elastic coefficients have two properties.</p>
+<p><strong>(1) Symmetry.</strong></p>
+<p><span class="math display">\[
+\begin{aligned}
+c_{ijkl} &amp;= c_{klij} &amp;&amp; \text{(major symmetry)} \\
+c_{ijkl} &amp;= c_{jikl}, \quad c_{ijkl} = c_{ijlk} &amp;&amp; \text{(minor symmetries)}
+\end{aligned}
+\]</span></p>
+<p><strong>(2) Positive definiteness.</strong> For every symmetric <span class="math inline">\(\psi_{ij}\)</span>,</p>
+<p><span class="math display">\[
+c_{ijkl}\,\psi_{ij}\,\psi_{kl} \ge 0,
+\qquad\text{and}\qquad
+c_{ijkl}\,\psi_{ij}\,\psi_{kl} = 0 \;\Longrightarrow\; \psi_{ij} = 0 .
+\]</span></p>
+<p>These properties ensure that the stress tensor <span class="math inline">\(\underline{\underline{\sigma}}\)</span> is symmetric, and that the stiffness matrix <span class="math inline">\(\underline{\underline{K}}\)</span> is symmetric and positive definite.</p>
+<ul>
+<li>The first minor symmetry, <span class="math inline">\(c_{ijkl} = c_{jikl}\)</span>, gives <span class="math inline">\(\sigma_{ij} = \sigma_{ji}\)</span>. The second, <span class="math inline">\(c_{ijkl} = c_{ijlk}\)</span>, is consistent with the strain being symmetric. Together, the minor symmetries reduce the 81 components to 36.</li>
+<li>The major symmetry plays the role that <span class="math inline">\(\kappa_{ij} = \kappa_{ji}\)</span> played in <a href="../chapters/23_Class.html">Class 23</a>: it makes the bilinear form, and therefore the stiffness matrix, symmetric. It reduces the number of independent coefficients to 21.</li>
+<li>Positive definiteness plays the role of a positive definite conductivity. The quantity <span class="math inline">\(\tfrac{1}{2}\,c_{ijkl}\,\varepsilon_{ij}\,\varepsilon_{kl}\)</span> is the strain energy stored in a unit volume of the material, and positive definiteness states that any deformation of the material stores energy.</li>
+</ul>
+</section>
+<section id="boundary-conditions-in-each-direction" class="level2" data-number="26.3">
+<h2 data-number="26.3" class="anchored" data-anchor-id="boundary-conditions-in-each-direction"><span class="header-section-number">26.3</span> Boundary conditions in each direction</h2>
+<p>In the Poisson Equation, the boundary was divided once, into <span class="math inline">\(\Gamma_g\)</span> and <span class="math inline">\(\Gamma_h\)</span>. In elasticity, each component of the displacement has its own boundary condition, so the boundary is divided once for each direction. For each <span class="math inline">\(i = 1, \dots, n_{sd}\)</span> (number of spatial dimensions),</p>
+<p><span class="math display">\[
+\Gamma = \overline{\Gamma_{g_i}\cup\Gamma_{h_i}},
+\qquad
+\Gamma_{g_i}\cap\Gamma_{h_i} = \emptyset ,
+\]</span></p>
+<p>where the displacement component <span class="math inline">\(u_i\)</span> is prescribed on <span class="math inline">\(\Gamma_{g_i}\)</span>, and the traction component <span class="math inline">\(h_i\)</span>, a force per unit area, is prescribed on <span class="math inline">\(\Gamma_{h_i}\)</span>. As in <a href="#fig-c26-bcs" class="quarto-xref">Figure&nbsp;<span>26.1</span></a>, the division can be different for each direction.</p>
+<div id="fig-c26-bcs" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c26-bcs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class26/C26_Fig1_BoundaryParts.png" class="img-fluid figure-img" style="width:85.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c26-bcs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;26.1: The same body with its boundary divided for each direction. Each division covers the whole boundary, and the two divisions need not agree.
+</figcaption>
+</figure>
+</div>
+<p>A roller support is a common example. A roller on a horizontal surface prevents a point from moving vertically, but allows it to slide horizontally without resistance. At such a point, <span class="math inline">\(u_2\)</span> is prescribed, so the point belongs to <span class="math inline">\(\Gamma_{g_2}\)</span>, and the horizontal traction is zero, <span class="math inline">\(h_1 = 0\)</span>, so the same point belongs to <span class="math inline">\(\Gamma_{h_1}\)</span>. A free surface carries no load in either direction, so it belongs to both <span class="math inline">\(\Gamma_{h_1}\)</span> and <span class="math inline">\(\Gamma_{h_2}\)</span>, with <span class="math inline">\(h_1 = h_2 = 0\)</span>.</p>
+</section>
+<section id="the-strong-form" class="level2" data-number="26.4">
+<h2 data-number="26.4" class="anchored" data-anchor-id="the-strong-form"><span class="header-section-number">26.4</span> The strong form</h2>
+<p>The boundary value problem of linear elasticity is then</p>
+<p><span class="math display">\[
+(\mathrm{S})\qquad
+\begin{aligned}
+&amp;\text{Given } f_i:\Omega\to\mathbb{R},\; g_i:\Gamma_{g_i}\to\mathbb{R},\; h_i:\Gamma_{h_i}\to\mathbb{R}, \text{ and } c_{ijkl}:\Omega\to\mathbb{R}, \\
+&amp;\text{find } u_i:\bar{\Omega}\to\mathbb{R} \text{ such that} \\[2pt]
+&amp;\qquad \sigma_{ij,j} + f_i = 0 \quad \text{in } \Omega \\
+&amp;\qquad u_i = g_i \quad \text{on } \Gamma_{g_i} \\
+&amp;\qquad \sigma_{ij}\,n_j = h_i \quad \text{on } \Gamma_{h_i} \\[2pt]
+&amp;\text{where } \sigma_{ij} = c_{ijkl}\,\varepsilon_{kl} \text{ and } \varepsilon_{kl} = u_{(k,l)} = \tfrac{1}{2}\left(u_{k,l} + u_{l,k}\right) .
+\end{aligned}
+\]</span></p>
+<p>Here <span class="math inline">\(c_{ijkl}\)</span> is symmetric and positive definite, <span class="math inline">\(f_i\)</span> is the body force per unit volume (for example, the weight of the material), <span class="math inline">\(g_i\)</span> is a prescribed displacement, <span class="math inline">\(h_i\)</span> is a prescribed traction, and <span class="math inline">\(n_j\)</span> is the outward unit normal. In vector notation, the differential equation is <span class="math inline">\(\nabla\cdot\underline{\underline{\sigma}} + \underline{f} = \underline{0}\)</span>. It states that the forces on every small piece of the body are in balance. Since <span class="math inline">\(i\)</span> is a free index, (S) contains one equation for each direction, so a two-dimensional problem has two coupled differential equations, and a three-dimensional problem has three.</p>
+<section id="the-balance-of-forces-on-a-small-box" class="level3" data-number="26.4.1">
+<h3 data-number="26.4.1" class="anchored" data-anchor-id="the-balance-of-forces-on-a-small-box"><span class="header-section-number">26.4.1</span> The balance of forces on a small box</h3>
+<p>The differential equation <span class="math inline">\(\sigma_{ij,j} + f_i = 0\)</span> is a balance of the forces on a small box of material, divided by the volume of the box. The widget below shows this balance for two stress fields that satisfy it exactly. The first is the exact solution for a steel cantilever, described in the appendix <a href="../chapters/Elasticity2D.html#a-problem-with-an-exact-solution-the-end-loaded-cantilever">Linear Elasticity I</a>. The cantilever is <span class="math inline">\(L\)</span> = 400 mm long, <span class="math inline">\(D\)</span> = 100 mm deep, and <span class="math inline">\(t\)</span> = 10 mm thick, and it has a downward load <span class="math inline">\(P\)</span> = 8 kN at its free end. With <span class="math inline">\(x_1\)</span> measured from the support and <span class="math inline">\(x_2\)</span> from the mid-depth, its stresses are <span class="math inline">\(\sigma_{11} = P(L - x_1)\,x_2/I\)</span>, <span class="math inline">\(\sigma_{12} = -P\left(D^2/4 - x_2^2\right)/(2I)\)</span>, and <span class="math inline">\(\sigma_{22} = 0\)</span>, where <span class="math inline">\(I = t D^3/12\)</span>, and it has no body force, <span class="math inline">\(f_1 = f_2 = 0\)</span>. The second is a concrete column, 1 m wide, 1 m deep, and 4 m tall, under its own weight, so that the body force is <span class="math inline">\(f_2 = -\rho g\)</span>, with <span class="math inline">\(\rho g \approx\)</span> 23.5 kN/m³. Drag the box to any point of the body, and change its size with the slider. The enlarged view shows the average traction on each face of the box, and the table lists the force on each face, which is the average traction multiplied by the area of the face.</p>
+<style>
+.dv{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;
+    max-width:900px;margin:0 auto;color:var(--ink)}
+.dv .bar{display:flex;flex-wrap:wrap;gap:9px 18px;align-items:center;padding:11px 14px;
+  background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.dv .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey)}
+.dv .seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--faint);border-radius:6px;overflow:hidden;background:#fff}
+.dv .seg button{border:0;background:#fff;padding:5px 11px;font:inherit;font-size:13px;cursor:pointer;
+  color:var(--grey);border-right:1px solid var(--faint)}
+.dv .seg button:last-child{border-right:0}
+.dv .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.dv input[type=range]{width:150px;vertical-align:middle}
+.dv .val{font:600 13px ui-monospace,Menlo,monospace;color:var(--ink);display:inline-block;min-width:4.5em}
+.dv .row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;margin-bottom:10px}
+.dv svg{display:block;width:100%;height:auto;border:1px solid var(--faint);border-radius:8px;background:#fff}
+.dv .body{flex:1 1 400px;max-width:520px}
+.dv .body svg{touch-action:none;cursor:grab}
+.dv .zoom{flex:1 1 260px;max-width:330px}
+.dv .tabwrap{flex:1 1 100%;overflow-x:auto;font-size:13px;line-height:1.5}
+.dv table.eqs td,.dv table.eqs th{font-size:12px;padding:2px 6px}
+.dv table.eqs td:nth-child(2){text-align:left;font-family:system-ui,sans-serif;white-space:normal;min-width:150px}
+.dv table.eqs tr.dir td{text-align:left;font:700 13px system-ui,sans-serif;padding-top:10px}
+.dv table.eqs tr.sum td{border-top:1px solid var(--faint);font-weight:700}
+.dv .chart{flex:1 1 100%}
+.dv .scale{color:var(--grey);margin:2px 0 4px}
+.dv table{border-collapse:collapse;font:12.5px ui-monospace,Menlo,monospace;margin-bottom:6px}
+.dv th,.dv td{padding:2px 9px;text-align:right;white-space:nowrap}
+.dv th{color:var(--grey);font-weight:600}
+.dv td:first-child,.dv th:first-child{text-align:left}
+.dv tr.sum td{border-top:1px solid var(--grey);font-weight:700}
+.dv .cap{font-size:13px;color:var(--grey);line-height:1.55;margin:4px 2px 22px}
+</style>
+
+<div class="dv">
+  <div class="bar">
+    <span class="seg" id="c26mode">
+      <button data-m="cant" aria-pressed="true">Cantilever with an end load</button>
+      <button data-m="col" aria-pressed="false">Column under its own weight</button>
+    </span>
+    <b>BOX SIZE h</b> <input type="range" id="c26h" min="0.05" max="1" step="0.01" value="0.65">
+    <span class="val" id="c26hv"></span>
+  </div>
+  <div class="row">
+    <div class="body"><svg id="c26body" viewbox="0 0 440 330" role="img" aria-label="The body, shaded by stress, with a small box that can be dragged"></svg></div>
+    <div class="zoom"><svg id="c26zoom" viewbox="0 0 300 330" role="img" aria-label="The box, enlarged, with the average traction on each face"></svg></div>
+  </div>
+  <div class="row">
+    <div class="tabwrap" id="c26tab"></div>
+  </div>
+  <div class="row">
+    <div class="tabwrap" id="c26eqs"></div>
+  </div>
+  <div class="row">
+    <div class="chart"><svg id="c26chart" viewbox="0 0 720 180" role="img" aria-label="Bar chart of the terms of the balance of forces, per unit volume, in each direction"></svg></div>
+  </div>
+  <div class="cap">
+    Left: the body, shaded by the stress that varies the most (red for tension, blue for compression); drag the box to move it.
+    Middle: the box, enlarged, with arrows for the average traction on each face (red and blue: normal traction; green: shear traction; purple: the weight of the box, per unit area of a face).
+    The arrows are drawn to one scale within the box, and each points the way its traction acts, so its label is the size of the traction; the tables below give the components along the axes, with signs.
+    Below: the force on each face of the box, and the terms of the balance, which are the forces in each direction divided by the volume of the box.
+    These are the terms of σ<sub>ij,j</sub> + f<sub>i</sub> = 0, and in each direction they add up to zero.
+  </div>
+</div>
+
+<script>
+(function(){
+var INK='#18202b', GREY='#6b7684', FAINT='#dfe4ea';
+var C11='#c0392b', C22='#1f6feb', C12='#0d9488', CF='#7c3aed';
+var NS='http://www.w3.org/2000/svg';
+function el(n, at, txt){ var e=document.createElementNS(NS,n); for(var k in at) e.setAttribute(k,at[k]); if(txt!==undefined) e.textContent=txt; return e; }
+function T(x,y,s,o){ o=o||{}; return el('text',{x:x,y:y,'font-size':o.fs||12,fill:o.f||GREY,'text-anchor':o.a||'start',
+  'font-weight':o.w||400,'font-family':'system-ui, sans-serif','dominant-baseline':o.b||'auto'},s); }
+function arrow(g, x1,y1,x2,y2, col, w){
+  var a=Math.atan2(y2-y1,x2-x1), L=Math.hypot(x2-x1,y2-y1); if(L<1.5) return;
+  var h=Math.min(8,0.6*L), hx=x2-h*Math.cos(a), hy=y2-h*Math.sin(a);
+  g.appendChild(el('line',{x1:x1,y1:y1,x2:hx,y2:hy,stroke:col,'stroke-width':w||2.2}));
+  g.appendChild(el('polygon',{points:x2+','+y2+' '+(x2-h*Math.cos(a-0.4))+','+(y2-h*Math.sin(a-0.4))+' '+(x2-h*Math.cos(a+0.4))+','+(y2-h*Math.sin(a+0.4)),fill:col}));
+}
+function sup(v){ return String(v).replace(/-/g,'⁻').replace(/[0-9]/g,function(d){return '⁰¹²³⁴⁵⁶⁷⁸⁹'[+d];}); }
+function num(v, d){
+  if(Math.abs(v)<1e-15) return '0';
+  var a=Math.abs(v), s=v<0?'−':'';
+  if(a>=0.01 && a<1e5) return s+a.toFixed(d===undefined?(a>=100?1:a>=1?2:3):d);
+  var e=Math.floor(Math.log10(a)), m=a/Math.pow(10,e);
+  return s+m.toFixed(2)+'×10'+sup(e);
+}
+
+// the two stress fields, in N, mm, and MPa; x2 is measured from the mid-depth of the cantilever, and up from the base of the column
+var P=8000, Lc=400, Dc=100, tc=10, Ic=tc*Dc*Dc*Dc/12;
+var rg=2.35e-5, Hc=4000, Bc=1000, Tc=1000;
+var MODES={
+  cant:{x0:0,x1:Lc,y0:-Dc/2,y1:Dc/2,t:tc,hmax:60,c:[200,25],
+        sig:function(x,y){ return [P*(Lc-x)*y/Ic, 0, -P/(2*Ic)*(Dc*Dc/4-y*y)]; }, f:[0,0],
+        shade:function(x,y){ return P*(Lc-x)*y/Ic; }, smax:P*Lc*(Dc/2)/Ic, shadeName:'σ₁₁',
+        divmax:P*(Dc/2)/Ic, nx:40, ny:10},
+  col:{x0:0,x1:Bc,y0:0,y1:Hc,t:Tc,hmax:900,c:[500,1500],
+       sig:function(x,y){ return [0, -rg*(Hc-y), 0]; }, f:[0,-rg],
+       shade:function(x,y){ return -rg*(Hc-y); }, smax:rg*Hc, shadeName:'σ₂₂',
+       divmax:rg, nx:5, ny:20}
+};
+var mode='cant', M=MODES[mode], hfrac=0.65, c=M.c.slice();
+function hsize(){ return Math.max(1, hfrac*M.hmax); }
+
+// forces on the faces of the box by three-point Gauss quadrature, exact for these fields
+var GS=[-Math.sqrt(0.6),0,Math.sqrt(0.6)], GW=[5/9,8/9,5/9];
+function faceForces(){
+  var h=hsize(), a=h/2, xc=c[0], yc=c[1], t=M.t, F={};
+  function along(fn){ var s=[0,0]; for(var q=0;q<3;q++){ var v=fn(GS[q]); s[0]+=GW[q]*v[0]; s[1]+=GW[q]*v[1]; } return [s[0]*a*t, s[1]*a*t]; }
+  F.right=along(function(s){ var S=M.sig(xc+a,yc+a*s); return [S[0],S[2]]; });
+  F.left=along(function(s){ var S=M.sig(xc-a,yc+a*s); return [-S[0],-S[2]]; });
+  F.top=along(function(s){ var S=M.sig(xc+a*s,yc+a); return [S[2],S[1]]; });
+  F.bottom=along(function(s){ var S=M.sig(xc+a*s,yc-a); return [-S[2],-S[1]]; });
+  F.body=[M.f[0]*h*h*t, M.f[1]*h*h*t];
+  return F;
+}
+
+// ---- (a) the body
+var sb=document.getElementById('c26body'), view={};
+function layoutBody(){
+  var W=440, H=330, mx=34, mt=40, mb=38, w=M.x1-M.x0, hgt=M.y1-M.y0;
+  var s=Math.min((W-2*mx)/w, (H-mt-mb)/hgt);
+  view={s:s, ox:(W-s*w)/2, oy:mt+(H-mt-mb-s*hgt)/2};
+}
+function X(x){ return view.ox+(x-M.x0)*view.s; }
+function Y(y){ return view.oy+(M.y1-y)*view.s; }
+function shadeColor(v){
+  var r=Math.max(-1,Math.min(1,v/M.smax)), a=Math.abs(r);
+  var base=r>=0?[192,57,43]:[31,111,235];
+  var m=function(k){ return Math.round(255+(base[k]-255)*0.75*a); };
+  return 'rgb('+m(0)+','+m(1)+','+m(2)+')';
+}
+function drawBody(){
+  while(sb.firstChild) sb.removeChild(sb.firstChild);
+  var g=el('g',{});
+  var dx=(M.x1-M.x0)/M.nx, dy=(M.y1-M.y0)/M.ny;
+  for(var i=0;i<M.nx;i++) for(var j=0;j<M.ny;j++){
+    var x=M.x0+(i+0.5)*dx, y=M.y0+(j+0.5)*dy;
+    g.appendChild(el('rect',{x:X(M.x0+i*dx)-0.3,y:Y(M.y0+(j+1)*dy)-0.3,width:dx*view.s+0.6,height:dy*view.s+0.6,fill:shadeColor(M.shade(x,y))}));
+  }
+  sb.appendChild(g);
+  sb.appendChild(el('rect',{x:X(M.x0),y:Y(M.y1),width:(M.x1-M.x0)*view.s,height:(M.y1-M.y0)*view.s,fill:'none',stroke:INK,'stroke-width':1.4}));
+  if(mode==='cant'){
+    sb.appendChild(el('line',{x1:X(0),y1:Y(M.y1)-8,x2:X(0),y2:Y(M.y0)+8,stroke:'#1e3a5f','stroke-width':4}));
+    for(var k=0;k<7;k++){ var yy=Y(M.y1)-6+k*((Y(M.y0)-Y(M.y1)+12)/6); sb.appendChild(el('line',{x1:X(0),y1:yy,x2:X(0)-8,y2:yy+7,stroke:'#1e3a5f','stroke-width':1})); }
+    arrow(sb, X(Lc)+12, Y(0)-28, X(Lc)+12, Y(0)+28, '#c0392b', 2.2);
+    sb.appendChild(T(X(Lc)+4, Y(0)+46, 'P = 8 kN', {f:'#c0392b', fs:12.5, a:'end'}));
+    sb.appendChild(T(220, 22, 'the cantilever, with P = 8 kN at its free end, shaded by σ₁₁', {a:'middle', fs:12.5, f:INK}));
+  } else {
+    sb.appendChild(el('line',{x1:X(0)-14,y1:Y(0),x2:X(Bc)+14,y2:Y(0),stroke:'#1e3a5f','stroke-width':4}));
+    for(var k=0;k<8;k++){ var xx=X(0)-10+k*((X(Bc)-X(0)+20)/7); sb.appendChild(el('line',{x1:xx,y1:Y(0),x2:xx-7,y2:Y(0)+8,stroke:'#1e3a5f','stroke-width':1})); }
+    arrow(sb, X(Bc)+60, Y(Hc*0.7), X(Bc)+60, Y(Hc*0.7)+40, CF, 2.2);
+    sb.appendChild(T(X(Bc)+66, Y(Hc*0.7)+28, 'ρg = 23.5 kN/m³', {f:CF, fs:12.5}));
+    sb.appendChild(T(220, 22, 'the column, carrying its own weight, shaded by σ₂₂', {a:'middle', fs:12.5, f:INK}));
+  }
+  var h=hsize();
+  sb.appendChild(el('rect',{x:X(c[0]-h/2),y:Y(c[1]+h/2),width:Math.max(3,h*view.s),height:Math.max(3,h*view.s),
+    fill:'rgba(230,126,34,0.18)',stroke:'#e67e22','stroke-width':2}));
+  sb.appendChild(T(220, 322, 'drag the box to move it', {a:'middle', fs:11.5}));
+}
+function clampCenter(){
+  var a=hsize()/2;
+  c[0]=Math.max(M.x0+a, Math.min(M.x1-a, c[0]));
+  c[1]=Math.max(M.y0+a, Math.min(M.y1-a, c[1]));
+}
+function toWorld(ev){
+  var pt=sb.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY;
+  var q=pt.matrixTransform(sb.getScreenCTM().inverse());
+  return [M.x0+(q.x-view.ox)/view.s, M.y1-(q.y-view.oy)/view.s];
+}
+var dragging=false;
+sb.addEventListener('pointerdown', function(ev){ dragging=true; try{ sb.setPointerCapture(ev.pointerId); }catch(e){} c=toWorld(ev); clampCenter(); render(); });
+sb.addEventListener('pointermove', function(ev){ if(!dragging) return; c=toWorld(ev); clampCenter(); render(); });
+sb.addEventListener('pointerup', function(){ dragging=false; });
+sb.addEventListener('pointercancel', function(){ dragging=false; });
+
+// ---- (b) the box, enlarged
+var sz=document.getElementById('c26zoom');
+function drawZoom(F){
+  while(sz.firstChild) sz.removeChild(sz.firstChild);
+  var h=hsize(), A=h*M.t, cx=150, cy=172, S=96, half=S/2;
+  var tr={right:[F.right[0]/A,F.right[1]/A], left:[F.left[0]/A,F.left[1]/A], top:[F.top[0]/A,F.top[1]/A], bottom:[F.bottom[0]/A,F.bottom[1]/A]};
+  var fb=[F.body[0]/A, F.body[1]/A];
+  var mx=Math.max(Math.abs(fb[0]),Math.abs(fb[1]));
+  for(var k in tr){ mx=Math.max(mx, Math.abs(tr[k][0]), Math.abs(tr[k][1])); }
+  var sc=mx>0?48/mx:0;
+  sz.appendChild(T(150, 22, 'the box, enlarged', {a:'middle', fs:12.5, f:INK}));
+  sz.appendChild(T(150, 40, 'h = '+num(h,1)+' mm, centered at ('+num(c[0],1)+', '+num(c[1],1)+') mm', {a:'middle', fs:11}));
+  sz.appendChild(el('rect',{x:cx-half,y:cy-half,width:S,height:S,fill:'rgba(230,126,34,0.12)',stroke:'#e67e22','stroke-width':2}));
+  var faces=[['right',[1,0],[0,1]],['left',[-1,0],[0,1]],['top',[0,1],[1,0]],['bottom',[0,-1],[1,0]]];
+  faces.forEach(function(f){
+    var n=f[1], s=f[2], tv=tr[f[0]];
+    var tn=tv[0]*n[0]+tv[1]*n[1], ts=tv[0]*s[0]+tv[1]*s[1];
+    var mxp=cx+n[0]*(half+6), myp=cy-n[1]*(half+6);
+    var colN=n[0]!==0?C11:C22, L=sc*Math.abs(tn);
+    if(L>1.5){
+      if(tn>=0) arrow(sz, mxp, myp, mxp+n[0]*L, myp-n[1]*L, colN, 2.4);
+      else arrow(sz, mxp+n[0]*L, myp-n[1]*L, mxp, myp, colN, 2.4);
+      // label beside the middle of the arrow: above a horizontal one, to the right of a vertical one
+      // the arrow already points the way the traction acts, so its label is the size of the traction
+      if(n[0]!==0) sz.appendChild(T(mxp+n[0]*L/2, myp-7, num(Math.abs(tn)), {f:colN, fs:10.5, a:'middle'}));
+      else sz.appendChild(T(mxp+7, myp-n[1]*L/2+4, num(Math.abs(tn)), {f:colN, fs:10.5}));
+    }
+    var Ls=sc*Math.abs(ts), ox=cx+n[0]*(half+4), oy=cy-n[1]*(half+4), sg=ts>=0?1:-1;
+    if(Ls>1.5){
+      arrow(sz, ox-sg*s[0]*Ls/2, oy+sg*s[1]*Ls/2, ox+sg*s[0]*Ls/2, oy-sg*s[1]*Ls/2, C12, 2.4);
+      var e=Math.max(Ls/2,8);
+      // label past the lower end of a vertical shear arrow, or to the left of a horizontal one
+      if(n[0]!==0) sz.appendChild(T(ox+n[0]*4, oy+e+13, num(Math.abs(ts)), {f:C12, fs:10.5, a:n[0]<0?'end':'start'}));
+      else sz.appendChild(T(ox-e-6, oy+(n[1]>0?-4:12), num(Math.abs(ts)), {f:C12, fs:10.5, a:'end'}));
+    }
+  });
+  var Lb=sc*Math.hypot(fb[0],fb[1]);
+  if(Lb>1.5){ arrow(sz, cx, cy, cx+sc*fb[0], cy-sc*fb[1], CF, 2.4); sz.appendChild(T(cx+8, cy+sc*Math.abs(fb[1])/2+4, 'weight', {f:CF, fs:10.5})); }
+  sz.appendChild(T(150, 312, 'average traction on each face (MPa); each', {a:'middle', fs:11}));
+  sz.appendChild(T(150, 326, 'arrow points the way the traction acts', {a:'middle', fs:11}));
+}
+
+// ---- the balance per unit volume, and the table of forces
+var tab=document.getElementById('c26tab');
+function big(v, mind){ if(Math.abs(v)<1e-12) return '0'; return (v<0?'−':'')+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:mind===undefined?1:mind,maximumFractionDigits:1}); }
+function amt(v){ return big(v, 0); }
+function sig(v){ if(Math.abs(v)<1e-12) return '0'; var a=Math.abs(v); return a<1e-3||a>=1e5 ? num(v) : (v<0?'−':'')+String(Number(a.toPrecision(5))); }
+function plus(a, b){ return b.charAt(0)==='−' ? a+' − '+b.slice(1) : a+' + '+b; }
+function drawTable(F){
+  var h=hsize(), A=h*M.t, V=h*h*M.t;
+  var rows=[['left face',F.left,A],['right face',F.right,A],['bottom face',F.bottom,A],['top face',F.top,A],['body force',F.body,V]];
+  var s=[0,0]; rows.forEach(function(r){ s[0]+=r[1][0]; s[1]+=r[1][1]; });
+  var bigF=Math.max.apply(null, rows.map(function(r){ return Math.max(Math.abs(r[1][0]),Math.abs(r[1][1])); }));
+  var clean=function(v){ return Math.abs(v)<1e-9*Math.max(bigF,1e-30)?0:v; };
+  var cell=function(Fi, a){ return sig(Fi/a)+' × '+amt(a)+' = '+big(Fi); };
+  var html='<table><tr><th>force on the box</th><th>direction x₁</th><th>direction x₂</th></tr>'
+    +'<tr><th></th><th>traction × area = force</th><th>traction × area = force</th></tr>';
+  rows.slice(0, 4).forEach(function(r){ html+='<tr><td>'+r[0]+'</td><td>'+cell(r[1][0], A)+'</td><td>'+cell(r[1][1], A)+'</td></tr>'; });
+  html+='<tr><td>body force</td><td>'+cell(F.body[0], V)+'</td><td>'+cell(F.body[1], V)+'</td></tr>';
+  html+='<tr class="sum"><td>sum</td><td>'+big(clean(s[0]))+'</td><td>'+big(clean(s[1]))+'</td></tr></table>';
+  html+='<div class="scale">Tractions in MPa, areas in mm², and forces in N. Signs in this table refer to the axes: a negative traction or force points in the −x₁ or −x₂ direction. With h = '+big(h)+' mm and t = '+amt(M.t)+' mm, each face has area h × t = '+amt(A)+' mm², and the box has volume h × h × t = '+amt(V)+' mm³; the body force row is f (N/mm³) × volume. '
+    +'Each face force grows in proportion to h. The difference between the forces on opposite faces, and the body force, grow in proportion to h², like the volume.</div>';
+  tab.innerHTML=html;
+}
+var eqs=document.getElementById('c26eqs'), chart=document.getElementById('c26chart');
+function terms(F){
+  return [
+    ['direction 1:  σ₁₁,₁ + σ₁₂,₂ + f₁ = 0', [['σ₁₁,₁','(F<sub>left</sub> + F<sub>right</sub>) / <span style="white-space:nowrap">(h × h × t)</span>',[F.left[0],F.right[0]],C11],['σ₁₂,₂','(F<sub>bottom</sub> + F<sub>top</sub>) / <span style="white-space:nowrap">(h × h × t)</span>',[F.bottom[0],F.top[0]],C12],['f₁','(body force) / <span style="white-space:nowrap">(h × h × t)</span>',[F.body[0]],CF]]],
+    ['direction 2:  σ₂₁,₁ + σ₂₂,₂ + f₂ = 0', [['σ₂₁,₁','(F<sub>left</sub> + F<sub>right</sub>) / <span style="white-space:nowrap">(h × h × t)</span>',[F.left[1],F.right[1]],C12],['σ₂₂,₂','(F<sub>bottom</sub> + F<sub>top</sub>) / <span style="white-space:nowrap">(h × h × t)</span>',[F.bottom[1],F.top[1]],C22],['f₂','(body force) / <span style="white-space:nowrap">(h × h × t)</span>',[F.body[1]],CF]]]
+  ];
+}
+function value(r, V){ var tot=r[2].reduce(function(a, b){ return a+b; }, 0); return Math.abs(tot)<1e-9*M.divmax*V ? 0 : tot/V; }
+function drawEqs(F){
+  var h=hsize(), V=h*h*M.t;
+  var html='<div class="scale">The forces in each direction, from the table above, divided by the volume of the box, h × h × t = '+amt(V)+' mm³. '
+    +'Because the differences and the volume both grow like h², these ratios do not change as h changes.</div>';
+  html+='<table class="eqs"><tr><th>term</th><th></th><th>sum of the forces (N)</th><th>÷ volume (N/mm³)</th></tr>';
+  terms(F).forEach(function(g){
+    html+='<tr class="dir"><td colspan="4">'+g[0]+'</td></tr>';
+    var vals=[];
+    g[1].forEach(function(r){
+      var v=value(r, V); vals.push(v);
+      // the sum is formed from the forces as displayed, so each line can be checked by hand
+      var shown=r[2].reduce(function(acc, f){ return acc+Math.round(f*10)/10; }, 0), sh=big(Math.abs(shown)<0.05?0:shown);
+      var forces=r[2].length===2 ? plus(big(r[2][0]), big(r[2][1]))+' = '+sh : sh;
+      html+='<tr><td><b style="color:'+r[3]+'">'+r[0]+'</b></td><td>= '+r[1]+'</td><td>'+forces+'</td><td>'+sh+' ÷ '+amt(V)+' = '+num(v)+'</td></tr>';
+    });
+    var total=vals[0]+vals[1]+vals[2];
+    html+='<tr class="sum"><td>sum</td><td></td><td></td><td>'+plus(plus(num(vals[0]), num(vals[1])), num(vals[2]))+' = '+num(Math.abs(total)<1e-9*M.divmax?0:total)+'</td></tr>';
+  });
+  eqs.innerHTML=html+'</table>';
+}
+function drawChart(F){
+  while(chart.firstChild) chart.removeChild(chart.firstChild);
+  var V=hsize()*hsize()*M.t;
+  chart.appendChild(T(360, 18, 'The terms of σᵢⱼ,ⱼ + fᵢ = 0 for the box, per unit volume (N/mm³)', {a:'middle', fs:12.5, f:INK, w:600}));
+  terms(F).forEach(function(g, k){
+    var ox=12+k*360, x0=ox+160, half=92, y=48;
+    chart.appendChild(T(ox, y, g[0], {fs:12, f:INK}));
+    chart.appendChild(el('line', {x1:x0, y1:y+10, x2:x0, y2:y+98, stroke:GREY, 'stroke-width':1}));
+    var sum=0;
+    g[1].forEach(function(r, i){
+      var v=value(r, V), yy=y+24+28*i; sum+=v;
+      chart.appendChild(T(ox+6, yy+5, r[0], {fs:13, f:r[3], w:600}));
+      var w=Math.max(-1, Math.min(1, v/M.divmax))*half;
+      if(Math.abs(w)>0.5) chart.appendChild(el('rect', {x:Math.min(x0, x0+w), y:yy-7, width:Math.abs(w), height:14, fill:r[3], rx:2}));
+      chart.appendChild(T(ox+340, yy+5, num(v), {fs:11.5, f:INK, a:'end'}));
+    });
+    chart.appendChild(T(ox+340, y+120, 'sum = '+num(Math.abs(sum)<1e-9*M.divmax?0:sum), {fs:11.5, f:INK, a:'end', w:600}));
+  });
+}
+
+// ---- controls
+var hs=document.getElementById('c26h'), hv=document.getElementById('c26hv');
+function render(){
+  hv.textContent=num(hsize(),1)+' mm';
+  var F=faceForces();
+  drawBody(); drawZoom(F); drawTable(F); drawEqs(F); drawChart(F);
+}
+hs.addEventListener('input', function(){ hfrac=+hs.value; clampCenter(); render(); });
+document.querySelectorAll('#c26mode button').forEach(function(b){
+  b.addEventListener('click', function(){
+    document.querySelectorAll('#c26mode button').forEach(function(o){ o.setAttribute('aria-pressed', o===b?'true':'false'); });
+    mode=b.dataset.m; M=MODES[mode]; c=M.c.slice(); layoutBody(); clampCenter(); render();
+  });
+});
+layoutBody(); clampCenter(); render();
+})();
+</script>
+<p>In the cantilever, the bending stress <span class="math inline">\(\sigma_{11}\)</span> changes along the beam, so the forces on the left and right faces of the box do not balance. Above the middle of the beam, where <span class="math inline">\(\sigma_{11}\)</span> is tension, the left face pulls harder than the right face, because it is closer to the support. The shear stress <span class="math inline">\(\sigma_{12}\)</span> changes through the depth, and the shear forces on the top and bottom faces supply exactly the difference. For this solution, <span class="math inline">\(\sigma_{11,1} = -P\,x_2/I\)</span> and <span class="math inline">\(\sigma_{12,2} = P\,x_2/I\)</span>, which cancel at every point, although neither is zero on its own.</p>
+<p>The column shows a different balance, because its body force is not zero. There, the forces on the faces of the box balance the weight of the box. The compression <span class="math inline">\(\sigma_{22}\)</span> increases toward the base, so the bottom face of the box pushes up harder than the top face pushes down, and the difference carries the weight of the box: <span class="math inline">\(\sigma_{22,2} = \rho g = -f_2\)</span>.</p>
+<p>As the box shrinks, the forces on its faces shrink in proportion to <span class="math inline">\(h\)</span>, and the differences between opposite faces shrink in proportion to <span class="math inline">\(h^2\)</span>, so only the differences divided by the volume remain finite. These are the derivatives in <span class="math inline">\(\sigma_{ij,j}\)</span>. For these two stress fields, which vary at most quadratically, the bars do not change with the size of the box, but for a general stress field, they approach the derivatives at the center of the box as the box shrinks.</p>
+</section>
+</section>
+<section id="isotropic-materials" class="level2" data-number="26.5">
+<h2 data-number="26.5" class="anchored" data-anchor-id="isotropic-materials"><span class="header-section-number">26.5</span> Isotropic materials</h2>
+<p>Often, we assume that the material is <strong>isotropic</strong>, meaning that it responds to a load in the same way regardless of the direction in which the load is applied. The elastic coefficients then take the form</p>
+<p><span class="math display">\[
+c_{ijkl}(\underline{x}) = \mu(\underline{x})\left(\delta_{ik}\,\delta_{jl} + \delta_{il}\,\delta_{jk}\right) + \lambda(\underline{x})\,\delta_{ij}\,\delta_{kl} ,
+\]</span></p>
+<p>where <span class="math inline">\(\lambda\)</span> is the first Lamé parameter and <span class="math inline">\(\mu\)</span> is the second Lamé parameter. They are related to Young’s modulus <span class="math inline">\(E\)</span> and Poisson’s ratio <span class="math inline">\(\nu\)</span> by</p>
+<p><span class="math display">\[
+\lambda = \frac{\nu E}{(1+\nu)(1-2\nu)},
+\qquad
+\mu = \frac{E}{2(1+\nu)} ,
+\]</span></p>
+<p>and <span class="math inline">\(\mu\)</span> is equal to <span class="math inline">\(G\)</span>, the shear modulus. For steel, with <span class="math inline">\(E\)</span> = 200 GPa and <span class="math inline">\(\nu\)</span> = 0.3, these give <span class="math inline">\(\lambda\)</span> = 115.4 GPa and <span class="math inline">\(\mu\)</span> = 76.9 GPa.</p>
+<p>Substituting the isotropic coefficients into Hooke’s law, and using the symmetry of the strain, gives a compact form of the law:</p>
+<p><span class="math display">\[
+\sigma_{ij}
+= \mu\left(\varepsilon_{ij} + \varepsilon_{ji}\right) + \lambda\,\delta_{ij}\,\varepsilon_{kk}
+= 2\mu\,\varepsilon_{ij} + \lambda\,\varepsilon_{kk}\,\delta_{ij} ,
+\]</span></p>
+<p>where <span class="math inline">\(\varepsilon_{kk} = \varepsilon_{11} + \varepsilon_{22} + \varepsilon_{33}\)</span> is the change in volume per unit volume.</p>
+</section>
+<section id="the-weak-form-the-principle-of-virtual-work" class="level2" data-number="26.6">
+<h2 data-number="26.6" class="anchored" data-anchor-id="the-weak-form-the-principle-of-virtual-work"><span class="header-section-number">26.6</span> The weak form: the principle of virtual work</h2>
+<p>The weak form of (S) is called the <strong>principle of virtual work</strong>. To obtain it, we multiply the strong form by a “virtual” displacement and integrate, as in <a href="../chapters/4_Class.html">Class 4</a>. The result pairs a virtual strain with the real stress, and since stress multiplied by strain is work per unit volume, each term of the result is a work.</p>
+<p>Texts differ in how they write the virtual displacement. Some write it as <span class="math inline">\(\hat{\underline{u}}\)</span>, <span class="math inline">\(\delta\underline{u}\)</span>, or <span class="math inline">\(\bar{\underline{u}}\)</span>, which marks it as a displacement of the same kind as <span class="math inline">\(\underline{u}\)</span>. These notes follow Hughes and write it as <span class="math inline">\(\underline{w}\)</span>, the same symbol used for the test functions of the Poisson Equation, so that the weak forms of the two problems can be compared directly.</p>
+<p>Let</p>
+<p><span class="math display">\[
+\mathcal{S}_i = \left\{\, u_i \;\middle|\; u_i\in H^1(\Omega),\; u_i = g_i \text{ on } \Gamma_{g_i} \right\},
+\qquad
+\mathcal{V}_i = \left\{\, w_i \;\middle|\; w_i\in H^1(\Omega),\; w_i = 0 \text{ on } \Gamma_{g_i} \right\} .
+\]</span></p>
+<p>There are <span class="math inline">\(n_{sd}\)</span> of each of these spaces, one for each direction, since each direction has its own <span class="math inline">\(\Gamma_{g_i}\)</span>. The weak form is</p>
+<p><span class="math display">\[
+(\mathrm{W})\qquad
+\begin{aligned}
+&amp;\text{Given } f_i,\; g_i,\; h_i, \text{ and } c_{ijkl} \text{ as before, find } u_i\in\mathcal{S}_i \text{ such that for all } w_i\in\mathcal{V}_i, \\[2pt]
+&amp;\qquad \int_\Omega w_{(i,j)}\,\sigma_{ij}\;d\Omega = \int_\Omega w_i\,f_i\;d\Omega + \sum_{i=1}^{n_{sd}}\left(\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma\right) .
+\end{aligned}
+\]</span></p>
+<p>Here, <span class="math inline">\(w_i\)</span> is a <strong>virtual displacement</strong>: an imagined displacement of the body that is zero wherever the displacement is prescribed. The sum over <span class="math inline">\(i\)</span> in the last term is written out explicitly, because the boundary of integration, <span class="math inline">\(\Gamma_{h_i}\)</span>, changes with <span class="math inline">\(i\)</span>.</p>
+</section>
+<section id="from-the-strong-form-to-the-weak-form" class="level2" data-number="26.7">
+<h2 data-number="26.7" class="anchored" data-anchor-id="from-the-strong-form-to-the-weak-form"><span class="header-section-number">26.7</span> From the strong form to the weak form</h2>
+<p>We begin by multiplying the differential equation of (S) by <span class="math inline">\(w_i\)</span>, summing over <span class="math inline">\(i\)</span>, and integrating over the domain:</p>
+<div class="derivation">
+<p><span class="math display">\[
+\int_\Omega w_i\,\sigma_{ij,j}\;d\Omega + \int_\Omega w_i\,f_i\;d\Omega = 0 .
+\]</span></p>
+</div>
+<p>As before, the product rule gives <span class="math inline">\(\left(w_i\,\sigma_{ij}\right)_{,j} = w_{i,j}\,\sigma_{ij} + w_i\,\sigma_{ij,j}\)</span>, and the Divergence Theorem converts the integral of <span class="math inline">\(\left(w_i\,\sigma_{ij}\right)_{,j}\)</span> into an integral over the boundary. Therefore,</p>
+<div class="derivation">
+<p><span class="math display">\[
+-\int_\Omega w_{i,j}\,\sigma_{ij}\;d\Omega + \sum_{i=1}^{n_{sd}}\int_\Gamma w_i\,\sigma_{ij}\,n_j\;d\Gamma + \int_\Omega w_i\,f_i\;d\Omega = 0 .
+\]</span></p>
+</div>
+<div class="step">
+<p>For each <span class="math inline">\(i\)</span>, <span class="math inline">\(w_i = 0\)</span> on <span class="math inline">\(\Gamma_{g_i}\)</span>, and <span class="math inline">\(\Gamma = \Gamma_{g_i}\cup\Gamma_{h_i}\)</span> with <span class="math inline">\(\Gamma_{g_i}\cap\Gamma_{h_i} = \emptyset\)</span>. So, for each direction, the boundary integral only remains nonzero over <span class="math inline">\(\Gamma_{h_i}\)</span>, where the Neumann boundary condition gives <span class="math inline">\(\sigma_{ij}\,n_j = h_i\)</span>:</p>
+</div>
+<div class="derivation">
+<p><span class="math display">\[
+\sum_{i=1}^{n_{sd}}\int_\Gamma w_i\,\sigma_{ij}\,n_j\;d\Gamma
+= \sum_{i=1}^{n_{sd}}\int_{\Gamma_{h_i}} w_i\,\sigma_{ij}\,n_j\;d\Gamma
+= \sum_{i=1}^{n_{sd}}\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma .
+\]</span></p>
+</div>
+<p>The remaining step replaces <span class="math inline">\(w_{i,j}\)</span> in the first integral with its symmetric part, <span class="math inline">\(w_{(i,j)}\)</span>. This uses a property of tensors that holds for any rank two tensor <span class="math inline">\(s_{ij}\)</span>. Every such tensor can be split into a symmetric part and an antisymmetric part:</p>
+<p><span class="math display">\[
+s_{ij}
+= \underbrace{\frac{s_{ij} + s_{ji}}{2}}_{s_{(ij)}}
++ \underbrace{\frac{s_{ij} - s_{ji}}{2}}_{s_{[ij]}} ,
+\qquad
+s_{(ij)} = s_{(ji)},
+\qquad
+s_{[ij]} = -s_{[ji]} .
+\]</span></p>
+<p>If <span class="math inline">\(s_{ij}\)</span> multiplies a symmetric tensor <span class="math inline">\(t_{ij} = t_{ji}\)</span>, then the antisymmetric part contributes nothing:</p>
+<p><span class="math display">\[
+s_{[ij]}\,t_{ij}
+= -s_{[ji]}\,t_{ij}
+= -s_{[ji]}\,t_{ji}
+= -s_{[ij]}\,t_{ij}
+\quad\Longrightarrow\quad
+s_{[ij]}\,t_{ij} = 0 .
+\]</span></p>
+<p>The first step uses the antisymmetry of <span class="math inline">\(s_{[ij]}\)</span>, and the second uses the symmetry of <span class="math inline">\(t_{ij}\)</span>. The third renames the indices, exchanging <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>, which is allowed because both indices are summed over, so their names do not matter. A quantity that equals its own negative is zero. Therefore <span class="math inline">\(s_{ij}\,t_{ij} = s_{(ij)}\,t_{ij}\)</span>.</p>
+<p>Since the stress is symmetric, this result applies with <span class="math inline">\(s_{ij} = w_{i,j}\)</span> and <span class="math inline">\(t_{ij} = \sigma_{ij}\)</span>, so that <span class="math inline">\(w_{i,j}\,\sigma_{ij} = w_{(i,j)}\,\sigma_{ij}\)</span>. Combining the steps gives</p>
+<div class="derivation">
+<p><span class="math display">\[
+\boxed{\;
+\int_\Omega \underbrace{w_{(i,j)}}_{\substack{\text{virtual}\\ \text{strain}}}\;\underbrace{\sigma_{ij}}_{\substack{\text{real}\\ \text{stress}}}\;d\Omega
+= \int_\Omega w_i\,f_i\;d\Omega + \sum_{i=1}^{n_{sd}}\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma
+\;}
+\]</span></p>
+</div>
+<p>which is the weak form (W).</p>
+<p>The left side is the <strong>internal virtual work</strong>: the work done by the real stresses as the material undergoes the virtual strains. The right side is the <strong>external virtual work</strong>: the work done by the body forces and the applied tractions as their points move through the virtual displacement. The supports do no virtual work, because the virtual displacement is zero wherever a displacement is prescribed. The principle of virtual work states that a body is in equilibrium when these two quantities are equal for every virtual displacement that the supports allow. As shown in <a href="../chapters/23_Class.html">Class 23</a> for the Poisson Equation, this is also the condition for the solution to minimize the total potential energy, and here that energy is the physical strain energy of the body minus the work of the applied loads.</p>
+</section>
+<section id="summary" class="level2" data-number="26.8">
+<h2 data-number="26.8" class="anchored" data-anchor-id="summary"><span class="header-section-number">26.8</span> Summary</h2>
+<ul>
+<li>The unknown in linear elasticity is the displacement, a vector, so the problem has one differential equation and one set of boundary conditions for each direction.</li>
+<li>The strain is the symmetric part of the displacement gradient, <span class="math inline">\(\varepsilon_{ij} = u_{(i,j)}\)</span>, and the stress follows from the generalized Hooke’s law, <span class="math inline">\(\sigma_{ij} = c_{ijkl}\,\varepsilon_{kl}\)</span>.</li>
+<li>The elastic coefficients have major and minor symmetries and are positive definite, which makes the stress symmetric and the stiffness matrix symmetric and positive definite.</li>
+<li>For an isotropic material, the coefficients depend only on the two Lamé parameters <span class="math inline">\(\lambda\)</span> and <span class="math inline">\(\mu\)</span>, or equivalently on <span class="math inline">\(E\)</span> and <span class="math inline">\(\nu\)</span>.</li>
+<li>The boundary is divided into <span class="math inline">\(\Gamma_{g_i}\)</span> and <span class="math inline">\(\Gamma_{h_i}\)</span> separately for each direction <span class="math inline">\(i\)</span>.</li>
+<li>The weak form is the principle of virtual work: the internal virtual work of the real stresses through the virtual strains equals the external virtual work of the loads through the virtual displacements.</li>
+<li>Replacing <span class="math inline">\(w_{i,j}\)</span> with its symmetric part <span class="math inline">\(w_{(i,j)}\)</span> in the weak form is allowed because the stress is symmetric.</li>
+</ul>
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+<nav class="page-navigation column-body" aria-label="Page">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/25_Class.html" class="pagination-link" aria-label="Class 25: Applications and Interpretation, Continued">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Class 25: Applications and Interpretation, Continued</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/27_Class.html" class="pagination-link" aria-label="Class 27: Voigt Notation and the Elasticity Matrix">
+        <span class="nav-page-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Class 27: Voigt Notation and the Elasticity Matrix</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

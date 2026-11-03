@@ -8,7 +8,7 @@
 
 <meta name="description" content="Finite Element Methods">
 
-<title>24&nbsp; Class 24: Applications and Interpretation – CE/ME 507 — Class Notes</title>
+<title>24&nbsp; Classes 24 and 25: Applications and Interpretation – CE/ME 507 — Class Notes</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -49,7 +49,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-bd990e089991ec7d162b92b5e37a2dc1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-25d60f11bf0350d4acb1bb2c5c0bf5d1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -130,7 +130,7 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/24_Class.html"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Class 24: Applications and Interpretation</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/24_Class.html"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Classes 24 and 25: Applications and Interpretation</span></a></li></ol></nav>
         <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -296,13 +296,13 @@ window.Quarto = {
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../chapters/24_Class.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Class 24: Applications and Interpretation</span></span></a>
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Classes 24 and 25: Applications and Interpretation</span></span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
- <span class="menu-text" id="quarto-sidebar-section-1-label">Class 24 applications</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+ <span class="menu-text" id="quarto-sidebar-section-1-label">Classes 24 and 25 applications</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
       </div>
       <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
@@ -331,6 +331,24 @@ window.Quarto = {
 </li>
       </ul>
   </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/25_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Class 25: Applications and Interpretation, Continued</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/26_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Class 26: Linear Elasticity and the Principle of Virtual Work</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/27_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Class 27: Voigt Notation and the Elasticity Matrix</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
@@ -426,7 +444,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Class 24: Applications and Interpretation</span></h1>
+<h1 class="title"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Classes 24 and 25: Applications and Interpretation</span></h1>
 <p class="subtitle lead">One equation in many fields: setting up a problem, choosing what to compute, and checking the result</p>
 </div>
 
@@ -444,7 +462,7 @@ window.Quarto = {
 </header>
 
 
-<p>Every problem in this course so far has used the same boundary value problem, the Poisson Equation, with different interpretations. Heat conduction has been the running example, but the same equation describes many other physical problems, in which the unknown, the coefficient, and the boundary conditions have different names and meanings. This class describes how to recognize such a problem, set it up for a solver, decide what to compute from the solution, and check that the result can be trusted. Five application pages accompany it, listed in <a href="#tbl-c24-pages" class="quarto-xref">Table&nbsp;<span>24.1</span></a>, and each follows the same structure: the physical problem, the governing equation, the boundary conditions, the solution, the quantities of interest, checks, and the limits of the model.</p>
+<p>Every problem in this course so far has used the same boundary value problem, the Poisson Equation, with different interpretations. Heat conduction has been the running example, but the same equation describes many other physical problems, in which the unknown, the coefficient, and the boundary conditions have different names and meanings. These two classes describe how to recognize such a problem, set it up for a solver, decide what to compute from the solution, and check that the result can be trusted. Five application pages accompany it, listed in <a href="#tbl-c24-pages" class="quarto-xref">Table&nbsp;<span>24.1</span></a>, and each follows the same structure: the physical problem, the governing equation, the boundary conditions, the solution, the quantities of interest, checks, and the limits of the model.</p>
 <div id="tbl-c24-pages" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-c24-pages-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
