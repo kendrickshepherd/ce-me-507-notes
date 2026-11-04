@@ -1,0 +1,940 @@
+---
+title: "Class 28: The Galerkin Form of Elasticity and Assembly"
+subtitle: "Vector basis functions, the ID and IEN arrays with two unknowns at each node, and local and global assembly"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+format:
+  html:
+    page-layout: full
+    toc: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+import sys
+sys.path.append('python')
+from notes_style import use_chapter, save
+import elast_figs as EF
+IMGDIR = use_chapter("Class28")
+
+fig_basis_path = save(EF.fig_vector_basis(), "C28_Fig1_VectorBasis.png")
+fig_pq_path = save(EF.fig_local_pq(), "C28_Fig2_LocalNumbering.png")
+```
+
+In [Class 27](27_Class.qmd), the weak form of elasticity was written with vectors and matrices:
+
+$$
+\int_\Omega \underline{\epsilon}(\underline{w})^T\,\underline{\underline{D}}\;\underline{\epsilon}(\underline{u})\;d\Omega
+= \int_\Omega w_i\,f_i\;d\Omega + \sum_{i=0}^{n_{sd}-1}\left(\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma\right) .
+$$
+
+As in Classes 26 and 27, every index is numbered from 0: the coordinates are $x_0$ and $x_1$, and $u_0$ is the displacement along $x_0$.
+
+In this class, we follow the steps of [Class 7](7_Class.qmd) to turn it into a matrix equation, $\underline{\underline{K}}\,\underline{d} = \underline{F}$.
+The steps are the same as for the Poisson Equation.
+What is new is that for 2D elasticity each node now has two unknowns, one for each direction, and the ID array, the element arrays, and assembly must keep track of both of them.
+<!-- The integrals here are taken over a two-dimensional domain, for a body of unit thickness.
+For a plate of thickness $t$ in plane stress, each integral is multiplied by $t$.
+-->
+
+## The Galerkin form
+
+To shorten the notation, let
+
+$$
+\begin{aligned}
+a(\underline{w}, \underline{u}) &= \int_\Omega \underline{\epsilon}(\underline{w})^T\,\underline{\underline{D}}\;\underline{\epsilon}(\underline{u})\;d\Omega, \\
+(\underline{w}, \underline{f}) &= \int_\Omega w_i\,f_i\;d\Omega,
+\qquad
+(\underline{w}, \underline{h})_\Gamma = \sum_{i=0}^{n_{sd}-1}\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma .
+\end{aligned}
+$$
+
+As for the Poisson Equation, the trial solution is split into an unknown part $\underline{v}^h$, which is zero on the Dirichlet boundary, and a known part $\underline{g}^h$, which takes the prescribed values there, so that $\underline{u}^h = \underline{v}^h + \underline{g}^h$.
+Each component is treated separately: $v^h_i = 0$ and $g^h_i = g_i$ on $\Gamma_{g_i}$, and every weighting function has $w^h_i = 0$ on $\Gamma_{g_i}$.
+The Galerkin form is then
+
+$$
+(\mathrm{G})\qquad
+\begin{aligned}
+&\text{Given } \underline{f},\; \underline{g},\; \underline{h}, \text{ and } \underline{\underline{D}}, \text{ find } \underline{u}^h = \underline{v}^h + \underline{g}^h, \text{ with } \underline{v}^h \in \mathcal{V}^h, \\
+&\text{such that for all } \underline{w}^h \in \mathcal{V}^h, \\[2pt]
+&\qquad a(\underline{w}^h, \underline{v}^h) = (\underline{w}^h, \underline{f}) + (\underline{w}^h, \underline{h})_\Gamma - a(\underline{w}^h, \underline{g}^h) .
+\end{aligned}
+$$
+
+The last term contains only known quantities, so it belongs on the right-hand side, as it did for the Poisson Equation.
+
+## Vector basis functions
+
+Each component of the displacement is built from the same scalar basis functions $N_A$ that were used for the Poisson Equation.
+The index $i$ of a component is called its **degree of freedom**: $i = 0$ is the component along $x_0$, and $i = 1$ is the component along $x_1$.
+Let $\eta_{g_i}$ be the set of nodes on $\Gamma_{g_i}$, at which degree of freedom $i$ is prescribed.
+Then, for $i = 0$ and $1$,
+
+$$
+v^h_i = \sum_{A \notin \eta_{g_i}} N_A\,d_{iA},
+\qquad
+g^h_i = \sum_{A \in \eta_{g_i}} N_A\,g_{iA} .
+$$
+
+Here $d_{iA}$ is the unknown displacement of node $A$ along degree of freedom $i$, and $g_{iA}$ is a prescribed one.
+Since the boundary is divided separately for each direction, the sums for the two degrees of freedom can run over different sets of nodes.
+
+The two components combine into a vector:
+
+$$
+\underline{v}^h = \sum_{i=0}^{1} v^h_i\,\underline{e}_i
+= v^h_0 \begin{bmatrix} 1 \\ 0 \end{bmatrix} + v^h_1 \begin{bmatrix} 0 \\ 1 \end{bmatrix}
+= \sum_{i=0}^{1}\;\sum_{A \notin \eta_{g_i}} d_{iA}\,N_A\,\underline{e}_i ,
+$$
+
+where $\underline{e}_0$ and $\underline{e}_1$ are the unit vectors along $x_0$ and $x_1$.
+Each product $N_A\,\underline{e}_i$ is a **vector basis function**: the displacement field in which node $A$ moves one unit along degree of freedom $i$ and every other node stays in place (@fig-c28-basis).
+As a result, each node has two unknowns, $d_{0A}$ and $d_{1A}$, and two vector basis functions.
+A roller support prescribes one of them and leaves the other unknown.
+
+![(a) The scalar basis function $N_A$ of an interior node, the same function used for the Poisson Equation. (b, c) The two vector basis functions built from it, $N_A\,\underline{e}_0$ and $N_A\,\underline{e}_1$. Each is a displacement field in which node $A$ moves one unit in one direction, the other nodes do not move, and the four elements around $A$ deform.](`{python} fig_basis_path`){#fig-c28-basis width=100%}
+
+## The matrix equation
+
+The weighting function is expanded in the same way, $\underline{w}^h = \sum_{i=0}^{1}\sum_{A \notin \eta_{g_i}} c_{iA}\,N_A\,\underline{e}_i$.
+Substituting the expansions into (G), and using the fact that the coefficients $c_{iA}$ are arbitrary, gives one equation for each unknown, similar to what was done in [Class 7](7_Class.qmd).
+The equation for node $A$ and degree of freedom $i$ is
+
+::: {.derivation}
+$$
+\begin{aligned}
+\sum_{j=0}^{1}\;\sum_{B \notin \eta_{g_j}} a\!\left(N_A\,\underline{e}_i,\; N_B\,\underline{e}_j\right) d_{jB}
+= \;& \left(N_A\,\underline{e}_i,\; \underline{f}\right) + \left(N_A\,\underline{e}_i,\; \underline{h}\right)_\Gamma \\
+& - \sum_{j=0}^{1}\;\sum_{B \in \eta_{g_j}} a\!\left(N_A\,\underline{e}_i,\; N_B\,\underline{e}_j\right) g_{jB} .
+\end{aligned}
+$$
+:::
+
+It is the balance of forces at node $A$ along degree of freedom $i$, since the virtual displacement $N_A\,\underline{e}_i$ moves only that node, and only in that direction.
+
+To evaluate $a(N_A\,\underline{e}_i, N_B\,\underline{e}_j)$, we need the strain vector of a vector basis function.
+From [Class 27](27_Class.qmd), $\underline{\epsilon}(\underline{u}) = \left(u_{0,0},\; u_{1,1},\; u_{0,1} + u_{1,0}\right)^T$, so
+
+$$
+\underline{\epsilon}(N_B\,\underline{e}_0) = \begin{bmatrix} N_{B,0} \\ 0 \\ N_{B,1} \end{bmatrix},
+\qquad
+\underline{\epsilon}(N_B\,\underline{e}_1) = \begin{bmatrix} 0 \\ N_{B,1} \\ N_{B,0} \end{bmatrix} ,
+$$
+
+where $N_{B,0}$ and $N_{B,1}$ are the derivatives of $N_B$ with respect to $x_0$ and $x_1$.
+You should spend a moment convincing yourself about how to get these vectors before you move on.
+These are the two columns of the matrix
+
+$$
+\underline{\underline{B}}_B = \begin{bmatrix} N_{B,0} & 0 \\ 0 & N_{B,1} \\ N_{B,1} & N_{B,0} \end{bmatrix} ,
+$$
+
+which is called the **strain-displacement matrix**, or B matrix, of node $B$.
+If node $B$ moves by $d_{0B}$ and $d_{1B}$, the strain it causes is $\underline{\underline{B}}_B$ multiplied by $(d_{0B}, d_{1B})^T$.
+Therefore
+
+::: {.derivation}
+$$
+a\!\left(N_A\,\underline{e}_i,\; N_B\,\underline{e}_j\right)
+= \underline{e}_i^T \left( \int_\Omega \underline{\underline{B}}_A^T\,\underline{\underline{D}}\;\underline{\underline{B}}_B\;d\Omega \right) \underline{e}_j ,
+$$
+:::
+
+which is the entry in row $i$ and column $j$ of a $2 \times 2$ matrix for the pair of nodes $A$ and $B$, with the rows and columns numbered from 0.
+
+Numbering the unknowns with equation numbers, the equations become
+
+::: {.derivation}
+$$
+\begin{aligned}
+&K_{PQ}\,d_Q = F_P,
+\qquad
+K_{PQ} = a\!\left(N_A\,\underline{e}_i,\; N_B\,\underline{e}_j\right), \\
+&F_P = \left(N_A\,\underline{e}_i,\; \underline{f}\right) + \left(N_A\,\underline{e}_i,\; \underline{h}\right)_\Gamma - \sum_{j=0}^{1}\;\sum_{B \in \eta_{g_j}} a\!\left(N_A\,\underline{e}_i,\; N_B\,\underline{e}_j\right) g_{jB} ,
+\end{aligned}
+$$
+:::
+
+where $P$ is the equation number of degree of freedom $i$ of node $A$, and $Q$ is that of degree of freedom $j$ of node $B$.
+In matrix form,
+
+$$
+\boxed{\underline{\underline{K}}\,\underline{d} = \underline{F}}
+$$
+
+Each pair of nodes that share an element contributes a $2 \times 2$ block to $\underline{\underline{K}}$.
+The diagonal entries of the block relate displacements in the same direction, and the off-diagonal entries relate the two directions, through the Poisson effect and through shear.
+
+## The ID array
+
+In [Class 14](14_Class.qmd), the ID array gave one equation number for each node.
+In elasticity, each node has one equation number for each direction:
+
+$$
+\mathrm{ID}(i, A) =
+\begin{cases}
+P, & \text{if degree of freedom } i \text{ of node } A \text{ is unknown} \\
+-1, & \text{if it is prescribed}
+\end{cases}
+$$
+
+where $P$ is its equation number.
+
+Here $i$ is the degree of freedom, 0 for the displacement along $x_0$ and 1 for the displacement along $x_1$, and $A$ is the global basis function number.
+As in Class 14, the equations are numbered consecutively from 0, skipping the prescribed components.
+They are often numbered node by node, with both degrees of freedom of node 0, then both degrees of freedom of node 1, and so on.
+This keeps the two unknowns of a node next to each other, so that each $2 \times 2$ block of $\underline{\underline{K}}$ stays together.
+A node on a roller support has one equation number and one $-1$.
+
+The IEN array is unchanged.
+It relates the local and global numbers of the basis functions, which do not depend on the direction.
+Composing the two arrays gives the equation number of each local unknown,
+
+$$
+\mathrm{LM}(i, a, e) = \mathrm{ID}\big(i,\; \mathrm{IEN}(a, e)\big) .
+$$
+
+## The element stiffness matrix
+
+As for the Poisson Equation, the integral over $\Omega$ is the sum of the integrals over the elements.
+On element $e$, the $2 \times 2$ block for local nodes $a$ and $b$ is
+
+::: {.derivation}
+$$
+\begin{aligned}
+\underline{\underline{k}}^e_{ab} &= \int_{\Omega^e} \underline{\underline{B}}_a^T\,\underline{\underline{D}}\;\underline{\underline{B}}_b\;d\Omega \\
+&= \int_{\Omega^e}
+\begin{bmatrix} N_{a,0} & 0 \\ 0 & N_{a,1} \\ N_{a,1} & N_{a,0} \end{bmatrix}^T
+\begin{bmatrix} \lambda + 2\mu & \lambda & 0 \\ \lambda & \lambda + 2\mu & 0 \\ 0 & 0 & \mu \end{bmatrix}
+\begin{bmatrix} N_{b,0} & 0 \\ 0 & N_{b,1} \\ N_{b,1} & N_{b,0} \end{bmatrix}
+d\Omega
+\end{aligned}
+$$
+:::
+
+for a homogeneous, isotropic material in plane strain; in plane stress, $\lambda$ is replaced by $\bar{\lambda}$.
+Multiplying out the matrices gives
+
+::: {.derivation}
+$$
+\underline{\underline{k}}^e_{ab} = \int_{\Omega^e}
+\begin{bmatrix}
+(\lambda + 2\mu)\,N_{a,0}N_{b,0} + \mu\,N_{a,1}N_{b,1} & \lambda\,N_{a,0}N_{b,1} + \mu\,N_{a,1}N_{b,0} \\
+\lambda\,N_{a,1}N_{b,0} + \mu\,N_{a,0}N_{b,1} & (\lambda + 2\mu)\,N_{a,1}N_{b,1} + \mu\,N_{a,0}N_{b,0}
+\end{bmatrix} d\Omega .
+$$
+:::
+
+The rows and columns of the block are the degrees of freedom, numbered from 0, so that row 0 is the $x_0$ direction and row 1 is the $x_1$ direction.
+The entry in row $i$ and column $j$ is the force on local node $a$ along degree of freedom $i$ caused by a unit displacement of local node $b$ along degree of freedom $j$, with every other displacement held at zero.
+When the blocks are put together into one element matrix, in the next section, each pair $(a, i)$ becomes a single row number $\hat{p}$ and each pair $(b, j)$ a single column number $\hat{q}$ (@fig-c28-pq).
+Each diagonal entry has the form of the Poisson Equation's $\int \nabla N_a\cdot\kappa\nabla N_b\,d\Omega$, with one stiffness along the direction of the displacement and another across it.
+The off-diagonal entries are new, and they couple the two directions.
+The integrals are evaluated by Gauss quadrature, with the derivatives $N_{a,0}$ and $N_{a,1}$ computed through the Jacobian of the element map, exactly as for the Poisson Equation.
+
+## Local assembly
+
+**Local assembly** places the $n_{en} \times n_{en}$ blocks $\underline{\underline{k}}^e_{ab}$ into a single element stiffness matrix $\underline{\underline{k}}^e$.
+How many blocks there are depends on the polynomial degree $p$ of the element.
+A tensor-product element of degree $p$ has $p + 1$ nodes along each side, numbered by the stride rule $a = a_\xi + (p+1)\,a_\eta$ of [Class 11](11_Class.qmd), so it has $n_{en} = (p+1)^2$ local nodes.
+Each local node has two unknowns, so $\underline{\underline{k}}^e$ is made of $(p+1)^2 \times (p+1)^2$ blocks of size $2 \times 2$, and it is a $2(p+1)^2 \times 2(p+1)^2$ matrix:
+
+| Degree $p$ | Local nodes $n_{en}$ | Blocks $\underline{\underline{k}}^e_{ab}$ | Size of $\underline{\underline{k}}^e$ |
+|:-:|:-:|:-:|:-:|
+| 1 | 4 | 16 | $8 \times 8$ |
+| 2 | 9 | 81 | $18 \times 18$ |
+| 3 | 16 | 256 | $32 \times 32$ |
+| $p$ | $(p+1)^2$ | $(p+1)^4$ | $2(p+1)^2 \times 2(p+1)^2$ |
+
+Each local node takes up two rows and two columns of $\underline{\underline{k}}^e$.
+The rows are numbered with a single **local equation number** $\hat{p}$, and the columns with $\hat{q}$:
+
+$$
+\hat{p} = 2a + i, \qquad \hat{q} = 2b + j ,
+$$
+
+each running from 0 to $2n_{en} - 1$.
+The hats distinguish these indices from the polynomial degree $p$.
+The formula is the same at every degree, since a higher degree only adds local nodes, and with them more pairs of rows and columns.
+The rows are ordered like the global equations, node by node, and run through $(a, i) = (0, 0), (0, 1), (1, 0), (1, 1), \ldots, (n_{en} - 1, 1)$.
+The entry of $\underline{\underline{k}}^e$ in row $\hat{p}$ and column $\hat{q}$ is the entry in row $i$ and column $j$ of the block for local nodes $a$ and $b$:
+
+$$
+k^e_{\hat{p}\hat{q}} = \left(\underline{\underline{k}}^e_{ab}\right)_{ij} .
+$$
+
+@fig-c28-pq shows the numbering for a four-node element, with $p = 1$.
+For example, row $\hat{p} = 3$ belongs to local node $a = 1$ along $x_1$, and column $\hat{q} = 4$ belongs to local node $b = 2$ along $x_0$.
+The entry $k^e_{34}$ is therefore the force at local node 1 along $x_1$ caused by a unit displacement of local node 2 along $x_0$.
+To go back from $\hat{p}$ to $(a, i)$, divide $\hat{p}$ by 2: $a$ is the quotient and $i$ is the remainder, as in Python's `a, i = divmod(p_hat, 2)`.
+For a nine-node element, with $p = 2$, the same rule numbers the rows $\hat{p} = 0, \ldots, 17$, and the widget below shows the resulting $18 \times 18$ matrix.
+In three dimensions, each node has three unknowns and a tensor-product element has $(p+1)^3$ nodes, so $\hat{p} = 3a + i$ and $\underline{\underline{k}}^e$ is $3(p+1)^3 \times 3(p+1)^3$.
+
+![(a) The eight unknowns of a four-node element, one arrow for each local node $a$ and degree of freedom $i$, labeled with the local equation number $\hat{p} = 2a + i$. The local nodes are numbered by the stride rule, so node 2 is at the top left. (b) The rows and columns of the element stiffness matrix $\underline{\underline{k}}^e$ in this numbering, with $(a, i)$ beside each row and $(b, j)$ above each column. The thick lines divide the matrix into the $2 \times 2$ blocks $\underline{\underline{k}}^e_{ab}$. The shaded block belongs to local nodes 1 and 2, and its entry in row $i = 1$ and column $j = 0$ is $k^e_{34}$, the force along unknown 3 caused by a unit displacement along unknown 4, both boxed in (a).](`{python} fig_pq_path`){#fig-c28-pq width=100%}
+
+The element force vector is built in the same way, from a vector with two entries for each local node, so that $f^e_{\hat{p}} = \left(\underline{f}^e_a\right)_i$:
+
+::: {.derivation}
+$$
+\underline{f}^e_a = \int_{\Omega^e} N_a\,\underline{f}\;d\Omega
++ \int_{\Gamma^e \cap \Gamma_h} N_a\,\underline{h}\;d\Gamma
+- \sum_{b=0}^{n_{en}-1} \underline{\underline{k}}^e_{ab}\,\underline{g}_b ,
+$$
+:::
+
+where $\underline{g}_b$ holds the prescribed displacements of local node $b$, with a zero for each one that is unknown.
+Each component of the traction term is integrated over its own part of the boundary, the $x_0$ component over $\Gamma_{h_0}$ and the $x_1$ component over $\Gamma_{h_1}$, so a side on rollers that fix $u_0$ still receives its $h_1$ term.
+
+## Global assembly
+
+**Global assembly** adds each entry of each block $\underline{\underline{k}}^e_{ab}$ into $\underline{\underline{K}}$, and each entry of $\underline{f}^e$ into $\underline{F}$, at the locations given by LM:
+
+::: {.derivation}
+$$
+\begin{aligned}
+&K_{PQ} \mathrel{+}= \left(\underline{\underline{k}}^e_{ab}\right)_{ij},
+\qquad
+F_P \mathrel{+}= \left(\underline{f}^e_a\right)_i, \\
+&\text{where}\quad
+P = \mathrm{LM}(i, a, e)\quad\text{and}\quad Q = \mathrm{LM}(j, b, e) .
+\end{aligned}
+$$
+:::
+
+Here $i$ and $j$ are degrees of freedom, 0 or 1.
+With the local equation numbers, the same rule is $K_{PQ} \mathrel{+}= k^e_{\hat{p}\hat{q}}$ and $F_P \mathrel{+}= f^e_{\hat{p}}$, with $P = \mathrm{LM}(\hat{p}, e)$ and $Q = \mathrm{LM}(\hat{q}, e)$, where $\mathrm{LM}(\hat{p}, e)$ is $\mathrm{LM}(i, a, e)$ with $a$ and $i$ combined into $\hat{p}$.
+This is the form used on the [Linear Elasticity II](Elasticity2D_FEM.qmd) page.
+Every row with $P = -1$ and every column with $Q = -1$ is skipped.
+A skipped row belongs to a prescribed displacement, which has no equation.
+A skipped column has already been moved to the right-hand side, through the last term of $\underline{f}^e$.
+Written as loops, with the ID array indexed by node first, `ID[A, i]`, global assembly is
+
+```python
+for e in range(n_el):
+    ke, fe = LocalStiffness(e), LocalForce(e)    # 2 n_en x 2 n_en matrix, vector of 2 n_en entries
+    # (Account for boundary terms)
+    for a in range(n_en):
+        A = IEN[e][a]
+        for i in range(2):
+            P = ID[A, i]
+            if P == -1:
+                continue
+            p_hat = 2 * a + i
+            F[P] += fe[p_hat]
+            for b in range(n_en):
+                B = IEN[e][b]
+                for j in range(2):
+                    Q = ID[B, j]
+                    if Q == -1:
+                        continue
+                    q_hat = 2 * b + j
+                    K[P, Q] += ke[p_hat, q_hat]
+```
+
+Compared with the Poisson Equation, the only changes are the two inner loops over the degrees of freedom, `i` and `j`, and the local equation numbers $\hat{p}$ and $\hat{q}$ that they form.
+
+## The arrays and assembly, interactively
+
+The widget below follows these arrays on a mesh of six square elements, of degree 1, with four nodes each and 12 nodes in all, or of degree 2, with nine nodes each and 35 nodes in all.
+Since all six elements are identical squares, they share one element stiffness matrix, shown for a material with $\nu$ = 0.3 in plane stress and divided by $E\,t$, where $E$ is Young's modulus and $t$ is the thickness of the plate; the entries of a square element do not depend on its size.
+Only their LM arrays, and so the places where their entries land in $\underline{\underline{K}}$, differ.
+Each node is labeled with its global number, inside its circle, and with its two equation numbers, $\to$ for $u_0$ and $\uparrow$ for $u_1$.
+
+- Click a side of the mesh to change its support.
+  Each click moves through free, $u_0$ held, $u_1$ held, and both held.
+  Triangles mark a side held in one direction, pointing along that direction, and hatching marks a side held in both.
+- Click a node to follow it through the arrays and into $\underline{\underline{K}}$, and click an element to show its local arrays and its $\underline{\underline{k}}^e$.
+- Hover over, or tap, an entry of $\underline{\underline{k}}^e$ to see where it goes in $\underline{\underline{K}}$, or an entry of $\underline{\underline{K}}$ to see where it came from.
+- Use the assembly buttons to build $\underline{\underline{K}}$ one element at a time, and the degree buttons to switch between four-node and nine-node elements.
+
+::: {html-table-processing="none"}
+```{=html}
+<style>
+.c28{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;color:var(--ink)}
+.c28 .bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:10px 14px;
+  background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:12px}
+.c28 .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey)}
+.c28 .bar .gap{width:12px}
+.c28 button{font:inherit;font-size:13px;padding:4px 10px;border:1px solid #c3c9d2;border-radius:6px;background:#fff;cursor:pointer}
+.c28 button:hover{background:#eef1f5}
+.c28 .seg{display:inline-flex;border:1px solid #c3c9d2;border-radius:6px;overflow:hidden}
+.c28 .seg button{border:0;border-radius:0;border-right:1px solid #c3c9d2}
+.c28 .seg button:last-child{border-right:0}
+.c28 .seg button[aria-pressed="true"]{background:#18202b;color:#fff}
+.c28 .row{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;margin-bottom:12px}
+.c28 .panel{border:1px solid var(--faint);border-radius:8px;background:#fff;padding:6px}
+.c28 .mesh{flex:1 1 440px;max-width:580px}
+.c28 .arrays{flex:1 1 330px;min-width:0}
+.c28 .local{flex:1 1 380px;max-width:480px}
+.c28 .global{flex:1 1 420px;max-width:520px}
+.c28 svg{display:block;width:100%;height:auto}
+.c28 .h{font-size:.92em;font-weight:600;color:#42506a;margin:4px 2px 6px}
+.c28 .h span{font-weight:400;color:var(--grey)}
+.c28 .scroll{overflow-x:auto}
+.c28 table.t{border-collapse:collapse;font-family:monospace;font-size:.82em;margin-bottom:10px}
+.c28 table.t th,.c28 table.t td{border:1px solid #e3e7ec;padding:2px 6px;text-align:center;min-width:24px}
+.c28 table.t th{background:#f3f5f8;font-weight:600;color:#42506a}
+.c28 table.t td.pre{background:#fbe6e4;color:#b8322a}
+.c28 table.t td.col,.c28 table.t th.col{background:#eef3fb}
+.c28 table.t td.hot{background:#ffe9a8;font-weight:700;outline:2px solid #e0a800;outline-offset:-2px}
+.c28 .read{font-family:monospace;font-size:.84em;background:var(--paper);border:1px solid var(--faint);
+  border-radius:8px;padding:9px 12px;line-height:1.65;min-height:3.4em;margin-bottom:12px}
+.c28 .read b{color:#b8322a}
+.c28 .note{color:var(--grey);font-size:.84em;margin:4px 2px}
+.c28 .cap{font-size:13px;color:var(--grey);line-height:1.55;margin:4px 2px 22px}
+</style>
+
+<div class="c28">
+  <div class="bar">
+    <b>DEGREE</b>
+    <span class="seg" id="c28deg"><button data-p="1" aria-pressed="true">1 (four nodes)</button><button data-p="2" aria-pressed="false">2 (nine nodes)</button></span>
+    <span class="gap"></span>
+    <b>ASSEMBLY</b>
+    <button id="c28reset">empty K</button>
+    <button id="c28next">add the next element</button>
+    <button id="c28all">add all elements</button>
+    <span class="gap"></span>
+    <b>SUPPORTS</b>
+    <button id="c28roll">rollers on two sides</button>
+    <button id="c28fix">left side held</button>
+    <button id="c28free">no supports</button>
+  </div>
+  <div class="row">
+    <div class="panel mesh"><svg id="c28mesh" viewBox="0 0 540 372" role="img" aria-label="A mesh of six square elements with node numbers, equation numbers, and supports"></svg></div>
+    <div class="arrays">
+      <div class="h">ID(i, A) <span>columns: node A; rows: degree of freedom i, 0 for u₀ and 1 for u₁; −1 where it is prescribed</span></div>
+      <div class="scroll"><table class="t" id="c28id"></table></div>
+      <div class="h">IEN(a, e) <span>rows: local node a; columns: element e</span></div>
+      <div class="scroll"><table class="t" id="c28ien"></table></div>
+      <div class="h">LM(i, a, e) = ID(i, IEN(a, e)) <span>for the selected element</span></div>
+      <div class="scroll"><table class="t" id="c28lm"></table></div>
+    </div>
+  </div>
+  <div class="read" id="c28read"></div>
+  <div class="row">
+    <div class="panel local"><div class="h" id="c28kh"></div><svg id="c28ke" role="img" aria-label="The element stiffness matrix of the selected element, in blocks of two by two"></svg></div>
+    <div class="panel global"><div class="h" id="c28Kh"></div><svg id="c28K" role="img" aria-label="The global stiffness matrix"></svg>
+      <div class="note">Red entries are positive and blue entries negative. White cells are zero because their two nodes share no element, and a dot marks an entry whose contributions cancel.</div></div>
+  </div>
+  <div class="read" id="c28probe"></div>
+  <div class="cap">
+    Top: the mesh, with each node's global number in its circle and its two equation numbers beside it, and the ID, IEN, and LM arrays; the local node numbers of the selected element are shown in its color.
+    Bottom left: the element stiffness matrix of the selected element, with each row and column labeled by its local node, its direction, and its LM entry; hatched rows and columns are skipped in assembly.
+    The thick lines divide it into 2 × 2 blocks, one for each pair of local nodes.
+    Bottom right: the global stiffness matrix, labeled by equation number, with thin lines between the equations of different nodes; outlined cells receive the selected element's entries (dashed if it has not been added yet).
+  </div>
+</div>
+
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const NX = 3, NY = 2, NEL = NX*NY;
+const INK="#18202b", GREY="#6b7684", FAINT="#dfe4ea", PRE="#b8322a", HOT="#e0a800", NAVY="#1e3a5f";
+const EC=["#dce9f8","#fae4d7","#dff0e2","#f0e2f2","#fbf0d2","#d9efed"];
+const ES=["#2f6db5","#c2410c","#3f8f5e","#8a4f9e","#b08900","#2c7a7b"];
+const SIDE=["bottom","right","top","left"], BCN=["free","u₀ held","u₁ held","u₀ and u₁ held"];
+const SUB=["₀","₁"], ARR=["→","↑"];
+
+// a support code per side: bit 1 holds u0, bit 2 holds u1
+const st = {p:1, bc:[2,0,0,1], elem:1, node:null, done:NEL, probe:null};
+
+/* ---------------- the mesh and the arrays ---------------- */
+// the nodes sit on a grid of (NX p + 1) by (NY p + 1), numbered row by row from the bottom left;
+// element e = ex + NX ey, and local node a = a_xi + (p + 1) a_eta, as in Class 11
+let M = null;
+function buildMesh(p){
+  const nx = NX*p + 1, ny = NY*p + 1, IEN = [];
+  for (let ey=0; ey<NY; ey++) for (let ex=0; ex<NX; ex++){
+    const ien = [];
+    for (let b=0; b<=p; b++) for (let a=0; a<=p; a++) ien.push((ex*p + a) + nx*(ey*p + b));
+    IEN.push(ien);
+  }
+  return {p, nx, ny, NNP:nx*ny, nen:(p+1)*(p+1), IEN};
+}
+const XY = A => [A % M.nx, Math.floor(A/M.nx)];
+const onSide = (A,k) => { const [x,y] = XY(A); return [y===0, x===M.nx-1, y===M.ny-1, x===0][k]; };
+
+function buildID(){
+  const held = [new Set(), new Set()];
+  for (let A=0; A<M.NNP; A++) st.bc.forEach((s,k) => {
+    if (!onSide(A,k)) return;
+    if (s & 1) held[0].add(A);
+    if (s & 2) held[1].add(A);
+  });
+  // equations numbered node by node, skipping the prescribed components
+  const ID = [], eqs = []; let n = 0;
+  for (let A=0; A<M.NNP; A++) ID.push([0,1].map(i => { if (held[i].has(A)) return -1; eqs.push([A,i]); return n++; }));
+  return {ID, eqs, neq:n, held};
+}
+
+// the element stiffness matrix of a unit square in plane stress, divided by E t, by Gauss quadrature
+const NU = 0.3, KES = {};
+function elementK(p){
+  if (KES[p]) return KES[p];
+  const c = 1/(1-NU*NU), D = [[c, c*NU, 0], [c*NU, c, 0], [0, 0, c*(1-NU)/2]];
+  const t = Array.from({length:p+1}, (_,k) => -1 + 2*k/p);
+  // one-dimensional Lagrange polynomials through the points t, and their derivatives
+  const L = (k,x) => t.reduce((acc,tm,m) => m === k ? acc : acc*(x - tm)/(t[k] - tm), 1);
+  const dL = (k,x) => t.reduce((acc,tm,m) => m === k ? acc
+    : acc + t.reduce((pr,tn,n) => (n === k || n === m) ? pr : pr*(x - tn)/(t[k] - tn), 1)/(t[k] - tm), 0);
+  const G = p === 1 ? [[-1/Math.sqrt(3), 1], [1/Math.sqrt(3), 1]]
+                    : [[-Math.sqrt(0.6), 5/9], [0, 8/9], [Math.sqrt(0.6), 5/9]];
+  const nen = (p+1)*(p+1), n = 2*nen, k = Array.from({length:n}, () => new Array(n).fill(0));
+  for (const [xi,wx] of G) for (const [eta,wy] of G){
+    // x = (xi + 1)/2, so d/dx = 2 d/dxi, and the Jacobian determinant is 1/4
+    const B = [];
+    for (let a=0; a<nen; a++){
+      const ax = a % (p+1), ay = Math.floor(a/(p+1));
+      const nx = 2*dL(ax,xi)*L(ay,eta), ny = 2*L(ax,xi)*dL(ay,eta);
+      B.push([[nx,0],[0,ny],[ny,nx]]);
+    }
+    const w = wx*wy/4;
+    for (let a=0;a<nen;a++) for (let b=0;b<nen;b++) for (let i=0;i<2;i++) for (let j=0;j<2;j++){
+      let s = 0;
+      for (let r=0;r<3;r++) for (let q=0;q<3;q++) s += B[a][r][i]*D[r][q]*B[b][q][j];
+      k[2*a+i][2*b+j] += w*s;
+    }
+  }
+  let max = 0; k.forEach(r => r.forEach(v => { max = Math.max(max, Math.abs(v)); }));
+  return KES[p] = {k, max};
+}
+let KE = null, KMAX = 1;
+
+// global assembly of the first st.done elements, keeping a record of every contribution
+function assemble(ar){
+  const n = ar.neq, nen = M.nen;
+  const K = Array.from({length:n}, () => new Array(n).fill(0));
+  const C = Array.from({length:n}, () => Array.from({length:n}, () => []));
+  for (let e=0; e<st.done; e++)
+    for (let a=0;a<nen;a++){ const A = M.IEN[e][a];
+      for (let i=0;i<2;i++){ const P = ar.ID[A][i]; if (P < 0) continue;
+        for (let b=0;b<nen;b++){ const B = M.IEN[e][b];
+          for (let j=0;j<2;j++){ const Q = ar.ID[B][j]; if (Q < 0) continue;
+            const v = KE[2*a+i][2*b+j];
+            K[P][Q] += v; C[P][Q].push({e, a, b, v});
+          }
+        }
+      }
+    }
+  return {K, C};
+}
+
+// the rigid motions that the supports leave free
+function rigid(held){
+  const ys = new Set([...held[0]].map(A => XY(A)[1])), xs = new Set([...held[1]].map(A => XY(A)[0]));
+  const m = [];
+  if (!held[0].size) m.push("a translation along x₀");
+  if (!held[1].size) m.push("a translation along x₁");
+  if (ys.size <= 1 && xs.size <= 1) m.push("a rotation");
+  return m;
+}
+
+/* ---------------- helpers ---------------- */
+const f1 = v => v.toFixed(1);
+const R  = (x,y,w,h,a) => `<rect x="${f1(x)}" y="${f1(y)}" width="${f1(w)}" height="${f1(h)}" ${a||""}/>`;
+const Ln = (x1,y1,x2,y2,a) => `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" ${a||""}/>`;
+const Tx = (x,y,s,a) => `<text x="${f1(x)}" y="${f1(y)}" ${a||""}>${s}</text>`;
+const Pg = (pts,a) => `<polygon points="${pts.map(p => f1(p[0])+","+f1(p[1])).join(" ")}" ${a||""}/>`;
+const lab = v => v < 0 ? "−1" : String(v);
+const fmt = v => Math.abs(v) < 5e-4 ? "0.000" : (v < 0 ? "−" : "") + Math.abs(v).toFixed(3);
+function heat(v, vmax){
+  if (Math.abs(v) < 1e-12) return "#ffffff";
+  const t = Math.min(1, Math.abs(v)/vmax), f = 0.12 + 0.78*Math.pow(t, 0.75);
+  const base = v > 0 ? [192,57,43] : [31,111,235];
+  return "rgb(" + base.map(c => Math.round(255 + (c-255)*f)).join(",") + ")";
+}
+const textOn = (v, vmax) => Math.abs(v)/vmax > 0.5 ? "#fff" : INK;
+
+/* ---------------- what to highlight ---------------- */
+function highlights(ar){
+  const hl = {nodes:new Set(), elems:new Set(), dofs:new Set(), lms:new Set(), locals:new Set(), keCells:[], KCells:[]};
+  if (st.node !== null) M.IEN.forEach((E,e) => { if (E.includes(st.node)) hl.elems.add(e); });
+  const pr = st.probe, E = M.IEN[st.elem];
+  if (pr && pr.k === "ke"){
+    const a = pr.p>>1, i = pr.p&1, b = pr.q>>1, j = pr.q&1, A = E[a], B = E[b];
+    hl.nodes.add(A); hl.nodes.add(B); hl.dofs.add(A+","+i); hl.dofs.add(B+","+j);
+    hl.lms.add(a+","+i); hl.lms.add(b+","+j); hl.locals.add(a); hl.locals.add(b);
+    hl.keCells.push([pr.p, pr.q]);
+    const P = ar.ID[A][i], Q = ar.ID[B][j];
+    if (P >= 0 && Q >= 0) hl.KCells.push([P, Q]);
+  }
+  if (pr && pr.k === "K"){
+    const [A,i] = ar.eqs[pr.P], [B,j] = ar.eqs[pr.Q];
+    hl.nodes.add(A); hl.nodes.add(B); hl.dofs.add(A+","+i); hl.dofs.add(B+","+j);
+    M.IEN.forEach((F,e) => { if (F.includes(A) && F.includes(B)) hl.elems.add(e); });
+    hl.KCells.push([pr.P, pr.Q]);
+    const a = E.indexOf(A), b = E.indexOf(B);
+    if (a >= 0 && b >= 0){
+      hl.keCells.push([2*a+i, 2*b+j]);
+      hl.lms.add(a+","+i); hl.lms.add(b+","+j); hl.locals.add(a); hl.locals.add(b);
+    }
+  }
+  return hl;
+}
+
+/* ---------------- the mesh ---------------- */
+const S = 120, OX = 90, OY = 305;
+const px = x => OX + S*x, py = y => OY - S*y;                    // x and y in element widths
+const gX = A => px(XY(A)[0]/M.p), gY = A => py(XY(A)[1]/M.p);
+const NRM  = [[0,1],[1,0],[0,-1],[-1,0]];                        // outward normals, on the screen
+const ENDS = [[[0,0],[NX,0]], [[NX,0],[NX,NY]], [[0,NY],[NX,NY]], [[0,0],[0,NY]]];
+const EDIR = [[1,0],[0,-1]];                                     // x0 and x1, on the screen
+
+// each node's box of equation numbers sits above and to the right of it,
+// pushed clear of a support that acts along the right or the top side
+function badgeAt(A){
+  const [x,y] = XY(A);
+  const dx = (x === M.nx-1 && st.bc[1] === 2) ? 26 : 9, dy = (y === M.ny-1 && st.bc[2] === 1) ? 26 : 9;
+  return [gX(A) + dx, gY(A) - dy - 33];
+}
+
+function drawMesh(ar, hl){
+  const o = [], p = M.p;
+  for (let e=0; e<NEL; e++){
+    const ex = e % NX, ey = Math.floor(e/NX);
+    o.push(R(px(ex), py(ey+1), S, S, `fill="${EC[e]}" fill-opacity="${e===st.elem?1:0.55}" stroke="#c9d0d9" stroke-width="1.2" data-elem="${e}" style="cursor:pointer"`));
+  }
+  // the lines through the middle nodes of the nine-node elements
+  if (p === 2){
+    for (let k=0; k<NX; k++) o.push(Ln(px(k+0.5), py(0), px(k+0.5), py(NY), `stroke="#c9d0d9" stroke-dasharray="3 3" style="pointer-events:none"`));
+    for (let k=0; k<NY; k++) o.push(Ln(px(0), py(k+0.5), px(NX), py(k+0.5), `stroke="#c9d0d9" stroke-dasharray="3 3" style="pointer-events:none"`));
+  }
+  for (let e=0; e<NEL; e++){
+    const ex = e % NX, ey = Math.floor(e/NX), on = (e===st.elem), lit = hl.elems.has(e);
+    if (on || lit) o.push(R(px(ex)+1.5, py(ey+1)+1.5, S-3, S-3, `fill="none" stroke="${ES[e]}" stroke-width="${on?3:2}" style="pointer-events:none"`));
+    if (p === 1) o.push(Tx(px(ex+0.5), py(ey+0.5)+8, "e"+e, `text-anchor="middle" font-size="22" font-weight="700" fill="${ES[e]}" opacity="0.55" style="pointer-events:none"`));
+    else o.push(Tx(px(ex)+18, py(ey)-46, "e"+e, `text-anchor="middle" font-size="13" font-weight="700" fill="${ES[e]}" opacity="0.75" style="pointer-events:none"`));
+  }
+  // supports: a plain line for a free side, triangles for one direction, hatching for both
+  st.bc.forEach((s,k) => {
+    const [[ax,ay],[bx,by]] = ENDS[k], P0 = [px(ax),py(ay)], P1 = [px(bx),py(by)], n = NRM[k];
+    if (s === 3){
+      o.push(Ln(P0[0],P0[1],P1[0],P1[1], `stroke="${NAVY}" stroke-width="3"`));
+      const len = Math.hypot(P1[0]-P0[0], P1[1]-P0[1]), t = [(P1[0]-P0[0])/len, (P1[1]-P0[1])/len], N = Math.round(len/14);
+      for (let m=0; m<=N; m++){
+        const q = [P0[0]+t[0]*len*m/N, P0[1]+t[1]*len*m/N];
+        o.push(Ln(q[0], q[1], q[0]+12*(n[0]-t[0])/Math.SQRT2, q[1]+12*(n[1]-t[1])/Math.SQRT2, `stroke="${NAVY}" stroke-width="1.4"`));
+      }
+    } else {
+      o.push(Ln(P0[0],P0[1],P1[0],P1[1], `stroke="${INK}" stroke-width="2.4"`));
+      if (s){
+        const i = s-1, e = EDIR[i], ne = n[0]*e[0]+n[1]*e[1], sg = ne >= 0 ? 1 : -1, h = p === 1 ? 15 : 12, perp = [-e[1], e[0]];
+        for (let A=0; A<M.NNP; A++){
+          if (!onSide(A,k)) continue;
+          const off = Math.abs(ne) < 0.5 ? 0.75*h : 11;
+          const ap = [gX(A)+off*n[0], gY(A)+off*n[1]], bs = [ap[0]+sg*e[0]*h, ap[1]+sg*e[1]*h];
+          o.push(Pg([ap, [bs[0]+perp[0]*0.55*h, bs[1]+perp[1]*0.55*h], [bs[0]-perp[0]*0.55*h, bs[1]-perp[1]*0.55*h]], `fill="${NAVY}"`));
+          const rl = [bs[0]+sg*e[0]*3, bs[1]+sg*e[1]*3];
+          o.push(Ln(rl[0]+perp[0]*0.75*h, rl[1]+perp[1]*0.75*h, rl[0]-perp[0]*0.75*h, rl[1]-perp[1]*0.75*h, `stroke="${NAVY}" stroke-width="1.5"`));
+        }
+      }
+    }
+    o.push(Ln(P0[0],P0[1],P1[0],P1[1], `stroke="transparent" stroke-width="26" data-side="${k}" style="cursor:pointer"`));
+  });
+  // local node numbers of the selected element
+  const E = M.IEN[st.elem], [x0,y0] = XY(E[0]);
+  E.forEach((A,a) => {
+    const [x,y] = XY(A), X = gX(A), Y = gY(A);
+    let lx, ly;
+    if (p === 1){
+      // inside the element's corner, and above the box of equation numbers when the box is in this corner
+      const ix = x > x0 ? -1 : 1, iy = y > y0 ? -1 : 1;
+      const boxHere = ix === 1 && iy === 1;
+      lx = X + ix*(boxHere ? 24 : 21); ly = Y - iy*(boxHere ? 52 : 21) + 4;
+    } else {
+      // beside the node: to its left, or to its right on the left side, where the supports are drawn
+      lx = X + (x === 0 ? 20 : -20); ly = Y + 4;
+    }
+    o.push(Tx(lx, ly, "a"+a, `text-anchor="middle" font-size="${p===1?13:11.5}" font-weight="700" font-family="monospace" fill="${ES[st.elem]}" stroke="#fff" stroke-width="3" paint-order="stroke" style="pointer-events:none"` + (hl.locals.has(a) ? ` text-decoration="underline"` : "")));
+  });
+  // nodes, with their two equation numbers
+  const r = p === 1 ? 10 : 9;
+  for (let A=0; A<M.NNP; A++){
+    const X = gX(A), Y = gY(A), sel = (A === st.node);
+    if (hl.nodes.has(A)) o.push(`<circle cx="${f1(X)}" cy="${f1(Y)}" r="${r+5}" fill="none" stroke="${HOT}" stroke-width="3"/>`);
+    o.push(`<circle cx="${f1(X)}" cy="${f1(Y)}" r="${r}" fill="${sel?HOT:"#fff"}" stroke="${INK}" stroke-width="1.5"/>`);
+    o.push(Tx(X, Y+(p===1?4:3.5), A, `text-anchor="middle" font-size="${p===1?11:10}" font-weight="700" font-family="monospace" fill="${INK}" style="pointer-events:none"`));
+    const [bx, by] = badgeAt(A);
+    o.push(R(bx, by, 42, 33, `rx="4" fill="#fff" fill-opacity="0.92" stroke="${FAINT}" style="pointer-events:none"`));
+    [0,1].forEach(i => {
+      const P = ar.ID[A][i], hot = hl.dofs.has(A+","+i);
+      o.push(Tx(bx+5, by+14+14*i, `<tspan fill="${GREY}" font-size="14">${ARR[i]}</tspan><tspan fill="${P<0?PRE:INK}" font-weight="${P<0?400:700}"${hot?` text-decoration="underline"`:""}>${lab(P)}</tspan>`,
+        `font-size="11.5" font-family="monospace" style="pointer-events:none"`));
+    });
+    o.push(`<circle cx="${f1(X)}" cy="${f1(Y)}" r="${r+5}" fill="transparent" data-node="${A}" style="cursor:pointer"/>`);
+  }
+  o.push(Tx(270, 364, "click a side to change its support", `text-anchor="middle" font-size="12" fill="${GREY}"`));
+  return o.join("");
+}
+
+/* ---------------- the arrays ---------------- */
+function drawTables(ar, hl){
+  const E = M.IEN[st.elem], inE = new Set(E), nen = M.nen;
+  let h = "<thead><tr><th>A</th>";
+  for (let A=0; A<M.NNP; A++) h += `<th class="${inE.has(A)?"col":""}" data-node="${A}" style="cursor:pointer">${A}</th>`;
+  h += "</tr></thead><tbody>";
+  for (let i=0; i<2; i++){
+    h += `<tr><th>i = ${i}</th>`;
+    for (let A=0; A<M.NNP; A++){
+      const P = ar.ID[A][i], hot = (A === st.node) || hl.dofs.has(A+","+i);
+      h += `<td class="${hot?"hot":P<0?"pre":inE.has(A)?"col":""}" data-node="${A}" style="cursor:pointer">${lab(P)}</td>`;
+    }
+    h += "</tr>";
+  }
+  $("c28id").innerHTML = h + "</tbody>";
+
+  h = "<thead><tr><th>a</th>";
+  for (let e=0; e<NEL; e++) h += `<th class="${e===st.elem?"col":""}" style="color:${ES[e]};cursor:pointer" data-elem="${e}">e${e}</th>`;
+  h += "</tr></thead><tbody>";
+  for (let a=0; a<nen; a++){
+    h += `<tr><th>${a}</th>`;
+    for (let e=0; e<NEL; e++){
+      const A = M.IEN[e][a], hot = (A === st.node) || (e === st.elem && hl.locals.has(a));
+      h += `<td class="${hot?"hot":e===st.elem?"col":""}" data-elem="${e}" style="cursor:pointer">${A}</td>`;
+    }
+    h += "</tr>";
+  }
+  $("c28ien").innerHTML = h + "</tbody>";
+
+  h = `<thead><tr><th style="color:${ES[st.elem]}">e${st.elem}, a</th>`;
+  for (let a=0; a<nen; a++) h += `<th>${a}</th>`;
+  h += "</tr></thead><tbody>";
+  for (let i=0; i<2; i++){
+    h += `<tr><th>i = ${i}</th>`;
+    for (let a=0; a<nen; a++){
+      const P = ar.ID[E[a]][i], hot = hl.lms.has(a+","+i);
+      h += `<td class="${hot?"hot":P<0?"pre":""}">${lab(P)}</td>`;
+    }
+    h += "</tr>";
+  }
+  $("c28lm").innerHTML = h + "</tbody>";
+}
+
+/* ---------------- local: the element stiffness matrix ---------------- */
+function drawKe(ar, hl){
+  const e = st.elem, E = M.IEN[e], nen = M.nen, n = 2*nen, big = M.p === 1;
+  const L = big ? 98 : 84, T = big ? 72 : 66, c = big ? 42 : 22, W = L+n*c+6, H = T+n*c+6;
+  const LM = []; for (let a=0;a<nen;a++) for (let i=0;i<2;i++) LM.push(ar.ID[E[a]][i]);
+  const o = [`<defs><pattern id="c28hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#b9c0ca" stroke-width="1.6"/></pattern></defs>`];
+  const mono = `font-family="monospace"`, fsH = big ? 12 : 10, fsB = big ? 11 : 9, bw = big ? 26 : 20;
+  for (let a=0; a<nen; a++){
+    o.push(Tx(6, T+c*(2*a+1)+4, "a = "+a, `font-size="${fsH}" font-weight="700" ${mono} fill="${INK}"`));
+    o.push(Tx(L+c*(2*a+1), 14, (big ? "b = " : "b=")+a, `text-anchor="middle" font-size="${fsH}" font-weight="700" ${mono} fill="${INK}"`));
+  }
+  for (let p=0; p<n; p++){
+    const i = p%2, y = T+c*p, x = L+c*p, P = LM[p], box = P < 0 ? "#fbe6e4" : "#f3f5f8", col = P < 0 ? PRE : INK;
+    o.push(Tx(big ? 52 : 44, y+c/2+4, "x"+SUB[i], `font-size="${fsH}" ${mono} fill="${GREY}"`));
+    o.push(R(L-bw-2, y+c/2-(big?10:8), bw, big?20:16, `rx="3" fill="${box}"`));
+    o.push(Tx(L-bw/2-2, y+c/2+(big?4:3), lab(P), `text-anchor="middle" font-size="${fsB}" font-weight="600" ${mono} fill="${col}"`));
+    o.push(Tx(x+c/2, big ? 34 : 30, "x"+SUB[i], `text-anchor="middle" font-size="${fsH}" ${mono} fill="${GREY}"`));
+    o.push(R(x+c/2-bw/2, big ? 42 : 38, bw, big?20:16, `rx="3" fill="${box}"`));
+    o.push(Tx(x+c/2, big ? 56 : 50, lab(P), `text-anchor="middle" font-size="${fsB}" font-weight="600" ${mono} fill="${col}"`));
+  }
+  for (let p=0; p<n; p++) for (let q=0; q<n; q++){
+    const v = KE[p][q], x = L+c*q, y = T+c*p, off = LM[p] < 0 || LM[q] < 0;
+    o.push(R(x, y, c, c, `fill="${heat(v, KMAX)}" stroke="#fff" stroke-width="1" data-p="${p}" data-q="${q}" style="cursor:pointer"`));
+    if (off) o.push(R(x, y, c, c, `fill="#fff" fill-opacity="0.5" style="pointer-events:none"`), R(x, y, c, c, `fill="url(#c28hatch)" style="pointer-events:none"`));
+    if (big) o.push(Tx(x+c/2, y+c/2+4, (v < 0 ? "−" : "") + Math.abs(v).toFixed(2), `text-anchor="middle" font-size="10.5" ${mono} fill="${off?GREY:textOn(v, KMAX)}" style="pointer-events:none"`));
+  }
+  // the 2 x 2 blocks, one for each pair of local nodes
+  for (let m=0; m<=nen; m++){
+    o.push(Ln(L+2*c*m, T, L+2*c*m, T+n*c, `stroke="#7d8796" stroke-width="${big?1.8:1.2}" style="pointer-events:none"`));
+    o.push(Ln(L, T+2*c*m, L+n*c, T+2*c*m, `stroke="#7d8796" stroke-width="${big?1.8:1.2}" style="pointer-events:none"`));
+  }
+  hl.keCells.forEach(([p,q]) => o.push(R(L+c*q+1.5, T+c*p+1.5, c-3, c-3, `fill="none" stroke="${HOT}" stroke-width="${big?3:2.4}" style="pointer-events:none"`)));
+  const svg = $("c28ke"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.innerHTML = o.join("");
+  $("c28kh").innerHTML = `k<sup>e</sup> of element <span style="color:${ES[e]}">e${e}</span>, ${n} × ${n}, divided by E t <span>(rows: a and i; columns: b and j; LM beside each${big ? "" : "; hover for the values"})</span>`;
+}
+
+/* ---------------- global: the stiffness matrix ---------------- */
+function drawK(ar, asm, hl){
+  const n = ar.neq, svg = $("c28K");
+  const cnt = st.done === 0 ? "empty: no elements added yet" : st.done === NEL ? "all six elements added" : `elements e0 to e${st.done-1} added`;
+  $("c28Kh").innerHTML = `K, ${n} × ${n} <span>(${cnt})</span>`;
+  if (!n){ svg.setAttribute("viewBox", "0 0 300 40"); svg.innerHTML = Tx(150, 24, "every displacement is prescribed", `text-anchor="middle" font-size="13" fill="${GREY}"`); return; }
+  const c = Math.max(6, Math.min(20, Math.floor(460/n))), every = c >= 12 ? 1 : 5;
+  const L = 30, T = 30, W = L+n*c+6, H = T+n*c+6, fs = c >= 12 ? Math.min(10, c*0.55) : 8;
+  let vmax = 0; asm.K.forEach(r => r.forEach(v => { vmax = Math.max(vmax, Math.abs(v)); })); vmax = vmax || 1;
+  const o = [], none = `style="pointer-events:none"`;
+  for (let P=0; P<n; P+=every){
+    o.push(Tx(L-4, T+c*P+c/2+fs*0.35, P, `text-anchor="end" font-size="${fs}" font-family="monospace" fill="${GREY}"`));
+    o.push(Tx(L+c*P+c/2, T-5, P, `text-anchor="middle" font-size="${fs}" font-family="monospace" fill="${GREY}"`));
+  }
+  for (let P=0; P<n; P++) for (let Q=0; Q<n; Q++){
+    const v = asm.K[P][Q], has = asm.C[P][Q].length > 0, x = L+c*Q, y = T+c*P;
+    o.push(R(x, y, c, c, `fill="${has?heat(v, vmax):"#fff"}" stroke="${has?"#fff":"#eef0f3"}" stroke-width="${c>=12?0.8:0.4}" data-pp="${P}" data-qq="${Q}" style="cursor:pointer"`));
+    if (has && Math.abs(v) < 1e-12) o.push(`<circle cx="${f1(x+c/2)}" cy="${f1(y+c/2)}" r="${Math.min(1.8, c/5)}" fill="${GREY}" ${none}/>`);
+  }
+  // thin lines between the equations of different nodes
+  for (let P=1; P<n; P++) if (ar.eqs[P][0] !== ar.eqs[P-1][0]){
+    o.push(Ln(L, T+c*P, L+n*c, T+c*P, `stroke="#aab2bd" stroke-width="${c>=12?1:0.6}" ${none}`));
+    o.push(Ln(L+c*P, T, L+c*P, T+n*c, `stroke="#aab2bd" stroke-width="${c>=12?1:0.6}" ${none}`));
+  }
+  o.push(R(L, T, n*c, n*c, `fill="none" stroke="#9aa3ae" ${none}`));
+  // the rows and columns of a selected node
+  if (st.node !== null) [0,1].forEach(i => {
+    const P = ar.ID[st.node][i]; if (P < 0) return;
+    o.push(R(L, T+c*P, n*c, c, `fill="${HOT}" fill-opacity="0.18" ${none}`), R(L+c*P, T, c, n*c, `fill="${HOT}" fill-opacity="0.18" ${none}`));
+  });
+  // where the selected element's entries go
+  const e = st.elem, E = M.IEN[e], added = e < st.done, sw = c >= 12 ? 1.6 : 1;
+  for (let a=0;a<M.nen;a++) for (let i=0;i<2;i++){
+    const P = ar.ID[E[a]][i]; if (P < 0) continue;
+    for (let b=0;b<M.nen;b++) for (let j=0;j<2;j++){
+      const Q = ar.ID[E[b]][j]; if (Q < 0) continue;
+      o.push(R(L+c*Q+sw/2, T+c*P+sw/2, c-sw, c-sw, `fill="none" stroke="${ES[e]}" stroke-width="${sw}"${added?"":` stroke-dasharray="3 2"`} ${none}`));
+    }
+  }
+  hl.KCells.forEach(([P,Q]) => o.push(R(L+c*Q+1, T+c*P+1, c-2, c-2, `fill="none" stroke="${HOT}" stroke-width="${c>=12?3:2}" ${none}`)));
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.innerHTML = o.join("");
+}
+
+/* ---------------- readouts ---------------- */
+function readSel(ar){
+  let h = "supports: " + st.bc.map((s,k) => `${SIDE[k]} ${BCN[s]}`).join(" · ") +
+    `<br>degree ${M.p}: ${M.NNP} nodes, ${2*M.NNP} displacements, n<sub>eq</sub> = <strong>${ar.neq}</strong> equations, ${2*M.NNP-ar.neq} prescribed`;
+  const m = rigid(ar.held);
+  if (m.length) h += `<br><b>K is singular:</b> the supports allow ${m.join(", ")}, which strains nothing`;
+  if (st.node !== null){
+    const A = st.node, own = [];
+    M.IEN.forEach((E,e) => { const a = E.indexOf(A); if (a >= 0) own.push(`<span style="color:${ES[e]}">${a} of e${e}</span>`); });
+    h += `<br>node <strong>${A}</strong>: ID(0, ${A}) = ${lab(ar.ID[A][0])} and ID(1, ${A}) = ${lab(ar.ID[A][1])}; it is local node ${own.join(", ")}`;
+    [0,1].forEach(i => { if (ar.ID[A][i] < 0) h += `<br>u${SUB[i]} is prescribed at node ${A}, so degree of freedom ${i} of the node has no equation`; });
+  } else {
+    const e = st.elem, E = M.IEN[e], LM = [];
+    E.forEach(A => [0,1].forEach(i => LM.push(lab(ar.ID[A][i]))));
+    h += `<br><span style="color:${ES[e]}">element <strong>e${e}</strong></span>: IEN = (${E.join(", ")}), and LM, node by node, = (${LM.join(", ")}); its k<sup>e</sup> holds ${M.nen} × ${M.nen} = ${M.nen*M.nen} blocks of 2 × 2, one for each pair of local nodes`;
+  }
+  $("c28read").innerHTML = h;
+}
+
+function readProbe(ar, asm){
+  const pr = st.probe, el = $("c28probe");
+  if (!pr){ el.innerHTML = "Hover over an entry of k<sup>e</sup> or K, or tap it, to see where it goes or where it came from."; return; }
+  if (pr.k === "ke"){
+    const e = st.elem, E = M.IEN[e], a = pr.p>>1, i = pr.p&1, b = pr.q>>1, j = pr.q&1, A = E[a], B = E[b];
+    const P = ar.ID[A][i], Q = ar.ID[B][j];
+    let h = `k<sup>e</sup> of e${e}, row (a = ${a}, i = ${i}), column (b = ${b}, j = ${j}): ${fmt(KE[pr.p][pr.q])} E t, the force on local node ${a} along x${SUB[i]} caused by a unit displacement of local node ${b} along x${SUB[j]}` +
+      `<br>local node ${a} is node ${A} and local node ${b} is node ${B}, so LM(${i}, ${a}, e${e}) = ${lab(P)} and LM(${j}, ${b}, e${e}) = ${lab(Q)}`;
+    if (P < 0) h += `<br><b>row skipped:</b> u${SUB[i]} is prescribed at node ${A}, so there is no equation for it`;
+    else if (Q < 0) h += `<br><b>column skipped:</b> u${SUB[j]} is prescribed at node ${B}; this entry, multiplied by the prescribed value, moves to the right-hand side through f<sup>e</sup>`;
+    else h += `<br>it is added to <strong>K[${P}, ${Q}]</strong>` + (e < st.done ? "" : `, once element e${e} is added`);
+    el.innerHTML = h; return;
+  }
+  const P = pr.P, Q = pr.Q, [A,i] = ar.eqs[P], [B,j] = ar.eqs[Q], C = asm.C[P][Q];
+  let h = `K[${P}, ${Q}]: row ${P} is degree of freedom ${i} (u${SUB[i]}) of node ${A}, and column ${Q} is degree of freedom ${j} (u${SUB[j]}) of node ${B}`;
+  const share = []; M.IEN.forEach((E,e) => { if (E.includes(A) && E.includes(B)) share.push(e); });
+  if (!share.length) h += `<br>nodes ${A} and ${B} share no element, so assembly never adds anything here, and K[${P}, ${Q}] = 0`;
+  else {
+    if (C.length) h += "<br>" + C.map(t => `<span style="color:${ES[t.e]}">e${t.e} (a = ${t.a}, b = ${t.b}): ${fmt(t.v)}</span>`).join(" + ") + ` = <strong>${fmt(asm.K[P][Q])}</strong> E t`;
+    const later = share.filter(e => e >= st.done);
+    if (later.length) h += `<br>still to come from ${later.map(e => "e"+e).join(", ")}`;
+    if (C.length > 1 && Math.abs(asm.K[P][Q]) < 1e-12) h += `<br>the contributions cancel`;
+  }
+  el.innerHTML = h;
+}
+
+/* ---------------- drawing and interaction ---------------- */
+function render(){
+  if (!M || M.p !== st.p) M = buildMesh(st.p);
+  ({k: KE, max: KMAX} = elementK(st.p));
+  const ar = buildID(), asm = assemble(ar), hl = highlights(ar);
+  $("c28mesh").innerHTML = drawMesh(ar, hl);
+  drawTables(ar, hl); drawKe(ar, hl); drawK(ar, asm, hl);
+  readSel(ar); readProbe(ar, asm);
+  document.querySelectorAll("#c28deg button").forEach(b => b.setAttribute("aria-pressed", +b.dataset.p === st.p ? "true" : "false"));
+}
+
+$("c28mesh").addEventListener("click", ev => {
+  const t = ev.target.closest("[data-side],[data-node],[data-elem]"); if (!t) return;
+  if (t.dataset.side !== undefined){ const k = +t.dataset.side; st.bc[k] = (st.bc[k]+1) % 4; }
+  else if (t.dataset.node !== undefined){ const A = +t.dataset.node; st.node = (st.node === A) ? null : A; }
+  else { st.elem = +t.dataset.elem; st.node = null; }
+  st.probe = null; render();
+});
+["c28id","c28ien"].forEach(id => $(id).addEventListener("click", ev => {
+  const t = ev.target.closest("[data-node],[data-elem]"); if (!t) return;
+  if (t.dataset.node !== undefined) st.node = +t.dataset.node;
+  else { st.elem = +t.dataset.elem; st.node = null; }
+  st.probe = null; render();
+}));
+function probeAt(ev){
+  const d = ev.target.dataset || {};
+  if (d.p !== undefined) return {k:"ke", p:+d.p, q:+d.q};
+  if (d.pp !== undefined) return {k:"K", P:+d.pp, Q:+d.qq};
+  return null;
+}
+["c28ke","c28K"].forEach(id => {
+  const f = ev => { const p = probeAt(ev); if (p && JSON.stringify(p) !== JSON.stringify(st.probe)){ st.probe = p; render(); } };
+  $(id).addEventListener("mousemove", f); $(id).addEventListener("click", f);
+});
+document.querySelectorAll("#c28deg button").forEach(b => b.addEventListener("click", () => {
+  st.p = +b.dataset.p; st.node = null; st.probe = null; st.done = NEL; render();
+}));
+$("c28reset").addEventListener("click", () => { st.done = 0; st.probe = null; render(); });
+$("c28next").addEventListener("click", () => { if (st.done < NEL){ st.elem = st.done; st.done++; st.node = null; st.probe = null; } render(); });
+$("c28all").addEventListener("click", () => { st.done = NEL; render(); });
+$("c28roll").addEventListener("click", () => { st.bc = [2,0,0,1]; st.probe = null; render(); });
+$("c28fix").addEventListener("click", () => { st.bc = [0,0,0,3]; st.probe = null; render(); });
+$("c28free").addEventListener("click", () => { st.bc = [0,0,0,0]; st.probe = null; render(); });
+render();
+})();
+</script>
+```
+:::
+
+## What the widget is showing
+
+**Two equation numbers for each node.**
+Each node carries an equation number for each direction, and a roller support removes only one of them.
+With the default supports, the nodes on the left side keep their equations for $u_1$, and the nodes on the bottom keep theirs for $u_0$.
+Only node 0, which lies on both supported sides, has no equations.
+
+**The element stiffness matrix is a matrix of blocks.**
+The rows and columns of $\underline{\underline{k}}^e$ come in pairs, one pair for each local node, and the thick lines divide it into 16 blocks of $2 \times 2$ at degree 1.
+Since the equations are numbered node by node, each block arrives in $\underline{\underline{K}}$ as a $2 \times 2$ block as well, wherever the equations of its two nodes are.
+The rows and columns of prescribed displacements are skipped, so part of a block can be left behind.
+
+**Overlapping blocks add.**
+Every element that contains two nodes contributes to their block.
+The diagonal block of an interior node, such as node 5 at degree 1, receives contributions from four elements, and the block of two nodes on a shared side receives contributions from two.
+In this uniform mesh, the contributions to many of the entries that couple the two directions cancel by symmetry, including those of an interior node with itself, and the widget marks these entries with a dot.
+On a general mesh they would not cancel.
+
+**Most of $\underline{\underline{K}}$ is zero.**
+Two nodes that share no element have a zero block, so each row has nonzero entries only in the columns of the node and its neighbors.
+This is the same sparsity as for the Poisson Equation, with each nonzero entry replaced by a $2 \times 2$ block.
+
+## Things to try
+
+1. At degree 1, click node 5, an interior node.
+   It is local node 3 of e0, 2 of e1, 1 of e3, and 0 of e4, and its two rows of $\underline{\underline{K}}$ have nonzero entries only in the columns of its neighbors.
+2. Press **empty K**, and then **add the next element** repeatedly.
+   Watch the block of node 5 fill in as each of its four elements is added, and hover over its diagonal entries to see the four contributions.
+3. Click the bottom side until it is free, so that only the rollers on the left side remain.
+   The readout reports that $\underline{\underline{K}}$ is singular, because nothing stops the body from sliding along $x_1$.
+4. Press **left side held**.
+   The nodes on the left side now have no equations, the nodes on the bottom, which are now free, have two each, and the equations are renumbered.
+5. Select element e0 with the default supports, and hover over the hatched rows and columns of its $\underline{\underline{k}}^e$.
+   They belong to prescribed displacements, so assembly skips them.
+6. Switch to degree 2.
+   Each element now has nine local nodes, so its $\underline{\underline{k}}^e$ is $18 \times 18$, with 81 blocks, and its LM array has nine columns.
+   The node in the middle of an element belongs to that element alone, so its block of $\underline{\underline{K}}$ receives a single contribution, while a node in the middle of a shared side receives two.
+
+## Summary
+
+- In the Galerkin form, each component of the displacement is expanded in the scalar basis functions, so each node carries one unknown for each degree of freedom, $d_{0A}$ and $d_{1A}$, and two vector basis functions, $N_A\,\underline{e}_0$ and $N_A\,\underline{e}_1$.
+- The strain vector of $N_B\,\underline{e}_j$ is column $j$ of the B matrix $\underline{\underline{B}}_B$, so the entry $K_{PQ} = a(N_A\,\underline{e}_i, N_B\,\underline{e}_j)$ is entry $(i, j)$ of $\int_\Omega \underline{\underline{B}}_A^T\,\underline{\underline{D}}\;\underline{\underline{B}}_B\,d\Omega$, and $\underline{\underline{K}}$ is made of $2 \times 2$ blocks, one for each pair of nodes.
+- $\mathrm{ID}(i, A)$ gives the equation number of degree of freedom $i$ of node $A$, or $-1$ if it is prescribed, with the equations numbered node by node.
+  Every index in the arrays is numbered from 0, including the degree of freedom: $i = 0$ is $u_0$ and $i = 1$ is $u_1$.
+  The IEN array is unchanged, and $\mathrm{LM}(i, a, e) = \mathrm{ID}(i, \mathrm{IEN}(a, e))$.
+- Local assembly forms the blocks $\underline{\underline{k}}^e_{ab} = \int_{\Omega^e} \underline{\underline{B}}_a^T\,\underline{\underline{D}}\;\underline{\underline{B}}_b\,d\Omega$ of the $2n_{en} \times 2n_{en}$ element stiffness matrix, and the two entries of the element force vector for each local node.
+  Entry $(i, j)$ of block $\underline{\underline{k}}^e_{ab}$ sits in row $\hat{p} = 2a + i$ and column $\hat{q} = 2b + j$ of $\underline{\underline{k}}^e$, whose size $2(p+1)^2 \times 2(p+1)^2$ grows with the degree $p$.
+- Global assembly adds entry $(i, j)$ of $\underline{\underline{k}}^e_{ab}$ into $K_{PQ}$, with $P = \mathrm{LM}(i, a, e)$ and $Q = \mathrm{LM}(j, b, e)$, and skips prescribed rows and columns; compared with the Poisson Equation, it adds two loops over the directions.

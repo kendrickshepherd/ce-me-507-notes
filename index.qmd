@@ -47,6 +47,7 @@ computed on the page so that the text and the drawings always agree.
 | [Class 25](chapters/25_Class.qmd) | A continuation of Class 24, whose page holds the notes for both class periods |
 | [Class 26](chapters/26_Class.qmd) | Linear elasticity: displacement, strain, stress, and the elasticity tensor and its symmetries; boundary conditions in each direction; the strong form, and the weak form as the principle of virtual work |
 | [Class 27](chapters/27_Class.qmd) | Voigt notation: the strain and virtual strain vectors, the elasticity matrix and its isotropic entries, the weak form as a product of vectors and matrices, and the plane strain and plane stress assumptions |
+| [Class 28](chapters/28_Class.qmd) | The Galerkin form of elasticity: vector basis functions, the B matrix, the ID array with an equation number for each direction, and local and global assembly of the element stiffness matrix, with an interactive assembly widget |
 
 ### Classes 24 and 25 applications
 

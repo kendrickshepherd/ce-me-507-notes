@@ -395,28 +395,28 @@ That edge force is a boundary flux, and it can be computed from the reactions at
 
 ## Relation to beam and frame elements {#frame-elements}
 
-The [appendix on beams and frames](Beam_Frame_Formulation.qmd) reduces three-dimensional elasticity to equations along the axis of each member, with $x$, $y$, $z$ here written as $x_1$, $x_2$, $x_3$.
-One of its unknowns is the twist $\theta_3(x_3)$ of each cross-section, governed by $m_3' + C_3 = 0$ with $m_3 = \mu J\,\theta_3'$, where $\mu = G$.
-Its twisting moment, [defined in the appendix](Beam_Frame_Formulation.qmd#stress-resultants-and-applied-loads) as $m_3 = \int_A \left(\sigma_{23}\,x_1 - \sigma_{13}\,x_2\right) dA$, is the torque $T$ of this page, and $\theta_3'$ is the twist per unit length $\theta$, so $m_3 = \mu J\,\theta_3'$ is $T = G J \theta$.
+The [appendix on beams and frames](Beam_Frame_Formulation.qmd) reduces three-dimensional elasticity to equations along the axis of each member, with $x$, $y$, $z$ here written as $x_0$, $x_1$, $x_2$.
+One of its unknowns is the twist $\theta_2(x_2)$ of each cross-section, governed by $m_2' + C_2 = 0$ with $m_2 = \mu J\,\theta_2'$, where $\mu = G$.
+Its twisting moment, [defined in the appendix](Beam_Frame_Formulation.qmd#stress-resultants-and-applied-loads) as $m_2 = \int_A \left(\sigma_{12}\,x_0 - \sigma_{02}\,x_1\right) dA$, is the torque $T$ of this page, and $\theta_2'$ is the twist per unit length $\theta$, so $m_2 = \mu J\,\theta_2'$ is $T = G J \theta$.
 The two models describe the same rotation of the cross-section, and differ only in whether it warps.
 
 | | frame member (appendix) | Saint-Venant torsion (this page) |
 |:--|:--|:--|
-| in-plane displacements | $u_1 = -x_2\,\theta_3$, $u_2 = x_1\,\theta_3$ | the same, with $\theta_3 = \theta\,x_3$ |
-| axial displacement due to twist | none | $u_3 = \theta\,\omega(x_1, x_2)$, the warping |
-| unknown | $\theta_3(x_3)$ along the member | $\Phi(x_1, x_2)$ over the cross-section |
-| torsion constant | $J = \int_A \left(x_1^2 + x_2^2\right) dA = I_1 + I_2$ | $J = 2\int_A \Phi\;dA$ |
+| in-plane displacements | $u_0 = -x_1\,\theta_2$, $u_1 = x_0\,\theta_2$ | the same, with $\theta_2 = \theta\,x_2$ |
+| axial displacement due to twist | none | $u_2 = \theta\,\omega(x_0, x_1)$, the warping |
+| unknown | $\theta_2(x_2)$ along the member | $\Phi(x_0, x_1)$ over the cross-section |
+| torsion constant | $J = \int_A \left(x_0^2 + x_1^2\right) dA = I_0 + I_1$ | $J = 2\int_A \Phi\;dA$ |
 | this I-section | `{python} f"{Ip:,.0f}"` mm⁴ | `{python} f"{J:,.0f}"` mm⁴ |
 
 : The twist of a member in the two models. {#tbl-tors-frame}
 
-Without warping, the shear stresses $\sigma_{13} = -\mu\,x_2\,\theta_3'$ and $\sigma_{23} = \mu\,x_1\,\theta_3'$ act perpendicular to the radius.
+Without warping, the shear stresses $\sigma_{02} = -\mu\,x_1\,\theta_2'$ and $\sigma_{12} = \mu\,x_0\,\theta_2'$ act perpendicular to the radius.
 They are therefore not tangent to the faces of a non-circular section, and the faces are not free of load.
 Warping removes these stresses, and the polar moment overestimates the torsional stiffness of this I-section by a factor of about `{python} f"{Ip / J:.0f}"`.
 The two constants agree only for a circular section, where $\omega = 0$, as in the first check above.
 
 A frame model therefore uses the Saint-Venant constant: a two-dimensional finite element problem over the cross-section, such as this one, supplies $J$ to the one-dimensional elements along each member.
-In the other direction, the frame analysis gives the torque $m_3$ in each member, and this page turns it into shear stresses, $\tau = (m_3/J)\,|\nabla\Phi|$.
+In the other direction, the frame analysis gives the torque $m_2$ in each member, and this page turns it into shear stresses, $\tau = (m_2/J)\,|\nabla\Phi|$.
 Assumption 2 of the appendix, $\sigma_{\alpha\beta} = 0$, holds exactly here, since the only stresses are $\tau_{xz}$ and $\tau_{yz}$.
 
 ### The warping function {#warping}
@@ -424,60 +424,60 @@ Assumption 2 of the appendix, $\sigma_{\alpha\beta} = 0$, holds exactly here, si
 In Saint-Venant's theory, the displacements are
 
 $$
-u_1 = -\theta\,x_2\,x_3,
+u_0 = -\theta\,x_1\,x_2,
 \qquad
-u_2 = \theta\,x_1\,x_3,
+u_1 = \theta\,x_0\,x_2,
 \qquad
-u_3 = \theta\,\omega(x_1, x_2),
+u_2 = \theta\,\omega(x_0, x_1),
 $$
 
-which are those of the appendix with $\theta_3 = \theta\,x_3$, together with an axial displacement proportional to the **warping function** $\omega$, in mm².
+which are those of the appendix with $\theta_2 = \theta\,x_2$, together with an axial displacement proportional to the **warping function** $\omega$, in mm².
 The shear strains then give the stresses
 
 $$
-\tau_{xz} = G\theta\left(\frac{\partial\omega}{\partial x_1} - x_2\right),
+\tau_{xz} = G\theta\left(\frac{\partial\omega}{\partial x_0} - x_1\right),
 \qquad
-\tau_{yz} = G\theta\left(\frac{\partial\omega}{\partial x_2} + x_1\right).
+\tau_{yz} = G\theta\left(\frac{\partial\omega}{\partial x_1} + x_0\right).
 $$
 
-Equilibrium, $\partial\tau_{xz}/\partial x_1 + \partial\tau_{yz}/\partial x_2 = 0$, and a load-free outer surface, $\tau_{xz}\,n_1 + \tau_{yz}\,n_2 = 0$, then give
+Equilibrium, $\partial\tau_{xz}/\partial x_0 + \partial\tau_{yz}/\partial x_1 = 0$, and a load-free outer surface, $\tau_{xz}\,n_0 + \tau_{yz}\,n_1 = 0$, then give
 
 $$
 -\nabla^2\omega = 0 \ \text{ in } A,
 \qquad
-\nabla\omega\cdot\underline{n} = x_2\,n_1 - x_1\,n_2 \ \text{ on the boundary}.
+\nabla\omega\cdot\underline{n} = x_1\,n_0 - x_0\,n_1 \ \text{ on the boundary}.
 $$
 
 This is again the same Poisson equation used in this course, now with $f = 0$ and Neumann data on the whole boundary.
 As in [Class 23](23_Class.qmd), a pure Neumann problem determines $\omega$ only up to a constant, which here is a rigid axial movement of the section.
-Its data must also satisfy a compatibility condition, which they do, since $\oint (x_2\,n_1 - x_1\,n_2)\,d\Gamma = \int_A \left(\partial x_2/\partial x_1 - \partial x_1/\partial x_2\right) dA = 0$.
-For this section, $\omega$ is odd in both $x_1$ and $x_2$, so the quarter model has $\omega = 0$ on the two axes of symmetry, which fixes the constant.
+Its data must also satisfy a compatibility condition, which they do, since $\oint (x_1\,n_0 - x_0\,n_1)\,d\Gamma = \int_A \left(\partial x_1/\partial x_0 - \partial x_0/\partial x_1\right) dA = 0$.
+For this section, $\omega$ is odd in both $x_0$ and $x_1$, so the quarter model has $\omega = 0$ on the two axes of symmetry, which fixes the constant.
 $\Phi$ is even in both, which is why its quarter model has zero-flux conditions there instead.
 
-Comparing these stresses with $\tau_{xz} = G\theta\,\partial\Phi/\partial x_2$ and $\tau_{yz} = -G\theta\,\partial\Phi/\partial x_1$ gives
+Comparing these stresses with $\tau_{xz} = G\theta\,\partial\Phi/\partial x_1$ and $\tau_{yz} = -G\theta\,\partial\Phi/\partial x_0$ gives
 
 $$
-\frac{\partial\Phi}{\partial x_2} = \frac{\partial\omega}{\partial x_1} - x_2,
+\frac{\partial\Phi}{\partial x_1} = \frac{\partial\omega}{\partial x_0} - x_1,
 \qquad
--\frac{\partial\Phi}{\partial x_1} = \frac{\partial\omega}{\partial x_2} + x_1 ,
+-\frac{\partial\Phi}{\partial x_0} = \frac{\partial\omega}{\partial x_1} + x_0 ,
 $$
 
 so $\Phi$ and $\omega$ describe the same stresses, one through a Dirichlet problem and the other through a Neumann problem.
 
-Substituting the stresses into the torque, $T = \int_A \left(x_1\,\tau_{yz} - x_2\,\tau_{xz}\right) dA = G\,J\,\theta$, gives
+Substituting the stresses into the torque, $T = \int_A \left(x_0\,\tau_{yz} - x_1\,\tau_{xz}\right) dA = G\,J\,\theta$, gives
 
 $$
-J = I_1 + I_2 + \int_A \left(x_1\,\frac{\partial\omega}{\partial x_2} - x_2\,\frac{\partial\omega}{\partial x_1}\right) dA
-= I_1 + I_2 - \int_A |\nabla\omega|^2\;dA .
+J = I_0 + I_1 + \int_A \left(x_0\,\frac{\partial\omega}{\partial x_1} - x_1\,\frac{\partial\omega}{\partial x_0}\right) dA
+= I_0 + I_1 - \int_A |\nabla\omega|^2\;dA .
 $$
 
-The second form follows from the weak form of the problem for $\omega$ with $\omega$ itself as the weight function, $\int_A |\nabla\omega|^2\,dA = \oint \omega\left(x_2\,n_1 - x_1\,n_2\right) d\Gamma$, and the divergence theorem.
+The second form follows from the weak form of the problem for $\omega$ with $\omega$ itself as the weight function, $\int_A |\nabla\omega|^2\,dA = \oint \omega\left(x_1\,n_0 - x_0\,n_1\right) d\Gamma$, and the divergence theorem.
 Warping can therefore only reduce the torsion constant below the polar moment, and the polar moment of the appendix is the case $\omega = 0$.
 
-![(a) The warping function $\omega$ over the section, from the biquadratic solution on the quarter, which changes sign across each axis of symmetry. (b) The end of the beam seen from above, with the axial displacement $u_3 = \theta\,\omega$ at the mid-thickness of each flange, greatly exaggerated. Each flange rotates in its own plane, and the two flanges rotate in opposite directions.](`{python} fig_warp_path`){#fig-tors-warping width=100%}
+![(a) The warping function $\omega$ over the section, from the biquadratic solution on the quarter, which changes sign across each axis of symmetry. (b) The end of the beam seen from above, with the axial displacement $u_2 = \theta\,\omega$ at the mid-thickness of each flange, greatly exaggerated. Each flange rotates in its own plane, and the two flanges rotate in opposite directions.](`{python} fig_warp_path`){#fig-tors-warping width=100%}
 
 @fig-tors-warping shows $\omega$ for this section.
-Along the mid-lines of the plates, $\omega \approx x_1 x_2$, which is zero along the web, so the web hardly warps.
+Along the mid-lines of the plates, $\omega \approx x_0 x_1$, which is zero along the web, so the web hardly warps.
 Each flange instead rotates in its own plane: for a positive twist, one tip of the top flange moves along the beam and the other moves back, and the bottom flange does the opposite.
 Where this motion is prevented, as at a welded support, each flange must bend in its own plane, which is the source of the additional stiffness noted under the limits of the model.
 
@@ -486,12 +486,12 @@ For each problem, the energy of the solution is $\Pi = -\int_A \Phi\,dA$ or $\Pi
 Writing $\Phi_h$ and $\omega_h$ for the finite element solutions, this gives
 
 $$
-2\int_A \Phi_h\;dA \;\le\; J \;\le\; I_1 + I_2 - \int_A |\nabla\omega_h|^2\;dA ,
+2\int_A \Phi_h\;dA \;\le\; J \;\le\; I_0 + I_1 - \int_A |\nabla\omega_h|^2\;dA ,
 $$
 
 and @tbl-tors-bounds shows the two approaching the same value from opposite sides.
 
-| nodes in the quarter | $2\int_A \Phi_h\,dA$ (mm⁴) | $I_1 + I_2 - \int_A \lvert\nabla\omega_h\rvert^2\,dA$ (mm⁴) |
+| nodes in the quarter | $2\int_A \Phi_h\,dA$ (mm⁴) | $I_0 + I_1 - \int_A \lvert\nabla\omega_h\rvert^2\,dA$ (mm⁴) |
 |---:|---:|---:|
 | `{python} f"{levels[0]['mesh'].nnp:,}"` | `{python} f"{levels[0]['J']:,.0f}"` | `{python} f"{wlev[0]['J']:,.0f}"` |
 | `{python} f"{levels[1]['mesh'].nnp:,}"` | `{python} f"{levels[1]['J']:,.0f}"` | `{python} f"{wlev[1]['J']:,.0f}"` |
@@ -523,4 +523,4 @@ and @tbl-tors-bounds shows the two approaching the same value from opposite side
 - The stress at a sharp re-entrant corner is singular and keeps growing with refinement, while the stresses on the faces converge.
 - A membrane stretched over the same shape and inflated by a uniform pressure takes the shape of $\Phi$, which relates torque to volume and stress to slope; the [membrane page](24_Membrane.qmd) treats the membrane in its own right.
 - Beam and frame elements twist each cross-section in the same way but do not let it warp, so their $J$ is the polar moment, which is far too stiff for an open section; the $J$ computed here is the one a frame model needs.
-- The warping function $\omega$ solves the same equation with Neumann data, and gives $J = I_1 + I_2 - \int_A|\nabla\omega|^2\,dA$; computed with finite elements, the two formulations bound $J$ from below and from above.
+- The warping function $\omega$ solves the same equation with Neumann data, and gives $J = I_0 + I_1 - \int_A|\nabla\omega|^2\,dA$; computed with finite elements, the two formulations bound $J$ from below and from above.

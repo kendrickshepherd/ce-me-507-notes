@@ -293,7 +293,7 @@ for i, xv in enumerate(xs):
 i = 4
 arrow(ax, (xs[i], y1 - 0.36), (xs[i] + uk(xs[i]), y1 - 0.36), color=LOADCLR,
       lw=1.6, ms=11)
-ax.text(xs[i] + uk(xs[i]) / 2, y1 - 0.45, "$u(x_4)$", ha="center", va="top",
+ax.text(xs[i] + uk(xs[i]) / 2, y1 - 0.45, "$u(x_3)$", ha="center", va="top",
         fontsize=11, color=LOADCLR)
 arrow(ax, (Lk + uk(Lk), y1), (Lk + uk(Lk) + 0.9, y1), color=LOADCLR, lw=2.2,
       ms=14)

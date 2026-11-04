@@ -36,7 +36,7 @@ def clean(ax, equal=True):
     ax.axis("off")
 
 
-def axes_glyph(ax, o, s, labels=("$x_1$", "$x_2$"), fs=12):
+def axes_glyph(ax, o, s, labels=("$x_0$", "$x_1$"), fs=12):
     arrow(ax, o, (o[0] + s, o[1]), INK, 1.1, 10)
     arrow(ax, o, (o[0], o[1] + s), INK, 1.1, 10)
     ax.text(o[0] + 1.18 * s, o[1], labels[0], fontsize=fs, va="center")
@@ -47,7 +47,7 @@ def axes_glyph(ax, o, s, labels=("$x_1$", "$x_2$"), fs=12):
 def triangles(mesh, k=None):
     """Points and triangles that split every element (each Q9 sub-square too)."""
     p = mesh.p
-    idx = [[0, 4, 1], [7, 8, 5], [3, 6, 2]] if p == 2 else [[0, 1], [3, 2]]
+    idx = [[i + (p + 1) * j for i in range(p + 1)] for j in range(p + 1)]   # stride rule, idx[j][i]
     tri = []
     for row in mesh.IEN:
         g = [[row[idx[j][i]] for j in range(p + 1)] for i in range(p + 1)]
@@ -200,9 +200,9 @@ def fig_strain():
     arrow(ax, O, mv(O), INK, 1.4, 11)
     ax.text(*(0.5 * (O + mv(O)) + np.array([0.12, -0.3])), "$\\underline{u}(O)$", fontsize=12)
     ax.annotate("", xy=(dx1, -0.45), xytext=(0, -0.45), arrowprops=dict(arrowstyle="<->", color="0.4", lw=0.9))
-    ax.text(dx1 / 2, -0.62, "$dx_1$", fontsize=11, ha="center", va="top", color="0.3")
+    ax.text(dx1 / 2, -0.62, "$dx_0$", fontsize=11, ha="center", va="top", color="0.3")
     ax.annotate("", xy=(-0.45, dx2), xytext=(-0.45, 0), arrowprops=dict(arrowstyle="<->", color="0.4", lw=0.9))
-    ax.text(-0.62, dx2 / 2, "$dx_2$", fontsize=11, ha="right", va="center", color="0.3")
+    ax.text(-0.62, dx2 / 2, "$dx_1$", fontsize=11, ha="right", va="center", color="0.3")
     # the angles: OA turns by u2,1, OB turns by u1,2
     Op, Ap, Bp = mv(O), mv(A0), mv(B0)
     a1 = math.degrees(math.atan2(*(Ap - Op)[::-1]))
@@ -213,26 +213,26 @@ def fig_strain():
     ax.add_patch(Arc(Op, 2 * r1, 2 * r1, theta1=0, theta2=a1, color=S12C, lw=2.0, zorder=7))
     ax.add_patch(Arc(Op, 2 * r2, 2 * r2, theta1=a2, theta2=90, color=S12C, lw=2.0, zorder=7))
     m1, m2 = math.radians(a1 / 2), math.radians((a2 + 90) / 2)
-    ax.text(Op[0] + (r1 + 0.12) * math.cos(m1), Op[1] + (r1 + 0.12) * math.sin(m1) - 0.04, "$u_{2,1}$",
+    ax.text(Op[0] + (r1 + 0.12) * math.cos(m1), Op[1] + (r1 + 0.12) * math.sin(m1) - 0.04, "$u_{1,0}$",
             fontsize=12, color=S12C, va="center", ha="left",
             bbox=dict(fc="white", ec="none", pad=0.5, alpha=0.85), zorder=8)
-    ax.text(Op[0] + (r2 + 0.12) * math.cos(m2) + 0.02, Op[1] + (r2 + 0.12) * math.sin(m2) + 0.08, "$u_{1,2}$",
+    ax.text(Op[0] + (r2 + 0.12) * math.cos(m2) + 0.02, Op[1] + (r2 + 0.12) * math.sin(m2) + 0.08, "$u_{0,1}$",
             fontsize=12, color=S12C, va="bottom", ha="center",
             bbox=dict(fc="white", ec="none", pad=0.5, alpha=0.85), zorder=8)
-    ax.text(5.65, 0.75, "O$'$A$'$: length $(1 + u_{1,1})\\,dx_1$,\nturned up by $u_{2,1}$\n\n"
-            "O$'$B$'$: length $(1 + u_{2,2})\\,dx_2$,\nturned right by $u_{1,2}$",
+    ax.text(5.65, 0.75, "O$'$A$'$: length $(1 + u_{0,0})\\,dx_0$,\nturned up by $u_{1,0}$\n\n"
+            "O$'$B$'$: length $(1 + u_{1,1})\\,dx_1$,\nturned right by $u_{0,1}$",
             fontsize=10.2, va="bottom", ha="left")
     ax.set_xlim(-1.2, 8.4)
     ax.set_ylim(-1.1, 4.4)
     clean(ax)
     ax.set_title("(a) A small rectangle, before and after", fontsize=11, loc="left")
     # (b) the modes
-    modes = [("$\\varepsilon_{11}$: stretch along $x_1$", np.array([[0.3, 0], [0, 0]]), S11C),
-             ("$\\varepsilon_{22}$: stretch along $x_2$", np.array([[0, 0], [0, 0.3]]), S22C),
-             ("$\\varepsilon_{12}$: shear, a change\nof angle $\\gamma_{12} = 2\\varepsilon_{12}$", np.array([[0, 0.17], [0.17, 0]]), S12C),
-             ("$\\varepsilon_{11} = \\varepsilon_{22} = 0$:\ncompressed along one diagonal", np.array([[0, 0.17], [0.17, 0]]), S12C),
-             ("rotation $\\omega_{12}$:\nno strain at all", np.array([[0, -0.25], [0.25, 0]]), S22C),
-             ("$\\varepsilon_{11} + \\varepsilon_{22}$:\na change of area", np.array([[0.18, 0], [0, 0.18]]), S11C)]
+    modes = [("$\\varepsilon_{00}$: stretch along $x_0$", np.array([[0.3, 0], [0, 0]]), S11C),
+             ("$\\varepsilon_{11}$: stretch along $x_1$", np.array([[0, 0], [0, 0.3]]), S22C),
+             ("$\\varepsilon_{01}$: shear, a change\nof angle $\\gamma_{01} = 2\\varepsilon_{01}$", np.array([[0, 0.17], [0.17, 0]]), S12C),
+             ("$\\varepsilon_{00} = \\varepsilon_{11} = 0$:\ncompressed along one diagonal", np.array([[0, 0.17], [0.17, 0]]), S12C),
+             ("rotation $\\omega_{01}$:\nno strain at all", np.array([[0, -0.25], [0.25, 0]]), S22C),
+             ("$\\varepsilon_{00} + \\varepsilon_{11}$:\na change of area", np.array([[0.18, 0], [0, 0.18]]), S11C)]
     keep = [0, 1, 2, 4, 5]
     pos = [(0, 1), (0, 2), (0, 3), (1, 1), (1, 2)]
     for (r, c), k in zip(pos, keep):
@@ -298,11 +298,11 @@ def fig_traction():
     arrow(bx, (-o, 0.55), (-o, -0.55), S12C, 2.2)
     arrow(bx, (-0.55, o), (0.55, o), S12C, 2.2)
     arrow(bx, (0.55, -o), (-0.55, -o), S12C, 2.2)
-    bx.text(h + 0.98, 0.0, "$\\sigma_{11}$", color=S11C, fontsize=13, va="center")
-    bx.text(0.0, h + 1.05, "$\\sigma_{22}$", color=S22C, fontsize=13, ha="center")
-    bx.text(o + 0.1, 0.62, "$\\sigma_{21}$", color=S12C, fontsize=13)
-    bx.text(0.62, o + 0.1, "$\\sigma_{12}$", color=S12C, fontsize=13)
-    bx.text(0, 0, "$dx_1 \\times dx_2$", fontsize=10.5, ha="center", va="center", color="0.3")
+    bx.text(h + 0.98, 0.0, "$\\sigma_{00}$", color=S11C, fontsize=13, va="center")
+    bx.text(0.0, h + 1.05, "$\\sigma_{11}$", color=S22C, fontsize=13, ha="center")
+    bx.text(o + 0.1, 0.62, "$\\sigma_{10}$", color=S12C, fontsize=13)
+    bx.text(0.62, o + 0.1, "$\\sigma_{01}$", color=S12C, fontsize=13)
+    bx.text(0, 0, "$dx_0 \\times dx_1$", fontsize=10.5, ha="center", va="center", color="0.3")
     axes_glyph(bx, (-2.1, -2.1), 0.55)
     bx.set_xlim(-2.3, 2.6)
     bx.set_ylim(-2.3, 2.5)
@@ -321,9 +321,9 @@ def fig_traction():
     arrow(cx, mid, mid + t, LOADCLR, 2.0, 12)
     cx.text(*(mid + t + np.array([0.05, -0.18])), "$\\underline{t}$", fontsize=13, color=LOADCLR)
     arrow(cx, (-0.08, 1.0), (-0.75, 1.0), S11C, 1.8)
-    cx.text(-0.8, 1.15, "$-\\sigma_{11}$", color=S11C, fontsize=11, ha="right")
+    cx.text(-0.8, 1.15, "$-\\sigma_{00}$", color=S11C, fontsize=11, ha="right")
     arrow(cx, (0.7, -0.08), (0.7, -0.75), S22C, 1.8)
-    cx.text(0.85, -0.7, "$-\\sigma_{22}$", color=S22C, fontsize=11)
+    cx.text(0.85, -0.7, "$-\\sigma_{11}$", color=S22C, fontsize=11)
     cx.text(-0.3, -1.25, "$t_i = \\sigma_{ij}\\,n_j$", fontsize=14)
     cx.set_xlim(-1.5, 2.4)
     cx.set_ylim(-1.5, 2.6)
@@ -340,21 +340,21 @@ def fig_equilibrium():
     ax.add_patch(Rectangle((0, 0), w, h, fc=BODY, ec=INK, lw=1.5))
     g = 0.12
     arrow(ax, (-g, h / 2), (-g - 1.2, h / 2), S11C, 2.2)
-    ax.text(-g - 1.25, h / 2 + 0.22, "$\\sigma_{11}(x_1, x_2)\\,dx_2$", color=S11C, fontsize=12, ha="right")
+    ax.text(-g - 1.25, h / 2 + 0.22, "$\\sigma_{00}(x_0, x_1)\\,dx_1$", color=S11C, fontsize=12, ha="right")
     arrow(ax, (w + g, h / 2), (w + g + 1.45, h / 2), S11C, 2.2)
-    ax.text(w + g + 0.1, h / 2 + 0.22, "$\\sigma_{11}(x_1 + dx_1, x_2)\\,dx_2$", color=S11C, fontsize=12)
+    ax.text(w + g + 0.1, h / 2 + 0.22, "$\\sigma_{00}(x_0 + dx_0, x_1)\\,dx_1$", color=S11C, fontsize=12)
     arrow(ax, (w / 2 + 0.7, -g - 0.04), (w / 2 - 0.7, -g - 0.04), S12C, 2.2)
-    ax.text(w / 2, -g - 0.3, "$\\sigma_{12}(x_1, x_2)\\,dx_1$", color=S12C, fontsize=12, ha="center", va="top")
+    ax.text(w / 2, -g - 0.3, "$\\sigma_{01}(x_0, x_1)\\,dx_0$", color=S12C, fontsize=12, ha="center", va="top")
     arrow(ax, (w / 2 - 0.8, h + g + 0.04), (w / 2 + 0.8, h + g + 0.04), S12C, 2.2)
-    ax.text(w / 2, h + g + 0.28, "$\\sigma_{12}(x_1, x_2 + dx_2)\\,dx_1$", color=S12C, fontsize=12, ha="center")
+    ax.text(w / 2, h + g + 0.28, "$\\sigma_{01}(x_0, x_1 + dx_1)\\,dx_0$", color=S12C, fontsize=12, ha="center")
     arrow(ax, (w / 2 - 0.45, h / 2), (w / 2 + 0.45, h / 2), LOADCLR, 2.0)
-    ax.text(w / 2, h / 2 - 0.22, "$f_1\\,dx_1\\,dx_2$", color=LOADCLR, fontsize=12, ha="center", va="top")
+    ax.text(w / 2, h / 2 - 0.22, "$f_0\\,dx_0\\,dx_1$", color=LOADCLR, fontsize=12, ha="center", va="top")
     ax.plot(0, 0, "o", color=INK, ms=4)
-    ax.text(-0.08, -0.08, "$(x_1, x_2)$", fontsize=11, ha="right", va="top")
+    ax.text(-0.08, -0.08, "$(x_0, x_1)$", fontsize=11, ha="right", va="top")
     ax.annotate("", xy=(w, -0.95), xytext=(0, -0.95), arrowprops=dict(arrowstyle="<->", color="0.4", lw=0.9))
-    ax.text(w / 2, -1.08, "$dx_1$", fontsize=11, ha="center", va="top", color="0.3")
+    ax.text(w / 2, -1.08, "$dx_0$", fontsize=11, ha="center", va="top", color="0.3")
     ax.annotate("", xy=(w + 2.7, h), xytext=(w + 2.7, 0), arrowprops=dict(arrowstyle="<->", color="0.4", lw=0.9))
-    ax.text(w + 2.82, h / 2 - 0.5, "$dx_2$", fontsize=11, va="center", color="0.3")
+    ax.text(w + 2.82, h / 2 - 0.5, "$dx_1$", fontsize=11, va="center", color="0.3")
     axes_glyph(ax, (-2.8, -1.1), 0.5)
     ax.set_xlim(-3.4, w + 3.3)
     ax.set_ylim(-1.45, h + 0.75)
@@ -374,8 +374,8 @@ def fig_hooke():
         arrow(ax, (L * (1 + ex) + 0.05, y), (L * (1 + ex) + 0.5, y), S11C, 1.6, 10)
         arrow(ax, (-0.05, y), (-0.5, y), S11C, 1.6, 10)
     ax.text(L * (1 + ex) + 0.62, 0.5, "$\\sigma$", color=S11C, fontsize=13, va="center")
-    ax.text(L * 0.45, 1.25, "lengthens by $\\varepsilon_{11} = \\sigma/E$", fontsize=10.5, ha="center")
-    ax.text(L * 0.45, -0.45, "narrows by $\\varepsilon_{22} = -\\nu\\,\\varepsilon_{11}$", fontsize=10.5, ha="center")
+    ax.text(L * 0.45, 1.25, "lengthens by $\\varepsilon_{00} = \\sigma/E$", fontsize=10.5, ha="center")
+    ax.text(L * 0.45, -0.45, "narrows by $\\varepsilon_{11} = -\\nu\\,\\varepsilon_{00}$", fontsize=10.5, ha="center")
     ax.set_xlim(-0.9, L * 1.25 + 0.9)
     ax.set_ylim(-0.8, 1.6)
     clean(ax)
@@ -389,8 +389,8 @@ def fig_hooke():
         bx.spines[s].set_visible(False)
     for s in ("left", "bottom"):
         bx.spines[s].set_linewidth(0.9)
-    bx.set_xlabel("strain $\\varepsilon_{11}$ ($\\times 10^{-3}$)", fontsize=10.5)
-    bx.set_ylabel("stress $\\sigma_{11}$ (MPa)", fontsize=10.5)
+    bx.set_xlabel("strain $\\varepsilon_{00}$ ($\\times 10^{-3}$)", fontsize=10.5)
+    bx.set_ylabel("stress $\\sigma_{00}$ (MPa)", fontsize=10.5)
     bx.tick_params(labelsize=9)
     bx.set_title("(b) Steel, before it yields:\na straight line", fontsize=10.5, loc="left")
     # shear
@@ -498,13 +498,13 @@ def fig_planes():
     for y in np.linspace(-Wh + 10, Wh - 10, 4):
         arrow(ax, Pp(Lh + 4, y, 7), Pp(Lh + 34, y, 7), LOADCLR, 1.6, 11, z=10)
         arrow(ax, Pp(-Lh - 4, y, 7), Pp(-Lh - 34, y, 7), LOADCLR, 1.6, 11, z=10)
-    ax.text(-Lh, -Wh - 14, "thickness $t$ much smaller than the plate;\nloads in the plane, the faces $x_3 = \\pm t/2$ free",
+    ax.text(-Lh, -Wh - 14, "thickness $t$ much smaller than the plate;\nloads in the plane, the faces $x_2 = \\pm t/2$ free",
             fontsize=10.2, ha="left", va="top")
-    ax.text(-Lh, Wh + 30, "$\\sigma_{33} = \\sigma_{13} = \\sigma_{23} = 0$\n$\\varepsilon_{33} = -\\dfrac{\\nu}{E}(\\sigma_{11} + \\sigma_{22}) \\neq 0$",
+    ax.text(-Lh, Wh + 30, "$\\sigma_{22} = \\sigma_{02} = \\sigma_{12} = 0$\n$\\varepsilon_{22} = -\\dfrac{\\nu}{E}(\\sigma_{00} + \\sigma_{11}) \\neq 0$",
             fontsize=11, va="bottom")
     gx, gy = Lh - 6, -Wh - 40
     o = Pp(gx, gy, 0)
-    for v, lab, off in (((22, 0, 0), "$x_1$", (3, -2)), ((0, 22, 0), "$x_2$", (-3, 3)), ((0, 0, 40), "$x_3$", (2, 1))):
+    for v, lab, off in (((22, 0, 0), "$x_0$", (3, -2)), ((0, 22, 0), "$x_1$", (-3, 3)), ((0, 0, 40), "$x_2$", (2, 1))):
         q = Pp(gx + v[0], gy + v[1], v[2])
         arrow(ax, o, q, INK, 1.1, 9)
         ax.text(q[0] + off[0], q[1] + off[1], lab, fontsize=11, ha="left" if off[0] >= 0 else "right")
@@ -520,9 +520,9 @@ def fig_planes():
     for x in np.linspace(-b + 15, b - 15, 5):
         for zz in (60, 220, 380):
             arrow(bx, Pw(x, d + 45, zz), Pw(x, d + 4, zz), LOADCLR, 1.2, 9, z=10)
-    bx.text(-b, -40, "long, with the same cross-section and loads\nall along $x_3$; the ends held (hatched)",
+    bx.text(-b, -40, "long, with the same cross-section and loads\nall along $x_2$; the ends held (hatched)",
             fontsize=10.2, va="top")
-    bx.text(-b - 20, d + 170, "$\\varepsilon_{33} = \\varepsilon_{13} = \\varepsilon_{23} = 0$\n$\\sigma_{33} = \\nu(\\sigma_{11} + \\sigma_{22}) \\neq 0$",
+    bx.text(-b - 20, d + 170, "$\\varepsilon_{22} = \\varepsilon_{02} = \\varepsilon_{12} = 0$\n$\\sigma_{22} = \\nu(\\sigma_{00} + \\sigma_{11}) \\neq 0$",
             fontsize=11, va="bottom")
     bx.set_xlim(-b - 30, b + 420)
     bx.set_ylim(-110, d + 245)
@@ -546,42 +546,42 @@ def _support(ax, x, y, direction, size, color=BDRYCLR, filled=True, outward=(0, 
 
 
 def fig_bcs():
-    """The boundary of the quarter plate, split once for direction 1 and once for direction 2."""
+    """The boundary of the quarter plate, split once for direction 0 and once for direction 1."""
     P = EL.PLATE
     Lh, Wh, a = P["L"] / 2, P["W"] / 2, P["a"]
     fig, axes = plt.subplots(1, 2, figsize=(10.8, 4.1))
     th = np.linspace(0, np.pi / 2, 40)
     edges = {"left": ([0, 0], [a, Wh]), "bottom": ([a, Lh], [0, 0]), "right": ([Lh, Lh], [0, Wh]),
              "top": ([0, Lh], [Wh, Wh]), "hole": (a * np.cos(th), a * np.sin(th))}
-    for ax, i in zip(axes, (1, 2)):
+    for ax, i in zip(axes, (0, 1)):
         ax.add_patch(Polygon(np.c_[np.r_[a, Lh, Lh, 0, 0, a * np.cos(th[::-1])], np.r_[0, 0, Wh, Wh, a, a * np.sin(th[::-1])]],
                              closed=True, fc=BODY, ec="none"))
-        gname = "left" if i == 1 else "bottom"
+        gname = "left" if i == 0 else "bottom"
         for name, (xs, ys) in edges.items():
             col = BDRYCLR if name == gname else FLUXCLR
             ax.plot(xs, ys, color=col, lw=4.2 if name == gname else 3.0, solid_capstyle="butt", zorder=5)
-        if i == 1:
+        if i == 0:
             for y in np.linspace(a + 5, Wh - 4, 4):
                 _support(ax, 0, y, 0, 5.5, outward=(-1, 0))
-            ax.text(-9, (a + Wh) / 2, "$\\Gamma_{g_1}$: $u_1 = 0$\n(symmetry)", color=BDRYCLR, fontsize=11, ha="right", va="center")
-            ax.text(Lh + 15, Wh / 2, "$h_1 = \\sigma$", color=FLUXCLR, fontsize=11, va="center")
-            ax.text((a + Lh) / 2, -5, "$h_1 = 0$: no shear on a\nline of symmetry", color=FLUXCLR, fontsize=10.5, ha="center", va="top")
-            ax.text(Lh / 2, Wh + 3, "$h_1 = 0$ (free)", color=FLUXCLR, fontsize=10.5, ha="center", va="bottom")
+            ax.text(-9, (a + Wh) / 2, "$\\Gamma_{g_0}$: $u_0 = 0$\n(symmetry)", color=BDRYCLR, fontsize=11, ha="right", va="center")
+            ax.text(Lh + 15, Wh / 2, "$h_0 = \\sigma$", color=FLUXCLR, fontsize=11, va="center")
+            ax.text((a + Lh) / 2, -5, "$h_0 = 0$: no shear on a\nline of symmetry", color=FLUXCLR, fontsize=10.5, ha="center", va="top")
+            ax.text(Lh / 2, Wh + 3, "$h_0 = 0$ (free)", color=FLUXCLR, fontsize=10.5, ha="center", va="bottom")
             for y in np.linspace(5, Wh - 5, 4):
                 arrow(ax, (Lh + 1.5, y), (Lh + 13, y), LOADCLR, 1.5, 10)
         else:
             for x in np.linspace(a + 6, Lh - 6, 6):
                 _support(ax, x, 0, 1, 5.5, outward=(0, -1))
-            ax.text((a + Lh) / 2, -9, "$\\Gamma_{g_2}$: $u_2 = 0$ (symmetry)", color=BDRYCLR, fontsize=11, ha="center", va="top")
-            ax.text(-3, (a + Wh) / 2, "$h_2 = 0$: no shear on a\nline of symmetry", color=FLUXCLR, fontsize=10.5, ha="right", va="center")
-            ax.text(Lh + 4, Wh / 2, "$h_2 = 0$", color=FLUXCLR, fontsize=11, va="center")
-            ax.text(Lh / 2, Wh + 3, "$h_2 = 0$ (free)", color=FLUXCLR, fontsize=10.5, ha="center", va="bottom")
+            ax.text((a + Lh) / 2, -9, "$\\Gamma_{g_1}$: $u_1 = 0$ (symmetry)", color=BDRYCLR, fontsize=11, ha="center", va="top")
+            ax.text(-3, (a + Wh) / 2, "$h_1 = 0$: no shear on a\nline of symmetry", color=FLUXCLR, fontsize=10.5, ha="right", va="center")
+            ax.text(Lh + 4, Wh / 2, "$h_1 = 0$", color=FLUXCLR, fontsize=11, va="center")
+            ax.text(Lh / 2, Wh + 3, "$h_1 = 0$ (free)", color=FLUXCLR, fontsize=10.5, ha="center", va="bottom")
         ax.text(a * 0.75, a * 0.75, "hole:\n$h_{%d} = 0$" % i, color=FLUXCLR, fontsize=10, ha="left", va="bottom")
         ax.set_xlim(-48, Lh + 34)
         ax.set_ylim(-26, Wh + 14)
         clean(ax)
         ax.set_title("(%s) Direction %d: $\\Gamma = \\overline{\\Gamma_{g_%d} \\cup \\Gamma_{h_%d}}$, with no overlap"
-                     % ("a" if i == 1 else "b", i, i, i), fontsize=11, loc="left")
+                     % ("a" if i == 0 else "b", i, i, i), fontsize=11, loc="left")
     fig.tight_layout(w_pad=1.0)
     return fig
 
@@ -589,11 +589,11 @@ def fig_bcs():
 def fig_supports():
     """Common supports, each a pair of conditions, one for each direction."""
     fig, axes = plt.subplots(1, 5, figsize=(11.2, 2.7))
-    items = [("held (clamped)", [("g", "g")], "$u_1 = g_1$, $u_2 = g_2$"),
-             ("roller on a horizontal surface", [("h", "g")], "$h_1 = 0$, $u_2 = g_2$"),
-             ("a line of symmetry\n(normal $x_1$)", [("g", "h")], "$u_1 = 0$, $h_2 = 0$"),
-             ("loaded surface", [("h", "h")], "$h_1$ and $h_2$ given"),
-             ("free surface", [("h0", "h0")], "$h_1 = h_2 = 0$")]
+    items = [("held (clamped)", [("g", "g")], "$u_0 = g_0$, $u_1 = g_1$"),
+             ("roller on a horizontal surface", [("h", "g")], "$h_0 = 0$, $u_1 = g_1$"),
+             ("a line of symmetry\n(normal $x_0$)", [("g", "h")], "$u_0 = 0$, $h_1 = 0$"),
+             ("loaded surface", [("h", "h")], "$h_0$ and $h_1$ given"),
+             ("free surface", [("h0", "h0")], "$h_0 = h_1 = 0$")]
     for ax, (title, _, rule) in zip(axes, items):
         ax.add_patch(Rectangle((0, 0), 2, 1.2, fc=BODY, ec="none"))
         clean(ax)
@@ -642,14 +642,14 @@ def fig_cantilever_setup():
     ax.plot([0, L], [0, 0], color="0.55", lw=0.8, ls="-.")
     arrow(ax, (0, 0), (30, 0), INK, 1.1, 10)
     arrow(ax, (0, 0), (0, 30), INK, 1.1, 10)
-    ax.text(34, 0, "$x_1$", fontsize=12, va="center")
-    ax.text(4, 30, "$x_2$", fontsize=12, va="center")
+    ax.text(34, 0, "$x_0$", fontsize=12, va="center")
+    ax.text(4, 30, "$x_1$", fontsize=12, va="center")
     ax.annotate("", xy=(L, -D / 2 - 22), xytext=(0, -D / 2 - 22), arrowprops=dict(arrowstyle="<->", color="0.4", lw=0.9))
     ax.text(L / 2, -D / 2 - 27, "$L$ = 400 mm", fontsize=10.5, ha="center", va="top", color="0.3")
     ax.annotate("", xy=(L * 0.72, D / 2), xytext=(L * 0.72, -D / 2), arrowprops=dict(arrowstyle="<->", color="0.4", lw=0.9))
     ax.text(L * 0.72 + 5, 18, "$D$ = 100 mm", fontsize=10.5, color="0.3")
     ax.text(-14, D / 2 + 18, "exact displacements\nprescribed", fontsize=10, color=BDRYCLR, ha="center")
-    ax.text(L * 0.3, D / 2 + 8, "free:  $h_1 = h_2 = 0$", fontsize=10, color=FLUXCLR)
+    ax.text(L * 0.3, D / 2 + 8, "free:  $h_0 = h_1 = 0$", fontsize=10, color=FLUXCLR)
     ax.text(L * 0.3, -D / 2 - 8, "free", fontsize=10, color=FLUXCLR, va="top")
     ax.text(L * 0.06, -D / 2 + 10, "steel plate, $t$ = 10 mm thick (plane stress)", fontsize=10, color="0.3")
     ax.set_xlim(-40, L + 150)
@@ -677,7 +677,7 @@ def fig_cantilever_exact():
         ax.plot(x + mag * ex["u1"][:, np.searchsorted(xs, x) - (1 if x == L else 0)], ys + mag * ex["u2"][:, np.searchsorted(xs, x) - (1 if x == L else 0)],
                 color=INK, lw=0.6, alpha=0.6)
     cb = fig.colorbar(cf, ax=ax, fraction=0.025, pad=0.01, ticks=[-200, -100, 0, 100, 200])
-    cb.set_label("$\\sigma_{11}$ (MPa)", fontsize=10)
+    cb.set_label("$\\sigma_{00}$ (MPa)", fontsize=10)
     cb.ax.tick_params(labelsize=8.5)
     tip = EL.cantilever_exact(L, 0, E_STEEL, NU_STEEL)["u2"]
     ax.text(L + 6, mag * ex["u2"][20, -1], "tip: %s mm" % ("%.3f" % tip).replace("-", "\u2212"),
@@ -698,11 +698,11 @@ def fig_cantilever_exact():
     x = np.linspace(0, L, 101)
     w = EL.cantilever_exact(x, 0 * x, E_STEEL, NU_STEEL)["u2"]
     eb = -P * x * x * (3 * L - x) / (6 * E_STEEL * I)
-    dx.plot(x, w, color=INK, lw=2.2, label="exact, at $x_2 = 0$")
+    dx.plot(x, w, color=INK, lw=2.2, label="exact, at $x_1 = 0$")
     dx.plot(x, eb, ls=(0, (4, 3)), color=REACTCLR, lw=1.4, label="Euler–Bernoulli")
-    for a_, xl, yl, title in ((bx, "$\\sigma_{11}$ at $x_1 = L/2$ (MPa)", "$x_2$ (mm)", "(b) Bending stress: linear"),
-                              (cx, "$\\sigma_{12}$ (MPa), any $x_1$", "$x_2$ (mm)", "(c) Shear stress: parabolic"),
-                              (dx, "$x_1$ (mm)", "$u_2$ (mm)", "(d) Deflection: bending + shear")):
+    for a_, xl, yl, title in ((bx, "$\\sigma_{00}$ at $x_0 = L/2$ (MPa)", "$x_1$ (mm)", "(b) Bending stress: linear"),
+                              (cx, "$\\sigma_{01}$ (MPa), any $x_0$", "$x_1$ (mm)", "(c) Shear stress: parabolic"),
+                              (dx, "$x_0$ (mm)", "$u_1$ (mm)", "(d) Deflection: bending + shear")):
         for s in ("top", "right"):
             a_.spines[s].set_visible(False)
         for s in ("left", "bottom"):
@@ -783,8 +783,8 @@ def fig_kirsch():
         ax.spines[side].set_visible(False)
     for side in ("left", "bottom"):
         ax.spines[side].set_linewidth(0.8)
-    ax.set_xlabel("distance from the center of the hole along $x_1 = 0$, $x_2/a$", fontsize=10.5)
-    ax.set_ylabel("$\\sigma_{11}/\\sigma$", fontsize=10.5)
+    ax.set_xlabel("distance from the center of the hole along $x_0 = 0$, $x_1/a$", fontsize=10.5)
+    ax.set_ylabel("$\\sigma_{00}/\\sigma$", fontsize=10.5)
     ax.set_ylim(0.8, 3.4)
     ax.legend(frameon=False, fontsize=9)
     ax.tick_params(labelsize=9)
@@ -809,7 +809,8 @@ def _graph(ax, xl, yl):
 
 
 def fig_vector_basis():
-    """The two vector basis functions of one node: N_A e_1 and N_A e_2."""
+    """The two vector basis functions of one node, N_A e_0 and N_A e_1, with the
+    degree of freedom numbered from 0 as in the notes (e_0 along x_0, e_1 along x_1)."""
     m = EL.cantilever_mesh(p=1, ny=2, nx=4, L=200.0, D=100.0)
     A = int(np.argmin(np.hypot(m.X[:, 0] - 100.0, m.X[:, 1])))
     fig, axes = plt.subplots(1, 3, figsize=(11.2, 3.3), gridspec_kw=dict(width_ratios=[1, 1, 1]))
@@ -836,7 +837,7 @@ def fig_vector_basis():
         arrow(ax, m.X[A], m.X[A] + sc * U[A], INK, 1.6, 11, z=7)
         ax.plot(*m.X[A], "o", color=INK, ms=5, zorder=7)
         ax.set_title("(%s) $N_A\\,\\underline{e}_%d$: node $A$ moves along $x_%d$,\nevery other node stays put"
-                     % ("b" if i == 0 else "c", i + 1, i + 1), fontsize=10.5, loc="left")
+                     % ("b" if i == 0 else "c", i, i), fontsize=10.5, loc="left")
     for ax in axes:
         ax.set_xlim(-8, 208)
         ax.set_ylim(-58, 58)
@@ -845,8 +846,91 @@ def fig_vector_basis():
     return fig
 
 
+def fig_local_pq(ah=1, ih=1, bh=2, jh=0):
+    """The local equation numbers p_hat = 2a + i of a four-node element, and where they
+    put the entries of each 2 x 2 block k^e_ab in the 8 x 8 element matrix.
+
+    The local nodes follow the stride rule a = a_xi + 2 a_eta of Class 11, as in the
+    Class 14 and Class 28 widgets.  The entry in row ih of block (ah, bh) and column jh
+    is highlighted."""
+    DOF = (S11C, S22C)
+    ph, qh = 2 * ah + ih, 2 * bh + jh
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(11.2, 4.9), gridspec_kw=dict(width_ratios=[1, 1.45]))
+    # (a) the element, with an arrow for each local unknown
+    X = np.array([(0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (1.0, 1.0)])
+    ax.add_patch(Polygon(X[[0, 1, 3, 2]], closed=True, fc=BODY, ec=INK, lw=1.4, zorder=1))
+    L = 0.4
+    for a in range(4):
+        x, y = X[a]
+        for i in range(2):
+            tip = (x + L, y) if i == 0 else (x, y + L)
+            arrow(ax, (x, y), tip, DOF[i], 2.0, 13, z=5)
+            if i == 0:   # below a bottom node, above a top one
+                tx, ty, ha, va = x + 0.5 * L, (y - 0.06, y + 0.06)[int(y)], "center", ("top", "bottom")[int(y)]
+            else:        # left of a left node, right of a right one
+                tx, ty, ha, va = (x - 0.06, x + 0.06)[int(x)], y + 0.5 * L, ("right", "left")[int(x)], "center"
+            hot = (a, i) in ((ah, ih), (bh, jh))
+            ax.text(tx, ty, "%d" % (2 * a + i), fontsize=13, ha=ha, va=va, color=DOF[i], zorder=7,
+                    fontweight="bold" if hot else "normal",
+                    bbox=dict(fc="#fde8d4" if hot else "white", ec=DEFCLR if hot else "none", lw=1.4,
+                              boxstyle="round,pad=0.2"))
+        ax.plot(x, y, "o", ms=7, color=INK, zorder=6)
+        ax.text(x + (0.08, -0.08)[int(x)], y + (0.08, -0.08)[int(y)], "$a = %d$" % a, fontsize=12,
+                ha=("left", "right")[int(x)], va=("bottom", "top")[int(y)], color=INK, zorder=7)
+    axes_glyph(ax, (-0.5, -0.5), 0.22, fs=11)
+    ax.text(0.5, -0.42, "red: $i = 0$, along $x_0$\nblue: $i = 1$, along $x_1$", fontsize=10, ha="center", va="top",
+            color="0.3")
+    ax.set_xlim(-0.6, 1.65)
+    ax.set_ylim(-0.75, 1.55)
+    clean(ax)
+    ax.set_title("(a) The local equation numbers $\\hat{p} = 2a + i$ of the\neight unknowns of a four-node element ($p = 1$)",
+                 fontsize=10.5, loc="left")
+    # (b) the 8 x 8 element matrix, ruled into 2 x 2 blocks
+    n = 8
+    for p in range(n):
+        for q in range(n):
+            fc = "white"
+            if p // 2 == ah and q // 2 == bh:
+                fc = "#fde8d4"
+            if (p, q) == (ph, qh):
+                fc = DEFCLR
+            bx.add_patch(Rectangle((q, -p - 1), 1, 1, fc=fc, ec="#c9ced6", lw=0.6, zorder=1))
+    for k in range(0, n + 1, 2):
+        bx.plot([k, k], [0, -n], color=INK, lw=1.5, zorder=3)
+        bx.plot([0, n], [-k, -k], color=INK, lw=1.5, zorder=3)
+    for p in range(n):
+        a, i = divmod(p, 2)
+        bx.text(-0.3, -p - 0.5, "%d" % p, fontsize=11, ha="right", va="center", color=DOF[i],
+                fontweight="bold" if p == ph else "normal")
+        bx.text(-1.25, -p - 0.5, "(%d, %d)" % (a, i), fontsize=10, ha="right", va="center", color="0.4")
+        bx.text(p + 0.5, 0.3, "%d" % p, fontsize=11, ha="center", va="bottom", color=DOF[i],
+                fontweight="bold" if p == qh else "normal")
+        bx.text(p + 0.5, 1.05, "%d,%d" % (a, i), fontsize=9.5, ha="center", va="bottom", color="0.4")
+    bx.text(-0.3, 0.3, "$\\hat{q}$", fontsize=11.5, ha="right", va="bottom")
+    bx.text(-0.3, 1.05, "$(b, j)$", fontsize=10.5, ha="right", va="bottom", color="0.4")
+    bx.text(-0.3, -n - 0.25, "$\\hat{p}$", fontsize=11.5, ha="right", va="top")
+    bx.text(-1.25, -n - 0.25, "$(a, i)$", fontsize=10.5, ha="right", va="top", color="0.4")
+    # call out the highlighted entry
+    bx.annotate("row $\\hat{p} = %d$, column $\\hat{q} = %d$:\nrow $i = %d$, column $j = %d$\nof the block for\n$a = %d$ and $b = %d$"
+                % (ph, qh, ih, jh, ah, bh),
+                xy=(qh + 0.92, -ph - 0.5), xytext=(n + 0.7, -ph - 0.5), fontsize=10.5, va="center",
+                arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.2, shrinkA=2, shrinkB=0), zorder=6)
+    bx.set_xlim(-3.0, n + 4.6)
+    bx.set_ylim(-n - 0.9, 2.1)
+    clean(bx)
+    bx.set_title("(b) The $8 \\times 8$ element stiffness matrix: row $\\hat{p} = 2a + i$, column $\\hat{q} = 2b + j$,\n"
+                 "with the thick lines around the $2 \\times 2$ block of each pair of local nodes",
+                 fontsize=10.5, loc="left")
+    fig.tight_layout(w_pad=1.0)
+    return fig
+
+
 def fig_id_lm():
-    """ID(i, A) on a small mesh with rollers on two sides, and LM for one element."""
+    """ID(i, A) on a small mesh with rollers on two sides, and LM for one element.
+
+    Shown numbered from 0, as in the class notes, with -1 for a prescribed
+    component; the solver stores equation numbers from 1, with 0 for prescribed."""
+    eq = lambda v: "$\\mathbf{-1}$" if v == 0 else str(v - 1)
     m = EL.cantilever_mesh(p=1, ny=2, nx=3, L=300.0, D=200.0)
     s = EL.solve(m, E_STEEL, NU_STEEL, "stress", t=10.0, dirichlet={"left": {0: ZERO}, "bottom": {1: ZERO}},
                  traction={"right": lambda x, y: (50.0, 0.0)})
@@ -856,7 +940,7 @@ def fig_id_lm():
     eh = int(np.argmin([np.hypot(*(m.X[m.IEN[e]].mean(axis=0) - (50.0, -50.0))) for e in range(m.nel)]))
     ax.add_patch(Polygon(element_outline(m, eh, 1), closed=True, fill=False, ec=DEFCLR, lw=2.6, zorder=5))
     c = m.X[m.IEN[eh]].mean(axis=0)
-    ax.text(c[0], c[1], "$e = %d$" % (eh + 1), fontsize=11.5, ha="center", va="center", color=DEFCLR, zorder=6)
+    ax.text(c[0], c[1], "$e = %d$" % eh, fontsize=11.5, ha="center", va="center", color=DEFCLR, zorder=6)
     for y in np.linspace(-80, 80, 5):
         _support(ax, 0, y, 0, 13, outward=(-1, 0))
     for x in np.linspace(20, 280, 7):
@@ -867,38 +951,38 @@ def fig_id_lm():
         x, y = m.X[A]
         ax.plot(x, y, "o", ms=6, color=INK, zorder=7)
         ids = s.ID[:, A]
-        txt = "(%s, %s)" % tuple("$\\mathbf{0}$" if v == 0 else str(v) for v in ids)
+        txt = "(%s, %s)" % tuple(eq(v) for v in ids)
         ax.text(x + 6, y + 7, txt, fontsize=10.5, zorder=8, color=BDRYCLR,
                 bbox=dict(fc="white", ec="none", pad=0.6, alpha=0.85))
-        ax.text(x - 5, y + 7, "%d" % (A + 1), fontsize=9.5, ha="right", va="bottom", color="0.35", zorder=8)
+        ax.text(x - 5, y + 7, "%d" % A, fontsize=9.5, ha="right", va="bottom", color="0.35", zorder=8)
     ax.set_xlim(-45, 370)
     ax.set_ylim(-135, 125)
     clean(ax)
-    ax.set_title("(a) Node numbers $A$ (gray) and $(\\mathrm{ID}(1, A),\\ \\mathrm{ID}(2, A))$ (navy):\n"
-                 "the left side fixes $u_1$ only, the bottom fixes $u_2$ only", fontsize=10.5, loc="left")
+    ax.set_title("(a) Node numbers $A$ (gray) and $(\\mathrm{ID}(0, A),\\ \\mathrm{ID}(1, A))$ (navy):\n"
+                 "the left side fixes $u_0$ only, the bottom fixes $u_1$ only", fontsize=10.5, loc="left")
     # (b) the arrays for the highlighted element
     bx.axis("off")
-    ien = m.IEN[eh] + 1
+    ien = m.IEN[eh]
     lm = s.LM[eh]
-    rows = [("$a$", ["1", "2", "3", "4"]),
+    rows = [("$a$", ["0", "1", "2", "3"]),
             ("$\\mathrm{IEN}(a, e)$", [str(v) for v in ien])]
     y0 = 0.92
-    bx.text(0.0, y0 + 0.06, "(b) The arrays of element $e = %d$" % (eh + 1), fontsize=10.5, transform=bx.transAxes)
+    bx.text(0.0, y0 + 0.06, "(b) The arrays of element $e = %d$" % eh, fontsize=10.5, transform=bx.transAxes)
     for k, (name, vals) in enumerate(rows):
         bx.text(0.0, y0 - 0.1 * (k + 1), name, fontsize=11, transform=bx.transAxes, va="center")
         for j, v in enumerate(vals):
             bx.text(0.36 + 0.16 * j, y0 - 0.1 * (k + 1), v, fontsize=11, transform=bx.transAxes, ha="center", va="center")
-    bx.text(0.0, y0 - 0.36, "$p = 2(a - 1) + i$", fontsize=11, transform=bx.transAxes, va="center")
+    bx.text(0.0, y0 - 0.36, "$\\hat{p} = 2a + i$", fontsize=11, transform=bx.transAxes, va="center")
     for j in range(8):
-        a, i = j // 2 + 1, j % 2 + 1
-        bx.text(0.36 + 0.08 * j, y0 - 0.36, "%d" % (j + 1), fontsize=10.5, transform=bx.transAxes, ha="center", va="center")
+        a, i = j // 2, j % 2
+        bx.text(0.36 + 0.08 * j, y0 - 0.36, "%d" % j, fontsize=10.5, transform=bx.transAxes, ha="center", va="center")
         bx.text(0.36 + 0.08 * j, y0 - 0.46, "%d,%d" % (i, a), fontsize=9.5, transform=bx.transAxes, ha="center", va="center", color="0.4")
         v = lm[j]
-        bx.text(0.36 + 0.08 * j, y0 - 0.56, "$\\mathbf{0}$" if v == 0 else "%d" % v, fontsize=11, transform=bx.transAxes,
+        bx.text(0.36 + 0.08 * j, y0 - 0.56, eq(v), fontsize=11, transform=bx.transAxes,
                 ha="center", va="center", color=LOADCLR if v == 0 else INK)
     bx.text(0.0, y0 - 0.46, "$(i, a)$", fontsize=11, transform=bx.transAxes, va="center", color="0.4")
-    bx.text(0.0, y0 - 0.56, "$\\mathrm{LM}(p, e)$", fontsize=11, transform=bx.transAxes, va="center")
-    bx.text(0.0, y0 - 0.72, "$\\mathrm{LM}(p, e) = \\mathrm{ID}(i, \\mathrm{IEN}(a, e))$.  A 0 marks a prescribed\n"
+    bx.text(0.0, y0 - 0.56, "$\\mathrm{LM}(\\hat{p}, e)$", fontsize=11, transform=bx.transAxes, va="center")
+    bx.text(0.0, y0 - 0.72, "$\\mathrm{LM}(\\hat{p}, e) = \\mathrm{ID}(i, \\mathrm{IEN}(a, e))$.  A $-1$ marks a prescribed\n"
             "component: its row and column of $\\mathbf{k}^e$ are not assembled,\n"
             "and its known value moves to the right-hand side.", fontsize=10.2, transform=bx.transAxes, va="top")
     fig.tight_layout(w_pad=1.0)
@@ -913,10 +997,10 @@ def ke_modes(E=E_STEEL, nu=NU_STEEL):
     X = m.X[m.IEN[0]] - m.X[m.IEN[0]].mean(axis=0)
     x, y = X[:, 0], X[:, 1]
     z = np.zeros(4)
-    modes = [("translation along $x_1$", np.c_[1 + z, z]), ("translation along $x_2$", np.c_[z, 1 + z]),
+    modes = [("translation along $x_0$", np.c_[1 + z, z]), ("translation along $x_1$", np.c_[z, 1 + z]),
              ("rotation", np.c_[-y, x]), ("uniform expansion", np.c_[x, y]),
-             ("stretch $x_1$, shorten $x_2$", np.c_[x, -y]), ("shear", np.c_[y, x]),
-             ("bending along $x_1$", np.c_[4 * x * y, z]), ("bending along $x_2$", np.c_[z, 4 * x * y])]
+             ("stretch $x_0$, shorten $x_1$", np.c_[x, -y]), ("shear", np.c_[y, x]),
+             ("bending along $x_0$", np.c_[4 * x * y, z]), ("bending along $x_1$", np.c_[z, 4 * x * y])]
     out = []
     for name, U in modes:
         d = U.reshape(-1)
@@ -938,12 +1022,13 @@ def fig_ke_modes():
             "Bottom row: the five modes that strain the\nelement. The bending modes (red) are the\n"
             "softest, but a straight-sided element bends\nonly by shearing as well.",
             fontsize=10.2, va="center", transform=tx.transAxes)
-    sq = X[[0, 1, 2, 3]]
+    ring = [0, 1, 3, 2]                     # the corners in order around the square (stride numbering)
+    sq = X[ring]
     for ax, (name, U, lam, res) in zip(axes, modes):
         ax.add_patch(Polygon(sq, closed=True, fill=False, ec=INK, lw=1.0, ls="--"))
         rigid = lam < 1e-6 * E_STEEL
         col = REACTCLR if rigid else (LOADCLR if "bending" in name else DEFCLR)
-        D = sq + 0.32 * U
+        D = sq + 0.32 * U[ring]
         ax.add_patch(Polygon(D, closed=True, fc=col, alpha=0.16, ec=col, lw=1.8))
         for k in range(4):
             arrow(ax, sq[k], D[k], col, 1.1, 8)
@@ -1050,12 +1135,12 @@ def fig_plate_results(study):
     draw_mesh(ax, m, U=s.U, scale=mag, color="0.45", lw=0.2)
     ax.add_patch(Rectangle((-P["L"] / 2, -P["W"] / 2), P["L"], P["W"], fill=False, ec="0.5", lw=0.8, ls="--"))
     cb = fig.colorbar(cf, ax=ax, fraction=0.03, pad=0.01, ticks=[-50, 0, 50, 100, 150])
-    cb.set_label("$\\sigma_{11}$ (MPa)", fontsize=10)
+    cb.set_label("$\\sigma_{00}$ (MPa)", fontsize=10)
     cb.ax.tick_params(labelsize=8.5)
     ax.set_xlim(-P["L"] / 2 - 6, P["L"] / 2 + 14)
     ax.set_ylim(-P["W"] / 2 - 6, P["W"] / 2 + 6)
     clean(ax)
-    ax.set_title("(a) $\\sigma_{11}$ on the deformed plate (Q9, %d elements;\ndisplacements magnified %d times)" % (m.nel, mag),
+    ax.set_title("(a) $\\sigma_{00}$ on the deformed plate (Q9, %d elements;\ndisplacements magnified %d times)" % (m.nel, mag),
                  fontsize=10.5, loc="left")
     kt, peak = EL.heywood(2 * P["a"], P["W"], P["s"])
     for quarter, ls in ((False, "-"), (True, "--")):
@@ -1066,7 +1151,7 @@ def fig_plate_results(study):
                         label="%s, %s" % ("Q4" if p == 1 else "Q9", "quarter (symmetry)" if quarter else "whole plate"))
     bx.axhline(peak, color=INK, lw=1.0, ls=":")
     bx.text(8000, peak - 0.15, "Heywood's estimate, %.1f MPa" % peak, fontsize=9.5, va="top", ha="right")
-    _graph(bx, "number of equations", "$\\sigma_{11}$ at the top of the hole (MPa)")
+    _graph(bx, "number of equations", "$\\sigma_{00}$ at the top of the hole (MPa)")
     bx.legend(frameon=False, fontsize=8.8, loc="lower right")
     bx.set_title("(b) The peak stress as the mesh is refined", fontsize=10.5, loc="left")
     fig.tight_layout(w_pad=1.2)

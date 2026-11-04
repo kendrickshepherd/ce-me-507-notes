@@ -50,11 +50,11 @@ e.g. in 2D
 
 ::: {.derivation}
 $$
-\nabla f = \begin{bmatrix} \partial f_1/\partial x \\[2pt] \partial f_2/\partial x \end{bmatrix}
+\nabla f = \begin{bmatrix} \partial f_0/\partial x \\[2pt] \partial f_1/\partial x \end{bmatrix}
 \qquad ; \qquad
-f_{,1} = \frac{\partial f_1}{\partial x}
+f_{,0} = \frac{\partial f_0}{\partial x}
 \qquad
-f_{,2} = \frac{\partial f_2}{\partial x}
+f_{,1} = \frac{\partial f_1}{\partial x}
 $$
 :::
 
@@ -63,9 +63,9 @@ $$
 \text{(double gradient)}\qquad \nabla(\nabla f) := f_{,ij}
 \qquad\qquad
 \begin{bmatrix}
-f_{,11} & f_{,12} & f_{,13} \\
-f_{,21} & f_{,22} & f_{,23} \\
-f_{,31} & f_{,32} & f_{,33}
+f_{,00} & f_{,01} & f_{,02} \\
+f_{,10} & f_{,11} & f_{,12} \\
+f_{,20} & f_{,21} & f_{,22}
 \end{bmatrix}
 $$
 :::
@@ -80,7 +80,7 @@ $$
 
 ::: {.derivation}
 $$
-f_{,ii} = f_{,11} + f_{,22} + f_{,33}
+f_{,ii} = f_{,00} + f_{,11} + f_{,22}
 = \frac{\partial^2 f}{\partial x^2} + \frac{\partial^2 f}{\partial y^2}
 + \frac{\partial^2 f}{\partial z^2}
 $$
@@ -90,7 +90,7 @@ $$
 $$
 \text{a vector (-valued function)}\qquad \underline{V} := V_i
 \qquad\qquad
-\underline{V} = \begin{bmatrix} V_1 \\ V_2 \\ V_3 \end{bmatrix}
+\underline{V} = \begin{bmatrix} V_0 \\ V_1 \\ V_2 \end{bmatrix}
 $$
 :::
 
@@ -98,8 +98,8 @@ $$
 $$
 \text{(divergence)}\qquad \nabla \cdot \underline{V} := V_{i,i}
 \qquad\qquad
-V_{i,i} = \frac{\partial v_1}{\partial x} + \frac{\partial v_2}{\partial y}
-+ \frac{\partial v_3}{\partial z} \quad \text{in 3D}
+V_{i,i} = \frac{\partial v_0}{\partial x} + \frac{\partial v_1}{\partial y}
++ \frac{\partial v_2}{\partial z} \quad \text{in 3D}
 $$
 :::
 
@@ -107,7 +107,7 @@ $$
 $$
 \text{(dot product)}\qquad \underline{V}\cdot\underline{n} := V_i n_i
 \qquad\qquad
-V_i n_i = V_1 n_1 + V_2 n_2 + V_3 n_3
+V_i n_i = V_0 n_0 + V_1 n_1 + V_2 n_2
 $$
 :::
 
@@ -434,8 +434,8 @@ and $\underline{w}$, written $\langle \underline{v}, \underline{w}\rangle$, is d
 
 ::: {.derivation}
 $$
-\langle \underline{v}, \underline{w}\rangle = v_i w_i = \sum_{i=1}^{n} v_i w_i
-= v_1 w_1 + \cdots + v_n w_n
+\langle \underline{v}, \underline{w}\rangle = v_i w_i = \sum_{i=0}^{n-1} v_i w_i
+= v_0 w_0 + \cdots + v_{n-1} w_{n-1}
 $$
 :::
 

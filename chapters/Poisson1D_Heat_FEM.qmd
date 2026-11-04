@@ -265,7 +265,7 @@ functions, so that finding $u^h$ means finding a list of numbers.
 
 ### Elements, nodes, and Lagrange basis functions
 
-Cut $[0, L]$ into $n_{el}$ **elements** $\Omega^e = [x^e_1, x^e_{n_{en}}]$ of length
+Cut $[0, L]$ into $n_{el}$ **elements** $\Omega^e = [x^e_0, x^e_{n_{en}}]$ of length
 $h^e$. On each element, use Lagrange polynomials of degree $p$, which need
 $n_{en} = p + 1$ element nodes, equally spaced. Neighbouring elements share their end
 nodes, so the mesh has
@@ -273,7 +273,7 @@ nodes, so the mesh has
 ::: {.derivation}
 $$
 n_{np} = p\,n_{el} + 1 \quad \text{nodes}, \qquad
-x_1 = 0 < x_2 < \cdots < x_{n_{np}} = L
+x_0 = 0 < x_1 < \cdots < x_{n_{np}} = L
 $$
 :::
 
@@ -287,13 +287,13 @@ N_a(\xi) = \prod_{b \ne a} \frac{\xi - \xi_b}{\xi_a - \xi_b}
 \qquad\Longrightarrow\qquad N_a(\xi_b) = \delta_{ab}
 $$
 $$
-p = 1:\;\; N_1 = \tfrac12(1 - \xi),\;\; N_2 = \tfrac12(1 + \xi)
+p = 1:\;\; N_0 = \tfrac12(1 - \xi),\;\; N_1 = \tfrac12(1 + \xi)
 \qquad\quad
-p = 2:\;\; N_1 = \tfrac12\xi(\xi - 1),\;\; N_2 = 1 - \xi^2,\;\; N_3 = \tfrac12\xi(\xi + 1)
+p = 2:\;\; N_0 = \tfrac12\xi(\xi - 1),\;\; N_1 = 1 - \xi^2,\;\; N_2 = \tfrac12\xi(\xi + 1)
 $$
 $$
-p = 3:\;\; N_{1,4} = \tfrac{1}{16}(1 \mp \xi)(9\xi^2 - 1),\qquad
-N_{2,3} = \tfrac{9}{16}(1 - \xi^2)(1 \mp 3\xi)
+p = 3:\;\; N_{0,3} = \tfrac{1}{16}(1 \mp \xi)(9\xi^2 - 1),\qquad
+N_{1,2} = \tfrac{9}{16}(1 - \xi^2)(1 \mp 3\xi)
 $$
 :::
 
@@ -313,21 +313,21 @@ unknown.](`{python} fig_basis_path`){#fig-hf-basis width=100%}
 
 ### The Galerkin form, $(\mathrm{G})$
 
-With Hughes' numbering, node $n_{np}$ is on $\Gamma_g$ and the other $n = n_{np} - 1$
-nodes carry unknowns. Build the approximations from the basis:
+Numbering the nodes from 0, the last node, $n = n_{np} - 1$, is on $\Gamma_g$, and the other $n$
+nodes, $0, \dots, n - 1$, carry unknowns. Build the approximations from the basis:
 
 ::: {.derivation}
 $$
-w^h = \sum_{A=1}^{n} c_A\,N_A \;\in \mathcal{V}^h
+w^h = \sum_{A=0}^{n-1} c_A\,N_A \;\in \mathcal{V}^h
 \qquad\qquad
 u^h = v^h + g^h,\qquad
-v^h = \sum_{B=1}^{n} d_B\,N_B \;\in \mathcal{V}^h,\qquad
-g^h = g\,N_{n+1}
+v^h = \sum_{B=0}^{n-1} d_B\,N_B \;\in \mathcal{V}^h,\qquad
+g^h = g\,N_n
 $$
 :::
 
 ::: {.step}
-$g^h$ takes care of the Dirichlet value ($g^h(L) = g$, because $N_{n+1}(L) = 1$), and
+$g^h$ takes care of the Dirichlet value ($g^h(L) = g$, because $N_n(L) = 1$), and
 $v^h$ vanishes at $L$ like every member of $\mathcal{V}^h$. So $u^h \in \mathcal{S}^h$
 automatically. Substituting $u^h$ and $w^h$ into $(\mathrm{W})$, and moving the known part
 $g^h$ to the right, gives
@@ -351,7 +351,7 @@ fig_build_path = F.fig_build(pb, verts3, "HF_Fig4_Build.png", ulabel="$u$ (°C)"
 
 ![What $u^h$ is made of, for the wall on three elements. Each thin line is one basis
 function scaled by its coefficient $d_A$ — its nodal temperature — and the dashed one is
-$g\,N_{n+1}$. Their sum is $u^h$ (black). With $p = 1$ the sum is a broken line; with
+$g\,N_n$. Their sum is $u^h$ (black). With $p = 1$ the sum is a broken line; with
 $p = 2$ it is piecewise quadratic, which here reproduces the exact quadratic profile (grey)
 perfectly.](`{python} fig_build_path`){#fig-hf-build width=98%}
 
@@ -362,8 +362,8 @@ Put the expansions into $(\mathrm{G})$. Because $a(\cdot,\cdot)$ and $(\cdot,\cd
 
 ::: {.derivation}
 $$
-\sum_{A=1}^{n} c_A \left[\, \sum_{B=1}^{n} a(N_A, N_B)\,d_B
-- (N_A, f) - N_A(0)\,h + a(N_A, N_{n+1})\,g \right] = 0
+\sum_{A=0}^{n-1} c_A \left[\, \sum_{B=0}^{n-1} a(N_A, N_B)\,d_B
+- (N_A, f) - N_A(0)\,h + a(N_A, N_n)\,g \right] = 0
 $$
 :::
 
@@ -375,23 +375,23 @@ is one equation per unknown:
 
 ::: {.derivation}
 $$
-\sum_{B=1}^{n} \underbrace{a(N_A, N_B)}_{K_{AB}}\;d_B
-= \underbrace{(N_A, f) + N_A(0)\,h - a(N_A, N_{n+1})\,g}_{F_A},
-\qquad A = 1, \dots, n
+\sum_{B=0}^{n-1} \underbrace{a(N_A, N_B)}_{K_{AB}}\;d_B
+= \underbrace{(N_A, f) + N_A(0)\,h - a(N_A, N_n)\,g}_{F_A},
+\qquad A = 0, \dots, n - 1
 $$
 $$
 \boxed{\;\mathbf{K}\,\mathbf{d} = \mathbf{F}\;}
 \qquad
 K_{AB} = \int_0^L N_{A,x}\,\kappa\,N_{B,x}\,dx
 \qquad
-F_A = \int_0^L N_A\,f\,dx + \delta_{A1}\,h - \int_0^L N_{A,x}\,\kappa\,N_{n+1,x}\,dx\;g
+F_A = \int_0^L N_A\,f\,dx + \delta_{A0}\,h - \int_0^L N_{A,x}\,\kappa\,N_{n,x}\,dx\;g
 $$
 :::
 
 ::: {.step .notes}
 - $\mathbf{K}$ is the **conductivity (stiffness) matrix**, W/(m²·K); $\mathbf{d}$ holds
   the unknown nodal temperatures, °C; $\mathbf{F}$ is the **heat-flux vector**, W/m².
-- $N_A(0) = \delta_{A1}$: only node 1 sits at $x = 0$, so $h$ enters only $F_1$.
+- $N_A(0) = \delta_{A0}$: only node 0 sits at $x = 0$, so $h$ enters only $F_0$.
 - **Symmetric**, since $a(N_A, N_B) = a(N_B, N_A)$.
 - **Banded.** $K_{AB} = 0$ unless $N_A$ and $N_B$ are both non-zero on some element
   (@fig-hf-assembly).
@@ -404,14 +404,14 @@ $$
 
 Every integral over $[0, L]$ is a sum of integrals over elements, and on element $e$ only
 its own $n_{en}$ functions are non-zero. So all the work reduces to small **element
-arrays**, in local numbering $a, b = 1, \dots, n_{en}$:
+arrays**, in local numbering $a, b = 0, \dots, n_{en}-1$:
 
 ::: {.derivation}
 $$
 k^e_{ab} = \int_{\Omega^e} N_{a,x}\,\kappa\,N_{b,x}\,dx
 \qquad\qquad
 f^e_a = \underbrace{\int_{\Omega^e} N_a\,f\,dx}_{\text{body}}
-+ \underbrace{\delta_{e1}\,\delta_{a1}\,h}_{\text{Neumann end}}
++ \underbrace{\delta_{e0}\,\delta_{a0}\,h}_{\text{Neumann end}}
 - \underbrace{\sum_{b} k^e_{ab}\,g^e_b}_{\text{Dirichlet end}}
 $$
 :::
@@ -433,7 +433,7 @@ follow the map.](`{python} fig_map_path`){#fig-hf-map width=88%}
 
 ::: {.derivation}
 $$
-x(\xi) = \sum_{a=1}^{n_{en}} N_a(\xi)\,x^e_a,
+x(\xi) = \sum_{a=0}^{n_{en}-1} N_a(\xi)\,x^e_a,
 \qquad
 x_{,\xi} = \frac{h^e}{2},
 \qquad
@@ -441,10 +441,10 @@ N_{a,x} = N_{a,\xi}\,\xi_{,x} = N_{a,\xi}\,\frac{2}{h^e}
 $$
 $$
 k^e_{ab} = \int_{-1}^{1} N_{a,\xi}\,\kappa\,N_{b,\xi}\,\left(x_{,\xi}\right)^{-1} d\xi
-\approx \sum_{l=1}^{n_{int}} N_{a,\xi}(\tilde\xi_l)\,\kappa\,N_{b,\xi}(\tilde\xi_l)\,
+\approx \sum_{l=0}^{n_{int}-1} N_{a,\xi}(\tilde\xi_l)\,\kappa\,N_{b,\xi}(\tilde\xi_l)\,
 \frac{2}{h^e}\,W_l
 \qquad
-f^e_a \approx \sum_{l=1}^{n_{int}} N_a(\tilde\xi_l)\,f\big(x(\tilde\xi_l)\big)\,\frac{h^e}{2}\,W_l
+f^e_a \approx \sum_{l=0}^{n_{int}-1} N_a(\tilde\xi_l)\,f\big(x(\tilde\xi_l)\big)\,\frac{h^e}{2}\,W_l
 $$
 :::
 
@@ -493,19 +493,19 @@ Hughes keeps the bookkeeping in three integer arrays:
 
 | Array | Maps | Meaning |
 |---|---|---|
-| $\mathrm{ID}(A)$ | global node $\to$ equation | $P$ if node $A$ is unknown number $P$; $0$ if $A$ is on $\Gamma_g$ |
+| $\mathrm{ID}(A)$ | global node $\to$ equation | $P$ if node $A$ is unknown number $P$; $-1$ if $A$ is on $\Gamma_g$ |
 | $\mathrm{IEN}(a, e)$ | local node, element $\to$ global node | local node $a$ of element $e$ is global node $A$ |
 | $\mathrm{LM}(a, e)$ | local node, element $\to$ equation | $\mathrm{LM}(a,e) = \mathrm{ID}\big(\mathrm{IEN}(a,e)\big)$ |
 
 **Assembly** adds $k^e_{ab}$ into $K_{PQ}$ with $P = \mathrm{LM}(a,e)$ and
-$Q = \mathrm{LM}(b,e)$, and $f^e_a$ into $F_P$, skipping any zero (Dirichlet) index. Hughes
+$Q = \mathrm{LM}(b,e)$, and $f^e_a$ into $F_P$, skipping any index of $-1$ (a Dirichlet node). Hughes
 writes the whole loop as
 
 ::: {.derivation}
 $$
-\mathbf{K} = \mathop{\Large\mathsf{A}}_{e=1}^{n_{el}}\left(\mathbf{k}^e\right),
+\mathbf{K} = \mathop{\Large\mathsf{A}}_{e=0}^{n_{el}-1}\left(\mathbf{k}^e\right),
 \qquad
-\mathbf{F} = \mathop{\Large\mathsf{A}}_{e=1}^{n_{el}}\left(\mathbf{f}^e\right)
+\mathbf{F} = \mathop{\Large\mathsf{A}}_{e=0}^{n_{el}-1}\left(\mathbf{f}^e\right)
 $$
 :::
 
@@ -526,9 +526,10 @@ $-k^e_{ab}\,g$.](`{python} fig_assembly_path`){#fig-hf-assembly width=100%}
 ::: {.callout-note collapse="true"}
 ## Hughes' notation and the class notation
 
-| Hughes (this appendix) | Class notes | |
+| Hughes | This appendix and the class notes | |
 |---|---|---|
-| nodes $A = 1, \dots, n_{np}$; local $a = 1, \dots, n_{en}$ | $A = 0, \dots, n_{bf}-1$; $a = 0, \dots$ | 1-based vs 0-based (code) counting |
+| nodes $A = 1, \dots, n_{np}$; local $a = 1, \dots, n_{en}$ | $A = 0, \dots, n_{np}-1$; $a = 0, \dots, n_{en}-1$ | Hughes counts from 1; these notes count from 0, as the code does |
+| $\mathrm{ID}(A) = 0$ for a node on $\Gamma_g$ | $\mathrm{ID}(A) = -1$ | the mark of a prescribed node |
 | $\mathbf{k}^e = [k^e_{ab}]$, $\mathbf{f}^e = \{f^e_a\}$ | $K^e_{ab}$, $F^e_a$ | element arrays |
 | $x_{,\xi}$ | $J$, $DF$ | the Jacobian of the parent map |
 | $\tilde\xi_l$, $W_l$, $n_{int}$ | $\xi_g$, $w_g$, $n_{quad}$ | quadrature points and weights |
@@ -562,17 +563,17 @@ qh_last = -kappa * (sol3["U"][-1] - sol3["U"][-2]) / (verts3[-1] - verts3[-2])
 ```
 
 Take $n_{el} = 3$ equal elements, $h^e$ = 0.10 m, and $p = 1$. Then there are four nodes, at
-$x$ = 0, 0.1, 0.2, 0.3 m, and node 4 is on $\Gamma_g$:
+$x$ = 0, 0.1, 0.2, 0.3 m, and node 3 is on $\Gamma_g$:
 
-| | $A = 1$ | $A = 2$ | $A = 3$ | $A = 4$ |
+| | $A = 0$ | $A = 1$ | $A = 2$ | $A = 3$ |
 |---|---|---|---|---|
 | $x_A$ (m) | 0 | 0.1 | 0.2 | 0.3 |
-| $\mathrm{ID}(A)$ | 1 | 2 | 3 | 0 |
+| $\mathrm{ID}(A)$ | 0 | 1 | 2 | $-1$ |
 
-| | $e = 1$ | $e = 2$ | $e = 3$ |
+| | $e = 0$ | $e = 1$ | $e = 2$ |
 |---|---|---|---|
-| $\mathrm{IEN}(1, e)$, $\mathrm{IEN}(2, e)$ | 1, 2 | 2, 3 | 3, 4 |
-| $\mathrm{LM}(1, e)$, $\mathrm{LM}(2, e)$ | 1, 2 | 2, 3 | 3, **0** |
+| $\mathrm{IEN}(0, e)$, $\mathrm{IEN}(1, e)$ | 0, 1 | 1, 2 | 2, 3 |
+| $\mathrm{LM}(0, e)$, $\mathrm{LM}(1, e)$ | 0, 1 | 1, 2 | 2, **$-1$** |
 
 Every element has $\kappa/h^e = 1.4/0.1 = 14$ W/(m²·K) and $f h^e/2 = 25$ W/m²:
 
@@ -584,14 +585,14 @@ fe = sol3["fe"]
 print(r"""
 ::: {.derivation}
 $$
-\mathbf{k}^1 = \mathbf{k}^2 = \mathbf{k}^3 = %s
+\mathbf{k}^0 = \mathbf{k}^1 = \mathbf{k}^2 = %s
 $$
 $$
-\mathbf{f}^1 = %s + \underbrace{%s}_{h\ \text{at node 1}} = %s
+\mathbf{f}^0 = %s + \underbrace{%s}_{h\ \text{at node 0}} = %s
 \qquad
-\mathbf{f}^2 = %s
+\mathbf{f}^1 = %s
 \qquad
-\mathbf{f}^3 = %s - \underbrace{\mathbf{k}^3 %s}_{g\ \text{at node 4}} = %s
+\mathbf{f}^2 = %s - \underbrace{\mathbf{k}^2 %s}_{g\ \text{at node 3}} = %s
 $$
 :::
 """ % (mat(sol3["ke"][0]),
@@ -600,8 +601,8 @@ $$
        vec(fe[2]["body"]), vec([0, g0]), vec(fe[2]["total"])))
 ```
 
-Assemble with the LM array. The second entry of $\mathbf{f}^3$ has
-$\mathrm{LM}(2,3) = 0$, so it is dropped:
+Assemble with the LM array. The second entry of $\mathbf{f}^2$ has
+$\mathrm{LM}(1,2) = -1$, so it is dropped:
 
 ```{python example_global}
 #| echo: false
@@ -611,7 +612,7 @@ print(r"""
 ::: {.derivation}
 $$
 \underbrace{%s}_{\mathbf{K}\ [\text{W/(m}^2\text{K)}]}
-\begin{Bmatrix} d_1 \\ d_2 \\ d_3 \end{Bmatrix}
+\begin{Bmatrix} d_0 \\ d_1 \\ d_2 \end{Bmatrix}
 = \underbrace{%s}_{\mathbf{F}\ [\text{W/m}^2]}
 \qquad\Longrightarrow\qquad
 \mathbf{d} = %s\ {}^\circ\text{C}
@@ -645,7 +646,7 @@ print(r"""
   %s °C, identical to $\mathbf{d}$. This is special to one dimension with constant
   $\kappa$: linear elements are *nodally exact* (Hughes, Section 1.10). Between the nodes,
   $u^h$ is only a chord of the curve.
-- **The Neumann condition holds only weakly.** On element 1, $q^h$ = %s W/m², not the
+- **The Neumann condition holds only weakly.** On element 0, $q^h$ = %s W/m², not the
   prescribed $h$ = 50 W/m²: it is the element's *average* flux. $(\mathrm{G})$ builds $h$
   into $\mathbf{F}$ but never forces $u^h_{,x}(0)$ to equal $-h/\kappa$. As the mesh is
   refined, $q^h(0) \to h$.
@@ -653,7 +654,7 @@ print(r"""
 - **The discarded equation is the heat to the room.** Row 4 of the full system,
   $\sum_b k^3_{2b} U^3_b - f^3_{\text{body},2}$, is the boundary term
   $\kappa u_{,x}(L)$ that $w(L) = 0$ removed. Evaluated, it gives %s W/m², so
-  $q(L) = %s$ W/m², the exact value. Differentiating $u^h$ on element 3 gives only
+  $q(L) = %s$ W/m², the exact value. Differentiating $u^h$ on element 2 gives only
   %s W/m².
 - With $p = 2$, even a single element reproduces the exact quadratic profile (@fig-hf-build),
   because the exact solution already lies in $\mathcal{S}^h$.
@@ -746,7 +747,7 @@ viewof meshKind = Inputs.select(new Map([
 ]), {value: "uniform", label: "Element spacing"})
 viewof customText = Inputs.text({label: "Custom interior vertices (m)",
   value: "0.02, 0.05, 0.1, 0.2", placeholder: "e.g. 0.02, 0.05, 0.1, 0.2"})
-viewof eSel = Inputs.range([1, 40], {value: 1, step: 1, label: "Highlight element e"})
+viewof eSel = Inputs.range([0, 39], {value: 0, step: 1, label: "Highlight element e"})
 ```
 
 ```{ojs}
@@ -765,7 +766,8 @@ sol = solve(pb, p, verts)
 ex = exact(pb)
 samples = evaluate(sol, 32)
 err = errors(sol, ex)
-eHi = Math.min(eSel, sol.nel)
+// the solver numbers elements from 1; eHi is its number, and every label shows eHi - 1
+eHi = Math.min(eSel, sol.nel - 1) + 1
 exactPts = d3.range(301).map(i => { const x = L * i / 300; return {x, u: ex.u(x), q: -kap * ex.du(x)}; })
 fmt = (v, d = 2) => (v < 0 ? "−" : "") + Math.abs(v).toFixed(d)
 colors = ["#1f6feb", "#c0392b", "#0d9488", "#e67e22", "#8a5a20", "#7c3aed"]
@@ -852,7 +854,7 @@ html`<div style="font-size:0.95rem; margin:0.3rem 0 0.6rem 0; padding:0.5rem 0.8
   <div style="font-size:0.88rem; color:#555">Grey: exact u. Red: uʰ. Open dots are unknowns d<sub>A</sub>; blue dots are Dirichlet values.
   ${showBasis ? "Thin lines: each d<sub>A</sub>N<sub>A</sub> (dashed: g N<sub>A</sub> on Γ<sub>g</sub>). " : ""}
   ${xn !== null ? "At the Neumann face: amber dashes are the exact slope −h/κ·n, red dots the slope of uʰ." : ""}
-  The shaded strip is element ${eHi}.</div></div>`;
+  The shaded strip is element ${eHi - 1}.</div></div>`;
 }
 ```
 
@@ -967,7 +969,7 @@ viewof showBasis = Inputs.toggle({label: "Draw each dₐNₐ", value: true})
   const par = [];
   for (let a = 0; a < p + 1; a++) for (let i = 0; i < 61; i++) {
     const xi = -1 + 2 * i / 60;
-    par.push({xi, y: shape(p, xi).N[a], a: `N${a + 1}`, A: sol.IEN[eHi - 1][a]});
+    par.push({xi, y: shape(p, xi).N[a], a: `N${a}`, A: sol.IEN[eHi - 1][a]});
   }
   const parent = Plot.plot({width: Math.min(W, 420), height: 200, marginLeft: 45,
     x: {label: "ξ →", domain: [-1, 1]}, y: {label: "↑ Nₐ(ξ)", domain: [-0.35, 1.15]},
@@ -977,10 +979,10 @@ viewof showBasis = Inputs.toggle({label: "Draw each dₐNₐ", value: true})
   const iens = sol.IEN[eHi - 1];
   return html`<div>${global}
     <div style="font-size:0.88rem; color:#555; margin-bottom:0.6rem">All ${sol.nnp} global basis functions N<sub>A</sub>, coloured by A.
-    Dashed ones sit on Γ<sub>g</sub>. Element ${eHi}'s ${p + 1} functions are drawn thick.</div>
+    Dashed ones sit on Γ<sub>g</sub>. Element ${eHi - 1}'s ${p + 1} functions are drawn thick.</div>
     <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap">${parent}
-    <div style="font-size:0.9rem">On element ${eHi}, the parent functions become<br>
-    ${iens.map((A, a) => `N<sub>${a + 1}</sub>(ξ) → N<sub>${A}</sub>(x)`).join("<br>")}<br>
+    <div style="font-size:0.9rem">On element ${eHi - 1}, the parent functions become<br>
+    ${iens.map((A, a) => `N<sub>${a}</sub>(ξ) → N<sub>${A - 1}</sub>(x)`).join("<br>")}<br>
     through x(ξ) = Σ Nₐ(ξ) xₐᵉ, with x,<sub>ξ</sub> = hᵉ/2 = ${fmt((verts[eHi] - verts[eHi - 1]) / 2, 4)} m.</div></div></div>`;
 }
 ```
@@ -1004,10 +1006,10 @@ viewof showBasis = Inputs.toggle({label: "Draw each dₐNₐ", value: true})
   const row = (name, f) => `<tr><th style="text-align:left; padding-right:10px">${name}</th>${
       d3.range(colsE).map(k => `<td style="padding:0 8px; ${k === e ? "color:#c0392b; font-weight:700" : ""}">${f(k)}</td>`).join("")}${sol.nel > colsE ? "<td>…</td>" : ""}</tr>`;
   const table = `<table style="font-size:0.85rem; margin:0.4rem 0 0.8rem 0; white-space:nowrap">
-      <tr><th style="text-align:left">e</th>${d3.range(colsE).map(k => `<td style="padding:0 8px; ${k === e ? "color:#c0392b; font-weight:700" : ""}">${k + 1}</td>`).join("")}${sol.nel > colsE ? "<td>…</td>" : ""}</tr>
-      ${row("IEN(·, e)", k => sol.IEN[k].join(", "))}
-      ${row("LM(·, e)", k => sol.LM[k].join(", "))}</table>`;
-  const idRow = `<div style="font-size:0.85rem">ID = [${sol.ID.slice(0, 30).join(", ")}${sol.nnp > 30 ? ", …" : ""}] &nbsp;(0 marks a Dirichlet node)</div>`;
+      <tr><th style="text-align:left">e</th>${d3.range(colsE).map(k => `<td style="padding:0 8px; ${k === e ? "color:#c0392b; font-weight:700" : ""}">${k}</td>`).join("")}${sol.nel > colsE ? "<td>…</td>" : ""}</tr>
+      ${row("IEN(·, e)", k => sol.IEN[k].map(A => A - 1).join(", "))}
+      ${row("LM(·, e)", k => sol.LM[k].map(P => P - 1).join(", "))}</table>`;
+  const idRow = `<div style="font-size:0.85rem">ID = [${sol.ID.slice(0, 30).map(P => P - 1).join(", ")}${sol.nnp > 30 ? ", …" : ""}] &nbsp;(−1 marks a Dirichlet node)</div>`;
   const vec = v => texVector(v, {sig: 4});
   const scroll = x => html`<div style="overflow-x:auto; max-width:100%">${x}</div>`;
   let zoom = "";
@@ -1018,24 +1020,24 @@ viewof showBasis = Inputs.toggle({label: "Draw each dₐNₐ", value: true})
     const sub = rng.map(i => rng.map(j => sol.K[i][j]));
     const subF = rng.map(i => sol.F[i]);
     const hiSet = new Set(eqs.map(P => P - 1));
-    zoom = html`<h4>Zoom: equations ${lo} to ${hi2}, around element ${eHi}</h4>
+    zoom = html`<h4>Zoom: equations ${lo - 1} to ${hi2 - 1}, around element ${eHi - 1}</h4>
       ${scroll(tex.block`${pre(sK)}${texMatrix(sub, {scale: sK, color: (i, j) => hiSet.has(rng[i]) && hiSet.has(rng[j]) ? hi : null})}
-        \begin{bmatrix}${rng.map(i => `d_{${i + 1}}`).join(" \\\\ ")}\end{bmatrix}
+        \begin{bmatrix}${rng.map(i => `d_{${i}}`).join(" \\\\ ")}\end{bmatrix}
         = ${pre(sF)}${texVector(subF, {scale: sF, color: i => hiSet.has(rng[i]) ? hi : null})}`)}
       <div style="font-size:0.88rem; color:#555">Each row is one equation of K d = F; only its neighbours' d's appear, because only neighbouring basis functions overlap.</div>`;
   }
   return html`<div>
     <h4 style="margin-top:0.4rem">Bookkeeping</h4>${idRow}${scroll(html`${table}`)}
-    <h4>Element ${eHi}: x from ${fmt(verts[e], 4)} to ${fmt(verts[e + 1], 4)} m, hᵉ = ${fmt(verts[e + 1] - verts[e], 4)} m</h4>
-    <div style="font-size:0.95rem">LM(·, ${eHi}) = {${lm.join(", ")}}: row and column a of the element arrays go to equation LM(a, ${eHi}); a 0 means "Dirichlet node: skip".</div>
-    ${scroll(tex.block`\mathbf{k}^{${eHi}} = ${texMatrix(ke)}\ \tfrac{\text{W}}{\text{m}^2\text{K}}`)}
-    ${scroll(tex.block`\mathbf{f}^{${eHi}} = \underbrace{${vec(fe.body)}}_{\int N_a f\,dx}
+    <h4>Element ${eHi - 1}: x from ${fmt(verts[e], 4)} to ${fmt(verts[e + 1], 4)} m, hᵉ = ${fmt(verts[e + 1] - verts[e], 4)} m</h4>
+    <div style="font-size:0.95rem">LM(·, ${eHi - 1}) = {${lm.map(P => P - 1).join(", ")}}: row and column a of the element arrays go to equation LM(a, ${eHi - 1}); a −1 means "Dirichlet node: skip".</div>
+    ${scroll(tex.block`\mathbf{k}^{${eHi - 1}} = ${texMatrix(ke)}\ \tfrac{\text{W}}{\text{m}^2\text{K}}`)}
+    ${scroll(tex.block`\mathbf{f}^{${eHi - 1}} = \underbrace{${vec(fe.body)}}_{\int N_a f\,dx}
       + \underbrace{${vec(fe.h)}}_{h\ \text{term}} - \underbrace{${vec(fe.g)}}_{\mathbf{k}^{e}\mathbf{g}^{e}}
       = ${vec(fe.total)}\ \tfrac{\text{W}}{\text{m}^2}`)}
     <h4>Global system: ${sol.neq} equations${sol.neq >= 15 ? " (first rows and columns shown)" : ""}</h4>
     ${scroll(tex.block`${pre(sK)}${Ktex}\,${dtex} = ${pre(sF)}${Ftex}`)}
-    <div style="font-size:0.88rem; color:#555">Red entries are where element ${eHi}'s k<sup>e</sup> and f<sup>e</sup> were added, through LM(·, ${eHi}).
-    Grey zeros show the band structure.${sol.neq >= 15 && lm.some(P => P > 6) ? ` Element ${eHi}'s rows are beyond those printed; see the zoom below.` : ""}</div>
+    <div style="font-size:0.88rem; color:#555">Red entries are where element ${eHi - 1}'s k<sup>e</sup> and f<sup>e</sup> were added, through LM(·, ${eHi - 1}).
+    Grey zeros show the band structure.${sol.neq >= 15 && lm.some(P => P > 6) ? ` Element ${eHi - 1}'s rows are beyond those printed; see the zoom below.` : ""}</div>
     ${zoom}
     ${tex.block`\mathbf{d} = \mathbf{K}^{-1}\mathbf{F} = ${dval}\ {}^\circ\text{C}`}
   </div>`;

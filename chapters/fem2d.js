@@ -381,7 +381,7 @@ export function exactCell({W, H, kappa, f, gLeft, hTab, tabs, M = 400, Ng = 40})
 }
 
 // ------------------------------------------------------------ drawing (canvas)
-export function makeCanvas(width, x0, x1, y0, y1, {margin = [14, 16, 38, 50], axes = true, xlabel = "x₁ (m)", ylabel = "x₂ (m)", aspect = true, height = null} = {}) {
+export function makeCanvas(width, x0, x1, y0, y1, {margin = [14, 16, 38, 50], axes = true, xlabel = "x₀ (m)", ylabel = "x₁ (m)", aspect = true, height = null} = {}) {
   // A canvas with equal-aspect world coordinates [x0, x1] x [y0, y1] (y up)
   const [mt, mr, mb, ml] = axes ? margin : [8, 8, 8, 8];
   const pw = width - ml - mr;
@@ -480,7 +480,7 @@ export function drawNodes(cv, mesh, gd, {r = 3.5, labels = false, idLabels = nul
     if (A === hiNode) { ctx.beginPath(); ctx.arc(sx(x), sy(y), r + 4, 0, 2 * Math.PI); ctx.strokeStyle = "#c0392b"; ctx.lineWidth = 2; ctx.stroke(); }
     if (labels) {
       ctx.fillStyle = "#1a1a1a"; ctx.textAlign = "left"; ctx.textBaseline = "bottom";
-      ctx.fillText(String(A), sx(x) + 3, sy(y) - 2);
+      ctx.fillText(String(A - 1), sx(x) + 3, sy(y) - 2);
     }
     if (idLabels) {
       ctx.fillStyle = dir ? "#4a7ba7" : "#7c3aed"; ctx.textAlign = "left"; ctx.textBaseline = "top";
@@ -496,7 +496,7 @@ export function drawNodes(cv, mesh, gd, {r = 3.5, labels = false, idLabels = nul
 export function drawElementNumbers(cv, mesh) {
   const {ctx, sx, sy} = cv;
   ctx.font = "italic 11px sans-serif"; ctx.fillStyle = "#8a5a20"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  for (let e = 1; e <= mesh.nel; e++) { const [x, y] = mapPoint(mesh, e, 0, 0).x; ctx.fillText(String(e), sx(x), sy(y)); }
+  for (let e = 1; e <= mesh.nel; e++) { const [x, y] = mapPoint(mesh, e, 0, 0).x; ctx.fillText(String(e - 1), sx(x), sy(y)); }
 }
 
 export function drawSpy(size, n, entries, {shadeRows = null, highlight = null, labelStep = null, title = ""} = {}) {
@@ -526,8 +526,8 @@ export function drawSpy(size, n, entries, {shadeRows = null, highlight = null, l
   const step = labelStep || Math.max(1, Math.ceil(n / 12));
   ctx.font = "9px sans-serif"; ctx.fillStyle = "#666";
   for (let i = 0; i < n; i += step) {
-    ctx.textAlign = "center"; ctx.textBaseline = "bottom"; ctx.fillText(String(i + 1), pad + (i + 0.5) * cell, oy + pad - 2);
-    ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.fillText(String(i + 1), pad - 3, oy + pad + (i + 0.5) * cell);
+    ctx.textAlign = "center"; ctx.textBaseline = "bottom"; ctx.fillText(String(i), pad + (i + 0.5) * cell, oy + pad - 2);
+    ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.fillText(String(i), pad - 3, oy + pad + (i + 0.5) * cell);
   }
   return cv;
 }
@@ -539,12 +539,13 @@ export function csrEntries(A) {
 }
 
 export function parseOverrides(text) {
-  // "8 = 30, 13 = free" -> Map {8 -> 30, 13 -> null}; returns {map, errors}
+  // "7 = 30, 12 = free" -> Map {8 -> 30, 13 -> null}; returns {map, errors}
+  // the text numbers nodes from 0, as the notes do; the map holds the solver's numbers, which start at 1
   const map = new Map(), errs = [];
   for (const item of text.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean)) {
     const m = item.match(/^(\d+)\s*[=:]\s*(.+)$/);
     if (!m) { errs.push(item); continue; }
-    const A = parseInt(m[1]), v = m[2].trim().toLowerCase();
+    const A = parseInt(m[1]) + 1, v = m[2].trim().toLowerCase();
     if (v === "free") map.set(A, null);
     else if (Number.isFinite(Number(v))) map.set(A, Number(v));
     else errs.push(item);
@@ -604,9 +605,9 @@ export function drawParentSquare(p, qSel, size) {
   ctx.font = "11px sans-serif";
   parentNodes(p).forEach(([x, y], a) => {
     ctx.beginPath(); ctx.arc(sx(x), sy(y), 3.5, 0, 2 * Math.PI); ctx.fillStyle = "#7c3aed"; ctx.fill();
-    ctx.fillStyle = "#1a1a1a"; ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText(String(a + 1), sx(x) + 4, sy(y) - 2);
+    ctx.fillStyle = "#1a1a1a"; ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText(String(a), sx(x) + 4, sy(y) - 2);
   });
-  let q = 0;
+  let q = -1;                                   // Gauss points are numbered from 0
   for (let qi = 0; qi < G.x.length; qi++) for (let qj = 0; qj < G.x.length; qj++) {
     q++;
     const X = sx(G.x[qi]), Y = sy(G.x[qj]), sel = q === qSel;
@@ -642,7 +643,7 @@ export function drawElementDetail(mesh, e, qSel, size) {
     curve(t => mapPoint(mesh, e, v, t).x); curve(t => mapPoint(mesh, e, t, v).x);
   }
   const G = gauss(mesh.p + 1);
-  let q = 0, sel = null;
+  let q = -1, sel = null;                      // Gauss points are numbered from 0
   for (let qi = 0; qi < G.x.length; qi++) for (let qj = 0; qj < G.x.length; qj++) {
     q++;
     const mp = mapPoint(mesh, e, G.x[qi], G.x[qj]), [X, Y] = [sx(mp.x[0]), sy(mp.x[1])], r = q === qSel ? 6 : 4;
@@ -661,7 +662,7 @@ export function drawElementDetail(mesh, e, qSel, size) {
     if (r < 1) { dx = 0.7; dy = -0.7; } else { dx /= r; dy /= r; }
     ctx.textAlign = dx > 0.35 ? "left" : dx < -0.35 ? "right" : "center";
     ctx.textBaseline = dy > 0.35 ? "top" : dy < -0.35 ? "bottom" : "middle";
-    ctx.fillText(`${a + 1} (A=${A})`, sx(x) + 7 * dx, sy(y) + 7 * dy);
+    ctx.fillText(`${a} (A=${A - 1})`, sx(x) + 7 * dx, sy(y) + 7 * dy);
   });
   if (sel) {
     const L = 0.35 * span / Math.max(Math.hypot(sel.DF[0][0], sel.DF[1][0]), Math.hypot(sel.DF[0][1], sel.DF[1][1]));

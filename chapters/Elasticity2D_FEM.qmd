@@ -46,7 +46,7 @@ This page concentrates on what changes when the unknown is a vector.
 
 | | Heat flow ([2D Poisson II](Poisson2D_Heat_FEM.qmd)) | Plane elasticity (this page) |
 |---|---|---|
-| unknowns at each node | 1, the temperature | 2, the displacements $u_1$ and $u_2$ |
+| unknowns at each node | 1, the temperature | 2, the displacements $u_0$ and $u_1$ |
 | equation numbers | $\mathrm{ID}(A)$ | $\mathrm{ID}(i, A)$, one for each direction |
 | derivatives of a basis function | $\nabla N_a$, a 2-vector | $\mathbf{B}_a$, a $3 \times 2$ matrix |
 | material | $\kappa$, a number | $\mathbf{D}$, a $3 \times 3$ matrix |
@@ -58,7 +58,7 @@ This page concentrates on what changes when the unknown is a vector.
 ## The Galerkin form
 
 The weak form from [the previous page](Elasticity2D.qmd#the-weak-form-read-as-virtual-work) is the principle of virtual work.
-In Voigt notation, the strain of a displacement field is the 3-vector $\{\varepsilon(\underline{u})\} = (u_{1,1},\ u_{2,2},\ u_{1,2} + u_{2,1})^T$, and the bilinear form is
+In Voigt notation, the strain of a displacement field is the 3-vector $\{\varepsilon(\underline{u})\} = (u_{0,0},\ u_{1,1},\ u_{0,1} + u_{1,0})^T$, and the bilinear form is
 
 ::: {.derivation}
 $$
@@ -98,18 +98,19 @@ Each component of the displacement uses them:
 $$
 u^h_i(\underline{x}) = \sum_{A} N_A(\underline{x})\,d_{iA}
 \qquad\Longleftrightarrow\qquad
-\underline{u}^h(\underline{x}) = \sum_{A} \sum_{i=1}^{2} d_{iA}\,N_A(\underline{x})\,\underline{e}_i
+\underline{u}^h(\underline{x}) = \sum_{A} \sum_{i=0}^{1} d_{iA}\,N_A(\underline{x})\,\underline{e}_i
 $$
 :::
 
 ::: {.step .notes}
-- $d_{iA}$ is the displacement of node $A$ in direction $i$, in mm.
-  Each node carries two of them, $d_{1A}$ and $d_{2A}$.
-- $N_A\,\underline{e}_i$ is a **vector basis function** (@fig-e2f-basis b and c): the displacement field in which node $A$ moves one unit along $x_i$ and every other node stays put.
+- $d_{iA}$ is the displacement of node $A$ along degree of freedom $i$, in mm.
+  The degree of freedom is numbered from 0, like every other index of the arrays: $i = 0$ is the direction $x_0$, and $i = 1$ is the direction $x_1$, with unit vectors $\underline{e}_0$ and $\underline{e}_1$.
+  Each node carries two displacements, $d_{0A}$ and $d_{1A}$.
+- $N_A\,\underline{e}_i$ is a **vector basis function** (@fig-e2f-basis b and c): the displacement field in which node $A$ moves one unit along degree of freedom $i$ and every other node stays put.
   A mesh with $n_{np}$ nodes has $2n_{np}$ of them.
 - Galerkin's method uses each vector basis function in turn as the virtual displacement $\underline{w}^h$.
-  The equation it produces is the balance of forces at node $A$ in direction $i$.
-- A component that is prescribed, $u_i = g_i$ at node $A$, has no equation: its virtual displacement must be zero there.
+  The equation it produces is the balance of forces at node $A$ along degree of freedom $i$.
+- A component that is prescribed at node $A$ has no equation: its virtual displacement must be zero there.
   The other component at the same node may still be unknown.
 :::
 
@@ -120,55 +121,60 @@ fig_id, sol_id = EF.fig_id_lm()
 fig_id_path = save(fig_id, "E2F_Fig2_IDLM.png")
 ```
 
-![(a) Equation numbers on a small mesh whose left side sits on rollers that fix $u_1$ and whose bottom sits on rollers that fix $u_2$, the supports of the quarter plate with a hole. A 0 marks a prescribed component. The corner node has both components prescribed; the other nodes on the supported sides keep one unknown each. (b) The local arrays of one element: its four nodes give eight local equations, $p = 1, \ldots, 8$.](`{python} fig_id_path`){#fig-e2f-id width=100%}
+![(a) Equation numbers on a small mesh whose left side sits on rollers that fix $u_0$ and whose bottom sits on rollers that fix $u_1$, the supports of the quarter plate with a hole. A $-1$ marks a prescribed component. The corner node has both components prescribed; the other nodes on the supported sides keep one unknown each. (b) The local arrays of one element: its four nodes give eight local equations, $\hat{p} = 0, \ldots, 7$.](`{python} fig_id_path`){#fig-e2f-id width=100%}
 
 The bookkeeping of [Class 14](14_Class.qmd) gains a direction index:
 
 ::: {.derivation}
 $$
 P = \mathrm{ID}(i, A), \qquad
-p = 2(a - 1) + i, \qquad
-\mathrm{LM}(p, e) = \mathrm{ID}\big(i,\ \mathrm{IEN}(a, e)\big)
+\hat{p} = 2a + i, \qquad
+\mathrm{LM}(\hat{p}, e) = \mathrm{ID}\big(i,\ \mathrm{IEN}(a, e)\big)
 $$
 :::
 
 ::: {.step .notes}
-- $\mathrm{ID}(i, A)$ is the global equation number of the displacement of node $A$ in direction $i$, or 0 if that component is prescribed (@fig-e2f-id a).
-  The ID array has two rows, one for each direction.
-- The equations are numbered node by node: the unknowns of node 1 first, $\mathrm{ID}(1, 1)$ and $\mathrm{ID}(2, 1)$, then node 2, and so on, skipping the prescribed components.
+- $\mathrm{ID}(i, A)$ is the global equation number of degree of freedom $i$ of node $A$, or $-1$ if that component is prescribed (@fig-e2f-id a).
+  The ID array has two rows, one for each degree of freedom.
+- The local nodes of an element are numbered by the stride rule of [Class 11](11_Class.qmd), $a = a_\xi + (p+1)\,a_\eta$, row by row from the bottom left, as in [Class 14](14_Class.qmd) and [Class 28](28_Class.qmd): for a four-node element, local node 2 is at the top left and local node 3 at the top right.
+  The heat problem on the earlier pages numbered them counterclockwise, as Hughes does.
+  The order changes only the order of the rows and columns of $\mathbf{k}^e$, not the solution.
+- As in the class notes and the course code, every index in these arrays is numbered from 0: the nodes, the elements, the local nodes, the equations, and the degree of freedom.
+- The equations are numbered node by node: the unknowns of node 0 first, $\mathrm{ID}(0, 0)$ and $\mathrm{ID}(1, 0)$, then node 1, and so on, skipping the prescribed components.
   Numbering this way keeps the two unknowns of a node next to each other, so the matrix stays banded when the nodes are well ordered.
-- Within an element, the local equation $p = 2(a - 1) + i$ runs through the local nodes in the same way: $(i, a) = (1, 1), (2, 1), (1, 2), (2, 2), \ldots$ (@fig-e2f-id b).
-  Hughes writes $p = n_{ed}(a - 1) + i$, with $n_{ed} = 2$ unknowns per node.
-- $\mathrm{LM}(p, e)$ tells assembly where row $p$ of $\mathbf{k}^e$ goes in $\mathbf{K}$, and a 0 tells it not to put it anywhere.
-  The assembly loop is the one from the heat problem, with $p$ and $q$ running to $2n_{en}$ instead of $n_{en}$.
+- Within an element, the local equation $\hat{p} = 2a + i$ runs through the local nodes in the same way: $(i, a) = (0, 0), (1, 0), (0, 1), (1, 1), \ldots$ (@fig-e2f-id b).
+  In general, $\hat{p} = n_{ed}\,a + i$, with $n_{ed} = 2$ unknowns per node.
+  The hat keeps it apart from the polynomial degree $p$; Hughes, who numbers every index from 1 and writes it without the hat, has $p = n_{ed}(a - 1) + i$.
+- $\mathrm{LM}(\hat{p}, e)$ tells assembly where row $\hat{p}$ of $\mathbf{k}^e$ goes in $\mathbf{K}$, and a $-1$ tells it not to put it anywhere.
+  The assembly loop is the one from the heat problem, with $\hat{p}$ and $\hat{q}$ taking $2n_{en}$ values instead of $n_{en}$.
 :::
 
-In the example, the left side fixes only $u_1$.
-Its nodes keep their $u_2$ unknowns, and their $x_2$ equations hold the traction $h_2 = 0$: the rollers let them slide.
+In the example, the left side fixes only $u_0$.
+Its nodes keep their $u_1$ unknowns, and their $x_1$ equations hold the traction $h_1 = 0$: the rollers let them slide.
 This is the boundary of the [previous page](Elasticity2D.qmd#boundary-conditions-one-direction-at-a-time) split once for each direction, turned into bookkeeping.
 
 ## Strain from the nodal displacements: the $\mathbf{B}$ matrix
 
-Inside element $e$, the displacement is $\underline{u}^h = \sum_a N_a\,\underline{d}_a$, where $\underline{d}_a = (d_{1a}, d_{2a})$ holds the displacements of local node $a$.
+Inside element $e$, the displacement is $\underline{u}^h = \sum_a N_a\,\underline{d}_a$, where $\underline{d}_a = (d_{0a}, d_{1a})$ holds the displacements of local node $a$.
 Differentiating each component gives the strain as a matrix times the nodal displacements:
 
 ::: {.derivation}
 $$
 \{\varepsilon(\underline{u}^h)\} =
-\begin{pmatrix} u^h_{1,1} \\ u^h_{2,2} \\ u^h_{1,2} + u^h_{2,1} \end{pmatrix}
-= \sum_{a=1}^{n_{en}} \mathbf{B}_a\,\underline{d}_a,
+\begin{pmatrix} u^h_{0,0} \\ u^h_{1,1} \\ u^h_{0,1} + u^h_{1,0} \end{pmatrix}
+= \sum_{a=0}^{n_{en}-1} \mathbf{B}_a\,\underline{d}_a,
 \qquad
 \mathbf{B}_a =
-\begin{bmatrix} N_{a,1} & 0 \\ 0 & N_{a,2} \\ N_{a,2} & N_{a,1} \end{bmatrix}
+\begin{bmatrix} N_{a,0} & 0 \\ 0 & N_{a,1} \\ N_{a,1} & N_{a,0} \end{bmatrix}
 $$
 :::
 
-Placing the $n_{en}$ blocks side by side gives $\mathbf{B} = [\,\mathbf{B}_1\ \mathbf{B}_2\ \cdots\ \mathbf{B}_{n_{en}}\,]$, a $3 \times 2n_{en}$ matrix, and $\{\varepsilon\} = \mathbf{B}\,\mathbf{d}^e$ with $\mathbf{d}^e = (d_{11}, d_{21}, d_{12}, d_{22}, \ldots)^T$.
+Placing the $n_{en}$ blocks side by side gives $\mathbf{B} = [\,\mathbf{B}_0\ \mathbf{B}_1\ \cdots\ \mathbf{B}_{n_{en}-1}\,]$, a $3 \times 2n_{en}$ matrix, and $\{\varepsilon\} = \mathbf{B}\,\mathbf{d}^e$, where $\mathbf{d}^e$ stacks the nodal displacements $\underline{d}_0, \underline{d}_1, \ldots$ of the local nodes in order.
 
 ::: {.step .notes}
-- The derivatives $N_{a,1}$ and $N_{a,2}$ are the ones the heat problem already needed, computed through the isoparametric map: $\nabla_x N_a = DF^{-T}\,\nabla_\xi N_a$.
-- The first row of $\mathbf{B}_a$ gives the stretch along $x_1$ from the $x_1$ displacement; the second, the stretch along $x_2$ from the $x_2$ displacement.
-- The third row mixes them: the change of angle $\gamma_{12}$ comes from how $u_1$ varies with $x_2$ and how $u_2$ varies with $x_1$.
+- The derivatives $N_{a,0}$ and $N_{a,1}$ are the ones the heat problem already needed, computed through the isoparametric map: $\nabla_x N_a = DF^{-T}\,\nabla_\xi N_a$.
+- The first row of $\mathbf{B}_a$ gives the stretch along $x_0$ from the $x_0$ displacement; the second, the stretch along $x_1$ from the $x_1$ displacement.
+- The third row mixes them: the change of angle $\gamma_{01}$ comes from how $u_0$ varies with $x_1$ and how $u_1$ varies with $x_0$.
   This row is where the two directions meet.
 - $\mathbf{B}$ depends on the point: it is evaluated at each Gauss point, like $\nabla N_a$.
 :::
@@ -180,7 +186,7 @@ Substituting $\{\varepsilon(\underline{w}^h)\} = \mathbf{B}\,\mathbf{c}^e$ and $
 ::: {.derivation}
 $$
 \mathbf{k}^e = \int_{\Omega^e} \mathbf{B}^T\,\mathbf{D}\,\mathbf{B}\;t\,d\Omega
-\approx \sum_{l=1}^{n_{int}} W_l\;\mathbf{B}^T\mathbf{D}\,\mathbf{B}\;t\;j\,\Big|_{\tilde{\underline{\xi}}_l}
+\approx \sum_{l=0}^{n_{int}-1} W_l\;\mathbf{B}^T\mathbf{D}\,\mathbf{B}\;t\;j\,\Big|_{\tilde{\underline{\xi}}_l}
 \qquad\Longleftrightarrow\qquad
 \mathbf{k}^e_{ab} = \int_{\Omega^e} \mathbf{B}_a^T\,\mathbf{D}\,\mathbf{B}_b\;t\,d\Omega \quad (2 \times 2)
 $$
@@ -188,7 +194,7 @@ $$
 
 ::: {.step .notes}
 - $\mathbf{k}^e$ is $2n_{en} \times 2n_{en}$: $8 \times 8$ for Q4 and $18 \times 18$ for Q9.
-  Its entry $k^e_{pq}$, with $p = 2(a - 1) + i$ and $q = 2(b - 1) + j$, is the force at local node $a$ in direction $i$ caused by a unit displacement of local node $b$ in direction $j$, with every other displacement held at zero.
+  Its entry $k^e_{\hat{p}\hat{q}}$, with $\hat{p} = 2a + i$ and $\hat{q} = 2b + j$, is the force at local node $a$ along degree of freedom $i$ caused by a unit displacement of local node $b$ along degree of freedom $j$, with every other displacement held at zero.
 - The quadrature is the one from the heat problem, $(p + 1) \times (p + 1)$ Gauss points, with $j = \det(\partial\underline{x}/\partial\underline{\xi})$ the Jacobian determinant.
 - $\mathbf{k}^e$ is symmetric because $\mathbf{D}$ is.
 :::
@@ -199,40 +205,41 @@ Writing out one $2 \times 2$ block for an isotropic material shows how the direc
 $$
 \mathbf{k}^e_{ab} = \int_{\Omega^e}
 \begin{bmatrix}
-D_{11}\,N_{a,1}N_{b,1} + D_{33}\,N_{a,2}N_{b,2} & D_{12}\,N_{a,1}N_{b,2} + D_{33}\,N_{a,2}N_{b,1} \\
-D_{12}\,N_{a,2}N_{b,1} + D_{33}\,N_{a,1}N_{b,2} & D_{22}\,N_{a,2}N_{b,2} + D_{33}\,N_{a,1}N_{b,1}
+D_{00}\,N_{a,0}N_{b,0} + D_{22}\,N_{a,1}N_{b,1} & D_{01}\,N_{a,0}N_{b,1} + D_{22}\,N_{a,1}N_{b,0} \\
+D_{01}\,N_{a,1}N_{b,0} + D_{22}\,N_{a,0}N_{b,1} & D_{11}\,N_{a,1}N_{b,1} + D_{22}\,N_{a,0}N_{b,0}
 \end{bmatrix} t\,d\Omega
 $$
 :::
 
 ::: {.step .notes}
-- Compare the heat problem's $\int \kappa\,(N_{a,1}N_{b,1} + N_{a,2}N_{b,2})\,d\Omega$.
-  Each diagonal entry of the block has the same form, but with a different "conductivity" in each direction: $D_{11}$ along the direction of the displacement and the shear modulus $D_{33}$ across it.
+- Compare the heat problem's $\int \kappa\,(N_{a,0}N_{b,0} + N_{a,1}N_{b,1})\,d\Omega$.
+  Each diagonal entry of the block has the same form, but with a different "conductivity" in each direction: $D_{00}$ along the direction of the displacement and the shear modulus $D_{22}$ across it.
 - The off-diagonal entries are new.
-  They are the forces in one direction caused by a displacement in the other: pulling a node along $x_1$ pushes its neighbors along $x_2$, through Poisson's effect ($D_{12}$) and through shear ($D_{33}$).
+  They are the forces in one direction caused by a displacement in the other: pulling a node along $x_0$ pushes its neighbors along $x_1$, through Poisson's effect ($D_{01}$) and through shear ($D_{22}$).
   This is the coupling term $(\lambda + \mu)\,u_{j,ji}$ of Navier's equations, seen from inside one element.
 :::
 
 ## The element force vector
 
-The right-hand side of $(\mathrm{G})$ restricted to one element gives the force vector, with one entry for each local equation $p = 2(a - 1) + i$:
+The right-hand side of $(\mathrm{G})$ restricted to one element gives the force vector, with two entries for each local node $a$, in the local equations $\hat{p} = 2a$ and $\hat{p} = 2a + 1$:
 
 ::: {.derivation}
 $$
-f^e_p
-= \int_{\Omega^e} N_a\,f_i\;t\,d\Omega
-+ \int_{\Gamma^e \cap \Gamma_{h_i}} N_a\,h_i\;t\,d\Gamma
-- \sum_{q=1}^{2n_{en}} k^e_{pq}\,g^e_q
+\mathbf{f}^e_a
+= \int_{\Omega^e} N_a\,\underline{f}\;t\,d\Omega
++ \int_{\Gamma^e \cap \Gamma_h} N_a\,\underline{h}\;t\,d\Gamma
+- \sum_{b=0}^{n_{en}-1} \mathbf{k}^e_{ab}\,\mathbf{g}^e_b
 $$
 :::
 
 ::: {.step .notes}
 - The first term is the body force, which is zero in the examples here.
-- The second is the traction, integrated along each element side that lies on $\Gamma_{h_i}$, with one-dimensional Gauss points along the side, as for the heat flux in [2D Poisson II](Poisson2D_Heat_FEM.qmd).
-  It is the work of the applied traction through the virtual displacement $N_a\,\underline{e}_i$: the share of the load that goes to node $a$.
-- The last term moves the prescribed displacements to the right-hand side, as for the heat problem: $g^e_q$ is the prescribed value of the local equation $q$, or 0 if that component is unknown.
+- The second is the traction, integrated along each element side on which it is applied, with one-dimensional Gauss points along the side, as for the heat flux in [2D Poisson II](Poisson2D_Heat_FEM.qmd).
+  Its $x_0$ component is integrated over the sides in $\Gamma_{h_0}$, and its $x_1$ component over the sides in $\Gamma_{h_1}$.
+  It is the work of the applied traction through the virtual displacements $N_a\,\underline{e}_0$ and $N_a\,\underline{e}_1$: the share of the load that goes to node $a$.
+- The last term moves the prescribed displacements to the right-hand side, as for the heat problem: $\mathbf{g}^e_b$ holds the prescribed displacements of local node $b$, with 0 for a component that is unknown.
 - The test for $\Gamma_{h_i}$ is made **one direction at a time**.
-  A side on rollers that fix $u_1$ still receives its $h_2$ term.
+  A side on rollers that fix $u_0$ still receives its $h_1$ term.
 :::
 
 ## Three motions cost nothing
@@ -254,7 +261,7 @@ The eigenvectors of $\mathbf{k}^e$ are the element's natural ways of deforming, 
   The heat problem had one such mode, a uniform temperature.
 - The same is true of the assembled matrix of a whole body: if the supports do not stop every rigid-body motion, $\mathbf{K}$ is singular, and the solution is not unique.
   In 2D, the supports must prevent two translations and one rotation.
-  A body pulled at one end and held only by rollers that fix $u_1$ can still slide along $x_2$.
+  A body pulled at one end and held only by rollers that fix $u_0$ can still slide along $x_1$.
   The explorer below reports this when it happens.
 - **The constant-strain modes** stretch, shear, or expand the element uniformly.
   A uniform expansion is the stiffest, with $\lambda = E\,t/(1 - \nu)$ here, because it fights both normal stiffnesses at once.
@@ -271,9 +278,9 @@ Assembly follows [2D Poisson II](Poisson2D_Heat_FEM.qmd) unchanged, with $\mathr
 
 ::: {.derivation}
 $$
-\mathbf{K} = \mathop{\mathsf{A}}_{e=1}^{n_{el}} \mathbf{k}^e, \qquad
-\mathbf{F} = \mathop{\mathsf{A}}_{e=1}^{n_{el}} \mathbf{f}^e, \qquad
-K_{PQ} \mathrel{+}= k^e_{pq} \ \text{ with } P = \mathrm{LM}(p, e),\ Q = \mathrm{LM}(q, e) \text{ both nonzero}
+\mathbf{K} = \mathop{\mathsf{A}}_{e=0}^{n_{el}-1} \mathbf{k}^e, \qquad
+\mathbf{F} = \mathop{\mathsf{A}}_{e=0}^{n_{el}-1} \mathbf{f}^e, \qquad
+K_{PQ} \mathrel{+}= k^e_{\hat{p}\hat{q}} \ \text{ with } P = \mathrm{LM}(\hat{p}, e),\ Q = \mathrm{LM}(\hat{q}, e) \text{ both} \neq -1
 $$
 :::
 
@@ -297,13 +304,13 @@ At any point of element $e$, $\{\sigma\} = \mathbf{D}\,\mathbf{B}\,\mathbf{d}^e$
 The displacements are continuous between elements, but their derivatives are not, so the stress jumps across element boundaries.
 A common remedy for plotting is to **average** the stresses that the elements sharing a node give at that node.
 The size of the jumps is itself a useful measure of the error: where they are large, the mesh is too coarse.
-In plane strain, $\sigma_{33} = \nu(\sigma_{11} + \sigma_{22})$ is computed afterward.
+In plane strain, $\sigma_{22} = \nu(\sigma_{00} + \sigma_{11})$ is computed afterward.
 
 **The von Mises stress** combines the components into the single number that ductile metals yield on:
 
 ::: {.derivation}
 $$
-\sigma_{vm} = \sqrt{\tfrac{1}{2}\left[(\sigma_{11} - \sigma_{22})^2 + (\sigma_{22} - \sigma_{33})^2 + (\sigma_{33} - \sigma_{11})^2\right] + 3\,\sigma_{12}^2}
+\sigma_{vm} = \sqrt{\tfrac{1}{2}\left[(\sigma_{00} - \sigma_{11})^2 + (\sigma_{11} - \sigma_{22})^2 + (\sigma_{22} - \sigma_{00})^2\right] + 3\,\sigma_{01}^2}
 $$
 :::
 
@@ -311,7 +318,7 @@ It is $\sigma$ for a bar in tension, and $\sqrt{3}\,\tau$ under pure shear.
 Steel with a yield stress of 345 MPa, a common grade for rolled shapes, yields where $\sigma_{vm}$ reaches 345 MPa.
 
 **Reactions.**
-The force a support exerts in direction $i$ at node $A$ is $R_{iA} = \sum_e \left(\mathbf{k}^e\,\mathbf{d}^e - \mathbf{f}^e_{\text{applied}}\right)$ at the prescribed components, the out-of-balance force that the support must supply.
+The force a support exerts along degree of freedom $i$ at node $A$ is $R_{iA} = \sum_e \left(\mathbf{k}^e\,\mathbf{d}^e - \mathbf{f}^e_{\text{applied}}\right)$ at the prescribed components, the out-of-balance force that the support must supply.
 Because the basis functions add up to 1, a rigid translation is one of the finite element displacement fields, and it strains nothing.
 So the internal forces of every element add up to zero, and the sum of the reactions balances the sum of the applied loads **exactly**, on any mesh.
 The explorer reports this check.
@@ -365,7 +372,7 @@ fig_plate_path = save(EF.fig_plate_results(PS), "E2F_Fig5_Plate.png")
   The whole plate is held at its left end, which stops the end from narrowing; the quarter model, by its symmetry, represents a plate pulled equally at both ends.
   The difference is the end restraint, felt weakly at the hole.
 - The quarter model needs a quarter of the equations.
-  Its symmetry conditions, $u_1 = 0$ on the vertical cut and $u_2 = 0$ on the horizontal cut, are the [direction-by-direction supports](Elasticity2D.qmd#boundary-conditions-one-direction-at-a-time) of the previous page.
+  Its symmetry conditions, $u_0 = 0$ on the vertical cut and $u_1 = 0$ on the horizontal cut, are the [direction-by-direction supports](Elasticity2D.qmd#boundary-conditions-one-direction-at-a-time) of the previous page.
 :::
 
 ### The W-shape: a singular corner
@@ -464,7 +471,7 @@ viewof nu = Inputs.range([0, 0.45], {value: mat[1], step: 0.01, label: "ν"})
 //| echo: false
 viewof bc = geom === "cantilever"
   ? Inputs.form({
-      end: Inputs.radio(new Map([["the exact displacements", "exact"], ["clamped: u₁ = u₂ = 0", "clamp"]]),
+      end: Inputs.radio(new Map([["the exact displacements", "exact"], ["clamped: u₀ = u₁ = 0", "clamp"]]),
                         {value: "exact", label: "Left end"}),
       P: Inputs.range([-20, 20], {value: 8, step: 0.5, label: "End load P (kN, downward)"})})
   : bcEditor(geom)
@@ -495,7 +502,7 @@ nodal = sol.ok ? nodalStress(sol) : null
 
 ```{ojs}
 //| echo: false
-viewof eSel = Inputs.range([1, mesh.nel], {value: Math.min(1, mesh.nel), step: 1, label: "Highlight element e"})
+viewof eSel = Inputs.range([0, mesh.nel - 1], {value: 0, step: 1, label: "Highlight element e"})
 ```
 
 ```{ojs}
@@ -506,8 +513,8 @@ viewof eSel = Inputs.range([1, mesh.nel], {value: Math.min(1, mesh.nel), step: 1
     if (sol.reason === "every displacement component is prescribed") return "every displacement is prescribed, so there is nothing to solve for.";
     const fx = sol.fixed[0].some(v => v), fy = sol.fixed[1].some(v => v);
     const what = !fx && !fy ? "nothing holds the body"
-      : !fx ? "nothing stops it from sliding along x₁"
-      : !fy ? "nothing stops it from sliding along x₂"
+      : !fx ? "nothing stops it from sliding along x₀"
+      : !fy ? "nothing stops it from sliding along x₁"
       : "the supports cannot stop it from rotating";
     return `K is singular: ${what}. Prescribe more displacement components, so that no rigid-body motion is left.`;
   };
@@ -515,7 +522,7 @@ viewof eSel = Inputs.range([1, mesh.nel], {value: Math.min(1, mesh.nel), step: 1
   return html`<div style="font-size:0.95rem; margin:0.3rem 0 0.6rem 0; padding:0.5rem 0.8rem; background:#fff; border-left:4px solid #1e3a5f;">
     <b>${mesh.nel}</b> ${pdeg === 1 ? "Q4" : "Q9"} elements, <b>${mesh.nnp}</b> nodes, <b>${2 * mesh.nnp}</b> displacement components,
     of which <b>${nPres}</b> are prescribed &rarr; <b>${sol.neq}</b> equations.
-    ${plane === "stress" ? `Plane stress, thickness t = ${G.t} mm.` : "Plane strain: forces per mm of length along x₃."}
+    ${plane === "stress" ? `Plane stress, thickness t = ${G.t} mm.` : "Plane strain: forces per mm of length along x₂."}
     ${sol.rebuilt ? "K was assembled and factored again." : "K was reused: only the loads or prescribed values changed, or E, which scales K."}
     (${sol.ms.toFixed(0)} ms)
     ${sol.ok ? "" : html`<br><span style="color:#c0392b"><b>No solution:</b> ${why()}</span>`}
@@ -530,8 +537,8 @@ viewof eSel = Inputs.range([1, mesh.nel], {value: Math.min(1, mesh.nel), step: 1
 ```{ojs}
 //| echo: false
 viewof field = Inputs.select(new Map([
-  ["von Mises stress", "vm"], ["σ₁₁", "s11"], ["σ₂₂", "s22"], ["σ₁₂", "s12"], ["σ₃₃", "s33"],
-  ["|u|, the size of the displacement", "|u|"], ["u₁", "u1"], ["u₂", "u2"]]), {value: "vm", label: "Color by"})
+  ["von Mises stress", "vm"], ["σ₀₀", "s11"], ["σ₁₁", "s22"], ["σ₀₁", "s12"], ["σ₂₂", "s33"],
+  ["|u|, the size of the displacement", "|u|"], ["u₀", "u1"], ["u₁", "u2"]]), {value: "vm", label: "Color by"})
 viewof magMul = Inputs.range([0, 3], {value: 1, step: 0.1, label: "Exaggerate the displacements (× automatic)"})
 viewof show = Inputs.checkbox(["the mesh", "supports and loads", "average the stresses at the nodes"],
   {value: ["the mesh", "supports and loads", "average the stresses at the nodes"], label: "Show"})
@@ -559,8 +566,8 @@ viewof show = Inputs.checkbox(["the mesh", "supports and loads", "average the st
   }
   const signed = !["vm", "|u|"].includes(field);
   let color, legend;
-  const labels = {vm: "von Mises stress (MPa)", s11: "σ₁₁ (MPa)", s22: "σ₂₂ (MPa)", s12: "σ₁₂ (MPa)", s33: "σ₃₃ (MPa)",
-                  "|u|": "|u| (mm)", u1: "u₁ (mm)", u2: "u₂ (mm)"};
+  const labels = {vm: "von Mises stress (MPa)", s11: "σ₀₀ (MPa)", s22: "σ₁₁ (MPa)", s12: "σ₀₁ (MPa)", s33: "σ₂₂ (MPa)",
+                  "|u|": "|u| (mm)", u1: "u₀ (mm)", u2: "u₁ (mm)"};
   if (signed) {
     const m = Math.max(Math.abs(lo), Math.abs(hi), 1e-12);
     color = d3.scaleDiverging([-m, 0, m], t => d3.interpolateRdBu(1 - t));
@@ -572,7 +579,7 @@ viewof show = Inputs.checkbox(["the mesh", "supports and loads", "average the st
   const cv = deformedCanvas(Math.min(width, 640), mesh, sol, scale);
   drawOutline(cv, G.outline());
   drawDeformed(cv, mesh, sol, val, color, scale, k);
-  if (show.includes("the mesh")) drawDeformedMesh(cv, mesh, sol, scale, {highlight: eSel, color: "rgba(26,26,26,0.35)", width: 0.6});
+  if (show.includes("the mesh")) drawDeformedMesh(cv, mesh, sol, scale, {highlight: Math.min(eSel, mesh.nel - 1) + 1, color: "rgba(26,26,26,0.35)", width: 0.6});
   if (show.includes("supports and loads")) {
     const tMax = Math.max(...Object.values(bcState).flatMap(s => ["x", "y"].map(d => s[d] && s[d][0] === "traction" ? Math.abs(s[d][1]) : 0)), 1e-9);
     drawGlyphs(cv, G.sides(), bcState, {tMax, uMax: Math.abs(G.uRange[1]), size: 0.06 * span, maxArrow: 1.6});
@@ -602,7 +609,7 @@ viewof show = Inputs.checkbox(["the mesh", "supports and loads", "average the st
     if (loc) {
       const s11 = evaluate(sol, ...loc).sig[0];
       const st = bcState.right && bcState.right.x && bcState.right.x[0] === "traction" ? bcState.right.x[1] : null;
-      extra = `<b>At the top of the hole:</b> σ₁₁ = ${fmt(s11, 1)} MPa` + (st ? `, ${fmt(s11 / st, 2)} times the applied ${fmt(st, 0)} MPa. Heywood's estimate for this plate: ${fmt(heywood(2 * PLATE.a, PLATE.W, st).peak, 1)} MPa.` : ".");
+      extra = `<b>At the top of the hole:</b> σ₀₀ = ${fmt(s11, 1)} MPa` + (st ? `, ${fmt(s11 / st, 2)} times the applied ${fmt(st, 0)} MPa. Heywood's estimate for this plate: ${fmt(heywood(2 * PLATE.a, PLATE.W, st).peak, 1)} MPa.` : ".");
     }
   } else if (geom === "wshape") {
     let it = 0;
@@ -610,7 +617,7 @@ viewof show = Inputs.checkbox(["the mesh", "supports and loads", "average the st
     extra = `<b>Left tip of the top flange:</b> u = (${fmt(sol.U[it][0], 4)}, ${fmt(sol.U[it][1], 4)}) mm.`;
   } else {
     const loc = locate(mesh, CANTILEVER.L, 0), uh = evaluate(sol, ...loc).u[1], ue = cantEx(CANTILEVER.L, 0).u2;
-    extra = `<b>Tip deflection</b> at mid-depth: u₂ = ${fmt(uh, 4)} mm; exact ${fmt(ue, 4)} mm (${(100 * uh / ue).toFixed(1)}%)` +
+    extra = `<b>Tip deflection</b> at mid-depth: u₁ = ${fmt(uh, 4)} mm; exact ${fmt(ue, 4)} mm (${(100 * uh / ue).toFixed(1)}%)` +
             (bc.end === "clamp" ? ". The exact value assumes the warped end of the exact solution, not a clamp." : ".");
   }
   return html`<div style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start">
@@ -619,8 +626,8 @@ viewof show = Inputs.checkbox(["the mesh", "supports and loads", "average the st
       Navy hatching marks a side held in both directions; navy triangles mark a side held in one direction only, free to slide in the other (filled when the prescribed value is zero).
       Navy arrows are prescribed nonzero displacements; red arrows are applied tractions.</div></div>
     <div style="flex:1; min-width:16rem; font-size:0.93rem; line-height:1.6">
-      <b>Largest displacement:</b> ${fmt(Math.hypot(...sol.U[iu]), 4)} mm at node ${iu + 1}, (${mesh.X[iu].map(v => v.toFixed(1)).join(", ")}) mm<br>
-      <b>Largest von Mises stress</b> (nodal average): ${fmt(vmN[iv], 1)} MPa at node ${iv + 1}, (${mesh.X[iv].map(v => v.toFixed(1)).join(", ")}) mm<br><br>
+      <b>Largest displacement:</b> ${fmt(Math.hypot(...sol.U[iu]), 4)} mm at node ${iu}, (${mesh.X[iu].map(v => v.toFixed(1)).join(", ")}) mm<br>
+      <b>Largest von Mises stress</b> (nodal average): ${fmt(vmN[iv], 1)} MPa at node ${iv}, (${mesh.X[iv].map(v => v.toFixed(1)).join(", ")}) mm<br><br>
       ${html([extra])}<br><br>
       <b>Equilibrium</b>, summed over the whole body:<br>
       &nbsp; applied loads: (${fmt(sumF[0], 1)}, ${fmt(sumF[1], 1)}) ${unitF}<br>
@@ -640,26 +647,28 @@ viewof show = Inputs.checkbox(["the mesh", "supports and loads", "average the st
 
 ```{ojs}
 //| echo: false
-viewof gpSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Gauss point l"})
+viewof gpSel = Inputs.range([0, (pdeg + 1) ** 2 - 1], {value: 0, step: 1, label: "Gauss point l"})
 ```
 
 ```{ojs}
 //| echo: false
 {
-  const e = Math.min(eSel, mesh.nel), ien = mesh.IEN[e - 1], lm = sol.LM[e - 1], nen = mesh.nen;
-  const ke = sol.ke(e), gp = sol.gp(e)[Math.min(gpSel, (pdeg + 1) ** 2) - 1];
+  // the solver numbers nodes, elements, and equations from 1, with 0 for a prescribed component;
+  // everything shown here is numbered from 0, with -1 for a prescribed component
+  const e = Math.min(eSel, mesh.nel - 1) + 1, ien = mesh.IEN[e - 1], lm = sol.LM[e - 1], nen = mesh.nen;
+  const ke = sol.ke(e), gp = sol.gp(e)[Math.min(gpSel, (pdeg + 1) ** 2 - 1)];
   const Dg = sol.D.map(r => r.map(v => v / 1000));
   const cell = (v, red) => `<td style="padding:1px 6px; text-align:center; ${red ? "color:#c0392b; font-weight:700" : ""}">${v}</td>`;
-  const rowA = ien.map((A, a) => cell(a + 1)).join(""), rowIEN = ien.map(A => cell(A)).join("");
-  const rowP = lm.map((_, p) => cell(p + 1)).join(""), rowIA = lm.map((_, p) => cell(`${(p % 2) + 1},${(p >> 1) + 1}`)).join("");
-  const rowLM = lm.map(P => cell(P === 0 ? "0" : P, P === 0)).join("");
+  const rowA = ien.map((A, a) => cell(a)).join(""), rowIEN = ien.map(A => cell(A - 1)).join("");
+  const rowP = lm.map((_, p) => cell(p)).join(""), rowIA = lm.map((_, p) => cell(`${p % 2},${p >> 1}`)).join("");
+  const rowLM = lm.map(P => cell(P === 0 ? "−1" : P - 1, P === 0)).join("");
   const table = `<table style="font-size:0.85rem; white-space:nowrap; margin:0.3rem 0 0.6rem 0">
     <tr><th style="text-align:left; padding-right:8px; font-weight:normal">local node a</th>${rowA}</tr>
-    <tr><th style="text-align:left; padding-right:8px; font-weight:normal">IEN(a, ${e})</th>${rowIEN}</tr></table>
+    <tr><th style="text-align:left; padding-right:8px; font-weight:normal">IEN(a, ${e - 1})</th>${rowIEN}</tr></table>
     <div style="overflow-x:auto"><table style="font-size:0.85rem; white-space:nowrap; margin:0 0 0.6rem 0">
-    <tr><th style="text-align:left; padding-right:8px; font-weight:normal">p = 2(a − 1) + i</th>${rowP}</tr>
+    <tr><th style="text-align:left; padding-right:8px; font-weight:normal">p̂ = 2a + i</th>${rowP}</tr>
     <tr><th style="text-align:left; padding-right:8px; font-weight:normal; color:#777">(i, a)</th>${rowIA}</tr>
-    <tr><th style="text-align:left; padding-right:8px; font-weight:normal">LM(p, ${e})</th>${rowLM}</tr></table></div>`;
+    <tr><th style="text-align:left; padding-right:8px; font-weight:normal">LM(p̂, ${e - 1})</th>${rowLM}</tr></table></div>`;
   // eigenvalues of k^e by Jacobi rotations
   const n = ke.length, A = ke.map(r => r.slice());
   for (let sweep = 0; sweep < 60; sweep++) {
@@ -678,7 +687,7 @@ viewof gpSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Ga
   const sc = x => html`<div style="overflow-x:auto; max-width:100%; font-size:${pdeg === 2 ? 0.8 : 1}em">${x}</div>`;
   const kScale = 10 ** Math.floor(Math.log10(emax));
   return html`<div style="font-size:0.93rem; line-height:1.55">
-    <b>Element ${e}</b>: ${nen} nodes, ${2 * nen} local equations. A red 0 in LM is a prescribed component.
+    <b>Element ${e - 1}</b>: ${nen} nodes, ${2 * nen} local equations. A red −1 in LM is a prescribed component.
     ${html([table])}
     ${sc(tex.block`\mathbf{D} = ${texMatrix(Dg, {sig: 4})}\ \text{GPa}\qquad (\text{plane ${plane}},\ E = ${EG}\ \text{GPa},\ \nu = ${nu})`)}
     At Gauss point ${gpSel}, (ξ, η) = (${fmt(gp.xi, 4)}, ${fmt(gp.eta, 4)}), x = (${gp.x.map(v => v.toFixed(2)).join(", ")}) mm, j = ${fmt(gp.J, 3)} mm², W = ${fmt(gp.w, 4)}:
@@ -696,14 +705,16 @@ viewof gpSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Ga
 ```{ojs}
 //| echo: false
 {
-  const nShow = Math.min(mesh.nnp, 40), lm = sol.LM[Math.min(eSel, mesh.nel) - 1], ien = mesh.IEN[Math.min(eSel, mesh.nel) - 1];
+  // the solver numbers nodes and equations from 1, with 0 for a prescribed component; the table shows them from 0, with -1
+  const nShow = Math.min(mesh.nnp, 40), lm = sol.LM[Math.min(eSel, mesh.nel - 1)], ien = mesh.IEN[Math.min(eSel, mesh.nel - 1)];
+  const idv = v => v === 0 ? "−1" : v - 1;
   const first = Math.max(1, Math.min(d3.min(ien) - 4, mesh.nnp - nShow + 1));
   const cell = (v, on, red) => `<td style="padding:1px 6px; text-align:center; ${on ? "background:#fde9d2;" : ""} ${red ? "color:#c0392b; font-weight:700" : ""}">${v}</td>`;
   const nodes = d3.range(first, first + nShow);
   const idTable = `<div style="overflow-x:auto"><table style="font-size:0.84rem; white-space:nowrap">
-    <tr><th style="text-align:left; padding-right:8px">A</th>${first > 1 ? "<td>…</td>" : ""}${nodes.map(A => cell(A, ien.includes(A))).join("")}${first + nShow - 1 < mesh.nnp ? "<td>…</td>" : ""}</tr>
-    <tr><th style="text-align:left; padding-right:8px; font-weight:normal">ID(1, A)</th>${first > 1 ? "<td></td>" : ""}${nodes.map(A => cell(sol.ID[0][A - 1], ien.includes(A), sol.ID[0][A - 1] === 0)).join("")}</tr>
-    <tr><th style="text-align:left; padding-right:8px; font-weight:normal">ID(2, A)</th>${first > 1 ? "<td></td>" : ""}${nodes.map(A => cell(sol.ID[1][A - 1], ien.includes(A), sol.ID[1][A - 1] === 0)).join("")}</tr>
+    <tr><th style="text-align:left; padding-right:8px">A</th>${first > 1 ? "<td>…</td>" : ""}${nodes.map(A => cell(A - 1, ien.includes(A))).join("")}${first + nShow - 1 < mesh.nnp ? "<td>…</td>" : ""}</tr>
+    <tr><th style="text-align:left; padding-right:8px; font-weight:normal">ID(0, A)</th>${first > 1 ? "<td></td>" : ""}${nodes.map(A => cell(idv(sol.ID[0][A - 1]), ien.includes(A), sol.ID[0][A - 1] === 0)).join("")}</tr>
+    <tr><th style="text-align:left; padding-right:8px; font-weight:normal">ID(1, A)</th>${first > 1 ? "<td></td>" : ""}${nodes.map(A => cell(idv(sol.ID[1][A - 1]), ien.includes(A), sol.ID[1][A - 1] === 0)).join("")}</tr>
   </table></div>`;
   let spy;
   if (sol.neq <= 3000 && sol.neq > 0) {
@@ -713,7 +724,7 @@ viewof gpSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Ga
   } else spy = html`<div style="color:#555">K has ${sol.neq} equations, too many to draw here: choose a coarser mesh or Q4 elements.</div>`;
   const nnzRow = sol.neq ? (kEntries(sol).length / sol.neq).toFixed(1) : 0;
   return html`<div style="font-size:0.93rem; line-height:1.55">
-    <b>The ID array</b>${mesh.nnp > nShow ? ` (nodes ${first} to ${first + nShow - 1} of ${mesh.nnp})` : ""}: a red 0 is a prescribed component. The nodes of element ${eSel} are shaded.
+    <b>The ID array</b>${mesh.nnp > nShow ? ` (nodes ${first - 1} to ${first + nShow - 2}, of ${mesh.nnp})` : ""}: a red −1 is a prescribed component. The nodes of element ${eSel} are shaded.
     ${html([idTable])}
     <div style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start; margin-top:0.6rem">
       <div>${spy}</div>
@@ -745,17 +756,17 @@ viewof gpSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Ga
     const s11 = prof("s11"), s12 = prof("s12");
     const fe = data => sides.map(([k], j) => Plot.line(data, {x: k, y: "y", stroke: j ? "#e67e22" : "#c0392b", strokeWidth: 2}));
     const w = Math.min(width, 330);
-    const p1 = Plot.plot({width: w, height: 220, x: {label: "x₁ (mm)"}, y: {label: "u₂ along x₂ = 0 (mm)"}, marks: [
+    const p1 = Plot.plot({width: w, height: 220, x: {label: "x₀ (mm)"}, y: {label: "u₁ along x₁ = 0 (mm)"}, marks: [
       Plot.line(dfl, {x: "x", y: "ex", stroke: "#1a1a1a", strokeDasharray: "5,4"}), Plot.line(dfl, {x: "x", y: "fe", stroke: "#c0392b", strokeWidth: 2})]});
-    const p2 = Plot.plot({width: w, height: 220, x: {label: "σ₁₁ at x₁ = L/2 (MPa)"}, y: {label: "x₂ (mm)"}, marks: [
+    const p2 = Plot.plot({width: w, height: 220, x: {label: "σ₀₀ at x₀ = L/2 (MPa)"}, y: {label: "x₁ (mm)"}, marks: [
       Plot.line(s11, {x: "ex", y: "y", stroke: "#1a1a1a", strokeDasharray: "5,4"}), ...fe(s11)]});
-    const p3 = Plot.plot({width: w, height: 220, x: {label: "σ₁₂ at x₁ = L/2 (MPa)"}, y: {label: "x₂ (mm)"}, marks: [
+    const p3 = Plot.plot({width: w, height: 220, x: {label: "σ₀₁ at x₀ = L/2 (MPa)"}, y: {label: "x₁ (mm)"}, marks: [
       Plot.line(s12, {x: "ex", y: "y", stroke: "#1a1a1a", strokeDasharray: "5,4"}), ...fe(s12)]});
     return html`<div style="font-size:0.93rem; line-height:1.55">The finite element solution (red) against the exact solution (dashed).
       ${bc.end === "clamp" ? "With a clamped end the problem differs from the exact one near the support, so the two need not agree there." : "With the exact end displacements prescribed, the difference is the discretization error alone."}
       ${avg ? "The stresses are averaged at the nodes. Turn the averaging off in the Solution tab to see each element's own stresses."
-            : html`The line x₁ = L/2 is an edge between two elements, and the stresses jump across it: red is the element on the left, orange the element on the right.
-               With Q4 elements, σ₁₂ on the two sides differs widely, and one side may even have the wrong sign.
+            : html`The line x₀ = L/2 is an edge between two elements, and the stresses jump across it: red is the element on the left, orange the element on the right.
+               With Q4 elements, σ₀₁ on the two sides differs widely, and one side may even have the wrong sign.
                That is the spurious shear strain of the bending modes, the cause of shear locking. With Q9 elements the two sides nearly agree.`}
       <div style="display:flex; flex-wrap:wrap; gap:0.8rem">${p1}${p2}${p3}</div></div>`;
   }
@@ -765,20 +776,20 @@ viewof gpSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Ga
     const ys = d3.range(0, 61).map(k => a + k * (Wh - a) / 60);
     const kir = y => { const q = (a / y) ** 2; return st * (1 + 0.5 * q + 1.5 * q * q); };
     const data = ys.map(y => ({y, fe: at(0, y, "s11"), ex: kir(y)}));
-    const p = Plot.plot({width: Math.min(width, 520), height: 260, x: {label: "x₂, along the line x₁ = 0 above the hole (mm)"}, y: {label: "σ₁₁ (MPa)"}, marks: [
+    const p = Plot.plot({width: Math.min(width, 520), height: 260, x: {label: "x₁, along the line x₀ = 0 above the hole (mm)"}, y: {label: "σ₀₀ (MPa)"}, marks: [
       Plot.line(data, {x: "y", y: "ex", stroke: "#1a1a1a", strokeDasharray: "5,4"}), Plot.line(data, {x: "y", y: "fe", stroke: "#c0392b", strokeWidth: 2}),
       Plot.ruleY([st], {stroke: "#999"})]});
-    return html`<div style="font-size:0.93rem; line-height:1.55">σ₁₁ above the hole: the finite element solution (red) and Kirsch's solution for a hole in an <i>infinite</i> plate under the same remote stress (dashed).
+    return html`<div style="font-size:0.93rem; line-height:1.55">σ₀₀ above the hole: the finite element solution (red) and Kirsch's solution for a hole in an <i>infinite</i> plate under the same remote stress (dashed).
       Both peak at the hole and fall off within a few radii.
       The finite plate's peak is higher, because the material beside the hole carries the whole load across a narrower section, and its stress at the free edge is lower.
-      ${st ? html`Heywood's estimate of the peak for this width: ${fmt(heywood(2 * a, PLATE.W, st).peak, 1)} MPa.` : "Apply a traction along x₁ on the right end to compare with Kirsch's solution."}
+      ${st ? html`Heywood's estimate of the peak for this width: ${fmt(heywood(2 * a, PLATE.W, st).peak, 1)} MPa.` : "Apply a traction along x₀ on the right end to compare with Kirsch's solution."}
       ${p}</div>`;
   }
   // the W-shape: von Mises along the underside of the top flange, from the web to the tip
   const {d, bf, tf, tw} = WSHAPE, yv = d - tf;
   const xs = d3.range(0, 121).map(k => tw / 2 + 0.01 + k * (bf / 2 - tw / 2 - 0.02) / 120);
   const data = xs.map(x => ({x, vm: at(x, yv, "vm")}));
-  const p = Plot.plot({width: Math.min(width, 520), height: 260, x: {label: "x₁ along the underside of the top flange (mm)"}, y: {label: "von Mises stress (MPa)", zero: true}, marks: [
+  const p = Plot.plot({width: Math.min(width, 520), height: 260, x: {label: "x₀ along the underside of the top flange (mm)"}, y: {label: "von Mises stress (MPa)", zero: true}, marks: [
     Plot.line(data, {x: "x", y: "vm", stroke: "#c0392b", strokeWidth: 2}), Plot.ruleX([tw / 2], {stroke: "#999", strokeDasharray: "4,3"})]});
   return html`<div style="font-size:0.93rem; line-height:1.55">The von Mises stress along the underside of the top flange, from the face of the web (dashed line) to the flange tip${avg ? ", averaged at the nodes" : ", element by element"}.
     Refine the mesh and watch the value at the corner: it keeps rising, because the exact stress there is infinite, while the stress a little way along the flange settles down.
@@ -789,15 +800,19 @@ viewof gpSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Ga
 :::
 
 ::: {.callout-note collapse="true"}
-## Hughes' notation and the code
+## The notation and the code
 
-| Hughes | The code ([python/elast2d.py](python/elast2d.py) and [elast2d.js](elast2d.js)) | |
+The arrays on this page are numbered from 0, with $-1$ for a prescribed component, as in the class notes.
+The solver behind the explorer numbers its equations from 1 and marks a prescribed component with 0, and its JavaScript version also numbers the nodes and elements from 1, as Hughes does.
+In the table, each index is numbered as on this page, and the last column says what the code stores there.
+
+| This page | The code ([python/elast2d.py](python/elast2d.py) and [elast2d.js](elast2d.js)) | |
 |---|---|---|
 | $n_{sd} = n_{ed} = 2$ | two directions, two unknowns per node | |
-| $\mathrm{ID}(i, A)$ | `ID[i-1][A-1]` (JavaScript), `ID[i-1, A]` (Python, 0-based nodes) | 0 marks a prescribed component |
-| $\mathrm{IEN}(a, e)$ | `IEN[e-1][a-1]` | the same local order as the heat code |
-| $\mathrm{LM}(i, a, e)$, or $\mathrm{LM}(p, e)$ with $p = 2(a-1)+i$ | `LM[e-1][2*(a-1) + i-1]` | |
+| $\mathrm{ID}(i, A)$ | `ID[i][A]` (JavaScript), `ID[i, A]` (Python) | holds $\mathrm{ID}(i, A) + 1$, so a prescribed component is 0 |
+| $\mathrm{IEN}(a, e)$ | `IEN[e][a]` (JavaScript), `IEN[e, a]` (Python) | holds $\mathrm{IEN}(a, e) + 1$ in JavaScript and $\mathrm{IEN}(a, e)$ in Python, with the local nodes in the stride order of Class 11, not the counterclockwise order of the heat code |
+| $\mathrm{LM}(\hat{p}, e)$, with $\hat{p} = 2a + i$ | `LM[e][p]` (JavaScript), `LM[e, p]` (Python) | holds $\mathrm{LM}(\hat{p}, e) + 1$, so a prescribed component is 0 |
 | $\mathbf{B}_a$, $\mathbf{D}$ | `bmatrix`, `dmatrix` | engineering shear strain in the third row |
 | $\mathbf{k}^e$, $\mathbf{f}^e$ | `elementArrays`, `sideIntegral` (`element_arrays`, `side_load` in Python) | |
-| $\Gamma_{g_i}$, $\Gamma_{h_i}$ | `dirichlet = {side: {i-1: g}}`, `traction = {side: [h1, h2]}` | a side can be in $\Gamma_{g_1}$ and $\Gamma_{h_2}$ at once |
+| $\Gamma_{g_i}$, $\Gamma_{h_i}$ | `dirichlet = {side: {i: g}}`, `traction = {side: [h0, h1]}` | in `dirichlet`, the key is the degree of freedom, 0 or 1; a side can be in $\Gamma_{g_0}$ and $\Gamma_{h_1}$ at once |
 :::

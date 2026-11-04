@@ -176,14 +176,14 @@ For us, we want bases of piecewise polynomials — use the **Lagrange polynomial
 
 ::: {.derivation}
 $$
-y \approx b\,\ell_1(x) + (m+b)\,\ell_2(x)
+y \approx b\,\ell_0(x) + (m+b)\,\ell_1(x)
 \qquad \text{(polynomial degree 1)}
 $$
 
 $$
-\ell_1(x) = \frac{x - 1}{0 - 1}
+\ell_0(x) = \frac{x - 1}{0 - 1}
 \qquad\qquad
-\ell_2(x) = \frac{x - 0}{1 - 0}
+\ell_1(x) = \frac{x - 0}{1 - 0}
 $$
 :::
 
@@ -194,11 +194,11 @@ $$
 fig, ax = plt.subplots(figsize=(4.6, 3.2))
 xs = np.linspace(0, 1, 200)
 nodes = [0.0, 1.0]
-for a, lab, c in zip(range(2), [r"$\ell_1$", r"$\ell_2$"], BASISCLRS):
+for a, lab, c in zip(range(2), [r"$\ell_0$", r"$\ell_1$"], BASISCLRS):
     ax.plot(xs, lagrange_basis(nodes, a, xs), color=c, lw=2.2, label=lab)
 ax.plot([0, 1], [0, 0], color=INK, lw=0.8)
-ax.text(0.02, 1.06, r"$\ell_1$", color=BASISCLRS[0], fontsize=13)
-ax.text(0.95, 1.06, r"$\ell_2$", color=BASISCLRS[1], fontsize=13)
+ax.text(0.02, 1.06, r"$\ell_0$", color=BASISCLRS[0], fontsize=13)
+ax.text(0.95, 1.06, r"$\ell_1$", color=BASISCLRS[1], fontsize=13)
 ax.set_xlim(-0.05, 1.05); ax.set_ylim(-0.15, 1.2)
 ax.set_xticks([0, 1]); ax.set_yticks([0, 1])
 ax.spines[["top", "right"]].set_visible(False)
@@ -213,17 +213,17 @@ For a quadratic, $y = \alpha x^2 + \beta x + \gamma$ on domain $[-1, 1]$:
 
 ::: {.derivation}
 $$
-y(x) \approx (\alpha - \beta + \gamma)\,\ell_1(x) + \gamma\,\ell_2(x)
-             + (\alpha + \beta + \gamma)\,\ell_3(x)
+y(x) \approx (\alpha - \beta + \gamma)\,\ell_0(x) + \gamma\,\ell_1(x)
+             + (\alpha + \beta + \gamma)\,\ell_2(x)
 \qquad \text{(polynomial degree 2)}
 $$
 
 $$
-\ell_1(x) = \frac{(x-0)(x-1)}{(-1-0)(-1-1)}
+\ell_0(x) = \frac{(x-0)(x-1)}{(-1-0)(-1-1)}
 \qquad
-\ell_2(x) = \frac{(x-(-1))(x-1)}{(0-(-1))(0-1)}
+\ell_1(x) = \frac{(x-(-1))(x-1)}{(0-(-1))(0-1)}
 \qquad
-\ell_3(x) = \frac{(x-(-1))(x-0)}{(1-(-1))(1-0)}
+\ell_2(x) = \frac{(x-(-1))(x-0)}{(1-(-1))(1-0)}
 $$
 :::
 
@@ -234,13 +234,13 @@ $$
 fig, ax = plt.subplots(figsize=(4.6, 3.2))
 xs = np.linspace(-1, 1, 200)
 nodes3 = [-1.0, 0.0, 1.0]
-labels = [r"$\ell_1$", r"$\ell_2$", r"$\ell_3$"]
+labels = [r"$\ell_0$", r"$\ell_1$", r"$\ell_2$"]
 for a, lab, c in zip(range(3), labels, BASISCLRS):
     ax.plot(xs, lagrange_basis(nodes3, a, xs), color=c, lw=2.2)
 ax.plot([-1, 1], [0, 0], color=INK, lw=0.8)
-ax.text(-0.97, 1.06, r"$\ell_1$", color=BASISCLRS[0], fontsize=13)
-ax.text(-0.05, 1.06, r"$\ell_2$", color=BASISCLRS[1], fontsize=13)
-ax.text(0.92, 1.06, r"$\ell_3$", color=BASISCLRS[2], fontsize=13)
+ax.text(-0.97, 1.06, r"$\ell_0$", color=BASISCLRS[0], fontsize=13)
+ax.text(-0.05, 1.06, r"$\ell_1$", color=BASISCLRS[1], fontsize=13)
+ax.text(0.92, 1.06, r"$\ell_2$", color=BASISCLRS[2], fontsize=13)
 ax.set_xlim(-1.1, 1.1); ax.set_ylim(-0.4, 1.2)
 ax.set_xticks([-1, 0, 1]); ax.set_yticks([0, 1])
 ax.spines[["top", "right"]].set_visible(False)

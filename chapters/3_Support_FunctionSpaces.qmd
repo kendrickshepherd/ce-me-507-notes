@@ -37,9 +37,9 @@ For a finite list of numbers, the norm is the familiar one:
 
 ::: {.derivation}
 $$
-\|\underline{u}\| = \sqrt{u_1^2 + u_2^2 + \cdots + u_n^2}
+\|\underline{u}\| = \sqrt{u_0^2 + u_1^2 + \cdots + u_{n-1}^2}
 \qquad\qquad
-\|\underline{u}\|^2 = \sum_{i=1}^{n} u_i^2
+\|\underline{u}\|^2 = \sum_{i=0}^{n-1} u_i^2
 $$
 :::
 
@@ -49,7 +49,7 @@ piece of the domain it stands for:
 
 ::: {.derivation}
 $$
-\|\underline{u}\|^2 = \sum_{i=1}^{n} u_i^2 \, w_i
+\|\underline{u}\|^2 = \sum_{i=0}^{n-1} u_i^2 \, w_i
 \qquad \xrightarrow[\;n \to \infty\;]{} \qquad
 \int_0^L u^2 \, dx
 $$

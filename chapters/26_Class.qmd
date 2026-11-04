@@ -125,8 +125,8 @@ def tick(t):
 
 fig, axes = plt.subplots(1, 2, figsize=(10.0, 4.0))
 for ax, (t0, t1), i, (gx, gy), (hx, hy) in (
-        (axes[0], (0.25 * np.pi, 0.95 * np.pi), 1, (-0.55, 1.28), (1.25, -1.05)),
-        (axes[1], (1.15 * np.pi, 1.75 * np.pi), 2, (-0.2, -1.38), (1.45, 0.95))):
+        (axes[0], (0.25 * np.pi, 0.95 * np.pi), 0, (-0.55, 1.28), (1.25, -1.05)),
+        (axes[1], (1.15 * np.pi, 1.75 * np.pi), 1, (-0.2, -1.38), (1.45, 0.95))):
     ax.fill(X, Y, color=DOMCLR, zorder=0)
     ax.plot(X, Y, color=FLUXCLR, lw=3, zorder=1)
     ax.plot(*arc(t0, t1), color=BDRYCLR, lw=4, solid_capstyle="butt", zorder=2)
@@ -147,7 +147,7 @@ fig_bcs_path = save(fig, "C26_Fig1_BoundaryParts.png")
 
 In the Poisson Equation, the boundary was divided once, into $\Gamma_g$ and $\Gamma_h$.
 In elasticity, each component of the displacement has its own boundary condition, so the boundary is divided once for each direction.
-For each $i = 1, \dots, n_{sd}$ (number of spatial dimensions),
+For each $i = 0, \dots, n_{sd}-1$, where $n_{sd}$ is the number of spatial dimensions,
 
 $$
 \Gamma = \overline{\Gamma_{g_i}\cup\Gamma_{h_i}},
@@ -162,8 +162,8 @@ As in @fig-c26-bcs, the division can be different for each direction.
 
 A roller support is a common example.
 A roller on a horizontal surface prevents a point from moving vertically, but allows it to slide horizontally without resistance.
-At such a point, $u_2$ is prescribed, so the point belongs to $\Gamma_{g_2}$, and the horizontal traction is zero, $h_1 = 0$, so the same point belongs to $\Gamma_{h_1}$.
-A free surface carries no load in either direction, so it belongs to both $\Gamma_{h_1}$ and $\Gamma_{h_2}$, with $h_1 = h_2 = 0$.
+At such a point, $u_1$ is prescribed, so the point belongs to $\Gamma_{g_1}$, and the horizontal traction is zero, $h_0 = 0$, so the same point belongs to $\Gamma_{h_0}$.
+A free surface carries no load in either direction, so it belongs to both $\Gamma_{h_0}$ and $\Gamma_{h_1}$, with $h_0 = h_1 = 0$.
 
 ## The strong form
 
@@ -192,8 +192,8 @@ The differential equation $\sigma_{ij,j} + f_i = 0$ is a balance of the forces o
 The widget below shows this balance for two stress fields that satisfy it exactly.
 The first is the exact solution for a steel cantilever, described in the appendix [Linear Elasticity I](Elasticity2D.qmd#a-problem-with-an-exact-solution-the-end-loaded-cantilever).
 The cantilever is $L$ = 400 mm long, $D$ = 100 mm deep, and $t$ = 10 mm thick, and it has a downward load $P$ = 8 kN at its free end.
-With $x_1$ measured from the support and $x_2$ from the mid-depth, its stresses are $\sigma_{11} = P(L - x_1)\,x_2/I$, $\sigma_{12} = -P\left(D^2/4 - x_2^2\right)/(2I)$, and $\sigma_{22} = 0$, where $I = t D^3/12$, and it has no body force, $f_1 = f_2 = 0$.
-The second is a concrete column, 1 m wide, 1 m deep, and 4 m tall, under its own weight, so that the body force is $f_2 = -\rho g$, with $\rho g \approx$ 23.5 kN/m³.
+With $x_0$ measured from the support and $x_1$ from the mid-depth, its stresses are $\sigma_{00} = P(L - x_0)\,x_1/I$, $\sigma_{01} = -P\left(D^2/4 - x_1^2\right)/(2I)$, and $\sigma_{11} = 0$, where $I = t D^3/12$, and it has no body force, $f_0 = f_1 = 0$.
+The second is a concrete column, 1 m wide, 1 m deep, and 4 m tall, under its own weight, so that the body force is $f_1 = -\rho g$, with $\rho g \approx$ 23.5 kN/m³.
 Drag the box to any point of the body, and change its size with the slider.
 The enlarged view shows the average traction on each face of the box, and the table lists the force on each face, which is the average traction multiplied by the area of the face.
 
@@ -286,17 +286,17 @@ function num(v, d){
   return s+m.toFixed(2)+'×10'+sup(e);
 }
 
-// the two stress fields, in N, mm, and MPa; x2 is measured from the mid-depth of the cantilever, and up from the base of the column
+// the two stress fields, in N, mm, and MPa; x1 is measured from the mid-depth of the cantilever, and up from the base of the column
 var P=8000, Lc=400, Dc=100, tc=10, Ic=tc*Dc*Dc*Dc/12;
 var rg=2.35e-5, Hc=4000, Bc=1000, Tc=1000;
 var MODES={
   cant:{x0:0,x1:Lc,y0:-Dc/2,y1:Dc/2,t:tc,hmax:60,c:[200,25],
         sig:function(x,y){ return [P*(Lc-x)*y/Ic, 0, -P/(2*Ic)*(Dc*Dc/4-y*y)]; }, f:[0,0],
-        shade:function(x,y){ return P*(Lc-x)*y/Ic; }, smax:P*Lc*(Dc/2)/Ic, shadeName:'σ₁₁',
+        shade:function(x,y){ return P*(Lc-x)*y/Ic; }, smax:P*Lc*(Dc/2)/Ic, shadeName:'σ₀₀',
         divmax:P*(Dc/2)/Ic, nx:40, ny:10},
   col:{x0:0,x1:Bc,y0:0,y1:Hc,t:Tc,hmax:900,c:[500,1500],
        sig:function(x,y){ return [0, -rg*(Hc-y), 0]; }, f:[0,-rg],
-       shade:function(x,y){ return -rg*(Hc-y); }, smax:rg*Hc, shadeName:'σ₂₂',
+       shade:function(x,y){ return -rg*(Hc-y); }, smax:rg*Hc, shadeName:'σ₁₁',
        divmax:rg, nx:5, ny:20}
 };
 var mode='cant', M=MODES[mode], hfrac=0.65, c=M.c.slice();
@@ -345,13 +345,13 @@ function drawBody(){
     for(var k=0;k<7;k++){ var yy=Y(M.y1)-6+k*((Y(M.y0)-Y(M.y1)+12)/6); sb.appendChild(el('line',{x1:X(0),y1:yy,x2:X(0)-8,y2:yy+7,stroke:'#1e3a5f','stroke-width':1})); }
     arrow(sb, X(Lc)+12, Y(0)-28, X(Lc)+12, Y(0)+28, '#c0392b', 2.2);
     sb.appendChild(T(X(Lc)+4, Y(0)+46, 'P = 8 kN', {f:'#c0392b', fs:12.5, a:'end'}));
-    sb.appendChild(T(220, 22, 'the cantilever, with P = 8 kN at its free end, shaded by σ₁₁', {a:'middle', fs:12.5, f:INK}));
+    sb.appendChild(T(220, 22, 'the cantilever, with P = 8 kN at its free end, shaded by σ₀₀', {a:'middle', fs:12.5, f:INK}));
   } else {
     sb.appendChild(el('line',{x1:X(0)-14,y1:Y(0),x2:X(Bc)+14,y2:Y(0),stroke:'#1e3a5f','stroke-width':4}));
     for(var k=0;k<8;k++){ var xx=X(0)-10+k*((X(Bc)-X(0)+20)/7); sb.appendChild(el('line',{x1:xx,y1:Y(0),x2:xx-7,y2:Y(0)+8,stroke:'#1e3a5f','stroke-width':1})); }
     arrow(sb, X(Bc)+60, Y(Hc*0.7), X(Bc)+60, Y(Hc*0.7)+40, CF, 2.2);
     sb.appendChild(T(X(Bc)+66, Y(Hc*0.7)+28, 'ρg = 23.5 kN/m³', {f:CF, fs:12.5}));
-    sb.appendChild(T(220, 22, 'the column, carrying its own weight, shaded by σ₂₂', {a:'middle', fs:12.5, f:INK}));
+    sb.appendChild(T(220, 22, 'the column, carrying its own weight, shaded by σ₁₁', {a:'middle', fs:12.5, f:INK}));
   }
   var h=hsize();
   sb.appendChild(el('rect',{x:X(c[0]-h/2),y:Y(c[1]+h/2),width:Math.max(3,h*view.s),height:Math.max(3,h*view.s),
@@ -429,20 +429,20 @@ function drawTable(F){
   var bigF=Math.max.apply(null, rows.map(function(r){ return Math.max(Math.abs(r[1][0]),Math.abs(r[1][1])); }));
   var clean=function(v){ return Math.abs(v)<1e-9*Math.max(bigF,1e-30)?0:v; };
   var cell=function(Fi, a){ return sig(Fi/a)+' × '+amt(a)+' = '+big(Fi); };
-  var html='<table><tr><th>force on the box</th><th>direction x₁</th><th>direction x₂</th></tr>'
+  var html='<table><tr><th>force on the box</th><th>direction x₀</th><th>direction x₁</th></tr>'
     +'<tr><th></th><th>traction × area = force</th><th>traction × area = force</th></tr>';
   rows.slice(0, 4).forEach(function(r){ html+='<tr><td>'+r[0]+'</td><td>'+cell(r[1][0], A)+'</td><td>'+cell(r[1][1], A)+'</td></tr>'; });
   html+='<tr><td>body force</td><td>'+cell(F.body[0], V)+'</td><td>'+cell(F.body[1], V)+'</td></tr>';
   html+='<tr class="sum"><td>sum</td><td>'+big(clean(s[0]))+'</td><td>'+big(clean(s[1]))+'</td></tr></table>';
-  html+='<div class="scale">Tractions in MPa, areas in mm², and forces in N. Signs in this table refer to the axes: a negative traction or force points in the −x₁ or −x₂ direction. With h = '+big(h)+' mm and t = '+amt(M.t)+' mm, each face has area h × t = '+amt(A)+' mm², and the box has volume h × h × t = '+amt(V)+' mm³; the body force row is f (N/mm³) × volume. '
+  html+='<div class="scale">Tractions in MPa, areas in mm², and forces in N. Signs in this table refer to the axes: a negative traction or force points in the −x₀ or −x₁ direction. With h = '+big(h)+' mm and t = '+amt(M.t)+' mm, each face has area h × t = '+amt(A)+' mm², and the box has volume h × h × t = '+amt(V)+' mm³; the body force row is f (N/mm³) × volume. '
     +'Each face force grows in proportion to h. The difference between the forces on opposite faces, and the body force, grow in proportion to h², like the volume.</div>';
   tab.innerHTML=html;
 }
 var eqs=document.getElementById('c26eqs'), chart=document.getElementById('c26chart');
 function terms(F){
   return [
-    ['direction 1:  σ₁₁,₁ + σ₁₂,₂ + f₁ = 0', [['σ₁₁,₁','(F<sub>left</sub> + F<sub>right</sub>) / <span style="white-space:nowrap">(h × h × t)</span>',[F.left[0],F.right[0]],C11],['σ₁₂,₂','(F<sub>bottom</sub> + F<sub>top</sub>) / <span style="white-space:nowrap">(h × h × t)</span>',[F.bottom[0],F.top[0]],C12],['f₁','(body force) / <span style="white-space:nowrap">(h × h × t)</span>',[F.body[0]],CF]]],
-    ['direction 2:  σ₂₁,₁ + σ₂₂,₂ + f₂ = 0', [['σ₂₁,₁','(F<sub>left</sub> + F<sub>right</sub>) / <span style="white-space:nowrap">(h × h × t)</span>',[F.left[1],F.right[1]],C12],['σ₂₂,₂','(F<sub>bottom</sub> + F<sub>top</sub>) / <span style="white-space:nowrap">(h × h × t)</span>',[F.bottom[1],F.top[1]],C22],['f₂','(body force) / <span style="white-space:nowrap">(h × h × t)</span>',[F.body[1]],CF]]]
+    ['direction 0:  σ₀₀,₀ + σ₀₁,₁ + f₀ = 0', [['σ₀₀,₀','(F<sub>left</sub> + F<sub>right</sub>) / <span style="white-space:nowrap">(h × h × t)</span>',[F.left[0],F.right[0]],C11],['σ₀₁,₁','(F<sub>bottom</sub> + F<sub>top</sub>) / <span style="white-space:nowrap">(h × h × t)</span>',[F.bottom[0],F.top[0]],C12],['f₀','(body force) / <span style="white-space:nowrap">(h × h × t)</span>',[F.body[0]],CF]]],
+    ['direction 1:  σ₁₀,₀ + σ₁₁,₁ + f₁ = 0', [['σ₁₀,₀','(F<sub>left</sub> + F<sub>right</sub>) / <span style="white-space:nowrap">(h × h × t)</span>',[F.left[1],F.right[1]],C12],['σ₁₁,₁','(F<sub>bottom</sub> + F<sub>top</sub>) / <span style="white-space:nowrap">(h × h × t)</span>',[F.bottom[1],F.top[1]],C22],['f₁','(body force) / <span style="white-space:nowrap">(h × h × t)</span>',[F.body[1]],CF]]]
   ];
 }
 function value(r, V){ var tot=r[2].reduce(function(a, b){ return a+b; }, 0); return Math.abs(tot)<1e-9*M.divmax*V ? 0 : tot/V; }
@@ -506,14 +506,14 @@ layoutBody(); clampCenter(); render();
 ```
 :::
 
-In the cantilever, the bending stress $\sigma_{11}$ changes along the beam, so the forces on the left and right faces of the box do not balance.
-Above the middle of the beam, where $\sigma_{11}$ is tension, the left face pulls harder than the right face, because it is closer to the support.
-The shear stress $\sigma_{12}$ changes through the depth, and the shear forces on the top and bottom faces supply exactly the difference.
-For this solution, $\sigma_{11,1} = -P\,x_2/I$ and $\sigma_{12,2} = P\,x_2/I$, which cancel at every point, although neither is zero on its own.
+In the cantilever, the bending stress $\sigma_{00}$ changes along the beam, so the forces on the left and right faces of the box do not balance.
+Above the middle of the beam, where $\sigma_{00}$ is tension, the left face pulls harder than the right face, because it is closer to the support.
+The shear stress $\sigma_{01}$ changes through the depth, and the shear forces on the top and bottom faces supply exactly the difference.
+For this solution, $\sigma_{00,0} = -P\,x_1/I$ and $\sigma_{01,1} = P\,x_1/I$, which cancel at every point, although neither is zero on its own.
 
 The column shows a different balance, because its body force is not zero.
 There, the forces on the faces of the box balance the weight of the box.
-The compression $\sigma_{22}$ increases toward the base, so the bottom face of the box pushes up harder than the top face pushes down, and the difference carries the weight of the box: $\sigma_{22,2} = \rho g = -f_2$.
+The compression $\sigma_{11}$ increases toward the base, so the bottom face of the box pushes up harder than the top face pushes down, and the difference carries the weight of the box: $\sigma_{11,1} = \rho g = -f_1$.
 
 As the box shrinks, the forces on its faces shrink in proportion to $h$, and the differences between opposite faces shrink in proportion to $h^2$, so only the differences divided by the volume remain finite.
 These are the derivatives in $\sigma_{ij,j}$.
@@ -548,7 +548,7 @@ $$
 = 2\mu\,\varepsilon_{ij} + \lambda\,\varepsilon_{kk}\,\delta_{ij} ,
 $$
 
-where $\varepsilon_{kk} = \varepsilon_{11} + \varepsilon_{22} + \varepsilon_{33}$ is the change in volume per unit volume.
+where $\varepsilon_{kk} = \varepsilon_{00} + \varepsilon_{11} + \varepsilon_{22}$ is the change in volume per unit volume.
 
 ## The weak form: the principle of virtual work
 
@@ -575,7 +575,7 @@ $$
 (\mathrm{W})\qquad
 \begin{aligned}
 &\text{Given } f_i,\; g_i,\; h_i, \text{ and } c_{ijkl} \text{ as before, find } u_i\in\mathcal{S}_i \text{ such that for all } w_i\in\mathcal{V}_i, \\[2pt]
-&\qquad \int_\Omega w_{(i,j)}\,\sigma_{ij}\;d\Omega = \int_\Omega w_i\,f_i\;d\Omega + \sum_{i=1}^{n_{sd}}\left(\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma\right) .
+&\qquad \int_\Omega w_{(i,j)}\,\sigma_{ij}\;d\Omega = \int_\Omega w_i\,f_i\;d\Omega + \sum_{i=0}^{n_{sd}-1}\left(\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma\right) .
 \end{aligned}
 $$
 
@@ -597,7 +597,7 @@ Therefore,
 
 ::: {.derivation}
 $$
--\int_\Omega w_{i,j}\,\sigma_{ij}\;d\Omega + \sum_{i=1}^{n_{sd}}\int_\Gamma w_i\,\sigma_{ij}\,n_j\;d\Gamma + \int_\Omega w_i\,f_i\;d\Omega = 0 .
+-\int_\Omega w_{i,j}\,\sigma_{ij}\;d\Omega + \sum_{i=0}^{n_{sd}-1}\int_\Gamma w_i\,\sigma_{ij}\,n_j\;d\Gamma + \int_\Omega w_i\,f_i\;d\Omega = 0 .
 $$
 :::
 
@@ -608,9 +608,9 @@ So, for each direction, the boundary integral only remains nonzero over $\Gamma_
 
 ::: {.derivation}
 $$
-\sum_{i=1}^{n_{sd}}\int_\Gamma w_i\,\sigma_{ij}\,n_j\;d\Gamma
-= \sum_{i=1}^{n_{sd}}\int_{\Gamma_{h_i}} w_i\,\sigma_{ij}\,n_j\;d\Gamma
-= \sum_{i=1}^{n_{sd}}\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma .
+\sum_{i=0}^{n_{sd}-1}\int_\Gamma w_i\,\sigma_{ij}\,n_j\;d\Gamma
+= \sum_{i=0}^{n_{sd}-1}\int_{\Gamma_{h_i}} w_i\,\sigma_{ij}\,n_j\;d\Gamma
+= \sum_{i=0}^{n_{sd}-1}\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma .
 $$
 :::
 
@@ -651,7 +651,7 @@ Combining the steps gives
 $$
 \boxed{\;
 \int_\Omega \underbrace{w_{(i,j)}}_{\substack{\text{virtual}\\ \text{strain}}}\;\underbrace{\sigma_{ij}}_{\substack{\text{real}\\ \text{stress}}}\;d\Omega
-= \int_\Omega w_i\,f_i\;d\Omega + \sum_{i=1}^{n_{sd}}\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma
+= \int_\Omega w_i\,f_i\;d\Omega + \sum_{i=0}^{n_{sd}-1}\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma
 \;}
 $$
 :::

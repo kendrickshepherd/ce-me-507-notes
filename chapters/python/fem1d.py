@@ -290,7 +290,7 @@ def fig_basis(verts, bc, name, xlabel="$x$"):
             ax.plot(xi, N[a], color=c, lw=2.0)
             xa = parent_nodes(p)[a]
             ax.plot([xa], [1.0], "o", color=c, ms=5)
-            ax.text(xa, 1.08, "$N_{%d}$" % (a + 1), color=c, ha="center",
+            ax.text(xa, 1.08, "$N_{%d}$" % a, color=c, ha="center",
                     va="bottom", fontsize=11)
         ax.axhline(0, color=DIMCLR, lw=0.7)
         ax.plot(parent_nodes(p), 0 * parent_nodes(p), "|", color=REFCLR,
@@ -316,7 +316,7 @@ def fig_basis(verts, bc, name, xlabel="$x$"):
                         ls="--" if A in gset else "-")
         for A, xv in enumerate(sol_nodes, start=1):
             c = BASISCLRS[(A - 1) % len(BASISCLRS)]
-            ax.text(xv, 1.08, "$N_{%d}$" % A, color=c, ha="center",
+            ax.text(xv, 1.08, "$N_{%d}$" % (A - 1), color=c, ha="center",
                     va="bottom", fontsize=9.5 if nnp < 9 else 8)
             ax.plot([xv], [0], "o", ms=5, color=INK if A in gset else "white",
                     mec=INK, zorder=5)
@@ -346,7 +346,7 @@ def fig_assembly(bc, name, nel=4):
             c = BASISCLRS[e % len(BASISCLRS)]
             ax.add_patch(Rectangle((A0, A0), p + 1, p + 1, facecolor=c,
                                    alpha=0.28, edgecolor=c, lw=1.6, zorder=2))
-            ax.text(A0 + (p + 1) / 2, A0 + (p + 1) / 2, "$k^{%d}$" % (e + 1),
+            ax.text(A0 + (p + 1) / 2, A0 + (p + 1) / 2, "$k^{%d}$" % e,
                     ha="center", va="center", fontsize=11 if p > 1 else 9.5,
                     color=c, zorder=6,
                     bbox=dict(fc="white", ec="none", alpha=0.8, pad=0.5))
@@ -366,7 +366,7 @@ def fig_assembly(bc, name, nel=4):
         ax.set_ylim(nnp + 0.3, -1.2)
         step = 1 if nnp <= 9 else 2
         for A in range(1, nnp + 1, step):
-            ax.text(A - 0.5, -0.35, str(A), ha="center", va="bottom",
+            ax.text(A - 0.5, -0.35, str(A - 1), ha="center", va="bottom",
                     fontsize=8, color=DIMCLR)
         ax.set_title("$p = %d$: %d nodes, %d equations" % (p, nnp, nnp - len(gset)),
                      fontsize=11)
@@ -386,7 +386,7 @@ def fig_parent_map(name, verts=(0.10, 0.22), p=2, xunit="m"):
     ax.plot([-1, 1], [1.2, 1.2], color=REFCLR, lw=2.6)
     for a, xa in enumerate(parent_nodes(p)):
         ax.plot([xa], [1.2], "o", color=REFCLR, ms=7, zorder=5)
-        ax.text(xa, 1.38, r"$\xi_{%d} = %g$" % (a + 1, xa), ha="center",
+        ax.text(xa, 1.38, r"$\xi_{%d} = %g$" % (a, xa), ha="center",
                 va="bottom", fontsize=10.5, color=REFCLR)
     for gq in gx:
         ax.plot([gq], [1.2], "x", color=LOADCLR, ms=8, mew=2, zorder=6)
@@ -399,7 +399,7 @@ def fig_parent_map(name, verts=(0.10, 0.22), p=2, xunit="m"):
         xa = X0 + (X1 - X0) * a / p
         ax.plot([xa], [0], "o", color=INK, ms=7, zorder=5)
         xv = x1 + (x2 - x1) * a / p
-        ax.text(xa, -0.2, "$x^e_{%d}$ = %g %s" % (a + 1, round(xv, 4), xunit),
+        ax.text(xa, -0.2, "$x^e_{%d}$ = %g %s" % (a, round(xv, 4), xunit),
                 ha="center", va="top", fontsize=10.5)
     for gq in gx:
         xa = X0 + (X1 - X0) * (gq + 1) / 2

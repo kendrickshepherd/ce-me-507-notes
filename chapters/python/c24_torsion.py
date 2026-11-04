@@ -323,7 +323,7 @@ def fig_warping(wm, lift=45.0, stub=150.0):
     ax.set_aspect("equal")
     ax.axis("off")
     ax.set_title(r"(a) The warping function $\omega$", fontsize=11, loc="left")
-    # (b) plan view from above: x_3 to the right, x_1 up, x_2 out of the page
+    # (b) plan view from above: x_2 to the right, x_0 up, x_1 out of the page
     bx = fig.add_subplot(gs[1])
     s = lift / vmax
     x1 = np.linspace(-bf / 2, bf / 2, 41)
@@ -342,17 +342,17 @@ def fig_warping(wm, lift=45.0, stub=150.0):
     bx.text(bot[0] + 6, x1[0] + 2, "bottom flange\n(below)", fontsize=10.5, color="0.4", ha="left", va="bottom")
     bx.text(-6, -bf / 2 - 6, "plane end\nof the beam", fontsize=9.5, color="0.4", ha="center", va="top")
     o = np.array([-128.0, -bf / 2 + 12])
-    for v, lab in (((32, 0), "$x_3$"), ((0, 32), "$x_1$")):
+    for v, lab in (((32, 0), "$x_2$"), ((0, 32), "$x_0$")):
         e = o + np.array(v)
         bx.annotate("", xy=e, xytext=o, arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.1, shrinkA=0, shrinkB=0))
         bx.text(*(o + 1.4 * np.array(v)), lab, fontsize=11, ha="center", va="center")
     bx.add_patch(Circle(o, 5.0, facecolor="white", edgecolor=INK, lw=1.0, zorder=5))
     bx.add_patch(Circle(o, 1.6, color=INK, zorder=6))
-    bx.text(o[0] - 7, o[1] - 7, "$x_2$", fontsize=11, ha="right", va="top")
+    bx.text(o[0] - 7, o[1] - 7, "$x_1$", fontsize=11, ha="right", va="top")
     bx.set_xlim(-155, stub + 10)
     bx.set_ylim(-bf / 2 - 34, bf / 2 + 14)
     bx.set_aspect("equal")
     bx.axis("off")
-    bx.set_title(r"(b) Plan view of the end of the beam, $u_3 = \theta\,\omega$ (exaggerated)", fontsize=11, loc="left")
+    bx.set_title(r"(b) Plan view of the end of the beam, $u_2 = \theta\,\omega$ (exaggerated)", fontsize=11, loc="left")
     fig.tight_layout(w_pad=1.5)
     return fig

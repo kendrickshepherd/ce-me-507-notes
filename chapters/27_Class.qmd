@@ -40,13 +40,13 @@ from matplotlib.patches import Rectangle, FancyArrowPatch
 from notes_style import INK
 
 # which entry of D each of the 16 coefficients becomes; rows w_{1,1}, w_{2,2}, w_{1,2}, w_{2,1}, columns u likewise
-pairs = ["11", "22", "12", "21"]
-voigt = {"11": 1, "22": 2, "12": 3, "21": 3}
-dcol = {(1, 1): "#1f6feb", (2, 2): "#0d9488", (3, 3): "#c0392b",
-        (1, 2): "#7c3aed", (1, 3): "#e67e22", (2, 3): "#8a5a20"}
+pairs = ["00", "11", "01", "10"]
+voigt = {"00": 0, "11": 1, "01": 2, "10": 2}
+dcol = {(0, 0): "#1f6feb", (1, 1): "#0d9488", (2, 2): "#c0392b",
+        (0, 1): "#7c3aed", (0, 2): "#e67e22", (1, 2): "#8a5a20"}
 dkey = lambda I, J: (min(I, J), max(I, J))
-wlab = [r"$w_{1,1}$", r"$w_{2,2}$", r"$w_{1,2}$", r"$w_{2,1}$"]
-ulab = [r"$u_{1,1}$", r"$u_{2,2}$", r"$u_{1,2}$", r"$u_{2,1}$"]
+wlab = [r"$w_{0,0}$", r"$w_{1,1}$", r"$w_{0,1}$", r"$w_{1,0}$"]
+ulab = [r"$u_{0,0}$", r"$u_{1,1}$", r"$u_{0,1}$", r"$u_{1,0}$"]
 
 fig, (ax, bx) = plt.subplots(1, 2, figsize=(10.6, 4.6), gridspec_kw=dict(width_ratios=[1.25, 1]))
 # (a) the 16 terms of the tensor form
@@ -70,11 +70,11 @@ ax.set_aspect("equal")
 ax.axis("off")
 ax.set_title("(a) The 16 terms of $w_{i,j}\\,c_{ijkl}\\,u_{k,l}$", fontsize=11.5, loc="left")
 # (b) the 3 x 3 matrix of the Voigt form
-vw = [r"$w_{1,1}$", r"$w_{2,2}$", r"$w_{1,2}+w_{2,1}$"]
-vu = [r"$u_{1,1}$", r"$u_{2,2}$", r"$u_{1,2}+u_{2,1}$"]
+vw = [r"$w_{0,0}$", r"$w_{1,1}$", r"$w_{0,1}+w_{1,0}$"]
+vu = [r"$u_{0,0}$", r"$u_{1,1}$", r"$u_{0,1}+u_{1,0}$"]
 for r in range(3):
     for col in range(3):
-        I, J = r + 1, col + 1
+        I, J = r, col
         y = 2 - r
         bx.add_patch(Rectangle((col, y), 1, 1, fc=dcol[dkey(I, J)], alpha=0.30, ec="0.55", lw=0.8))
         bx.text(col + 0.5, y + 0.5, r"$D_{%d%d}$" % (I, J), ha="center", va="center", fontsize=13, color=INK)
@@ -95,7 +95,7 @@ In [Class 26](26_Class.qmd), we found the weak form of linear elasticity, which 
 
 $$
 \int_\Omega w_{(i,j)}\,\sigma_{ij}\;d\Omega
-= \int_\Omega w_i\,f_i\;d\Omega + \sum_{i=1}^{n_{sd}}\left(\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma\right) .
+= \int_\Omega w_i\,f_i\;d\Omega + \sum_{i=0}^{n_{sd}-1}\left(\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma\right) .
 $$
 
 As in Class 26, $w_i$ is the virtual displacement, which some texts write as $\hat{u}_i$, $\delta u_i$, or $\bar{u}_i$.
@@ -107,7 +107,7 @@ The stress is related to the displacement by Hooke's law, $\sigma_{ij} = c_{ijkl
 $$
 \underbrace{\int_\Omega w_{(i,j)}\,c_{ijkl}\,u_{(k,l)}\;d\Omega}_{a(\underline{w},\,\underline{u})}
 = \underbrace{\int_\Omega w_i\,f_i\;d\Omega}_{(\underline{w},\,\underline{f})}
-+ \underbrace{\sum_{i=1}^{n_{sd}}\left(\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma\right)}_{(\underline{w},\,\underline{h})_\Gamma} .
++ \underbrace{\sum_{i=0}^{n_{sd}-1}\left(\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma\right)}_{(\underline{w},\,\underline{h})_\Gamma} .
 $$
 
 This has the same structure as the weak form of the Poisson Equation, $a(w,u) = (w,f) + (w,h)_\Gamma$.
@@ -126,29 +126,29 @@ Define the **strain vector** of the displacement, and the corresponding **virtua
 
 $$
 \underline{\epsilon}(\underline{u}) =
-\begin{bmatrix} u_{1,1} \\ u_{2,2} \\ u_{1,2} + u_{2,1} \end{bmatrix}
+\begin{bmatrix} u_{0,0} \\ u_{1,1} \\ u_{0,1} + u_{1,0} \end{bmatrix}
 =: \underline{\epsilon},
 \qquad
 \underline{\epsilon}(\underline{w}) =
-\begin{bmatrix} w_{1,1} \\ w_{2,2} \\ w_{1,2} + w_{2,1} \end{bmatrix}
+\begin{bmatrix} w_{0,0} \\ w_{1,1} \\ w_{0,1} + w_{1,0} \end{bmatrix}
 =: \hat{\underline{\epsilon}} .
 $$
 
-The first two entries are the normal strains $\varepsilon_{11}$ and $\varepsilon_{22}$.
-The third entry is $u_{1,2} + u_{2,1} = 2\,\varepsilon_{12}$, which is called the **engineering shear strain**, $\gamma_{12}$.
-It is the total change in the angle between two fibers that were originally along the $x_1$ and $x_2$ directions.
+The first two entries are the normal strains $\varepsilon_{00}$ and $\varepsilon_{11}$.
+The third entry is $u_{0,1} + u_{1,0} = 2\,\varepsilon_{01}$, which is called the **engineering shear strain**, $\gamma_{01}$.
+It is the total change in the angle between two fibers that were originally along the $x_0$ and $x_1$ directions.
 The reason that the third entry is the sum rather than the average will become clear below.
 This vector holds only the in-plane strains.
-The strains that involve the third direction, $\varepsilon_{13}$, $\varepsilon_{23}$, and $\varepsilon_{33}$, are treated in the sections on plane strain and plane stress.
+The strains that involve the third direction, $\varepsilon_{02}$, $\varepsilon_{12}$, and $\varepsilon_{22}$, are treated in the sections on plane strain and plane stress.
 
 Define the **elasticity matrix** by
 
 $$
 \underline{\underline{D}} =
 \begin{bmatrix}
-D_{11} & D_{12} & D_{13} \\
-D_{21} & D_{22} & D_{23} \\
-D_{31} & D_{32} & D_{33}
+D_{00} & D_{01} & D_{02} \\
+D_{10} & D_{11} & D_{12} \\
+D_{20} & D_{21} & D_{22}
 \end{bmatrix},
 \qquad
 D_{IJ} = D_{JI} .
@@ -158,15 +158,15 @@ Its entries are elastic coefficients, $D_{IJ} = c_{ijkl}$, where each capital in
 
 | $I$ (or $J$) | $i$ (or $k$) | $j$ (or $l$) |
 |:---:|:---:|:---:|
+| 0 | 0 | 0 |
 | 1 | 1 | 1 |
-| 2 | 2 | 2 |
-| 3 | 1 | 2 |
-| 3 | 2 | 1 |
+| 2 | 0 | 1 |
+| 2 | 1 | 0 |
 
-: The Voigt index map in two dimensions. Both index pairs 12 and 21 map to 3. {#tbl-c27-voigt}
+: The Voigt index map in two dimensions. Both index pairs 01 and 10 map to 2. {#tbl-c27-voigt}
 
-For example, $D_{12} = c_{1122}$ and $D_{13} = c_{1112}$.
-Since both $12$ and $21$ map to $3$, the entry $D_{13}$ could equally be written $c_{1121}$, and the minor symmetries guarantee that these are the same number.
+For example, $D_{01} = c_{0011}$ and $D_{02} = c_{0001}$.
+Since both $01$ and $10$ map to $2$, the entry $D_{02}$ could equally be written $c_{0010}$, and the minor symmetries guarantee that these are the same number.
 The major symmetry, $c_{ijkl} = c_{klij}$, gives $D_{IJ} = D_{JI}$.
 
 ## The weak form in Voigt notation
@@ -182,10 +182,10 @@ Writing out the sums over $i$, $j$, $k$, and $l$ then gives the 16 terms
 $$
 \begin{aligned}
 w_{(i,j)}\,c_{ijkl}\,u_{(k,l)}
-= \;& w_{1,1}\left(c_{1111}\,u_{1,1} + c_{1122}\,u_{2,2} + c_{1112}\,u_{1,2} + c_{1121}\,u_{2,1}\right) \\
-+ \;& w_{2,2}\left(c_{2211}\,u_{1,1} + c_{2222}\,u_{2,2} + c_{2212}\,u_{1,2} + c_{2221}\,u_{2,1}\right) \\
-+ \;& w_{1,2}\left(c_{1211}\,u_{1,1} + c_{1222}\,u_{2,2} + c_{1212}\,u_{1,2} + c_{1221}\,u_{2,1}\right) \\
-+ \;& w_{2,1}\left(c_{2111}\,u_{1,1} + c_{2122}\,u_{2,2} + c_{2112}\,u_{1,2} + c_{2121}\,u_{2,1}\right) .
+= \;& w_{0,0}\left(c_{0000}\,u_{0,0} + c_{0011}\,u_{1,1} + c_{0001}\,u_{0,1} + c_{0010}\,u_{1,0}\right) \\
++ \;& w_{1,1}\left(c_{1100}\,u_{0,0} + c_{1111}\,u_{1,1} + c_{1101}\,u_{0,1} + c_{1110}\,u_{1,0}\right) \\
++ \;& w_{0,1}\left(c_{0100}\,u_{0,0} + c_{0111}\,u_{1,1} + c_{0101}\,u_{0,1} + c_{0110}\,u_{1,0}\right) \\
++ \;& w_{1,0}\left(c_{1000}\,u_{0,0} + c_{1011}\,u_{1,1} + c_{1001}\,u_{0,1} + c_{1010}\,u_{1,0}\right) .
 \end{aligned}
 $$
 
@@ -195,16 +195,16 @@ $$
 \begin{aligned}
 \hat{\underline{\epsilon}}^T\,\underline{\underline{D}}\;\underline{\epsilon}
 &=
-\begin{bmatrix} w_{1,1} & w_{2,2} & w_{1,2} + w_{2,1} \end{bmatrix}
+\begin{bmatrix} w_{0,0} & w_{1,1} & w_{0,1} + w_{1,0} \end{bmatrix}
 \begin{bmatrix}
-D_{11} & D_{12} & D_{13} \\
- & D_{22} & D_{23} \\
-\text{sym.} & & D_{33}
+D_{00} & D_{01} & D_{02} \\
+ & D_{11} & D_{12} \\
+\text{sym.} & & D_{22}
 \end{bmatrix}
-\begin{bmatrix} u_{1,1} \\ u_{2,2} \\ u_{1,2} + u_{2,1} \end{bmatrix} \\[4pt]
-&= \;w_{1,1}\left(D_{11}\,u_{1,1} + D_{12}\,u_{2,2} + D_{13}\left(u_{1,2} + u_{2,1}\right)\right) \\
-&\quad + w_{2,2}\left(D_{12}\,u_{1,1} + D_{22}\,u_{2,2} + D_{23}\left(u_{1,2} + u_{2,1}\right)\right) \\
-&\quad + \left(w_{1,2} + w_{2,1}\right)\left(D_{13}\,u_{1,1} + D_{23}\,u_{2,2} + D_{33}\left(u_{1,2} + u_{2,1}\right)\right) .
+\begin{bmatrix} u_{0,0} \\ u_{1,1} \\ u_{0,1} + u_{1,0} \end{bmatrix} \\[4pt]
+&= \;w_{0,0}\left(D_{00}\,u_{0,0} + D_{01}\,u_{1,1} + D_{02}\left(u_{0,1} + u_{1,0}\right)\right) \\
+&\quad + w_{1,1}\left(D_{01}\,u_{0,0} + D_{11}\,u_{1,1} + D_{12}\left(u_{0,1} + u_{1,0}\right)\right) \\
+&\quad + \left(w_{0,1} + w_{1,0}\right)\left(D_{02}\,u_{0,0} + D_{12}\,u_{1,1} + D_{22}\left(u_{0,1} + u_{1,0}\right)\right) .
 \end{aligned}
 $$
 
@@ -219,20 +219,20 @@ $$
 Each cell on the left is one of the 16 terms of the tensor form, and its color shows which entry of $\underline{\underline{D}}$ it becomes.
 The 16 coefficients take only six distinct values, which are the six independent entries of the symmetric matrix $\underline{\underline{D}}$.
 
-![(a) The coefficient in each of the 16 terms of the tensor form, with a row for each derivative of $\underline{w}$ and a column for each derivative of $\underline{u}$. (b) The elasticity matrix of the Voigt form. Cells of the same color hold the same number. The last two rows of (a) combine into the single last row of (b), because the virtual strain vector holds the sum $w_{1,2} + w_{2,1}$, and the last two columns combine in the same way. The four outlined shear terms in (a) become the single entry $D_{33}$ in (b).](`{python} fig_sixteen_path`){#fig-c27-sixteen width=95%}
+![(a) The coefficient in each of the 16 terms of the tensor form, with a row for each derivative of $\underline{w}$ and a column for each derivative of $\underline{u}$. (b) The elasticity matrix of the Voigt form. Cells of the same color hold the same number. The last two rows of (a) combine into the single last row of (b), because the virtual strain vector holds the sum $w_{0,1} + w_{1,0}$, and the last two columns combine in the same way. The four outlined shear terms in (a) become the single entry $D_{22}$ in (b).](`{python} fig_sixteen_path`){#fig-c27-sixteen width=95%}
 
-The shear terms show why the strain vector contains the sum $u_{1,2} + u_{2,1}$.
-In the tensor form there are four shear terms, one for each combination of $12$ and $21$, outlined in @fig-c27-sixteen a:
+The shear terms show why the strain vector contains the sum $u_{0,1} + u_{1,0}$.
+In the tensor form there are four shear terms, one for each combination of $01$ and $10$, outlined in @fig-c27-sixteen a:
 
 $$
 \begin{aligned}
-&w_{1,2}\,c_{1212}\,u_{1,2} + w_{1,2}\,c_{1221}\,u_{2,1} + w_{2,1}\,c_{2112}\,u_{1,2} + w_{2,1}\,c_{2121}\,u_{2,1} \\
-&\qquad = c_{1212}\left(w_{1,2} + w_{2,1}\right)\left(u_{1,2} + u_{2,1}\right) .
+&w_{0,1}\,c_{0101}\,u_{0,1} + w_{0,1}\,c_{0110}\,u_{1,0} + w_{1,0}\,c_{1001}\,u_{0,1} + w_{1,0}\,c_{1010}\,u_{1,0} \\
+&\qquad = c_{0101}\left(w_{0,1} + w_{1,0}\right)\left(u_{0,1} + u_{1,0}\right) .
 \end{aligned}
 $$
 
-The Voigt form has a single shear entry in each vector, so the single product $\left(w_{1,2} + w_{2,1}\right) D_{33}\left(u_{1,2} + u_{2,1}\right)$ must account for all four terms.
-This works with $D_{33} = c_{1212}$ only if each vector holds the full sum, $\gamma_{12} = 2\,\varepsilon_{12}$, rather than the tensor component $\varepsilon_{12}$.
+The Voigt form has a single shear entry in each vector, so the single product $\left(w_{0,1} + w_{1,0}\right) D_{22}\left(u_{0,1} + u_{1,0}\right)$ must account for all four terms.
+This works with $D_{22} = c_{0101}$ only if each vector holds the full sum, $\gamma_{01} = 2\,\varepsilon_{01}$, rather than the tensor component $\varepsilon_{01}$.
 
 The same matrix also gives the stress.
 The product $c_{ijkl}\,u_{(k,l)}$ is the stress $\sigma_{ij}$, and in Voigt notation it is
@@ -242,17 +242,17 @@ $$
 \qquad\text{or}\qquad
 \sigma_I = D_{IJ}\,\epsilon_J ,
 \qquad\text{where}\qquad
-\underline{\sigma} = \begin{bmatrix} \sigma_1 \\ \sigma_2 \\ \sigma_3 \end{bmatrix} = \begin{bmatrix} \sigma_{11} \\ \sigma_{22} \\ \sigma_{12} \end{bmatrix} .
+\underline{\sigma} = \begin{bmatrix} \sigma_0 \\ \sigma_1 \\ \sigma_2 \end{bmatrix} = \begin{bmatrix} \sigma_{00} \\ \sigma_{11} \\ \sigma_{01} \end{bmatrix} .
 $$
 
-Note that the stress vector holds the shear stress $\sigma_{12}$ itself, without a factor of 2.
+Note that the stress vector holds the shear stress $\sigma_{01}$ itself, without a factor of 2.
 The factor of 2 appears only in the strain vector.
 
 With these definitions, the weak form of [Class 26](26_Class.qmd) becomes
 
 $$
 \int_\Omega \underline{\epsilon}(\underline{w})^T\,\underline{\underline{D}}\;\underline{\epsilon}(\underline{u})\;d\Omega
-= \int_\Omega w_i\,f_i\;d\Omega + \sum_{i=1}^{n_{sd}}\left(\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma\right) .
+= \int_\Omega w_i\,f_i\;d\Omega + \sum_{i=0}^{n_{sd}-1}\left(\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma\right) .
 $$
 
 The same steps apply in three spatial dimensions, with six entries in each vector and a $6\times 6$ elasticity matrix.
@@ -265,27 +265,27 @@ $$
 c_{ijkl}(\underline{x}) = \mu(\underline{x})\left(\delta_{ik}\,\delta_{jl} + \delta_{il}\,\delta_{jk}\right) + \lambda(\underline{x})\,\delta_{ij}\,\delta_{kl} .
 $$
 
-The entries of $\underline{\underline{D}}$ then follow from @tbl-c27-voigt, using $\delta_{11} = \delta_{22} = 1$ and $\delta_{12} = \delta_{21} = 0$:
+The entries of $\underline{\underline{D}}$ then follow from @tbl-c27-voigt, using $\delta_{00} = \delta_{11} = 1$ and $\delta_{01} = \delta_{10} = 0$:
 
 ::: {.derivation}
 $$
 \begin{aligned}
+D_{00} &= c_{0000} = \mu\left(\delta_{00}\delta_{00} + \delta_{00}\delta_{00}\right) + \lambda\,\delta_{00}\delta_{00} = \lambda + 2\mu \\
+D_{01} &= c_{0011} = \mu\left(\delta_{01}\delta_{01} + \delta_{01}\delta_{01}\right) + \lambda\,\delta_{00}\delta_{11} = \lambda \\
+D_{02} &= c_{0001} = \mu\left(\delta_{00}\delta_{01} + \delta_{01}\delta_{00}\right) + \lambda\,\delta_{00}\delta_{01} = 0 \\
 D_{11} &= c_{1111} = \mu\left(\delta_{11}\delta_{11} + \delta_{11}\delta_{11}\right) + \lambda\,\delta_{11}\delta_{11} = \lambda + 2\mu \\
-D_{12} &= c_{1122} = \mu\left(\delta_{12}\delta_{12} + \delta_{12}\delta_{12}\right) + \lambda\,\delta_{11}\delta_{22} = \lambda \\
-D_{13} &= c_{1112} = \mu\left(\delta_{11}\delta_{12} + \delta_{12}\delta_{11}\right) + \lambda\,\delta_{11}\delta_{12} = 0 \\
-D_{22} &= c_{2222} = \mu\left(\delta_{22}\delta_{22} + \delta_{22}\delta_{22}\right) + \lambda\,\delta_{22}\delta_{22} = \lambda + 2\mu \\
-D_{23} &= c_{2212} = \mu\left(\delta_{21}\delta_{22} + \delta_{22}\delta_{21}\right) + \lambda\,\delta_{22}\delta_{12} = 0 \\
-D_{33} &= c_{1212} = \mu\left(\delta_{11}\delta_{22} + \delta_{12}\delta_{21}\right) + \lambda\,\delta_{12}\delta_{12} = \mu
+D_{12} &= c_{1101} = \mu\left(\delta_{10}\delta_{11} + \delta_{11}\delta_{10}\right) + \lambda\,\delta_{11}\delta_{01} = 0 \\
+D_{22} &= c_{0101} = \mu\left(\delta_{00}\delta_{11} + \delta_{01}\delta_{10}\right) + \lambda\,\delta_{01}\delta_{01} = \mu
 \end{aligned}
 $$
 :::
 
-The zeros in $D_{13}$ and $D_{23}$ state that, in an isotropic material, a normal strain produces no shear stress, and a shear strain produces no normal stress.
+The zeros in $D_{02}$ and $D_{12}$ state that, in an isotropic material, a normal strain produces no shear stress, and a shear strain produces no normal stress.
 
-In three dimensions, the vectors hold six entries, ordered $11$, $22$, $33$, $23$, $13$, $12$, and a homogeneous, isotropic material has
+In three dimensions, the vectors hold six entries, ordered $00$, $11$, $22$, $12$, $02$, $01$, and a homogeneous, isotropic material has
 
 $$
-\underbrace{\begin{bmatrix} \sigma_{11} \\ \sigma_{22} \\ \sigma_{33} \\ \sigma_{23} \\ \sigma_{13} \\ \sigma_{12} \end{bmatrix}}_{\underline{\sigma}}
+\underbrace{\begin{bmatrix} \sigma_{00} \\ \sigma_{11} \\ \sigma_{22} \\ \sigma_{12} \\ \sigma_{02} \\ \sigma_{01} \end{bmatrix}}_{\underline{\sigma}}
 =
 \underbrace{\begin{bmatrix}
 \lambda + 2\mu & \lambda & \lambda & 0 & 0 & 0 \\
@@ -295,19 +295,19 @@ $$
 0 & 0 & 0 & 0 & \mu & 0 \\
 0 & 0 & 0 & 0 & 0 & \mu
 \end{bmatrix}}_{\underline{\underline{D}}}
-\underbrace{\begin{bmatrix} u_{1,1} \\ u_{2,2} \\ u_{3,3} \\ u_{2,3} + u_{3,2} \\ u_{1,3} + u_{3,1} \\ u_{1,2} + u_{2,1} \end{bmatrix}}_{\underline{\epsilon}} .
+\underbrace{\begin{bmatrix} u_{0,0} \\ u_{1,1} \\ u_{2,2} \\ u_{1,2} + u_{2,1} \\ u_{0,2} + u_{2,0} \\ u_{0,1} + u_{1,0} \end{bmatrix}}_{\underline{\epsilon}} .
 $$
 
 Written out row by row, this is
 
 $$
 \begin{aligned}
-\sigma_{11} &= 2\mu\,\varepsilon_{11} + \lambda\left(\varepsilon_{11} + \varepsilon_{22} + \varepsilon_{33}\right), &
-\sigma_{23} &= \mu\left(u_{2,3} + u_{3,2}\right) = 2\mu\,\varepsilon_{23}, \\
-\sigma_{22} &= 2\mu\,\varepsilon_{22} + \lambda\left(\varepsilon_{11} + \varepsilon_{22} + \varepsilon_{33}\right), &
-\sigma_{13} &= \mu\left(u_{1,3} + u_{3,1}\right) = 2\mu\,\varepsilon_{13}, \\
-\sigma_{33} &= 2\mu\,\varepsilon_{33} + \lambda\left(\varepsilon_{11} + \varepsilon_{22} + \varepsilon_{33}\right), &
-\sigma_{12} &= \mu\left(u_{1,2} + u_{2,1}\right) = 2\mu\,\varepsilon_{12},
+\sigma_{00} &= 2\mu\,\varepsilon_{00} + \lambda\left(\varepsilon_{00} + \varepsilon_{11} + \varepsilon_{22}\right), &
+\sigma_{12} &= \mu\left(u_{1,2} + u_{2,1}\right) = 2\mu\,\varepsilon_{12}, \\
+\sigma_{11} &= 2\mu\,\varepsilon_{11} + \lambda\left(\varepsilon_{00} + \varepsilon_{11} + \varepsilon_{22}\right), &
+\sigma_{02} &= \mu\left(u_{0,2} + u_{2,0}\right) = 2\mu\,\varepsilon_{02}, \\
+\sigma_{22} &= 2\mu\,\varepsilon_{22} + \lambda\left(\varepsilon_{00} + \varepsilon_{11} + \varepsilon_{22}\right), &
+\sigma_{01} &= \mu\left(u_{0,1} + u_{1,0}\right) = 2\mu\,\varepsilon_{01},
 \end{aligned}
 $$
 
@@ -328,7 +328,7 @@ Wood is commonly idealized as orthotropic.
 Its three material directions are longitudinal ($L$, along the grain), radial ($R$, across the growth rings), and tangential ($T$, tangent to the growth rings), and it is often ten or more times stiffer along the grain than across it.
 Each direction has its own Young's modulus, $E_L$, $E_R$, and $E_T$, and each plane has its own shear modulus, $G_{RT}$, $G_{LT}$, and $G_{LR}$.
 The Poisson's ratio $\nu_{LR}$ is the ratio of the contraction in the $R$ direction to the extension in the $L$ direction under a stress in the $L$ direction, and the other ratios are defined in the same way.
-With $x_1$, $x_2$, and $x_3$ aligned with $L$, $R$, and $T$, the law is simplest to write with the inverse of $\underline{\underline{D}}$, which gives the strain produced by each stress:
+With $x_0$, $x_1$, and $x_2$ aligned with $L$, $R$, and $T$, the law is simplest to write with the inverse of $\underline{\underline{D}}$, which gives the strain produced by each stress:
 
 $$
 \underline{\epsilon}
@@ -344,14 +344,14 @@ $$
 \underline{\sigma} ,
 $$
 
-with $\underline{\sigma}$ and $\underline{\epsilon}$ ordered $11$, $22$, $33$, $23$, $13$, $12$ as above.
+with $\underline{\sigma}$ and $\underline{\epsilon}$ ordered $00$, $11$, $22$, $12$, $02$, $01$ as above.
 The symmetry of the matrix requires $\nu_{LR}/E_L = \nu_{RL}/E_R$, and likewise for the other two pairs, which leaves nine independent constants.
 Its inverse, $\underline{\underline{D}}$, has the same pattern of zeros as for an isotropic material: each normal stress depends on all three normal strains, now with unequal coefficients, and each shear stress depends only on its own shear strain.
 
 The radial and tangential directions follow the growth rings, so they turn from point to point around the center of the tree.
 The matrix above therefore holds in the local $L$, $R$, $T$ axes at each point.
 In a board cut far from the center, the rings are nearly flat, and one set of axes serves for the whole board, which is the usual idealization of lumber.
-Otherwise, $\underline{\underline{D}}$ must be rotated into the $x_1$, $x_2$, $x_3$ axes at each point, and it then varies over the body, just as a conductivity can.
+Otherwise, $\underline{\underline{D}}$ must be rotated into the $x_0$, $x_1$, $x_2$ axes at each point, and it then varies over the body, just as a conductivity can.
 
 In axes that are not aligned with the directions of the material, the zeros of $\underline{\underline{D}}$ fill in, so a normal strain produces a shear stress.
 The appendix [Linear Elasticity I](Elasticity2D.qmd#hookes-law-the-elasticity-tensor) shows the elasticity matrix of a fiber composite as its fibers are turned.
@@ -371,13 +371,13 @@ Plane strain describes a long object, such as a dam or the W-shape of @fig-c27-p
 The displacements in the cross-section do not depend on $z$, and nothing moves along the length:
 
 $$
-u_1(x,y,z) = u_1(x,y), \qquad u_2(x,y,z) = u_2(x,y), \qquad u_3(x,y,z) = 0 .
+u_0(x,y,z) = u_0(x,y), \qquad u_1(x,y,z) = u_1(x,y), \qquad u_2(x,y,z) = 0 .
 $$
 
 Therefore
 
 $$
-0 = \frac{\partial u_1}{\partial z} = \frac{\partial u_2}{\partial z} = \frac{\partial u_3}{\partial z} = \frac{\partial u_3}{\partial y} = \frac{\partial u_3}{\partial x}
+0 = \frac{\partial u_0}{\partial z} = \frac{\partial u_1}{\partial z} = \frac{\partial u_2}{\partial z} = \frac{\partial u_2}{\partial y} = \frac{\partial u_2}{\partial x}
 \qquad\Longrightarrow\qquad
 \varepsilon_{xz} = \varepsilon_{yz} = \varepsilon_{zz} = 0 .
 $$
@@ -386,25 +386,25 @@ Setting these strains to zero in the three-dimensional law gives
 
 $$
 \begin{aligned}
-\sigma_{11} &= 2\mu\,\varepsilon_{11} + \lambda\left(\varepsilon_{11} + \varepsilon_{22}\right), &
-\sigma_{33} &= \lambda\left(\varepsilon_{11} + \varepsilon_{22}\right), \\
-\sigma_{22} &= 2\mu\,\varepsilon_{22} + \lambda\left(\varepsilon_{11} + \varepsilon_{22}\right), &
-\sigma_{23} &= \sigma_{13} = 0, \\
-\sigma_{12} &= 2\mu\,\varepsilon_{12} ,
+\sigma_{00} &= 2\mu\,\varepsilon_{00} + \lambda\left(\varepsilon_{00} + \varepsilon_{11}\right), &
+\sigma_{22} &= \lambda\left(\varepsilon_{00} + \varepsilon_{11}\right), \\
+\sigma_{11} &= 2\mu\,\varepsilon_{11} + \lambda\left(\varepsilon_{00} + \varepsilon_{11}\right), &
+\sigma_{12} &= \sigma_{02} = 0, \\
+\sigma_{01} &= 2\mu\,\varepsilon_{01} ,
 \end{aligned}
 $$
 
 so that
 
 $$
-\begin{bmatrix} \sigma_{11} \\ \sigma_{22} \\ \sigma_{12} \end{bmatrix}
+\begin{bmatrix} \sigma_{00} \\ \sigma_{11} \\ \sigma_{01} \end{bmatrix}
 =
 \begin{bmatrix} \lambda + 2\mu & \lambda & 0 \\ \lambda & \lambda + 2\mu & 0 \\ 0 & 0 & \mu \end{bmatrix}
-\begin{bmatrix} u_{1,1} \\ u_{2,2} \\ u_{1,2} + u_{2,1} \end{bmatrix} .
+\begin{bmatrix} u_{0,0} \\ u_{1,1} \\ u_{0,1} + u_{1,0} \end{bmatrix} .
 $$
 
 This is the two-dimensional matrix found above for an isotropic material.
-Note that $\sigma_{33}$ is not zero: a stress along the length is needed to keep the body from stretching or shortening in that direction.
+Note that $\sigma_{22}$ is not zero: a stress along the length is needed to keep the body from stretching or shortening in that direction.
 It is not an unknown of the problem, and it is computed afterward from the in-plane strains.
 
 ### Plane stress
@@ -413,7 +413,7 @@ Plane stress describes a very slim object, such as the plate of @fig-c27-planes 
 Since the faces are free and the plate is thin, the stresses that act on planes parallel to the faces are taken to be zero throughout:
 
 $$
-u_1(x,y,z) = u_1(x,y), \qquad u_2(x,y,z) = u_2(x,y), \qquad \sigma_{33} = \sigma_{13} = \sigma_{23} = 0 .
+u_0(x,y,z) = u_0(x,y), \qquad u_1(x,y,z) = u_1(x,y), \qquad \sigma_{22} = \sigma_{02} = \sigma_{12} = 0 .
 $$
 
 Using the three-dimensional isotropic law,
@@ -421,52 +421,52 @@ Using the three-dimensional isotropic law,
 ::: {.derivation}
 $$
 \begin{aligned}
-\sigma_{23} &= 0 = 2\mu\,\varepsilon_{23} &&\Longrightarrow\quad \varepsilon_{23} = 0, \\
-\sigma_{13} &= 0 = 2\mu\,\varepsilon_{13} &&\Longrightarrow\quad \varepsilon_{13} = 0, \\
-\sigma_{33} &= 0 = 2\mu\,\varepsilon_{33} + \lambda\left(\varepsilon_{11} + \varepsilon_{22} + \varepsilon_{33}\right) &&\Longrightarrow\quad \varepsilon_{33} = -\frac{\lambda\left(\varepsilon_{11} + \varepsilon_{22}\right)}{\lambda + 2\mu} .
+\sigma_{12} &= 0 = 2\mu\,\varepsilon_{12} &&\Longrightarrow\quad \varepsilon_{12} = 0, \\
+\sigma_{02} &= 0 = 2\mu\,\varepsilon_{02} &&\Longrightarrow\quad \varepsilon_{02} = 0, \\
+\sigma_{22} &= 0 = 2\mu\,\varepsilon_{22} + \lambda\left(\varepsilon_{00} + \varepsilon_{11} + \varepsilon_{22}\right) &&\Longrightarrow\quad \varepsilon_{22} = -\frac{\lambda\left(\varepsilon_{00} + \varepsilon_{11}\right)}{\lambda + 2\mu} .
 \end{aligned}
 $$
 :::
 
-Unlike plane strain, $\varepsilon_{33}$ is not zero: the plate becomes thinner where it is stretched.
-Substituting $\varepsilon_{33}$ into the law for $\sigma_{11}$ gives
+Unlike plane strain, $\varepsilon_{22}$ is not zero: the plate becomes thinner where it is stretched.
+Substituting $\varepsilon_{22}$ into the law for $\sigma_{00}$ gives
 
 ::: {.derivation}
 $$
 \begin{aligned}
-\sigma_{11}
-&= 2\mu\,\varepsilon_{11} + \lambda\left(\varepsilon_{11} + \varepsilon_{22} - \frac{\lambda\left(\varepsilon_{11} + \varepsilon_{22}\right)}{\lambda + 2\mu}\right) \\
-&= 2\mu\,\varepsilon_{11} + \frac{2\lambda\mu}{\lambda + 2\mu}\left(\varepsilon_{11} + \varepsilon_{22}\right)
-=: 2\mu\,\varepsilon_{11} + \bar{\lambda}\left(\varepsilon_{11} + \varepsilon_{22}\right) ,
+\sigma_{00}
+&= 2\mu\,\varepsilon_{00} + \lambda\left(\varepsilon_{00} + \varepsilon_{11} - \frac{\lambda\left(\varepsilon_{00} + \varepsilon_{11}\right)}{\lambda + 2\mu}\right) \\
+&= 2\mu\,\varepsilon_{00} + \frac{2\lambda\mu}{\lambda + 2\mu}\left(\varepsilon_{00} + \varepsilon_{11}\right)
+=: 2\mu\,\varepsilon_{00} + \bar{\lambda}\left(\varepsilon_{00} + \varepsilon_{11}\right) ,
 \end{aligned}
 $$
 :::
 
 where $\bar{\lambda} = 2\lambda\mu/(\lambda + 2\mu)$.
-In the same way, $\sigma_{22} = 2\mu\,\varepsilon_{22} + \bar{\lambda}\left(\varepsilon_{11} + \varepsilon_{22}\right)$, and $\sigma_{12} = 2\mu\,\varepsilon_{12}$ as before, so that
+In the same way, $\sigma_{11} = 2\mu\,\varepsilon_{11} + \bar{\lambda}\left(\varepsilon_{00} + \varepsilon_{11}\right)$, and $\sigma_{01} = 2\mu\,\varepsilon_{01}$ as before, so that
 
 $$
-\begin{bmatrix} \sigma_{11} \\ \sigma_{22} \\ \sigma_{12} \end{bmatrix}
+\begin{bmatrix} \sigma_{00} \\ \sigma_{11} \\ \sigma_{01} \end{bmatrix}
 =
 \begin{bmatrix} \bar{\lambda} + 2\mu & \bar{\lambda} & 0 \\ \bar{\lambda} & \bar{\lambda} + 2\mu & 0 \\ 0 & 0 & \mu \end{bmatrix}
-\begin{bmatrix} u_{1,1} \\ u_{2,2} \\ u_{1,2} + u_{2,1} \end{bmatrix} .
+\begin{bmatrix} u_{0,0} \\ u_{1,1} \\ u_{0,1} + u_{1,0} \end{bmatrix} .
 $$
 
 The plane stress matrix has the same form as the plane strain matrix, with $\lambda$ replaced by $\bar{\lambda}$.
 In terms of Young's modulus and Poisson's ratio, $\bar{\lambda} + 2\mu = E/(1-\nu^2)$ and $\bar{\lambda} = \nu E/(1-\nu^2)$.
 
 For steel, with $E$ = 200 GPa and $\nu$ = 0.3, $\lambda$ = `{python} g(lam_st)` GPa, $\bar{\lambda}$ = `{python} g(lbar_st)` GPa, and $\mu$ = `{python} g(mu_st)` GPa.
-The first diagonal entry is then $D_{11}$ = `{python} g(lam_st + 2 * mu_st)` GPa in plane strain, and `{python} g(lbar_st + 2 * mu_st)` GPa in plane stress.
+The first diagonal entry is then $D_{00}$ = `{python} g(lam_st + 2 * mu_st)` GPa in plane strain, and `{python} g(lbar_st + 2 * mu_st)` GPa in plane stress.
 Plane strain is the stiffer of the two, because the material cannot expand or contract along the length of the body.
 
 ## Summary
 
-- In Voigt notation, the strain and the virtual strain are stored as vectors, $\underline{\epsilon} = \left(u_{1,1},\, u_{2,2},\, u_{1,2} + u_{2,1}\right)$ in two dimensions, and the elastic coefficients are stored in a symmetric matrix $\underline{\underline{D}}$, with $D_{IJ} = c_{ijkl}$ through the index map of @tbl-c27-voigt.
+- In Voigt notation, the strain and the virtual strain are stored as vectors, $\underline{\epsilon} = \left(u_{0,0},\, u_{1,1},\, u_{0,1} + u_{1,0}\right)$ in two dimensions, and the elastic coefficients are stored in a symmetric matrix $\underline{\underline{D}}$, with $D_{IJ} = c_{ijkl}$ through the index map of @tbl-c27-voigt.
 - The integrand of the weak form becomes $w_{(i,j)}\,c_{ijkl}\,u_{(k,l)} = \hat{\underline{\epsilon}}^T\,\underline{\underline{D}}\;\underline{\epsilon}$, and the stress becomes $\underline{\sigma} = \underline{\underline{D}}\;\underline{\epsilon}$.
-- The shear entry of the strain vector is the engineering shear strain $\gamma_{12} = u_{1,2} + u_{2,1} = 2\,\varepsilon_{12}$, so that one product in the Voigt form accounts for all four shear terms of the tensor form; the stress vector holds $\sigma_{12}$ without a factor of 2.
+- The shear entry of the strain vector is the engineering shear strain $\gamma_{01} = u_{0,1} + u_{1,0} = 2\,\varepsilon_{01}$, so that one product in the Voigt form accounts for all four shear terms of the tensor form; the stress vector holds $\sigma_{01}$ without a factor of 2.
 - For an isotropic material, the diagonal entries are $\lambda + 2\mu$ for the normal strains and $\mu$ for the shear strains, and normal and shear components are not coupled.
 - Positive definiteness requires $E > 0$ and $-1 < \nu < \tfrac{1}{2}$; anisotropic materials have more independent entries in $\underline{\underline{D}}$, and can couple normal and shear components.
   An orthotropic material such as wood has nine, and in its material axes $\underline{\underline{D}}$ has the same pattern of zeros as for an isotropic material.
-- Plane strain assumes that nothing varies or moves along the length of a long body, so $\varepsilon_{33} = 0$ and $\sigma_{33} = \lambda\left(\varepsilon_{11} + \varepsilon_{22}\right)$.
-- Plane stress assumes that a thin body carries no stress on planes parallel to its faces, so $\sigma_{33} = 0$, the plate thins, and the elasticity matrix uses $\bar{\lambda} = 2\lambda\mu/(\lambda + 2\mu)$ in place of $\lambda$.
+- Plane strain assumes that nothing varies or moves along the length of a long body, so $\varepsilon_{22} = 0$ and $\sigma_{22} = \lambda\left(\varepsilon_{00} + \varepsilon_{11}\right)$.
+- Plane stress assumes that a thin body carries no stress on planes parallel to its faces, so $\sigma_{22} = 0$, the plate thins, and the elasticity matrix uses $\bar{\lambda} = 2\lambda\mu/(\lambda + 2\mu)$ in place of $\lambda$.
 - The appendix [Linear Elasticity I](Elasticity2D.qmd) has an interactive view of the elasticity matrix and of the forces on a small block, and [Linear Elasticity II](Elasticity2D_FEM.qmd) uses $\underline{\underline{D}}$ to build the element stiffness matrix.

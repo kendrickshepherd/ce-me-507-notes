@@ -115,7 +115,7 @@ def draw_nodes(ax, mesh, gd, labels=True, fs=8.5, ms=5.5, z=6, lab_off=(0.0025, 
         ax.plot([x], [y], "o", ms=ms, mfc=BDRYCLR if dirn else "white",
                 mec=INK, mew=0.9, zorder=z)
         if labels:
-            ax.text(x + lab_off[0], y + lab_off[1], str(A), fontsize=fs,
+            ax.text(x + lab_off[0], y + lab_off[1], str(A - 1), fontsize=fs,
                     ha="left", va="bottom", zorder=z + 1,
                     color=BDRYCLR if dirn else INK)
 
@@ -166,9 +166,9 @@ The running example is the side-cooled cell:
 
 | Where | Condition | |
 |---|---|---|
-| in $\Omega = \,]0, W[\, \times \,]0, H[$ | $-\kappa\left(u_{,11} + u_{,22}\right) = f$ | $f$ = 25,000 W/m³, $\kappa$ = 25 W/(m·K) |
-| $x_1 = 0$ ($\Gamma_g$) | $u = g$ | $g$ = 25 °C, the cooling plate |
-| top, on the tabs | $\kappa\,u_{,2} = h$ | $h$ = 5000 W/m² on $x_1 \in [0.015, 0.035]$ and $[0.065, 0.085]$ m |
+| in $\Omega = \,]0, W[\, \times \,]0, H[$ | $-\kappa\left(u_{,00} + u_{,11}\right) = f$ | $f$ = 25,000 W/m³, $\kappa$ = 25 W/(m·K) |
+| $x_0 = 0$ ($\Gamma_g$) | $u = g$ | $g$ = 25 °C, the cooling plate |
+| top, on the tabs | $\kappa\,u_{,1} = h$ | $h$ = 5000 W/m² on $x_0 \in [0.015, 0.035]$ and $[0.065, 0.085]$ m |
 | rest of $\Gamma_h$ | $\kappa\,\nabla u\cdot\underline{n} = 0$ | insulated |
 
 $W$ = 0.10 m and $H$ = 0.20 m. At the bottom of the page, an explorer lets you choose the
@@ -221,8 +221,8 @@ for k, (Z, title, zl, glev) in enumerate((
     ax.set_xticks([0, 0.05, 0.1])
     ax.set_yticks([0, 0.1, 0.2])
     ax.tick_params(labelsize=8, pad=0)
-    ax.set_xlabel("$x_1$ (m)", fontsize=9.5, labelpad=0)
-    ax.set_ylabel("$x_2$ (m)", fontsize=9.5, labelpad=2)
+    ax.set_xlabel("$x_0$ (m)", fontsize=9.5, labelpad=0)
+    ax.set_ylabel("$x_1$ (m)", fontsize=9.5, labelpad=2)
     ax.zaxis.set_rotate_label(False)
     ax.set_zlabel(zl, fontsize=9.5, labelpad=0, rotation=90)
     ax.set_title(title, fontsize=11.5, pad=0)
@@ -375,7 +375,7 @@ $$
 - **The insulated edges are free.** They carry a boundary condition, $h = 0$, but it costs
   nothing: the natural condition is satisfied, in the weak sense, simply by not adding a
   term. For the cell, $(w, h)_\Gamma$ is an integral over the two tabs only.
-- **Only first derivatives.** The strong form needed $u_{,11} + u_{,22}$ at every point,
+- **Only first derivatives.** The strong form needed $u_{,00} + u_{,11}$ at every point,
   which failed at the tab ends. The weak form needs only $\nabla u$ to be
   square-integrable, and the log-singular gradient there is.
 :::
@@ -389,14 +389,14 @@ list of numbers.
 
 ### Nodes, elements, and a mesh of the cell
 
-Cut the cell into $n_{el}$ quadrilateral **elements**, $n_1$ across and $n_2$ up. On each
+Cut the cell into $n_{el}$ quadrilateral **elements**, $n_0$ across and $n_1$ up. On each
 element, place a grid of $(p + 1) \times (p + 1)$ **nodes**: its four corners when
 $p = 1$, and also its mid-sides and centre when $p = 2$. Neighbouring elements share the
 nodes on their common edge, so the mesh has
 
 ::: {.derivation}
 $$
-n_{np} = \left(p\,n_1 + 1\right)\left(p\,n_2 + 1\right) \quad \text{nodes},
+n_{np} = \left(p\,n_0 + 1\right)\left(p\,n_1 + 1\right) \quad \text{nodes},
 \qquad
 n_{en} = (p + 1)^2 \quad \text{nodes per element}
 $$
@@ -438,7 +438,7 @@ fig.tight_layout(w_pad=1.2)
 fig_mesh_path = save(fig, "H2F_Fig3_Mesh.png")
 ```
 
-![Meshes of the cell. Node numbers $A$ run along $x_1$ first, row by row, and element
+![Meshes of the cell. Node numbers $A$ run along $x_0$ first, row by row, and element
 numbers $e$ the same way. Filled nodes lie on $\Gamma_g$, the cooled edge, where the
 temperature is known; the open nodes carry the unknowns. (c) Moving the interior nodes
 changes the shape of every element, and with nine nodes per element even the edges
@@ -590,7 +590,7 @@ All four come from one construction: build a few standard functions on a single
 ### The parent square and the tensor product
 
 The parent element is the square $\hat\Omega = [-1, 1]^2$, with coordinates
-$(\xi, \eta)$, also written $\xi_1 = \xi$ and $\xi_2 = \eta$. Its shape functions are
+$(\xi, \eta)$, also written $\xi_0 = \xi$ and $\xi_1 = \eta$. Its shape functions are
 **products of the 1D Lagrange functions** from [1D Poisson II](Poisson1D_Heat_FEM.qmd),
 one factor for each direction:
 
@@ -606,7 +606,7 @@ For $p = 1$, the 1D functions are $\tfrac12(1 - \xi)$ and $\tfrac12(1 + \xi)$, a
 four products are the **bilinear** functions. Local nodes are numbered counter-clockwise
 from the lower-left corner, as in [Class 10](10_Class.qmd):
 
-| $a$ | 1 | 2 | 3 | 4 |
+| $a$ | 0 | 1 | 2 | 3 |
 |---|---|---|---|---|
 | $(\xi_a, \eta_a)$ | $(-1, -1)$ | $(1, -1)$ | $(1, 1)$ | $(-1, 1)$ |
 | $N_a(\xi, \eta)$ | $\tfrac14(1 - \xi)(1 - \eta)$ | $\tfrac14(1 + \xi)(1 - \eta)$ | $\tfrac14(1 + \xi)(1 + \eta)$ | $\tfrac14(1 - \xi)(1 + \eta)$ |
@@ -638,7 +638,7 @@ for a in range(4):
     for b, (xb, yb) in enumerate(nd4):
         ax.scatter([xb], [yb], [1.0 if b == a else 0.0], color=INK if b == a else "white",
                    edgecolor=INK, s=26, depthshade=False, zorder=5)
-        ax.text(xb * 1.18, yb * 1.18, -0.08, str(b + 1), fontsize=9,
+        ax.text(xb * 1.18, yb * 1.18, -0.08, str(b), fontsize=9,
                 ha="center", va="center", color=DIMCLR, zorder=6)
     ax.set_zlim(0, 1.05)
     ax.set_xlim(-1.25, 1.25)
@@ -653,7 +653,7 @@ for a in range(4):
     ax.set_ylabel(r"$\eta$", fontsize=10, labelpad=-4)
     xi_f = ["\\frac{1}{2}(1-\\xi)", "\\frac{1}{2}(1+\\xi)"][i]
     et_f = ["\\frac{1}{2}(1-\\eta)", "\\frac{1}{2}(1+\\eta)"][j]
-    ax.set_title("$N_%d = %s\\cdot %s$" % (a + 1, xi_f, et_f), fontsize=10.5,
+    ax.set_title("$N_%d = %s\\cdot %s$" % (a, xi_f, et_f), fontsize=10.5,
                  pad=-2)
 fig.subplots_adjust(left=0.0, right=1.0, bottom=0.02, top=0.9, wspace=0.02)
 fig_q4_path = save(fig, "H2F_Fig5_Q4.png")
@@ -666,14 +666,14 @@ or $\eta$ = const the function is a straight line, but the surface itself is twi
 flat.](`{python} fig_q4_path`){#fig-h2f-q4 width=100%}
 
 ::: {.step .notes}
-- **Bilinear is not linear.** $N_3 = \tfrac14(1 + \xi + \eta + \xi\eta)$ contains the
+- **Bilinear is not linear.** $N_2 = \tfrac14(1 + \xi + \eta + \xi\eta)$ contains the
   product $\xi\eta$. Along any grid line it is linear, but along a diagonal it is
   quadratic, and the surface is a gently twisted saddle rather than a plane.
-- **Partition of unity.** At every point, $N_1 + N_2 + N_3 + N_4 = 1$. A uniform
+- **Partition of unity.** At every point, $N_0 + N_1 + N_2 + N_3 = 1$. A uniform
   temperature is represented exactly, which is why every row of $\mathbf{k}^e$ will sum
   to zero.
-- **Edges see only their own nodes.** On the edge $\eta = -1$, $N_3 = N_4 = 0$, and $N_1$
-  and $N_2$ reduce to the 1D functions $\tfrac12(1 \mp \xi)$. That single fact makes
+- **Edges see only their own nodes.** On the edge $\eta = -1$, $N_2 = N_3 = 0$, and $N_0$
+  and $N_1$ reduce to the 1D functions $\tfrac12(1 \mp \xi)$. That single fact makes
   $u^h$ continuous between elements, as shown below.
 - The gradient in the parent coordinates is
   $\nabla_\xi N_a = \left(N_{a,\xi},\; N_{a,\eta}\right) =
@@ -703,9 +703,9 @@ for v in (-1, 0, 1):
 for b, (xb, yb) in enumerate(nd9):
     ax.plot([xb], [yb], "o", ms=8, color=REFCLR if b < 4 else (HOTCLR if b < 8 else LOADCLR))
     i, j = F2.LOCAL_IJ[2][b]
-    ax.text(xb + 0.1, yb + 0.1, "%d" % (b + 1), fontsize=12, ha="left",
+    ax.text(xb + 0.1, yb + 0.1, "%d" % b, fontsize=12, ha="left",
             va="bottom", color=INK)
-    ax.text(xb + 0.1, yb - 0.1, "$(%d,%d)$" % (i + 1, j + 1), fontsize=8.5,
+    ax.text(xb + 0.1, yb - 0.1, "$(%d,%d)$" % (i, j), fontsize=8.5,
             ha="left", va="top", color=DIMCLR)
 ax.text(0, -1.45, "$a$ and $(i, j)$: $N_a = N_i(\\xi)\\,N_j(\\eta)$",
         ha="center", va="top", fontsize=10)
@@ -713,9 +713,9 @@ ax.set_title("Q9 local numbering", fontsize=11)
 tidy(ax)
 ax.set_xlim(-1.35, 1.75)
 ax.set_ylim(-1.75, 1.4)
-for k, (a, title) in enumerate(((0, "corner, $N_1 = \\frac{1}{4}\\,\\xi(\\xi-1)\\,\\eta(\\eta-1)$"),
-                                (4, "mid-side, $N_5 = \\frac{1}{2}\\,(1-\\xi^2)\\,\\eta(\\eta-1)$"),
-                                (8, "centre, $N_9 = (1-\\xi^2)(1-\\eta^2)$"))):
+for k, (a, title) in enumerate(((0, "corner, $N_0 = \\frac{1}{4}\\,\\xi(\\xi-1)\\,\\eta(\\eta-1)$"),
+                                (4, "mid-side, $N_4 = \\frac{1}{2}\\,(1-\\xi^2)\\,\\eta(\\eta-1)$"),
+                                (8, "centre, $N_8 = (1-\\xi^2)(1-\\eta^2)$"))):
     ax = fig.add_subplot(1, 4, k + 2, projection="3d")
     ax.computed_zorder = False
     Z = N9[a].reshape(XI.shape)
@@ -751,7 +751,7 @@ boundary of the element.](`{python} fig_q9_path`){#fig-h2f-q9 width=100%}
   quadratics.
 - Q9 reproduces every polynomial of degree 2 in $\xi$ and $\eta$ (and a few of degree 3
   and 4), so on a mesh of rectangles it represents the tab-free solution of the cell,
-  a quadratic in $x_1$, exactly.
+  a quadratic in $x_0$, exactly.
 - Dropping the centre node gives the 8-node *serendipity* element, which is not a tensor
   product. The tensor-product family used here extends to any degree $p$ with
   $(p + 1)^2$ nodes.
@@ -839,8 +839,8 @@ three kinds, according to where the node sits in its elements.](`{python} fig_gl
   side each one is the same 1D Lagrange function of position along the edge. So $u^h$
   takes the same values from both sides: it is continuous, with a crease (a jump in
   slope) allowed across the edge. That is exactly what $H^1$ needs.
-- **Why $\mathbf{K}$ is sparse.** The tent of node 8 overlaps only the tents of its eight
-  neighbours. So row 8 of $\mathbf{K}$ has at most nine non-zeros, however large the
+- **Why $\mathbf{K}$ is sparse.** The tent of node 7 overlaps only the tents of its eight
+  neighbours. So row 7 of $\mathbf{K}$ has at most nine non-zeros, however large the
   mesh. A Q9 corner-type node overlaps 25 functions; a centre node overlaps only the nine
   of its element.
 :::
@@ -894,8 +894,8 @@ for k, (sol, title) in enumerate(((sol8, "$u^h$: Q4, $2 \\times 4$ elements,\n10
     ax.set_yticks([0, 0.1, 0.2])
     ax.set_zticks([25, 30, 35])
     ax.tick_params(labelsize=7.5, pad=0)
-    ax.set_xlabel("$x_1$ (m)", fontsize=9, labelpad=0)
-    ax.set_ylabel("$x_2$ (m)", fontsize=9, labelpad=1)
+    ax.set_xlabel("$x_0$ (m)", fontsize=9, labelpad=0)
+    ax.set_ylabel("$x_1$ (m)", fontsize=9, labelpad=1)
     ax.set_title(title, fontsize=11, pad=-2)
 fig.subplots_adjust(left=0.0, right=1.0, bottom=0.02, top=0.9, wspace=0.02)
 fig_build_path = save(fig, "H2F_Fig8_Build.png")
@@ -917,9 +917,9 @@ temperatures are.
 
 ::: {.derivation}
 $$
-\underline{x}(\xi, \eta) = \sum_{a=1}^{n_{en}} N_a(\xi, \eta)\;\underline{x}^e_a
+\underline{x}(\xi, \eta) = \sum_{a=0}^{n_{en}-1} N_a(\xi, \eta)\;\underline{x}^e_a
 \quad\Longleftrightarrow\quad
-x_i(\xi, \eta) = \sum_{a=1}^{n_{en}} N_a(\xi, \eta)\;x^e_{ia}
+x_i(\xi, \eta) = \sum_{a=0}^{n_{en}-1} N_a(\xi, \eta)\;x^e_{ia}
 $$
 :::
 
@@ -1037,12 +1037,12 @@ $$
 \begin{aligned}
 DF = \frac{\partial \underline{x}}{\partial \underline{\xi}}
 &= \begin{bmatrix}
-\dfrac{\partial x_1}{\partial \xi} & \dfrac{\partial x_1}{\partial \eta} \\[8pt]
-\dfrac{\partial x_2}{\partial \xi} & \dfrac{\partial x_2}{\partial \eta}
+\dfrac{\partial x_0}{\partial \xi} & \dfrac{\partial x_0}{\partial \eta} \\[8pt]
+\dfrac{\partial x_1}{\partial \xi} & \dfrac{\partial x_1}{\partial \eta}
 \end{bmatrix}
-= \sum_{a=1}^{n_{en}} \underline{x}^e_a \left(\nabla_\xi N_a\right)^T \\[4pt]
+= \sum_{a=0}^{n_{en}-1} \underline{x}^e_a \left(\nabla_\xi N_a\right)^T \\[4pt]
 \Longleftrightarrow\quad
-\frac{\partial x_i}{\partial \xi_j} &= \sum_{a=1}^{n_{en}} x^e_{ia}\,\frac{\partial N_a}{\partial \xi_j},
+\frac{\partial x_i}{\partial \xi_j} &= \sum_{a=0}^{n_{en}-1} x^e_{ia}\,\frac{\partial N_a}{\partial \xi_j},
 \qquad\qquad
 J = \det DF
 \end{aligned}
@@ -1050,15 +1050,15 @@ $$
 :::
 
 ::: {.step .notes}
-- **The columns of $DF$ are tangent vectors.** Column 1, $\partial\underline{x}/\partial\xi$,
-  points along the image of a $\xi$ grid line, and column 2 along the image of an $\eta$
+- **The columns of $DF$ are tangent vectors.** Column 0, $\partial\underline{x}/\partial\xi$,
+  points along the image of a $\xi$ grid line, and column 1 along the image of an $\eta$
   grid line (@fig-h2f-map).
 - **$J$ is the area stretch.** The tiny square $d\xi\,d\eta$ becomes a parallelogram
   spanned by the two columns, with area $J\,d\xi\,d\eta$. So
   $d\Omega = J\,d\xi\,d\eta$, and every element integral can be done on the parent square:
   $\int_{\Omega^e} (\cdot)\,d\Omega = \int_{-1}^{1}\!\int_{-1}^{1} (\cdot)\,J\,d\xi\,d\eta$.
-- **For an axis-aligned $h_1 \times h_2$ rectangle** the map is a pure stretch:
-  $DF = \mathrm{diag}\!\left(h_1/2,\; h_2/2\right)$ and $J = h_1 h_2 / 4$, one quarter of
+- **For an axis-aligned $h_0 \times h_1$ rectangle** the map is a pure stretch:
+  $DF = \mathrm{diag}\!\left(h_0/2,\; h_1/2\right)$ and $J = h_0 h_1 / 4$, one quarter of
   the element's area, because the parent square has area 4. That is the 2D version of
   $x_{,\xi} = h^e/2$.
 - **$J$ must stay positive.** $J > 0$ everywhere means the map is one-to-one and keeps
@@ -1071,7 +1071,7 @@ $$
 #| output: false
 
 shapes = [("a good element", np.array([[0.0, 0.0], [4.0, 0.3], [4.4, 3.6], [0.4, 3.2]])),
-          ("a skewed element:\n$J$ small near node 4",
+          ("a skewed element:\n$J$ small near node 3",
            np.array([[0.0, 0.0], [4.0, 0.0], [4.4, 3.4], [2.4, 2.0]])),
           ("a folded element:\n$J < 0$ in the red region",
            np.array([[0.0, 0.0], [4.0, 0.0], [4.0, 3.6], [3.0, 1.0]]))]
@@ -1126,8 +1126,8 @@ $$
 $$
 $$
 DF^{-1} = \frac{1}{J}\begin{bmatrix}
-\dfrac{\partial x_2}{\partial \eta} & -\dfrac{\partial x_1}{\partial \eta} \\[8pt]
--\dfrac{\partial x_2}{\partial \xi} & \dfrac{\partial x_1}{\partial \xi}
+\dfrac{\partial x_1}{\partial \eta} & -\dfrac{\partial x_0}{\partial \eta} \\[8pt]
+-\dfrac{\partial x_1}{\partial \xi} & \dfrac{\partial x_0}{\partial \xi}
 \end{bmatrix}
 $$
 :::
@@ -1137,7 +1137,7 @@ $\partial\xi_j/\partial x_i$ is the matrix $DF^{-1}$, by the inverse function th
 the inverse map $\underline{\xi}(\underline{x})$ is **never needed**. Everything is
 evaluated forward from $(\xi, \eta)$, at the quadrature points. For an axis-aligned
 rectangle the rule reduces to
-$\nabla_{\!x} N_a = \left(\tfrac{2}{h_1}N_{a,\xi},\; \tfrac{2}{h_2}N_{a,\eta}\right)$,
+$\nabla_{\!x} N_a = \left(\tfrac{2}{h_0}N_{a,\xi},\; \tfrac{2}{h_1}N_{a,\eta}\right)$,
 the 2D version of $N_{a,x} = \tfrac{2}{h^e}N_{a,\xi}$.
 :::
 
@@ -1145,7 +1145,7 @@ the 2D version of $N_{a,x} = \tfrac{2}{h^e}N_{a,\xi}$.
 #| echo: false
 #| output: false
 
-a_show = 2                                     # N_3
+a_show = 2                                     # N_2
 sc_ = np.linspace(-1, 1, 61)
 XIc, ETAc = np.meshgrid(sc_, sc_, indexing="ij")
 Nc = F2.shape(1, XIc.ravel(), ETAc.ravel())[0][a_show].reshape(XIc.shape)
@@ -1155,7 +1155,7 @@ lev = np.linspace(0.1, 0.9, 9)
 gq2, _ = F2.gauss(2)
 pts = np.array([(a, b) for a in (-0.6, 0.0, 0.6) for b in (-0.6, 0.0, 0.6)])
 N_, Nxi_, Neta_ = F2.shape(1, pts[:, 0], pts[:, 1])
-gxi = np.vstack([Nxi_[a_show], Neta_[a_show]]).T            # grad_xi N_3
+gxi = np.vstack([Nxi_[a_show], Neta_[a_show]]).T            # grad_xi N_2
 xq, DFq = iso_map(1, xe4, pts[:, 0], pts[:, 1])
 gx = np.array([np.linalg.inv(DFq[q]).T @ gxi[q] for q in range(len(pts))])
 
@@ -1167,8 +1167,8 @@ ax.contour(XIc, ETAc, Nc, levels=lev, colors=INK, linewidths=0.6, alpha=0.6)
 for q in range(len(pts)):
     arrow(ax, tuple(pts[q]), tuple(pts[q] + 0.9 * gxi[q]), color=LOADCLR, lw=1.8, ms=11)
 ax.plot([1], [1], "o", ms=7, color=INK)
-ax.text(1.04, 1.04, "node 3", fontsize=10, ha="left", va="bottom")
-ax.set_title("$N_3$ on the parent square, with $\\nabla_{\\!\\xi} N_3$", fontsize=11.5)
+ax.text(1.04, 1.04, "node 2", fontsize=10, ha="left", va="bottom")
+ax.set_title("$N_2$ on the parent square, with $\\nabla_{\\!\\xi} N_2$", fontsize=11.5)
 ax.set_aspect("equal")
 ax.set_xlim(-1.1, 1.45)
 ax.set_ylim(-1.1, 1.3)
@@ -1186,14 +1186,14 @@ for q in range(len(pts)):
 P4 = np.vstack([xe4, xe4[:1]])
 ax.plot(P4[:, 0], P4[:, 1], color=INK, lw=1.4)
 ax.plot([xe4[2, 0]], [xe4[2, 1]], "o", ms=7, color=INK)
-ax.text(xe4[2, 0] + 0.1, xe4[2, 1] + 0.1, "node 3", fontsize=10)
-ax.set_title("the same $N_3$ on the element, with $\\nabla_{\\!x} N_3 = "
-             "DF^{-T}\\,\\nabla_{\\!\\xi} N_3$", fontsize=11.5)
+ax.text(xe4[2, 0] + 0.1, xe4[2, 1] + 0.1, "node 2", fontsize=10)
+ax.set_title("the same $N_2$ on the element, with $\\nabla_{\\!x} N_2 = "
+             "DF^{-T}\\,\\nabla_{\\!\\xi} N_2$", fontsize=11.5)
 ax.set_aspect("equal")
 ax.set_xlim(-0.4, 6.6)
 ax.set_ylim(-0.4, 5.2)
-ax.set_xlabel("$x_1$")
-ax.set_ylabel("$x_2$")
+ax.set_xlabel("$x_0$")
+ax.set_ylabel("$x_1$")
 for s_ in ax.spines.values():
     s_.set_visible(False)
 ax.tick_params(labelsize=8.5)
@@ -1201,9 +1201,9 @@ fig.tight_layout(w_pad=2.0)
 fig_chain_path = save(fig, "H2F_Fig11_Chain.png")
 ```
 
-![The chain rule, seen. Left: $N_3$ on the parent square, with its contour lines and its
+![The chain rule, seen. Left: $N_2$ on the parent square, with its contour lines and its
 gradient at nine points. Right: the same function carried onto the Q4 element of
-@fig-h2f-map, with $\nabla_{\!x} N_3$ at the images of the same nine points. The arrows
+@fig-h2f-map, with $\nabla_{\!x} N_2$ at the images of the same nine points. The arrows
 are not just the left-hand arrows rescaled: $DF^{-T}$ turns them so that they stay
 perpendicular to the new contour lines, which is what a gradient must
 do.](`{python} fig_chain_path`){#fig-h2f-chain width=96%}
@@ -1223,8 +1223,8 @@ print(r"""
 ::: {.callout-note collapse="true"}
 ## One point, worked by hand
 
-Take the Q4 element of @fig-h2f-map, with corners $\underline{x}^e_1, \dots,
-\underline{x}^e_4$ = $(0, 0)$, $(5, 0.8)$, $(5.8, 4.6)$, $(0.6, 3.8)$, and the point
+Take the Q4 element of @fig-h2f-map, with corners $\underline{x}^e_0, \dots,
+\underline{x}^e_3$ = $(0, 0)$, $(5, 0.8)$, $(5.8, 4.6)$, $(0.6, 3.8)$, and the point
 $(\xi, \eta) = (%.2f,\ %.2f)$.
 
 $$
@@ -1232,17 +1232,17 @@ DF = \sum_a \underline{x}^e_a\left(\nabla_\xi N_a\right)^T = %s,
 \qquad J = \det DF = %.3f
 $$
 
-For $N_3 = \tfrac14(1 + \xi)(1 + \eta)$:
+For $N_2 = \tfrac14(1 + \xi)(1 + \eta)$:
 
 $$
-\nabla_\xi N_3 = \tfrac14\begin{bmatrix} 1 + \eta \\ 1 + \xi \end{bmatrix} = %s
+\nabla_\xi N_2 = \tfrac14\begin{bmatrix} 1 + \eta \\ 1 + \xi \end{bmatrix} = %s
 \qquad\Longrightarrow\qquad
-\nabla_x N_3 = DF^{-T}\,\nabla_\xi N_3 = %s
+\nabla_x N_2 = DF^{-T}\,\nabla_\xi N_2 = %s
 $$
 
-Check: $\nabla_x N_3 \cdot \partial\underline{x}/\partial\xi = %.4f = N_{3,\xi}$ and
-$\nabla_x N_3 \cdot \partial\underline{x}/\partial\eta = %.4f = N_{3,\eta}$. Moving along
-a mapped grid line, $N_3$ changes at exactly the rate it changes along the parent grid
+Check: $\nabla_x N_2 \cdot \partial\underline{x}/\partial\xi = %.4f = N_{2,\xi}$ and
+$\nabla_x N_2 \cdot \partial\underline{x}/\partial\eta = %.4f = N_{2,\eta}$. Moving along
+a mapped grid line, $N_2$ changes at exactly the rate it changes along the parent grid
 line.
 :::
 """ % (Phat[0], Phat[1], m(DFP), JP, m(gxiP[:, None]), m(gxP[:, None]),
@@ -1303,7 +1303,7 @@ $$
 
 Every integral over $\Omega$ is a sum over elements, and on element $e$ only its own
 $n_{en}$ functions are non-zero. So the work reduces to the small element arrays, in
-local numbering $a, b = 1, \dots, n_{en}$:
+local numbering $a, b = 0, \dots, n_{en}-1$:
 
 ::: {.derivation}
 $$
@@ -1312,7 +1312,7 @@ $$
 $$
 f^e_a = \underbrace{\int_{\Omega^e} N_a\,f\;d\Omega}_{\text{body}}
 + \underbrace{\int_{\Gamma^e_h} N_a\,h\;d\Gamma}_{\text{element sides on } \Gamma_h}
-- \underbrace{\sum_{b=1}^{n_{en}} k^e_{ab}\,g^e_b}_{\text{Dirichlet nodes}}
+- \underbrace{\sum_{b=0}^{n_{en}-1} k^e_{ab}\,g^e_b}_{\text{Dirichlet nodes}}
 $$
 :::
 
@@ -1331,12 +1331,12 @@ $$
 \begin{aligned}
 k^e_{ab} &= \int_{-1}^{1}\!\!\int_{-1}^{1}
 \left(DF^{-T}\nabla_{\!\xi}N_a\right)\cdot\kappa\left(DF^{-T}\nabla_{\!\xi}N_b\right) J\;d\xi\,d\eta \\
-&\approx \sum_{l=1}^{n_{int}}
+&\approx \sum_{l=0}^{n_{int}-1}
 \left[\left(DF^{-T}\nabla_{\!\xi}N_a\right)\cdot\kappa\left(DF^{-T}\nabla_{\!\xi}N_b\right) J\right]_{\tilde{\underline{\xi}}_l} W_l
 \end{aligned}
 $$
 $$
-f^e_{a,\text{body}} \;\approx\; \sum_{l=1}^{n_{int}} N_a(\tilde{\underline{\xi}}_l)\,
+f^e_{a,\text{body}} \;\approx\; \sum_{l=0}^{n_{int}-1} N_a(\tilde{\underline{\xi}}_l)\,
 f\big(\underline{x}(\tilde{\underline{\xi}}_l)\big)\,J(\tilde{\underline{\xi}}_l)\,W_l
 $$
 :::
@@ -1400,7 +1400,7 @@ ax.fill_between(xx, 0, hv, color=TABCLR, alpha=0.35, step="mid")
 ax.plot(xx, hv, color=TABCLR, lw=2)
 ax.set_ylim(0, 6500)
 ax.set_yticks([0, 5000])
-ax.text(0.05, 5600, "$h(x_1)$ on the top edge: 5000 W/m² on the tabs",
+ax.text(0.05, 5600, "$h(x_0)$ on the top edge: 5000 W/m² on the tabs",
         ha="center", fontsize=10.5, color="#a0520d")
 graph(ax, None, "$h$ (W/m²)")
 ax = axes[1]
@@ -1409,16 +1409,16 @@ for k, A in enumerate(top_nodes):
     xa = mesh8.X[A - 1, 0]
     Nx = np.clip(1 - np.abs(xx - xa) / 0.05, 0, None)
     ax.plot(xx, Nx, color=BASISCLRS[k], lw=2.2)
-    ax.text(xa, 1.05, "$N_{%d}$" % A, color=BASISCLRS[k], ha="center",
+    ax.text(xa, 1.05, "$N_{%d}$" % (A - 1), color=BASISCLRS[k], ha="center",
             va="bottom", fontsize=11)
 for xv in (0, 0.05, 0.1):
     ax.axvline(xv, color=MESHCLR, lw=0.8, ls=":")
-ax.text(0.025, 1.13, "top side of element 7", ha="center", fontsize=9.5,
+ax.text(0.025, 1.13, "top side of element 6", ha="center", fontsize=9.5,
         color=MESHCLR)
-ax.text(0.075, 1.13, "top side of element 8", ha="center", fontsize=9.5,
+ax.text(0.075, 1.13, "top side of element 7", ha="center", fontsize=9.5,
         color=MESHCLR)
 ax.set_ylim(0, 1.35)
-graph(ax, None, "$N_A$ along $x_2 = H$")
+graph(ax, None, "$N_A$ along $x_1 = H$")
 ax = axes[2]
 contrib = {13: sol8["els"][6]["h"][3], 14: sol8["els"][6]["h"][2] + sol8["els"][7]["h"][3],
            15: sol8["els"][7]["h"][2]}
@@ -1428,37 +1428,37 @@ for k, A in enumerate(top_nodes):
     ax.plot([xa, xa], [0, contrib[A]], color=c, lw=5, solid_capstyle="butt")
     ax.text(xa, contrib[A] + 4, "%.0f W/m" % contrib[A], ha="center",
             va="bottom", fontsize=10.5, color=c)
-ax.text(0.003, 72, "node 13 is on $\\Gamma_g$:\nits 50 W/m is not an equation's\n"
+ax.text(0.003, 72, "node 12 is on $\\Gamma_g$:\nits 50 W/m is not an equation's\n"
         "load; it goes straight\ninto the plate", ha="left", va="bottom",
         fontsize=9.5, color="0.45")
 ax.set_ylim(0, 150)
 ax.set_xlim(-0.004, W + 0.004)
-graph(ax, "$x_1$ (m), along the top edge", "$\\int N_A\\,h\\,d\\Gamma$ (W/m)")
+graph(ax, "$x_0$ (m), along the top edge", "$\\int N_A\\,h\\,d\\Gamma$ (W/m)")
 fig.tight_layout(h_pad=0.8)
 fig_edge_path = save(fig, "H2F_Fig12_Edge.png")
 ```
 
 ![The Neumann term for the worked example's top edge. Each tab lies inside one element
 side, exactly in its middle, so its 5000 W/m² × 0.02 m = 100 W/m is split evenly between
-the two nodes of that side. Node 14 collects 50 W/m from each tab. The total, 200 W/m,
+the two nodes of that side. Node 13 collects 50 W/m from each tab. The total, 200 W/m,
 is exactly the heat the tabs bring in.](`{python} fig_edge_path`){#fig-h2f-edge width=80%}
 
 ### Closed forms for a rectangle
 
-For an $h_1 \times h_2$ rectangle with constant $\kappa$ and $f$, the Q4 arrays come out in
+For an $h_0 \times h_1$ rectangle with constant $\kappa$ and $f$, the Q4 arrays come out in
 closed form:
 
 ::: {.derivation}
 $$
-\mathbf{k}^e = \frac{\kappa}{6}\left(\frac{h_2}{h_1}\begin{bmatrix}
+\mathbf{k}^e = \frac{\kappa}{6}\left(\frac{h_1}{h_0}\begin{bmatrix}
 2 & -2 & -1 & 1 \\ -2 & 2 & 1 & -1 \\ -1 & 1 & 2 & -2 \\ 1 & -1 & -2 & 2
 \end{bmatrix}
-+ \frac{h_1}{h_2}\begin{bmatrix}
++ \frac{h_0}{h_1}\begin{bmatrix}
 2 & 1 & -1 & -2 \\ 1 & 2 & -2 & -1 \\ -1 & -2 & 2 & 1 \\ -2 & -1 & 1 & 2
 \end{bmatrix}\right)
 $$
 $$
-\text{a square, } h_1 = h_2: \qquad
+\text{a square, } h_0 = h_1: \qquad
 \mathbf{k}^e = \frac{\kappa}{6}\begin{bmatrix}
 4 & -1 & -2 & -1 \\ -1 & 4 & -1 & -2 \\ -2 & -1 & 4 & -1 \\ -1 & -2 & -1 & 4
 \end{bmatrix}
@@ -1476,9 +1476,9 @@ $$
 - **No element size appears** in the square element's $\mathbf{k}^e$, only $\kappa$. In
   1D, $k^e \propto \kappa/h^e$: the gradient scales like $1/h$, so the product of two
   gradients scales like $1/h^2$, and the element's length gives back one power of $h$. In
-  2D its area gives back $h^2$, so only the *shape*, $h_2/h_1$, matters.
+  2D its area gives back $h^2$, so only the *shape*, $h_1/h_0$, matters.
 - **Rows sum to zero**, because a uniform temperature carries no heat.
-- **Node 1 is coupled most strongly to the opposite corner**, node 3 ($-2$), not to its
+- **Node 0 is coupled most strongly to the opposite corner**, node 2 ($-2$), not to its
   edge neighbours ($-1$). Heat between two nodes flows through the element's interior,
   and the diagonal pair shares it all.
 - **The body load is not split evenly for Q9.** Corners get 1/36 of the element's heat,
@@ -1502,9 +1502,9 @@ $Q = \mathrm{LM}(b, e)$, and $f^e_a$ into $F_P$, skipping every 0:
 
 ::: {.derivation}
 $$
-\mathbf{K} = \mathop{\Large\mathsf{A}}_{e=1}^{n_{el}}\left(\mathbf{k}^e\right),
+\mathbf{K} = \mathop{\Large\mathsf{A}}_{e=0}^{n_{el}-1}\left(\mathbf{k}^e\right),
 \qquad
-\mathbf{F} = \mathop{\Large\mathsf{A}}_{e=1}^{n_{el}}\left(\mathbf{f}^e\right)
+\mathbf{F} = \mathop{\Large\mathsf{A}}_{e=0}^{n_{el}-1}\left(\mathbf{f}^e\right)
 $$
 :::
 
@@ -1515,20 +1515,20 @@ For the eight-element mesh of @fig-h2f-mesh(a), with the cooled edge on $\Gamma_
 #| output: asis
 
 ID8, IEN8, LM8 = sol8["ID"], sol8["IEN"], sol8["LM"]
-print("| $A$ | " + " | ".join(str(A) for A in range(1, 16)) + " |")
+print("| $A$ | " + " | ".join(str(A) for A in range(15)) + " |")
 print("|---|" + "---|" * 15)
-print("| $\\mathrm{ID}(A)$ | " + " | ".join(("**0**" if v == 0 else str(v)) for v in ID8) + " |")
+print("| $\\mathrm{ID}(A)$ | " + " | ".join(("**−1**" if v == 0 else str(v - 1)) for v in ID8) + " |")
 print()
 print("| $a \\backslash e$ | " + " | ".join(str(e) for e in range(1, 9)) + " |")
 print("|---|" + "---|" * 8)
 for a in range(4):
-    print("| $\\mathrm{IEN}(%d, e)$ | " % (a + 1) + " | ".join(str(v) for v in IEN8[a]) + " |")
+    print("| $\\mathrm{IEN}(%d, e)$ | " % a + " | ".join(str(v - 1) for v in IEN8[a]) + " |")
 print()
 print("| $a \\backslash e$ | " + " | ".join(str(e) for e in range(1, 9)) + " |")
 print("|---|" + "---|" * 8)
 for a in range(4):
-    print("| $\\mathrm{LM}(%d, e)$ | " % (a + 1)
-          + " | ".join(("**0**" if v == 0 else str(v)) for v in LM8[a]) + " |")
+    print("| $\\mathrm{LM}(%d, e)$ | " % a
+          + " | ".join(("**−1**" if v == 0 else str(v - 1)) for v in LM8[a]) + " |")
 ```
 
 ```{python fig_assembly}
@@ -1544,7 +1544,7 @@ ax.plot([0, 0], [0, H], color=BDRYCLR, lw=4, zorder=2)
 draw_nodes(ax, mesh8, gd8, labels=True, fs=10, lab_off=(0.002, 0.002))
 for e in range(1, 9):
     xc = mesh8.map(e, np.array([0.0]), np.array([0.0]))[0][0]
-    ax.text(xc[0], xc[1], "$e = %d$" % e, ha="center", va="center",
+    ax.text(xc[0], xc[1], "$e = %d$" % (e - 1), ha="center", va="center",
             fontsize=10.5, color=ECOL[e - 1], fontweight="bold")
 cell_axes(ax, ticks=False)
 ax.set_title("elements and global node numbers", fontsize=11.5)
@@ -1573,8 +1573,8 @@ for k in range(n + 1):
 bx.add_patch(Rectangle((0, 0), n, n, facecolor="none", edgecolor=INK, lw=1.2, zorder=5))
 for A in range(1, n + 1):
     col = BDRYCLR if A in gd8 else INK
-    bx.text(A - 0.5, -0.3, str(A), ha="center", va="bottom", fontsize=9, color=col)
-    bx.text(-0.3, A - 0.5, str(A), ha="right", va="center", fontsize=9, color=col)
+    bx.text(A - 0.5, -0.3, str(A - 1), ha="center", va="bottom", fontsize=9, color=col)
+    bx.text(-0.3, A - 0.5, str(A - 1), ha="right", va="center", fontsize=9, color=col)
 bx.text(n / 2, -1.3, "column: global node $B$", ha="center", fontsize=10)
 bx.text(-1.5, n / 2, "row: global node $A$", ha="center", va="center",
         rotation=90, fontsize=10)
@@ -1590,8 +1590,8 @@ fig_assembly_path = save(fig, "H2F_Fig13_Assembly.png")
 
 ![Assembly for the eight-element mesh, drawn over all 15 nodes. Each element adds its
 $4 \times 4$ array at the rows and columns of its four nodes, in its own colour, and
-overlapping colours are entries that several elements add into. Element 4 (outlined)
-has nodes 5, 6, 9, 8, so its entries are scattered over rows and columns 5, 6, 8, 9: in
+overlapping colours are entries that several elements add into. Element 3 (outlined)
+has nodes 4, 5, 8, 7, so its entries are scattered over rows and columns 4, 5, 7, 8: in
 2D an element's contributions are not a block on the diagonal. The hatched rows and
 columns belong to the five nodes on $\Gamma_g$.](`{python} fig_assembly_path`){#fig-h2f-assembly width=100%}
 
@@ -1758,8 +1758,8 @@ band narrow.](`{python} fig_band_path`){#fig-h2f-band width=100%}
 print(r"""
 ::: {.step}
 Neighbouring nodes in the *other* direction are a whole row of nodes apart in the
-numbering. Numbered along $x_1$, rows are 9 nodes long and the half-bandwidth is %d.
-Numbered along $x_2$, rows are 17 long and it grows to %d. A banded solver's work
+numbering. Numbered along $x_0$, rows are 9 nodes long and the half-bandwidth is %d.
+Numbered along $x_1$, rows are 17 long and it grows to %d. A banded solver's work
 grows with the square of the bandwidth, so the first numbering is about %.0f times
 cheaper, for exactly the same $\mathbf{d}$. Meshing programs renumber nodes for this
 reason; sparse solvers go further and reorder the unknowns themselves.
@@ -1791,25 +1791,25 @@ $$
 \begin{aligned}
 \mathbf{k}^e &= \frac{25}{6}\begin{bmatrix} 4 & -1 & -2 & -1 \\ -1 & 4 & -1 & -2 \\ -2 & -1 & 4 & -1 \\ -1 & -2 & -1 & 4 \end{bmatrix} \\
 &= %s\ \tfrac{\text{W}}{\text{m·K}}
-\qquad e = 1, \dots, 8
+\qquad e = 0, \dots, 7
 \end{aligned}
 $$
 :::
 """ % mat(els[0]["ke"]))
 print(r"""
-Three kinds of right-hand side occur. Elements 2, 4, and 6 touch neither the plate nor
-the tabs, so $\mathbf{f}^e = \mathbf{f}^e_{\text{body}}$. Elements 1, 3, and 5 have local
-nodes 1 and 4 on $\Gamma_g$, and element 7 also carries a tab on its top side:
+Three kinds of right-hand side occur. Elements 1, 3, and 5 touch neither the plate nor
+the tabs, so $\mathbf{f}^e = \mathbf{f}^e_{\text{body}}$. Elements 0, 2, and 4 have local
+nodes 0 and 3 on $\Gamma_g$, and element 6 also carries a tab on its top side:
 
 ::: {.derivation}
 $$
-\mathbf{f}^1 = %s - \mathbf{k}^1 \underbrace{%s}_{\mathbf{g}^1} = %s\ \text{W/m}
+\mathbf{f}^0 = %s - \mathbf{k}^0 \underbrace{%s}_{\mathbf{g}^0} = %s\ \text{W/m}
 $$
 $$
-\mathbf{f}^7 = %s + \underbrace{%s}_{\text{tab}} - \mathbf{k}^7 %s = %s\ \text{W/m}
+\mathbf{f}^6 = %s + \underbrace{%s}_{\text{tab}} - \mathbf{k}^6 %s = %s\ \text{W/m}
 $$
 $$
-\mathbf{f}^8 = %s + \underbrace{%s}_{\text{tab}} = %s\ \text{W/m}
+\mathbf{f}^7 = %s + \underbrace{%s}_{\text{tab}} = %s\ \text{W/m}
 $$
 :::
 """ % (vec(els[0]["body"]), vec(g_e(1)), vec(els[0]["total"]),
@@ -1817,10 +1817,10 @@ $$
        vec(els[7]["body"]), vec(els[7]["h"]), vec(els[7]["total"])))
 ```
 
-**Assembly.** Entries of $\mathbf{f}^1$ and $\mathbf{f}^7$ with $\mathrm{LM} = 0$ (local
-nodes 1 and 4) are dropped. The two survivors of $\mathbf{f}^1$,
-$15.625 + 312.5 = 328.125$ W/m, are the body load plus $-\mathbf{k}^1\mathbf{g}^1$: the
-cold plate's pull on nodes 2 and 5, moved to the right-hand side. Adding everything in
+**Assembly.** Entries of $\mathbf{f}^0$ and $\mathbf{f}^6$ with $\mathrm{LM} = -1$ (local
+nodes 0 and 3) are dropped. The two survivors of $\mathbf{f}^0$,
+$15.625 + 312.5 = 328.125$ W/m, are the body load plus $-\mathbf{k}^0\mathbf{g}^0$: the
+cold plate's pull on nodes 1 and 4, moved to the right-hand side. Adding everything in
 through LM gives
 
 ```{python example_global}
@@ -1849,9 +1849,9 @@ $$
 ::: {.step .notes}
 - **Read the diagonal.** In units of $\kappa/6$, each element that touches a node adds 4
   to that node's diagonal entry. So the diagonal is 16 for a node shared by four elements,
-  8 for a node on an outer edge, and 4 for the corner nodes 3 and 15.
+  8 for a node on an outer edge, and 4 for the corner nodes 2 and 14.
 - **Read the rows.** A row of the *full* matrix sums to zero, because a uniform
-  temperature carries no heat. Rows 1, 3, 5, 7, and 9 here do not: they belong to nodes
+  temperature carries no heat. Rows 0, 2, 4, 6, and 8 here do not: they belong to nodes
   next to the cooled edge, and the columns cut out of them moved to $\mathbf{F}$ as the
   pull of the 25 °C plate.
 :::
@@ -1908,13 +1908,13 @@ qn = kappa * H2.series(np.zeros_like(yq), yq, **EX, M=4000)["u1"]
 cons = np.array([np.trapezoid(np.clip(1 - np.abs(yq - yA) / 0.05, 0, None) * qn, yq)
                  for yA in ys])
 ax.barh(ys, out, height=0.02, color=BDRYCLR, alpha=0.8, label="$-R_A$ from $u^h$")
-ax.plot(cons, ys, "o", color=LOADCLR, ms=7, label="exact: $\\int N_A\\,\\kappa u_{,1}\\,d\\Gamma$")
+ax.plot(cons, ys, "o", color=LOADCLR, ms=7, label="exact: $\\int N_A\\,\\kappa u_{,0}\\,d\\Gamma$")
 for yA, v, c_ in zip(ys, out, cons):
     ax.text(max(v, c_) + 7, yA, "%.1f" % v, va="center", fontsize=9, color=BDRYCLR)
 ax.set_ylim(-0.015, H + 0.015)
 ax.set_xlim(0, 260)
 ax.legend(frameon=False, fontsize=9.5, loc="lower right")
-graph(ax, "heat into the plate at each node (W/m)", "$x_2$ of the node (m)")
+graph(ax, "heat into the plate at each node (W/m)", "$x_1$ of the node (m)")
 ax.set_title("(c) the heat into the plate:\n%.1f W/m in total" % out.sum(), fontsize=11)
 fig_example_path = save(fig, "H2F_Fig16_Example.png")
 EX_OUT, EX_CONS = out, cons
@@ -1943,7 +1943,7 @@ Every line of the Galerkin form can be checked on the result:
 - **The Dirichlet condition holds exactly.** Every node on the cooled edge is at 25 °C,
   because it was built into $\mathcal{S}^h$.
 - **The Neumann condition holds only on average.** The top edge's flux is built into
-  $\mathbf{F}$, but along the top side of element 8, $\kappa\,u^h_{,2}$ runs only from
+  $\mathbf{F}$, but along the top side of element 7, $\kappa\,u^h_{,1}$ runs only from
   %.0f to %.0f W/m², nothing like 5000 on the tab and 0 beside it. One bilinear element
   cannot represent a flux that switches on and off inside it.
 - **Energy is conserved exactly.** The cut-out rows give the heat through each node of
@@ -1955,7 +1955,7 @@ Every line of the Galerkin form can be checked on the result:
   weighted flux to within %.0f%%, with the largest share at the top, where the tab heat
   arrives.
 :::
-""" % (abs(errs[k_worst]), free8[k_worst],
+""" % (abs(errs[k_worst]), free8[k_worst] - 1,
        kappa * (sol8["U"][13] - sol8["U"][10]) / 0.05,
        kappa * (sol8["U"][14] - sol8["U"][11]) / 0.05,
        EX_OUT.sum(), 100 * np.max(np.abs(EX_OUT - EX_CONS) / EX_CONS)))
@@ -2011,7 +2011,7 @@ for ax, (title, sl) in zip(axes, (("$\\|u - u^h\\|_{L^2}$ (°C·m)", ((2, 3.5e-5
                 color="0.4", va="center")
     ax.set_title(title, fontsize=11.5)
     ax.grid(True, which="major", color="0.9", lw=0.6)
-    graph(ax, "element width $h = W / n_1$ (m)", None)
+    graph(ax, "element width $h = W / n_0$ (m)", None)
 axes[0].legend(frameon=False, fontsize=9.5, loc="lower right")
 fig.tight_layout(w_pad=2.5)
 fig_conv_path = save(fig, "H2F_Fig17_Convergence.png")
@@ -2057,9 +2057,10 @@ $$
 ::: {.callout-note collapse="true"}
 ## Hughes' notation and the class notation
 
-| Hughes (this appendix) | Class notes | |
+| Hughes | This appendix and the class notes | |
 |---|---|---|
-| nodes $A = 1, \dots, n_{np}$; local $a = 1, \dots, n_{en}$ | $A = 0, \dots$; $a = 0, 1, 2, 3$ | 1-based vs 0-based (code) counting; the same counter-clockwise order |
+| nodes $A = 1, \dots, n_{np}$; local $a = 1, \dots, n_{en}$ | $A = 0, \dots, n_{np}-1$; $a = 0, \dots, n_{en}-1$ | Hughes counts from 1; these notes count from 0, as the code does; the same counter-clockwise order |
+| $\mathrm{ID}(A) = 0$ for a node on $\Gamma_g$ | $\mathrm{ID}(A) = -1$ | the mark of a prescribed node |
 | $\partial\underline{x}/\partial\underline{\xi}$ and $j = \det(\partial\underline{x}/\partial\underline{\xi})$ | $DF$ and $J$ | the Jacobian matrix and its determinant (used on this page) |
 | $\tilde{\underline{\xi}}_l$, $W_l$, $n_{int}$ | $\xi_g$, $w_g$, $n_{quad}$ | quadrature points and weights |
 | $\mathbf{k}^e = [k^e_{ab}]$, $\mathbf{f}^e = \{f^e_a\}$ | $K^e_{ab}$, $F^e_a$ | element arrays |
@@ -2092,10 +2093,10 @@ import {texMatrix, texVector, num} from "./fem1d.js"
 //| echo: false
 viewof pdeg = Inputs.radio(new Map([["Q4: bilinear, p = 1", 1], ["Q9: biquadratic, p = 2", 2]]),
   {value: 1, label: "Elements"})
-viewof n1 = Inputs.range([1, 16], {value: 2, step: 1, label: "n₁ (across)"})
-viewof n2 = Inputs.range([1, 32], {value: 4, step: 1, label: "n₂ (up)"})
+viewof n1 = Inputs.range([1, 16], {value: 2, step: 1, label: "n₀ (across)"})
+viewof n2 = Inputs.range([1, 32], {value: 4, step: 1, label: "n₁ (up)"})
 viewof distort = Inputs.range([0, 0.45], {value: 0, step: 0.05, label: "Distort the interior"})
-viewof order = Inputs.radio(new Map([["along x₁ first", "x1"], ["along x₂ first", "x2"]]),
+viewof order = Inputs.radio(new Map([["along x₀ first", "x1"], ["along x₁ first", "x2"]]),
   {value: "x1", label: "Number nodes"})
 ```
 
@@ -2110,16 +2111,16 @@ viewof xho = Inputs.range([-2000, 2000], {value: 0, step: 100, label: "h on the 
 ```
 
 **The Dirichlet nodes, $\Gamma_g$.** Tick the edges held at a known temperature and give
-each one its $g(x, y)$ in °C, with $x = x_1$ and $y = x_2$ in meters. Plain numbers work,
+each one its $g(x, y)$ in °C, with $x = x_0$ and $y = x_1$ in meters. Plain numbers work,
 and so do expressions such as `25 + 3*y/0.2` or `25 + 5*sin(PI*y/0.2)`. Then fix or free
-individual nodes by number, for example `8 = 45, 13 = free`. Every fixed node gets
-$\mathrm{ID}(A) = 0$, and its row and column are cut out of the solve. A node freed from a
+individual nodes by number, for example `7 = 45, 12 = free`. Every fixed node gets
+$\mathrm{ID}(A) = -1$, and its row and column are cut out of the solve. A node freed from a
 Dirichlet edge sits on an insulated stretch of boundary.
 
 ```{ojs}
 //| echo: false
-viewof dEdges = Inputs.checkbox(new Map([["left, x₁ = 0", "left"], ["right, x₁ = W", "right"],
-  ["bottom, x₂ = 0", "bottom"], ["top, x₂ = H", "top"]]), {value: ["left"], label: "Dirichlet edges"})
+viewof dEdges = Inputs.checkbox(new Map([["left, x₀ = 0", "left"], ["right, x₀ = W", "right"],
+  ["bottom, x₁ = 0", "bottom"], ["top, x₁ = H", "top"]]), {value: ["left"], label: "Dirichlet edges"})
 viewof gExpr = Inputs.form({
   left: Inputs.text({label: "g on the left edge", value: "25"}),
   right: Inputs.text({label: "g on the right edge", value: "25"}),
@@ -2127,7 +2128,7 @@ viewof gExpr = Inputs.form({
   top: Inputs.text({label: "g on the top edge", value: "25"})
 })
 viewof nodeText = Inputs.text({label: "Fix or free nodes", value: "",
-  placeholder: "e.g.  8 = 45,  13 = free"})
+  placeholder: "e.g.  7 = 45,  12 = free"})
 ```
 
 ```{ojs}
@@ -2169,8 +2170,11 @@ kSub = Math.max(2, Math.min(24, Math.ceil(Math.sqrt(20000 / mesh.nel))))
 
 ```{ojs}
 //| echo: false
-viewof eSel = Inputs.range([1, mesh.nel], {value: Math.min(4, mesh.nel), step: 1, label: "Element e"})
-viewof aSel = Inputs.range([1, mesh.nnp], {value: Math.min(8, mesh.nnp), step: 1, label: "Node A"})
+viewof eSel = Inputs.range([0, mesh.nel - 1], {value: Math.min(3, mesh.nel - 1), step: 1, label: "Element e"})
+viewof aSel = Inputs.range([0, mesh.nnp - 1], {value: Math.min(7, mesh.nnp - 1), step: 1, label: "Node A"})
+// the solver numbers elements and nodes from 1; the selectors and every label here count from 0
+eI = Math.min(eSel, mesh.nel - 1) + 1
+aI = Math.min(aSel, mesh.nnp - 1) + 1
 ```
 
 ```{ojs}
@@ -2210,10 +2214,10 @@ viewof labs = Inputs.checkbox(["node numbers A", "ID(A)", "element numbers e"],
   const col = d3.scaleSequential([hi, hi - lo < 1e-9 ? hi - 1 : lo], d3.interpolateRdYlBu);
   const cv = makeCanvas(Math.min(width, 360), 0, W2, 0, H2);
   drawField(cv, mesh, uhAt, col, kSub);
-  drawMesh(cv, mesh, {highlight: eSel, color: "rgba(26,26,26,0.55)"});
+  drawMesh(cv, mesh, {highlight: eI, color: "rgba(26,26,26,0.55)"});
   drawBoundary(cv, mesh, dEdges, TABS2);
   drawNodes(cv, mesh, gd, {labels: labs.includes("node numbers A"),
-    idLabels: labs.includes("ID(A)") ? (A => `ID ${sol.ID[A - 1]}`) : null,
+    idLabels: labs.includes("ID(A)") ? (A => `ID ${sol.ID[A - 1] - 1}`) : null,
     r: mesh.nnp > 400 ? 1.6 : 3.5});
   if (labs.includes("element numbers e")) drawElementNumbers(cv, mesh);
   const made = d3.sum(sol.els, ea => d3.sum(ea.body)), hin = d3.sum(sol.els, ea => d3.sum(ea.h));
@@ -2230,9 +2234,9 @@ viewof labs = Inputs.checkbox(["node numbers A", "ID(A)", "element numbers e"],
       &nbsp; in through Γ<sub>h</sub>, Σ f<sup>e</sup><sub>h</sub> = ${fmt(hin, 2)} W/m<br>
       &nbsp; out through Γ<sub>g</sub>, −Σ R<sub>A</sub> = ${fmt(out, 2)} W/m<br>
       <span style="color:#555">These agree on every mesh, because the basis functions add up to 1.</span><br><br>
-      <b>Hottest node:</b> A = ${kmax + 1}, ${fmt(sol.U[kmax], 2)} °C at (${mesh.X[kmax].map(v => v.toFixed(3)).join(", ")}) m<br>
+      <b>Hottest node:</b> A = ${kmax}, ${fmt(sol.U[kmax], 2)} °C at (${mesh.X[kmax].map(v => v.toFixed(3)).join(", ")}) m<br>
       <b>Coldest node:</b> ${fmt(lo, 2)} °C<br><br>
-      <span style="color:#555">Blue edges: Γ<sub>g</sub>. Amber: Γ<sub>h</sub>, violet on the tabs. Filled nodes are fixed (ID = 0); open nodes carry unknowns. The orange outline is element ${eSel}.</span>
+      <span style="color:#555">Blue edges: Γ<sub>g</sub>. Amber: Γ<sub>h</sub>, violet on the tabs. Filled nodes are fixed (ID = −1); open nodes carry unknowns. The orange outline is element ${eSel}.</span>
     </div></div>`;
 }
 ```
@@ -2242,21 +2246,21 @@ viewof labs = Inputs.checkbox(["node numbers A", "ID(A)", "element numbers e"],
 ```{ojs}
 //| echo: false
 {
-  const A = aSel, els = [];
-  mesh.IEN.forEach((row, e) => { if (row.includes(A)) els.push(e + 1); });
+  const A = aI, els = [];
+  mesh.IEN.forEach((row, e) => { if (row.includes(A)) els.push(e); });
   const cv = makeCanvas(Math.min(width, 330), 0, W2, 0, H2);
   drawField(cv, mesh, (e, xi, eta) => { const a = mesh.IEN[e - 1].indexOf(A); return a < 0 ? 0 : shape(pdeg, xi, eta).N[a]; },
             diverging, Math.max(kSub, 6));
-  drawMesh(cv, mesh, {highlight: eSel, color: "rgba(26,26,26,0.5)"});
+  drawMesh(cv, mesh, {highlight: eI, color: "rgba(26,26,26,0.5)"});
   drawBoundary(cv, mesh, dEdges, TABS2);
   drawNodes(cv, mesh, gd, {hiNode: A, r: mesh.nnp > 400 ? 1.6 : 3});
-  const ien = mesh.IEN[eSel - 1];
-  const minis = ien.map((B, a) => drawParentFunction(pdeg, a, pdeg === 1 ? 110 : 92, `N${a + 1} → N${B}`));
+  const ien = mesh.IEN[eI - 1];
+  const minis = ien.map((B, a) => drawParentFunction(pdeg, a, pdeg === 1 ? 110 : 92, `N${a} → N${B - 1}`));
   const where = gd.has(A) ? `on Γ<sub>g</sub>: its function carries the known g = ${fmt(gd.get(A), 2)} °C`
-                          : `unknown number ID(${A}) = ${sol.ID[A - 1]}`;
+                          : `unknown number ID(${A - 1}) = ${sol.ID[A - 1] - 1}`;
   return html`<div style="display:flex; flex-wrap:wrap; gap:1.2rem; align-items:flex-start">
     <div>${cv.canvas}<div style="font-size:0.88rem; color:#555; max-width:330px">
-      N<sub>${A}</sub>, blue where positive and red where negative. Node ${A} is ${html([where])}.
+      N<sub>${A - 1}</sub>, blue where positive and red where negative. Node ${A - 1} is ${html([where])}.
       Its support is element${els.length > 1 ? "s" : ""} ${els.join(", ")}.</div></div>
     <div style="flex:1; min-width:16rem">
       <div style="font-size:0.93rem; margin-bottom:0.4rem"><b>Element ${eSel}</b>: its ${mesh.nen} parent functions N<sub>a</sub>(ξ, η), and the global functions they become through IEN(a, ${eSel}):</div>
@@ -2270,13 +2274,13 @@ viewof labs = Inputs.checkbox(["node numbers A", "ID(A)", "element numbers e"],
 
 ```{ojs}
 //| echo: false
-viewof qSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Gauss point l"})
+viewof qSel = Inputs.range([0, (pdeg + 1) ** 2 - 1], {value: 0, step: 1, label: "Gauss point l"})
 ```
 
 ```{ojs}
 //| echo: false
 {
-  const e = eSel, ea = sol.els[e - 1], g = ea.gp[qSel - 1];
+  const e = eI, ea = sol.els[e - 1], g = ea.gp[qSel];
   const DF = g.DF, J = g.J;
   const invT = [[DF[1][1] / J, -DF[1][0] / J], [-DF[0][1] / J, DF[0][0] / J]];
   const gxi = [g.Nxi, g.Neta], gx = [g.grads.map(v => v[0]), g.grads.map(v => v[1])];
@@ -2286,7 +2290,7 @@ viewof qSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Gau
   const sc = x => html`<div style="overflow-x:auto; max-width:100%; font-size:${pdeg === 2 ? 0.76 : 1}em">${x}</div>`;
   return html`<div>
     <div style="display:flex; flex-wrap:wrap; gap:1rem; align-items:center">${left}<div style="font-size:1.6rem">→</div>${right}</div>
-    <div style="font-size:0.9rem; color:#555">Left: the parent square, with its local nodes and ${(pdeg + 1) ** 2} Gauss points; point ${qSel} is the bold one. Right: element ${e}, with local and global node numbers, the images of the grid lines and Gauss points, and the two columns of DF at the selected point.</div>
+    <div style="font-size:0.9rem; color:#555">Left: the parent square, with its local nodes and ${(pdeg + 1) ** 2} Gauss points; point ${qSel} is the bold one. Right: element ${e - 1}, with local and global node numbers, the images of the grid lines and Gauss points, and the two columns of DF at the selected point.</div>
     ${sc(tex.block`\tilde{\underline{\xi}}_{${qSel}} = (${t4(g.xi)},\ ${t4(g.eta)}),\quad W_{${qSel}} = ${t4(g.w)}
       \quad\longrightarrow\quad \underline{x}(\tilde{\underline{\xi}}_{${qSel}}) = (${t4(g.x[0])},\ ${t4(g.x[1])})\ \text{m}`)}
     ${sc(tex.block`DF = \sum_a \underline{x}^e_a \left(\nabla_\xi N_a\right)^T = ${texMatrix(DF, {sig: 4})}\ \text{m}`)}
@@ -2294,10 +2298,10 @@ viewof qSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Gau
       \qquad DF^{-T} = ${texMatrix(invT, {sig: 4})}\ \text{m}^{-1}`)}
     ${sc(tex.block`\nabla_\xi N_a = ${texMatrix(gxi, {sig: 3, maxn: 12})}`)}
     ${sc(tex.block`\nabla_x N_a = DF^{-T}\,\nabla_\xi N_a = ${texMatrix(gx, {sig: 3, maxn: 12})}\ \text{m}^{-1}`)}
-    <div style="font-size:0.9rem; line-height:1.6">Columns: a = 1, …, ${mesh.nen}. Rows: the ξ and η derivatives (left), and the x₁ and x₂ derivatives (right).<br>
-    J at the ${Js.length} Gauss points of element ${e}: ${Js.map(v => v.toExponential(3)).join(", ")} m².
+    <div style="font-size:0.9rem; line-height:1.6">Columns: a = 0, …, ${mesh.nen - 1}. Rows: the ξ and η derivatives (left), and the x₀ and x₁ derivatives (right).<br>
+    J at the ${Js.length} Gauss points of element ${e - 1}: ${Js.map(v => v.toExponential(3)).join(", ")} m².
     Element area = Σ J W = ${d3.sum(ea.gp, q => q.J * q.w).toExponential(4)} m².
-    ${mesh.distort === 0 ? "Undistorted: DF = diag(h₁/2, h₂/2), and J = h₁h₂/4 at every point." : "Distorted: DF and J change from point to point."}</div>
+    ${mesh.distort === 0 ? "Undistorted: DF = diag(h₀/2, h₁/2), and J = h₀h₁/4 at every point." : "Distorted: DF and J change from point to point."}</div>
   </div>`;
 }
 ```
@@ -2307,17 +2311,18 @@ viewof qSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Gau
 ```{ojs}
 //| echo: false
 {
-  const e = eSel, ea = sol.els[e - 1], ien = mesh.IEN[e - 1], lm = sol.LM[e - 1], hi = "#c0392b", dc = "#7fa6c9";
+  const e = eI, ea = sol.els[e - 1], ien = mesh.IEN[e - 1], lm = sol.LM[e - 1], hi = "#c0392b", dc = "#7fa6c9";
+  const iens = ien.map(A => A - 1), lms = lm.map(P => P - 1);     // as shown, from 0
   const nShow = 12, e0 = Math.max(1, Math.min(e - 5, mesh.nel - nShow + 1));
   const cols = d3.range(e0, Math.min(mesh.nel, e0 + nShow - 1) + 1);
   const cell = (v, on) => `<td style="padding:1px 7px; text-align:center; ${on ? "color:#c0392b; font-weight:700" : ""}">${v}</td>`;
-  const arr = (name, M) => d3.range(mesh.nen).map(a => `<tr><th style="text-align:left; padding-right:8px; font-weight:normal">${name}(${a + 1}, e)</th>${cols.map(c => cell(M[c - 1][a] === 0 && name === "LM" ? "<b>0</b>" : M[c - 1][a], c === e)).join("")}</tr>`).join("");
+  const arr = (name, M) => d3.range(mesh.nen).map(a => `<tr><th style="text-align:left; padding-right:8px; font-weight:normal">${name}(${a}, e)</th>${cols.map(c => cell(M[c - 1][a] === 0 && name === "LM" ? "<b>−1</b>" : M[c - 1][a] - 1, c === e)).join("")}</tr>`).join("");
   const table = `<table style="font-size:0.85rem; white-space:nowrap; margin:0.3rem 0 0.8rem 0">
-      <tr><th style="text-align:left">e</th>${cols.map(c => cell(c, c === e)).join("")}${cols[cols.length - 1] < mesh.nel ? "<td>…</td>" : ""}</tr>
+      <tr><th style="text-align:left">e</th>${cols.map(c => cell(c - 1, c === e)).join("")}${cols[cols.length - 1] < mesh.nel ? "<td>…</td>" : ""}</tr>
       ${arr("IEN", mesh.IEN)}<tr><td colspan="${cols.length + 1}" style="height:6px"></td></tr>${arr("LM", sol.LM)}</table>`;
   const idShow = Math.min(mesh.nnp, 45);
-  const idRow = `<div style="font-size:0.86rem; overflow-x:auto; white-space:nowrap">ID = [${sol.ID.slice(0, idShow).map((v, i) => ien.includes(i + 1) ? `<b style="color:#c0392b">${v}</b>` : v).join(", ")}${mesh.nnp > idShow ? ", …" : ""}]</div>
-    <div style="font-size:0.86rem; color:#555">Entry A is ID(A), the equation number of node A; 0 marks a node on Γ<sub>g</sub>. Element ${e}'s nodes are in red.</div>`;
+  const idRow = `<div style="font-size:0.86rem; overflow-x:auto; white-space:nowrap">ID = [${sol.ID.slice(0, idShow).map((v, i) => ien.includes(i + 1) ? `<b style="color:#c0392b">${v - 1}</b>` : v - 1).join(", ")}${mesh.nnp > idShow ? ", …" : ""}]</div>
+    <div style="font-size:0.86rem; color:#555">Entry A is ID(A), the equation number of node A; −1 marks a node on Γ<sub>g</sub>. Element ${e - 1}'s nodes are in red.</div>`;
   const scroll = (x, n = 0) => html`<div style="overflow-x:auto; max-width:100%; font-size:${n > 12 ? 0.62 : n > 8 ? 0.74 : n > 6 ? 0.85 : 1}em">${x}</div>`;
   const vec = v => texVector(v, {sig: 4});
   const inE = new Set(ien.map(A => A - 1)), inLM = new Set(lm.filter(P => P > 0).map(P => P - 1));
@@ -2332,13 +2337,13 @@ viewof qSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Gau
       <h4>1. Every node: the full ${mesh.nnp} × ${mesh.nnp} matrix, before anything is cut</h4>
       ${scroll(tex.block`\tilde{\mathbf{K}} = ${texMatrix(Kf, {sig: sgF, maxn: 25, color: colFull})},
         \qquad \tilde{\mathbf{F}} = ${texVector(sol.Ffull, {sig: 4, maxn: 25, color: i => gd.has(i + 1) ? dc : null})}`, mesh.nnp)}
-      <div style="font-size:0.88rem; color:#555">Red: element ${e}'s entries, at rows and columns IEN(·, ${e}) = {${ien.join(", ")}}.
-      Blue: rows and columns of the ${gd.size} Dirichlet nodes {${[...gd.keys()].sort((a, b) => a - b).join(", ")}}, which are cut out.
+      <div style="font-size:0.88rem; color:#555">Red: element ${e - 1}'s entries, at rows and columns IEN(·, ${e - 1}) = {${iens.join(", ")}}.
+      Blue: rows and columns of the ${gd.size} Dirichlet nodes {${[...gd.keys()].sort((a, b) => a - b).map(A => A - 1).join(", ")}}, which are cut out.
       The all-node load vector on the right holds only the body and h terms.</div>
       <h4>2. Cut out: the ${sol.neq} × ${sol.neq} system that is solved</h4>
       ${scroll(tex.block`\mathbf{K} = ${texMatrix(K, {sig: sgK, maxn: 25, color: (i, j) => inLM.has(i) && inLM.has(j) ? hi : null})},
         \qquad \mathbf{F} = \tilde{\mathbf{F}}_f - \tilde{\mathbf{K}}_{fg}\,\mathbf{g} = ${texVector(sol.F, {sig: 5, maxn: 25, color: i => inLM.has(i) ? hi : null})}`, sol.neq)}
-      <div style="font-size:0.88rem; color:#555">Row and column P of K belong to the node A with ID(A) = P. Element ${e}'s k<sup>e</sup> lands at rows and columns LM(·, ${e}) = {${lm.join(", ")}}; a 0 means "skip".</div>`;
+      <div style="font-size:0.88rem; color:#555">Row and column P of K belong to the node A with ID(A) = P. Element ${e - 1}'s k<sup>e</sup> lands at rows and columns LM(·, ${e - 1}) = {${lms.join(", ")}}; a −1 means "skip".</div>`;
   } else {
     const entFull = csrEntries(sol.Kfull), entK = csrEntries(sol.K), hiFull = [], hiK = [];
     for (const i of inE) for (const j of inE) hiFull.push([i, j]);
@@ -2349,18 +2354,18 @@ viewof qSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Gau
         ${drawSpy(sz, sol.nnp, entFull, {shadeRows: dirIdx, highlight: hiFull, title: `full matrix: all ${sol.nnp} nodes`})}
         ${drawSpy(sz, sol.neq, entK, {highlight: hiK, title: `K: ${sol.neq} unknowns (Dirichlet rows and columns cut)`})}
       </div>
-      <div style="font-size:0.88rem; color:#555">Each dark square is a non-zero entry; element ${e}'s are red. The shaded bands in the full matrix are the rows and columns of the ${gd.size} Dirichlet nodes. There are too many nodes to print the numbers; with 20 nodes or fewer, every entry is printed.</div>`;
+      <div style="font-size:0.88rem; color:#555">Each dark square is a non-zero entry; element ${e - 1}'s are red. The shaded bands in the full matrix are the rows and columns of the ${gd.size} Dirichlet nodes. There are too many nodes to print the numbers; with 20 nodes or fewer, every entry is printed.</div>`;
   }
   const dir = [...gd.keys()].sort((a, b) => a - b);
-  const reac = dir.slice(0, 30).map(A => `<tr><td style="padding:0 8px">${A}</td><td style="padding:0 8px">${fmt(gd.get(A), 2)}</td><td style="padding:0 8px">${fmt(-sol.R[A - 1], 3)}</td></tr>`).join("");
+  const reac = dir.slice(0, 30).map(A => `<tr><td style="padding:0 8px">${A - 1}</td><td style="padding:0 8px">${fmt(gd.get(A), 2)}</td><td style="padding:0 8px">${fmt(-sol.R[A - 1], 3)}</td></tr>`).join("");
   const dBlock = sol.neq <= 20 && sol.ok
     ? scroll(tex.block`\mathbf{d} = \mathbf{K}^{-1}\mathbf{F} = ${texVector(sol.d, {sig: 5, maxn: 25})}\ {}^\circ\text{C}`)
     : html`<div style="font-size:0.9rem">d has ${sol.neq} entries${sol.iterations ? `, found by preconditioned conjugate gradients in ${sol.iterations} iterations` : ""}.</div>`;
   return html`<div>
     <h4 style="margin-top:0.4rem">Bookkeeping</h4>${html([idRow])}${scroll(html([table]))}
-    <h4>Element ${e}: nodes {${ien.join(", ")}}, LM = {${lm.join(", ")}}</h4>
-    ${scroll(tex.block`\mathbf{k}^{${e}} = ${texMatrix(ea.ke, {sig: mesh.nen > 4 ? 3 : 4, maxn: 12})}\ \tfrac{\text{W}}{\text{m}\,\text{K}}`, mesh.nen)}
-    ${scroll(tex.block`\mathbf{f}^{${e}} = \underbrace{${vec(ea.body)}}_{\int N_a f\,d\Omega}
+    <h4>Element ${e - 1}: nodes {${iens.join(", ")}}, LM = {${lms.join(", ")}}</h4>
+    ${scroll(tex.block`\mathbf{k}^{${e - 1}} = ${texMatrix(ea.ke, {sig: mesh.nen > 4 ? 3 : 4, maxn: 12})}\ \tfrac{\text{W}}{\text{m}\,\text{K}}`, mesh.nen)}
+    ${scroll(tex.block`\mathbf{f}^{${e - 1}} = \underbrace{${vec(ea.body)}}_{\int N_a f\,d\Omega}
       + \underbrace{${vec(ea.h)}}_{\int N_a h\,d\Gamma} - \underbrace{${vec(ea.g)}}_{\mathbf{k}^{e}\mathbf{g}^{e}}
       = ${vec(ea.total)}\ \tfrac{\text{W}}{\text{m}}`)}
     ${global}
@@ -2395,7 +2400,7 @@ viewof qSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Gau
       ‖u − uʰ‖<sub>L²</sub> = ${er.l2.toExponential(3)} °C·m<br>
       |u − uʰ|<sub>H¹</sub> = ${er.h1.toExponential(3)} °C<br>
       largest nodal error: ${d3.max(nodal, Math.abs).toExponential(3)} °C<br><br>
-      <span style="color:#555">Halve the elements (double n₁ and n₂) and watch the norms. Away from the tab ends, the L² error falls by about 2<sup>p+1</sup> and the H¹ error by about 2<sup>p</sup>. While the tab ends dominate, both fall more slowly: that is where the error concentrates, because ∇u is unbounded there.</span>
+      <span style="color:#555">Halve the elements (double n₀ and n₁) and watch the norms. Away from the tab ends, the L² error falls by about 2<sup>p+1</sup> and the H¹ error by about 2<sup>p</sup>. While the tab ends dominate, both fall more slowly: that is where the error concentrates, because ∇u is unbounded there.</span>
     </div></div>`;
 }
 ```
@@ -2407,10 +2412,10 @@ viewof qSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Gau
   element through all eight: its red entries land in scattered rows and columns of
   $\tilde{\mathbf{K}}$, and the blue rows and columns are the ones that disappear from
   $\mathbf{K}$.
-- Type `8 = 45` into "Fix or free nodes". Node 8 gets $\mathrm{ID} = 0$, every later
+- Type `7 = 45` into "Fix or free nodes". Node 7 gets $\mathrm{ID} = -1$, every later
   equation number drops by one, and its row and column move from $\mathbf{K}$ to the
-  blue set. The temperature field now has a hot spot pinned at node 8, and the heat
-  table shows node 8 putting heat *into* the cell.
+  blue set. The temperature field now has a hot spot pinned at node 7, and the heat
+  table shows node 7 putting heat *into* the cell.
 - Tick a second Dirichlet edge, or untick them all: with no Dirichlet node, $\mathbf{K}$
   is singular.
 - Switch to Q9 with $1 \times 2$ elements. There are still few enough nodes to print
@@ -2418,6 +2423,6 @@ viewof qSel = Inputs.range([1, (pdeg + 1) ** 2], {value: 1, step: 1, label: "Gau
 - Turn up **Distort the interior** and open **Mapping**. $DF$ is no longer diagonal, and
   $J$ changes from Gauss point to Gauss point. Push the distortion far enough and some
   element folds.
-- Refine to $16 \times 32$ and switch the numbering between $x_1$ first and $x_2$ first.
+- Refine to $16 \times 32$ and switch the numbering between $x_0$ first and $x_1$ first.
   The band in the sparsity picture on **Matrices** doubles in width.
 :::

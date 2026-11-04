@@ -40,8 +40,8 @@ In matrix form in 2D, with $\underline{\xi} = (\xi,\eta)$,
 $$
 DF =
 \begin{bmatrix}
-\dfrac{\partial x_1}{\partial \xi} & \dfrac{\partial x_1}{\partial \eta} \\[10pt]
-\dfrac{\partial x_2}{\partial \xi} & \dfrac{\partial x_2}{\partial \eta}
+\dfrac{\partial x_0}{\partial \xi} & \dfrac{\partial x_0}{\partial \eta} \\[10pt]
+\dfrac{\partial x_1}{\partial \xi} & \dfrac{\partial x_1}{\partial \eta}
 \end{bmatrix}
 =
 \begin{bmatrix}
@@ -61,8 +61,8 @@ every point.
 The determinant is the **Jacobian**,
 
 $$
-J = \det DF = \frac{\partial x_1}{\partial \xi}\frac{\partial x_2}{\partial \eta}
-            - \frac{\partial x_1}{\partial \eta}\frac{\partial x_2}{\partial \xi},
+J = \det DF = \frac{\partial x_0}{\partial \xi}\frac{\partial x_1}{\partial \eta}
+            - \frac{\partial x_0}{\partial \eta}\frac{\partial x_1}{\partial \xi},
 \qquad
 d\Omega = J\,d\xi\,d\eta,
 $$
@@ -690,14 +690,14 @@ In 2D the inverse is written out easily, since
 $$
 DF^{-1} = \frac{1}{J}
 \begin{bmatrix}
-\dfrac{\partial x_2}{\partial \eta} & -\dfrac{\partial x_1}{\partial \eta} \\[10pt]
--\dfrac{\partial x_2}{\partial \xi} & \dfrac{\partial x_1}{\partial \xi}
+\dfrac{\partial x_1}{\partial \eta} & -\dfrac{\partial x_0}{\partial \eta} \\[10pt]
+-\dfrac{\partial x_1}{\partial \xi} & \dfrac{\partial x_0}{\partial \xi}
 \end{bmatrix},
 \qquad\text{so}\qquad
 DF^{-T} = \frac{1}{J}
 \begin{bmatrix}
-\dfrac{\partial x_2}{\partial \eta} & -\dfrac{\partial x_2}{\partial \xi} \\[10pt]
--\dfrac{\partial x_1}{\partial \eta} & \dfrac{\partial x_1}{\partial \xi}
+\dfrac{\partial x_1}{\partial \eta} & -\dfrac{\partial x_1}{\partial \xi} \\[10pt]
+-\dfrac{\partial x_0}{\partial \eta} & \dfrac{\partial x_0}{\partial \xi}
 \end{bmatrix}.
 $$
 

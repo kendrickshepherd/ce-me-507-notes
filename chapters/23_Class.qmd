@@ -70,7 +70,7 @@ $$
 
 Three properties of $B$ will be used repeatedly.
 
-- **$B$ is bilinear**, meaning that it is linear in each of its two arguments, so that, for example, $B(w, u_1 + \alpha\,u_2) = B(w,u_1) + \alpha\,B(w,u_2)$ for any number $\alpha$.
+- **$B$ is bilinear**, meaning that it is linear in each of its two arguments, so that, for example, $B(w, u_0 + \alpha\,u_1) = B(w,u_0) + \alpha\,B(w,u_1)$ for any number $\alpha$.
   Similarly, $L$ is linear.
 - **$B$ is symmetric**, $B(w,u) = B(u,w)$, whenever the conductivity is symmetric.
   In index notation, $w_{,i}\,\kappa_{ij}\,u_{,j} = u_{,j}\,\kappa_{ij}\,w_{,i} = u_{,j}\,\kappa_{ji}\,w_{,i}$, where the last step uses $\kappa_{ij} = \kappa_{ji}$, and the Robin term is unchanged when $w$ and $u$ are exchanged.
@@ -187,9 +187,9 @@ u = -f0 * x**2 / (2 * kappa) + A * x + (g_eff - A * L)
 du = -f0 * x / kappa + A
 
 dirs = [
-    (r"$w_1 = 1 - x/L$", 1 - x / L, -np.ones_like(x) / L),
-    (r"$w_2 = \sin(\pi x/L)$", np.sin(np.pi * x / L), np.pi / L * np.cos(np.pi * x / L)),
-    (r"$w_3 = \sin(2\pi x/L)$", np.sin(2 * np.pi * x / L), 2 * np.pi / L * np.cos(2 * np.pi * x / L)),
+    (r"$w_0 = 1 - x/L$", 1 - x / L, -np.ones_like(x) / L),
+    (r"$w_1 = \sin(\pi x/L)$", np.sin(np.pi * x / L), np.pi / L * np.cos(np.pi * x / L)),
+    (r"$w_2 = \sin(2\pi x/L)$", np.sin(2 * np.pi * x / L), 2 * np.pi / L * np.cos(2 * np.pi * x / L)),
 ]
 
 
@@ -230,7 +230,7 @@ curv_s = [f"{c:.1f}" for c in curv]
 ```
 
 @fig-c23-energy shows this for the wall of Class 22, with its outer face exchanging heat with air at $h_c$ = 10 W/(m²·K).
-Three directions $w_1$, $w_2$, and $w_3$ are chosen, each of which is zero at the interior face, where the temperature is prescribed.
+Three directions $w_0$, $w_1$, and $w_2$ are chosen, each of which is zero at the interior face, where the temperature is prescribed.
 Moving away from the solution in any of these directions increases the energy, and each curve has zero slope at $\varepsilon = 0$.
 
 ![(a) The solution $u$ of the wall problem of Class 22 with $h_c$ = 10 W/(m²·K), together with six other functions in $\mathcal{S}$, obtained by adding $\pm 8$ °C times each of three functions $w_i\in\mathcal{V}$. Each of these candidates satisfies the Dirichlet condition at $x = L$. (b) The change in energy along each direction, computed directly from the definition of $\Pi$. Each curve is a parabola with its minimum at $\varepsilon = 0$; the slope of each curve at $\varepsilon = 0$, computed numerically, is zero to within the accuracy of the numerical integration (less than 10^-4^ in magnitude), which is the weak form for these three choices of $w$. The curvatures, $B(w_i,w_i)$ = `{python} curv_s[0]`, `{python} curv_s[1]`, and `{python} curv_s[2]`, increase as the direction varies more rapidly across the wall.](`{python} fig_energy_path`){#fig-c23-energy width=100%}
@@ -238,13 +238,13 @@ Moving away from the solution in any of these directions increases the energy, a
 ### Uniqueness
 
 The energy viewpoint also shows that the solution is unique.
-Suppose that $u_1$ and $u_2$ both solve (W), and let $e = u_2 - u_1\in\mathcal{V}$.
-Applying the boxed identity twice, once with $u = u_1$ and $v = u_2$, and once with the roles exchanged, gives
+Suppose that $u_0$ and $u_1$ both solve (W), and let $e = u_1 - u_0\in\mathcal{V}$.
+Applying the boxed identity twice, once with $u = u_0$ and $v = u_1$, and once with the roles exchanged, gives
 
 $$
-\Pi(u_2) = \Pi(u_1) + \tfrac{1}{2}B(e,e)
+\Pi(u_1) = \Pi(u_0) + \tfrac{1}{2}B(e,e)
 \qquad\text{and}\qquad
-\Pi(u_1) = \Pi(u_2) + \tfrac{1}{2}B(e,e) .
+\Pi(u_0) = \Pi(u_1) + \tfrac{1}{2}B(e,e) .
 $$
 
 Adding these two equations gives $B(e,e) = 0$, that is,
@@ -260,7 +260,7 @@ Both integrals are nonnegative, so both must be zero.
 - If $\Gamma_g$ is not empty, then $e = 0$ on $\Gamma_g$, since $e\in\mathcal{V}$, and the constant must be zero.
 - If $\Gamma_g$ is empty, but $\hat{a} > 0$ on some part of $\Gamma_r$, then the second integral can only be zero if $e = 0$ on that part, and again the constant must be zero.
 
-In either case, $e = 0$, and $u_1 = u_2$.
+In either case, $e = 0$, and $u_0 = u_1$.
 The solution of the weak form, and therefore of the strong form, is unique provided that
 
 1. the conductivity $\underline{\underline{\kappa}}$ is symmetric and positive definite throughout $\Omega$,
@@ -446,7 +446,7 @@ Physically, a boundary that is only weakly connected to its surroundings require
 
 ## Seeing the cases on a small problem
 
-The widget below shows the energy $\Pi(\underline{d}) = \tfrac{1}{2}\,\underline{d}^T\underline{\underline{K}}\,\underline{d} - \underline{d}^T\underline{F}$ for the smallest possible problem: a bar of one linear element, with $\kappa/L = 1$, whose two nodal values are $d_1$ (left end) and $d_2$ (right end).
+The widget below shows the energy $\Pi(\underline{d}) = \tfrac{1}{2}\,\underline{d}^T\underline{\underline{K}}\,\underline{d} - \underline{d}^T\underline{F}$ for the smallest possible problem: a bar of one linear element, with $\kappa/L = 1$, whose two nodal values are $d_0$ (left end) and $d_1$ (right end).
 Each case uses a different pair of boundary conditions.
 The energy is shaded so that darker regions have lower energy, and the thin curves are curves of constant energy.
 
@@ -568,8 +568,8 @@ function draw(){
     svg.appendChild(el('line',{x1:sx(t),y1:PY+PS,x2:sx(t),y2:PY+PS+4,stroke:GREY}));
     svg.appendChild(el('line',{x1:PX-4,y1:sy(t),x2:PX,y2:sy(t),stroke:GREY}));
   }
-  svg.appendChild(T(PX+PS/2,PY+PS+36,'d₁  (left node)',{a:'middle',fs:12,f:INK}));
-  var yl=T(18,PY+PS/2,'d₂  (right node)',{a:'middle',fs:12,f:INK});
+  svg.appendChild(T(PX+PS/2,PY+PS+36,'d₀  (left node)',{a:'middle',fs:12,f:INK}));
+  var yl=T(18,PY+PS/2,'d₁  (right node)',{a:'middle',fs:12,f:INK});
   yl.setAttribute('transform','rotate(-90 18 '+(PY+PS/2)+')'); svg.appendChild(yl);
   /* the solution, or the admissible set */
   var ev=eig(m.K), K=m.K, F=m.F, mat, ver, txt;
@@ -580,12 +580,12 @@ function draw(){
   function line(a1,b1,a2,b2,w){ svg.appendChild(el('line',{x1:sx(a1),y1:sy(b1),x2:sx(a2),y2:sy(b2),stroke:ACC,'stroke-width':w||2.6})); }
   if(mode==='DN'){
     line(1,D0,1,D1,2.2); dot(1,1.5);
-    svg.appendChild(T(sx(1)+8,sy(4.2),'d₁ = 1',{fs:12,f:ACC,w:700}));
+    svg.appendChild(T(sx(1)+8,sy(4.2),'d₀ = 1',{fs:12,f:ACC,w:700}));
     ver='One solution.';
     txt='On its own, K is singular (one eigenvalue is zero), and the energy is a tilted trough along the direction (1, 1). '+
-        'The Dirichlet condition allows only the candidates on the red line d₁ = 1, which crosses the trough. '+
-        'Along that line, Π is a parabola with a single minimum, at d₂ = 1.5. '+
-        'This is the reduced system K₂₂ d₂ = F₂ − K₂₁ g that the code solves after the Dirichlet row and column are removed.';
+        'The Dirichlet condition allows only the candidates on the red line d₀ = 1, which crosses the trough. '+
+        'Along that line, Π is a parabola with a single minimum, at d₁ = 1.5. '+
+        'This is the reduced system K₁₁ d₁ = F₁ − K₁₀ g that the code solves after the Dirichlet row and column are removed.';
   } else if(mode==='RN'){
     var det=K[0][0]*K[1][1]-K[0][1]*K[1][0], a1=(K[1][1]*F[0]-K[0][1]*F[1])/det, a2=(K[0][0]*F[1]-K[1][0]*F[0])/det;
     dot(a1,a2);
@@ -596,8 +596,8 @@ function draw(){
   } else if(mode==='NNb'){
     line(D0,D0+0.5,D1-0.5,D1);
     ver='Infinitely many solutions.';
-    txt='K is singular, because adding the same constant to d₁ and d₂ does not change the energy. '+
-        'Since F₁ + F₂ = 0, the heat entering at the right end equals the heat leaving at the left, and every point on the red line d₂ = d₁ + 0.5 is a minimum. '+
+    txt='K is singular, because adding the same constant to d₀ and d₁ does not change the energy. '+
+        'Since F₀ + F₁ = 0, the heat entering at the right end equals the heat leaving at the left, and every point on the red line d₁ = d₀ + 0.5 is a minimum. '+
         'The solutions differ only by a constant, and one more condition is needed to choose among them.';
   } else {
     var defs=el('defs',{}), mk=el('marker',{id:'e23ah',viewBox:'0 0 10 10',refX:8,refY:5,markerWidth:7,markerHeight:7,orient:'auto'});
@@ -607,7 +607,7 @@ function draw(){
     lab.setAttribute('stroke','#fff'); lab.setAttribute('stroke-width','3.5'); lab.setAttribute('paint-order','stroke');
     svg.appendChild(lab);
     ver='No solution.';
-    txt='K is singular, and F₁ + F₂ = 1 is not zero: heat enters at both ends and cannot leave, so no steady state exists. '+
+    txt='K is singular, and F₀ + F₁ = 1 is not zero: heat enters at both ends and cannot leave, so no steady state exists. '+
         'The energy decreases without bound along the direction (1, 1), so it has no lowest point, and K d = F has no solution.';
   }
   document.getElementById('e23mat').textContent=mat;

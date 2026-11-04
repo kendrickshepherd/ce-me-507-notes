@@ -1523,8 +1523,8 @@ The Euler--Bernoulli beam weak form contains second derivatives ($m=2$), so the 
 A cubic Hermite element uses the deflection $w$ and the rotation $\theta = dw/dx$ at each end,
 
 $$
-w^h(t)=h_{00}(t)\,w_1+L\,h_{10}(t)\,\theta_1
-       +h_{01}(t)\,w_2+L\,h_{11}(t)\,\theta_2,
+w^h(t)=h_{00}(t)\,w_0+L\,h_{10}(t)\,\theta_0
+       +h_{01}(t)\,w_1+L\,h_{11}(t)\,\theta_1,
 \qquad 0\le t\le 1,
 $$
 

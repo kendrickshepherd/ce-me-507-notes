@@ -447,8 +447,8 @@ function arcPiece(xif,e0,e1,col,wd){
 ```
 
 One more reason to be careful: on an **axis-aligned rectangle** the two are proportional.
-For an $h_1 \times h_2$ element, $DF$ is diagonal, $\det(DF) = h_1h_2/4$, and on the
-$\eta$-face $\|\underline{t}\| = h_1/2$. Their ratio is $h_2/2$ --- a constant. Use the
+For an $h_0 \times h_1$ element, $DF$ is diagonal, $\det(DF) = h_0h_1/4$, and on the
+$\eta$-face $\|\underline{t}\| = h_0/2$. Their ratio is $h_1/2$ --- a constant. Use the
 wrong one on a rectangular mesh and every face integral is off by the same factor, which
 looks far more like a units slip than a bug, and does not disturb the convergence rate at
 all. It only becomes obvious once an element is curved or distorted, which is exactly the

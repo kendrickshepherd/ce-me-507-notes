@@ -139,7 +139,7 @@ fig_ibeam_path = save(fig, "C10_Fig2_IBeam.png")
 ::: {.step}
 ![](`{python} fig_ibeam_path`){#fig-c10-ibeam width=42%}
 
-What is $\Gamma_{g_1}, \Gamma_{g_2}$? $\Gamma_{h_1}, \Gamma_{h_2}$? — Each component of
+What is $\Gamma_{g_0}, \Gamma_{g_1}$? $\Gamma_{h_0}, \Gamma_{h_1}$? — Each component of
 displacement (or flux) can have its *own* Dirichlet or Neumann boundary, which need not
 coincide with the others. A pin support fixes both displacement components; a roller
 fixes only one.

@@ -98,11 +98,11 @@ All examples use millimeters, newtons, and megapascals (1 MPa = 1 N/mm²), and s
 fig_deformation_path = save(EF.fig_deformation(), "E2_Fig1_Deformation.png")
 ```
 
-![(a) A steel plate with a hole, held at its left end and pulled at its right end. The colors show the size of the displacement, the arrows show its direction at a few points, and the shape is drawn in its deformed position (the dashed lines are the original outline). (b) The small square above the hole, before and after. With the motion of the square as a whole removed, what remains is a change of shape: the square stretches along $x_1$, narrows along $x_2$, and its bottom edge, nearer the hole, stretches the most.](`{python} fig_deformation_path`){#fig-e2-deformation width=100%}
+![(a) A steel plate with a hole, held at its left end and pulled at its right end. The colors show the size of the displacement, the arrows show its direction at a few points, and the shape is drawn in its deformed position (the dashed lines are the original outline). (b) The small square above the hole, before and after. With the motion of the square as a whole removed, what remains is a change of shape: the square stretches along $x_0$, narrows along $x_1$, and its bottom edge, nearer the hole, stretches the most.](`{python} fig_deformation_path`){#fig-e2-deformation width=100%}
 
 A solid occupies the region $\Omega$ before it is loaded.
 Under load, the material point that started at $\underline{x}$ moves to $\underline{x} + \underline{u}(\underline{x})$.
-The **displacement** $\underline{u}(\underline{x}) = (u_1, u_2)$, or $u_i$ in index notation, is a vector field: an arrow attached to each point of the body.
+The **displacement** $\underline{u}(\underline{x}) = (u_0, u_1)$, or $u_i$ in index notation, is a vector field: an arrow attached to each point of the body.
 In @fig-e2-deformation the largest displacement is `{python} "%.3f" % UMAX` mm, on a plate 200 mm long.
 That is far too small to see, so every picture on this page magnifies the displacements.
 
@@ -128,24 +128,24 @@ fig_strain_path = save(EF.fig_strain(), "E2_Fig2_Strain.png")
 ![(a) A small rectangle OAB, before (gray) and after (orange) the displacement. Each side changes its length and turns. (b) The ways a small square can change: stretches along each axis, a change of angle, and a change of area. A rotation moves the square without changing its shape. All of these are exaggerated.](`{python} fig_strain_path`){#fig-e2-strain width=100%}
 
 To measure how the material is stretched, follow two short fibers of material.
-Take the corner O at $\underline{x}$ and the corner A at $\underline{x} + dx_1\,\underline{e}_1$, a distance $dx_1$ along $x_1$ (@fig-e2-strain a).
-After loading, O has moved by $\underline{u}(\underline{x})$ and A by $\underline{u}(\underline{x} + dx_1\underline{e}_1)$.
-Keeping the first term of the Taylor series, $\underline{u}(\underline{x} + dx_1\underline{e}_1) \approx \underline{u}(\underline{x}) + \underline{u}_{,1}\,dx_1$, so the side OA becomes
+Take the corner O at $\underline{x}$ and the corner A at $\underline{x} + dx_0\,\underline{e}_0$, a distance $dx_0$ along $x_0$ (@fig-e2-strain a).
+After loading, O has moved by $\underline{u}(\underline{x})$ and A by $\underline{u}(\underline{x} + dx_0\underline{e}_0)$.
+Keeping the first term of the Taylor series, $\underline{u}(\underline{x} + dx_0\underline{e}_0) \approx \underline{u}(\underline{x}) + \underline{u}_{,0}\,dx_0$, so the side OA becomes
 
 ::: {.derivation}
 $$
 \overrightarrow{\mathrm{O'A'}}
-= dx_1\,\underline{e}_1 + \underline{u}(\underline{x} + dx_1\underline{e}_1) - \underline{u}(\underline{x})
-\approx dx_1 \begin{pmatrix} 1 + u_{1,1} \\ u_{2,1} \end{pmatrix}
+= dx_0\,\underline{e}_0 + \underline{u}(\underline{x} + dx_0\underline{e}_0) - \underline{u}(\underline{x})
+\approx dx_0 \begin{pmatrix} 1 + u_{0,0} \\ u_{1,0} \end{pmatrix}
 $$
 :::
 
 ::: {.step .notes}
-- To first order in the small derivatives, the new side has length $(1 + u_{1,1})\,dx_1$.
-  Its change in length per unit length is $u_{1,1}$.
-- It has turned counterclockwise through the small angle $u_{2,1}$ (its slope).
-- The same argument for OB, along $x_2$, gives length $(1 + u_{2,2})\,dx_2$ and a clockwise turn through $u_{1,2}$.
-- So the right angle at O closes by $u_{1,2} + u_{2,1}$.
+- To first order in the small derivatives, the new side has length $(1 + u_{0,0})\,dx_0$.
+  Its change in length per unit length is $u_{0,0}$.
+- It has turned counterclockwise through the small angle $u_{1,0}$ (its slope).
+- The same argument for OB, along $x_1$, gives length $(1 + u_{1,1})\,dx_1$ and a clockwise turn through $u_{0,1}$.
+- So the right angle at O closes by $u_{0,1} + u_{1,0}$.
   If both sides had turned the same way by the same amount, the angle would not change: that is a rotation.
 :::
 
@@ -153,21 +153,21 @@ These three numbers are the **strains** in two dimensions:
 
 ::: {.derivation}
 $$
+\varepsilon_{00} = u_{0,0}, \qquad
 \varepsilon_{11} = u_{1,1}, \qquad
-\varepsilon_{22} = u_{2,2}, \qquad
-\gamma_{12} = 2\,\varepsilon_{12} = u_{1,2} + u_{2,1}
+\gamma_{01} = 2\,\varepsilon_{01} = u_{0,1} + u_{1,0}
 $$
 :::
 
 ::: {.step .notes}
-- $\varepsilon_{11}$ and $\varepsilon_{22}$ are the **normal strains**: the stretch per unit length of a fiber along $x_1$ or $x_2$.
+- $\varepsilon_{00}$ and $\varepsilon_{11}$ are the **normal strains**: the stretch per unit length of a fiber along $x_0$ or $x_1$.
   Positive means longer.
-- $\gamma_{12}$ is the **engineering shear strain**: the decrease of the right angle between the two fibers, in radians.
-  The **tensor shear strain** is half of it, $\varepsilon_{12} = \gamma_{12}/2$.
+- $\gamma_{01}$ is the **engineering shear strain**: the decrease of the right angle between the two fibers, in radians.
+  The **tensor shear strain** is half of it, $\varepsilon_{01} = \gamma_{01}/2$.
   The factor of 2 is a convention, and it reappears in the matrix forms below.
 - Strain is dimensionless (mm per mm).
   A strain of $10^{-3}$ is a stretch of 0.1%.
-- $\varepsilon_{11} + \varepsilon_{22}$ is the change of area per unit area, to first order.
+- $\varepsilon_{00} + \varepsilon_{11}$ is the change of area per unit area, to first order.
 :::
 
 The four derivatives $u_{i,j}$ form the **displacement gradient**, a $2 \times 2$ matrix.
@@ -179,9 +179,9 @@ u_{i,j}
 = \underbrace{\tfrac{1}{2}\left(u_{i,j} + u_{j,i}\right)}_{\varepsilon_{ij} \;=\; u_{(i,j)}}
 + \underbrace{\tfrac{1}{2}\left(u_{i,j} - u_{j,i}\right)}_{\omega_{ij}}
 \qquad\Longleftrightarrow\qquad
-\begin{bmatrix} u_{1,1} & u_{1,2} \\ u_{2,1} & u_{2,2} \end{bmatrix}
+\begin{bmatrix} u_{0,0} & u_{0,1} \\ u_{1,0} & u_{1,1} \end{bmatrix}
 =
-\begin{bmatrix} \varepsilon_{11} & \varepsilon_{12} \\ \varepsilon_{12} & \varepsilon_{22} \end{bmatrix}
+\begin{bmatrix} \varepsilon_{00} & \varepsilon_{01} \\ \varepsilon_{01} & \varepsilon_{11} \end{bmatrix}
 +
 \begin{bmatrix} 0 & -\omega \\ \omega & 0 \end{bmatrix}
 $$
@@ -190,7 +190,7 @@ $$
 ::: {.step .notes}
 - The symmetric part is the **strain tensor** $\varepsilon_{ij}$.
   Hughes writes it $u_{(i,j)}$: parentheses around the indices mean "the symmetric part".
-- The skew part $\omega_{ij}$ holds one number in 2D, $\omega = \tfrac{1}{2}(u_{2,1} - u_{1,2})$: the average counterclockwise rotation of the two fibers, in radians.
+- The skew part $\omega_{ij}$ holds one number in 2D, $\omega = \tfrac{1}{2}(u_{1,0} - u_{0,1})$: the average counterclockwise rotation of the two fibers, in radians.
   It turns the square without changing any length or angle, so it causes no stress.
 - Only $\varepsilon_{ij}$ enters the material law.
   A displacement field whose strain vanishes everywhere is a rigid-body motion.
@@ -199,7 +199,7 @@ $$
 
 Choose a displacement gradient below and see how it splits.
 The pictures apply the gradient to a square of material.
-"Simple shear" has a single nonzero derivative, $u_{1,2}$: half of it is a change of angle, and the other half is a rotation.
+"Simple shear" has a single nonzero derivative, $u_{0,1}$: half of it is a change of angle, and the other half is a rotation.
 
 ```{ojs}
 //| echo: false
@@ -215,7 +215,7 @@ GRADS = new Map([
   ["simple shear", [[0, 0.3], [0, 0]]],
   ["pure shear", [[0, 0.15], [0.15, 0]]],
   ["a rotation", [[0, -0.2], [0.2, 0]]],
-  ["a stretch along x₁", [[0.25, 0], [0, 0]]],
+  ["a stretch along x₀", [[0.25, 0], [0, 0]]],
   ["a uniform expansion", [[0.15, 0], [0, 0.15]]],
   ["a general gradient", [[0.12, 0.25], [-0.05, -0.08]]]
 ])
@@ -224,10 +224,10 @@ viewof g0 = Inputs.select(GRADS, {label: "Start from"})
 
 ```{ojs}
 //| echo: false
-viewof h11 = Inputs.range([-0.3, 0.3], {value: g0[0][0], step: 0.01, label: "u₁,₁"})
-viewof h12 = Inputs.range([-0.3, 0.3], {value: g0[0][1], step: 0.01, label: "u₁,₂"})
-viewof h21 = Inputs.range([-0.3, 0.3], {value: g0[1][0], step: 0.01, label: "u₂,₁"})
-viewof h22 = Inputs.range([-0.3, 0.3], {value: g0[1][1], step: 0.01, label: "u₂,₂"})
+viewof h11 = Inputs.range([-0.3, 0.3], {value: g0[0][0], step: 0.01, label: "u₀,₀"})
+viewof h12 = Inputs.range([-0.3, 0.3], {value: g0[0][1], step: 0.01, label: "u₀,₁"})
+viewof h21 = Inputs.range([-0.3, 0.3], {value: g0[1][0], step: 0.01, label: "u₁,₀"})
+viewof h22 = Inputs.range([-0.3, 0.3], {value: g0[1][1], step: 0.01, label: "u₁,₁"})
 ```
 
 ```{ojs}
@@ -242,9 +242,9 @@ viewof h22 = Inputs.range([-0.3, 0.3], {value: g0[1][1], step: 0.01, label: "u�
     ${fig}
     <div style="overflow-x:auto">${tex.block`[u_{i,j}] = ${M(Hm, "#e67e22")} = ${M(e, "#c0392b")} + ${M([[0, -w], [w, 0]], "#1f6feb")}`}</div>
     <div style="font-size:0.93rem; line-height:1.6">
-      Stretch along x₁: ε₁₁ = ${fmtS(h11, 3)}; along x₂: ε₂₂ = ${fmtS(h22, 3)}.
-      Change of angle: γ₁₂ = ${fmtS(h12 + h21, 3)} rad.
-      Change of area: ε₁₁ + ε₂₂ = ${fmtS(h11 + h22, 3)}.<br>
+      Stretch along x₀: ε₀₀ = ${fmtS(h11, 3)}; along x₁: ε₁₁ = ${fmtS(h22, 3)}.
+      Change of angle: γ₀₁ = ${fmtS(h12 + h21, 3)} rad.
+      Change of area: ε₀₀ + ε₁₁ = ${fmtS(h11 + h22, 3)}.<br>
       Rotation: ω = ${fmtS(w, 3)} rad = ${fmtS(w * 180 / Math.PI, 1)}°, counterclockwise when positive.<br>
       <span style="color:#555">The dashed square is the material before; each colored shape is the square moved by one part of the gradient.
       These values are a hundred times larger than any in linear elasticity, which is why the rotated square looks slightly larger than the original: the linear rotation is exact only for small angles.</span>
@@ -276,9 +276,9 @@ t_i = \sigma_{ij}\,n_j
 \qquad\Longleftrightarrow\qquad
 \underline{t} = \underline{\underline{\sigma}}\,\underline{n}
 \qquad\Longleftrightarrow\qquad
-\begin{pmatrix} t_1 \\ t_2 \end{pmatrix} =
-\begin{bmatrix} \sigma_{11} & \sigma_{12} \\ \sigma_{21} & \sigma_{22} \end{bmatrix}
-\begin{pmatrix} n_1 \\ n_2 \end{pmatrix}
+\begin{pmatrix} t_0 \\ t_1 \end{pmatrix} =
+\begin{bmatrix} \sigma_{00} & \sigma_{01} \\ \sigma_{10} & \sigma_{11} \end{bmatrix}
+\begin{pmatrix} n_0 \\ n_1 \end{pmatrix}
 $$
 :::
 
@@ -286,11 +286,11 @@ $$
 - $\sigma_{ij}$ is the **Cauchy stress tensor**.
   Setting $\underline{n} = \underline{e}_j$ shows what each entry means: $\sigma_{ij}$ is the $i$-component of the traction on a face whose outward normal is $\underline{e}_j$ (@fig-e2-traction b).
   The second index names the face, and the first names the direction of the force.
-- On the face with normal $\underline{e}_1$, the traction is $(\sigma_{11}, \sigma_{21})$.
-  $\sigma_{11}$ is the **normal stress**, perpendicular to the face, and $\sigma_{21}$ is the **shear stress**, along it.
+- On the face with normal $\underline{e}_0$, the traction is $(\sigma_{00}, \sigma_{10})$.
+  $\sigma_{00}$ is the **normal stress**, perpendicular to the face, and $\sigma_{10}$ is the **shear stress**, along it.
 - A positive normal stress is **tension**: it pulls the face outward.
   On a face with outward normal $-\underline{e}_k$, every arrow reverses, because there $t_i = \sigma_{ij}\,n_j = -\sigma_{ik}$.
-- The proof (@fig-e2-traction c) balances the forces on a small triangle whose sides have normals $-\underline{e}_1$, $-\underline{e}_2$, and $\underline{n}$.
+- The proof (@fig-e2-traction c) balances the forces on a small triangle whose sides have normals $-\underline{e}_0$, $-\underline{e}_1$, and $\underline{n}$.
   The face forces are proportional to the side lengths, while a body force is proportional to the area, so it disappears as the triangle shrinks, leaving $t_i = \sigma_{ij} n_j$.
 - In 3D, $\sigma_{ij}$ is $3 \times 3$, and each face of a small cube carries one normal and two shear components.
 - Some texts swap the meaning of the two indices.
@@ -310,19 +310,19 @@ In the 2D block the material is a thin plate, free to thin out of its plane (pla
 //| echo: false
 STATES2 = new Map([
   ["a general state", [150, -60, 80]],
-  ["tension along x₁", [200, 0, 0]],
-  ["equal tension along x₁ and x₂", [150, 150, 0]],
+  ["tension along x₀", [200, 0, 0]],
+  ["equal tension along x₀ and x₁", [150, 150, 0]],
   ["pure shear", [0, 0, 120]],
-  ["tension along x₁, compression along x₂", [120, -120, 0]]
+  ["tension along x₀, compression along x₁", [120, -120, 0]]
 ])
 viewof st2 = Inputs.select(STATES2, {label: "Start from"})
 ```
 
 ```{ojs}
 //| echo: false
-viewof a11 = Inputs.range([-300, 300], {value: st2[0], step: 5, label: "σ₁₁ (MPa)"})
-viewof a22 = Inputs.range([-300, 300], {value: st2[1], step: 5, label: "σ₂₂ (MPa)"})
-viewof a12 = Inputs.range([-300, 300], {value: st2[2], step: 5, label: "σ₁₂ = σ₂₁ (MPa)"})
+viewof a11 = Inputs.range([-300, 300], {value: st2[0], step: 5, label: "σ₀₀ (MPa)"})
+viewof a22 = Inputs.range([-300, 300], {value: st2[1], step: 5, label: "σ₁₁ (MPa)"})
+viewof a12 = Inputs.range([-300, 300], {value: st2[2], step: 5, label: "σ₀₁ = σ₁₀ (MPa)"})
 viewof mag2 = Inputs.range([0, 400], {value: 150, step: 10, label: "Magnify the deformation"})
 ```
 
@@ -339,8 +339,8 @@ viewof mag2 = Inputs.range([0, 400], {value: 150, step: 10, label: "Magnify the 
     <div style="flex:1; min-width:17rem; font-size:0.93rem; line-height:1.6">
       ${tex.block`[\sigma_{ij}] = \begin{bmatrix} ${c("s11", a11)} & ${c("s12", a12)} \\ ${c("s12", a12)} & ${c("s22", a22)} \end{bmatrix}\ \text{MPa}`}
       <b>Tractions</b> t<sub>i</sub> = σ<sub>ij</sub>n<sub>j</sub>:<br>
-      &nbsp; right face, <u>n</u> = (1, 0): <u>t</u> = (σ₁₁, σ₂₁) = (${fmtS(a11)}, ${fmtS(a12)}) MPa<br>
-      &nbsp; top face, <u>n</u> = (0, 1): <u>t</u> = (σ₁₂, σ₂₂) = (${fmtS(a12)}, ${fmtS(a22)}) MPa<br>
+      &nbsp; right face, <u>n</u> = (1, 0): <u>t</u> = (σ₀₀, σ₁₀) = (${fmtS(a11)}, ${fmtS(a12)}) MPa<br>
+      &nbsp; top face, <u>n</u> = (0, 1): <u>t</u> = (σ₀₁, σ₁₁) = (${fmtS(a12)}, ${fmtS(a22)}) MPa<br>
       &nbsp; left and bottom faces: the same, with every sign reversed<br>
       ${tex.block`[\varepsilon_{ij}] = \begin{bmatrix} ${m3(e.e11)} & ${m3(e.g12 / 2)} \\ ${m3(e.g12 / 2)} & ${m3(e.e22)} \end{bmatrix} \times 10^{-3},
         \qquad \varepsilon_{33} = ${m3(e.e33)} \times 10^{-3}`}
@@ -356,23 +356,23 @@ viewof mag2 = Inputs.range([0, 400], {value: 150, step: 10, label: "Magnify the 
 //| echo: false
 STATES3 = new Map([
   ["a general state", [150, -60, 100, 80, 0, 40]],
-  ["tension along x₃", [0, 0, 200, 0, 0, 0]],
+  ["tension along x₂", [0, 0, 200, 0, 0, 0]],
   ["hydrostatic pressure", [-150, -150, -150, 0, 0, 0]],
-  ["shear in the x₁–x₂ plane", [0, 0, 0, 120, 0, 0]],
-  ["plane stress: σ₃₃ = σ₁₃ = σ₂₃ = 0", [150, -60, 0, 80, 0, 0]],
-  ["plane strain: σ₃₃ = ν(σ₁₁ + σ₂₂), so ε₃₃ = 0", [150, -60, 27, 80, 0, 0]]
+  ["shear in the x₀–x₁ plane", [0, 0, 0, 120, 0, 0]],
+  ["plane stress: σ₂₂ = σ₀₂ = σ₁₂ = 0", [150, -60, 0, 80, 0, 0]],
+  ["plane strain: σ₂₂ = ν(σ₀₀ + σ₁₁), so ε₂₂ = 0", [150, -60, 27, 80, 0, 0]]
 ])
 viewof st3 = Inputs.select(STATES3, {label: "Start from"})
 ```
 
 ```{ojs}
 //| echo: false
-viewof b11 = Inputs.range([-300, 300], {value: st3[0], step: 5, label: "σ₁₁ (MPa)"})
-viewof b22 = Inputs.range([-300, 300], {value: st3[1], step: 5, label: "σ₂₂ (MPa)"})
-viewof b33 = Inputs.range([-300, 300], {value: st3[2], step: 1, label: "σ₃₃ (MPa)"})
-viewof b12 = Inputs.range([-300, 300], {value: st3[3], step: 5, label: "σ₁₂ = σ₂₁ (MPa)"})
-viewof b13 = Inputs.range([-300, 300], {value: st3[4], step: 5, label: "σ₁₃ = σ₃₁ (MPa)"})
-viewof b23 = Inputs.range([-300, 300], {value: st3[5], step: 5, label: "σ₂₃ = σ₃₂ (MPa)"})
+viewof b11 = Inputs.range([-300, 300], {value: st3[0], step: 5, label: "σ₀₀ (MPa)"})
+viewof b22 = Inputs.range([-300, 300], {value: st3[1], step: 5, label: "σ₁₁ (MPa)"})
+viewof b33 = Inputs.range([-300, 300], {value: st3[2], step: 1, label: "σ₂₂ (MPa)"})
+viewof b12 = Inputs.range([-300, 300], {value: st3[3], step: 5, label: "σ₀₁ = σ₁₀ (MPa)"})
+viewof b13 = Inputs.range([-300, 300], {value: st3[4], step: 5, label: "σ₀₂ = σ₂₀ (MPa)"})
+viewof b23 = Inputs.range([-300, 300], {value: st3[5], step: 5, label: "σ₁₂ = σ₂₁ (MPa)"})
 viewof yaw3 = Inputs.range([-180, 180], {value: -132, step: 2, label: "Turn the block (°)"})
 viewof mag3 = Inputs.range([0, 400], {value: 150, step: 10, label: "Magnify the deformation"})
 viewof hid3 = Inputs.toggle({label: "Show the hidden faces' arrows", value: false})
@@ -390,11 +390,11 @@ viewof hid3 = Inputs.toggle({label: "Show the hidden faces' arrows", value: fals
     <div>${fig}</div>
     <div style="flex:1; min-width:17rem; font-size:0.93rem; line-height:1.6">
       ${tex.block`[\sigma_{ij}] = \begin{bmatrix} ${M} \end{bmatrix}\ \text{MPa}`}
-      Column j holds the traction on the face whose normal is <u>e</u><sub>j</sub>: the x₁ face carries σ₁₁, σ₂₁, σ₃₁, and so on.
+      Column j holds the traction on the face whose normal is <u>e</u><sub>j</sub>: the x₀ face carries σ₀₀, σ₁₀, σ₂₀, and so on.
       Each face has one normal component, on the diagonal, and two shear components, off it.<br>
       ${tex.block`[\varepsilon_{ij}] = \begin{bmatrix} ${ep} \end{bmatrix} \times 10^{-3}`}
       <span style="color:#555">The strain of steel under this stress.
-      ε₁₁ + ε₂₂ + ε₃₃ = ${fmtS(1e3 * (fig.strain[0][0] + fig.strain[1][1] + fig.strain[2][2]), 3)} × 10⁻³ is the change of volume per unit volume.
+      ε₀₀ + ε₁₁ + ε₂₂ = ${fmtS(1e3 * (fig.strain[0][0] + fig.strain[1][1] + fig.strain[2][2]), 3)} × 10⁻³ is the change of volume per unit volume.
       The front faces carry the arrows; the faces hidden behind the block carry the same arrows, reversed.</span>
     </div></div>`;
 }
@@ -410,35 +410,35 @@ viewof hid3 = Inputs.toggle({label: "Show the hidden faces' arrows", value: fals
 fig_equilibrium_path = save(EF.fig_equilibrium(), "E2_Fig4_Equilibrium.png")
 ```
 
-![The forces along $x_1$ on a small rectangle of unit thickness. The stresses change from one face to the opposite face, and the body force acts on the area.](`{python} fig_equilibrium_path`){#fig-e2-equilibrium width=80%}
+![The forces along $x_0$ on a small rectangle of unit thickness. The stresses change from one face to the opposite face, and the body force acts on the area.](`{python} fig_equilibrium_path`){#fig-e2-equilibrium width=80%}
 
 The heat equation came from a balance of energy on a small rectangle.
 The equations of elasticity come from a balance of forces on the same rectangle, once for each direction.
-@fig-e2-equilibrium shows the forces along $x_1$.
+@fig-e2-equilibrium shows the forces along $x_0$.
 On each face the force is the stress times the length of the face, for a unit thickness.
-The body force $f_1$ is a force per unit volume (N/mm³), such as the weight of the material, and it acts on the area $dx_1\,dx_2$.
+The body force $f_0$ is a force per unit volume (N/mm³), such as the weight of the material, and it acts on the area $dx_0\,dx_1$.
 
 ::: {.derivation}
 $$
 \begin{aligned}
-\sum F_1 = 0:\quad
-&\left[\sigma_{11}(x_1 + dx_1, x_2) - \sigma_{11}(x_1, x_2)\right] dx_2 \\
-&\quad + \left[\sigma_{12}(x_1, x_2 + dx_2) - \sigma_{12}(x_1, x_2)\right] dx_1
-+ f_1\,dx_1\,dx_2 = 0 \\[4pt]
-\xrightarrow{\;\div\, dx_1 dx_2,\ \text{shrink}\;}\quad
-&\frac{\partial \sigma_{11}}{\partial x_1} + \frac{\partial \sigma_{12}}{\partial x_2} + f_1 = 0
+\sum F_0 = 0:\quad
+&\left[\sigma_{00}(x_0 + dx_0, x_1) - \sigma_{00}(x_0, x_1)\right] dx_1 \\
+&\quad + \left[\sigma_{01}(x_0, x_1 + dx_1) - \sigma_{01}(x_0, x_1)\right] dx_0
++ f_0\,dx_0\,dx_1 = 0 \\[4pt]
+\xrightarrow{\;\div\, dx_0 dx_1,\ \text{shrink}\;}\quad
+&\frac{\partial \sigma_{00}}{\partial x_0} + \frac{\partial \sigma_{01}}{\partial x_1} + f_0 = 0
 \end{aligned}
 $$
 :::
 
-The same balance along $x_2$ uses the second row of the stress matrix, and both fit one statement in index notation:
+The same balance along $x_1$ uses the second row of the stress matrix, and both fit one statement in index notation:
 
 ::: {.derivation}
 $$
 \left.
 \begin{aligned}
-\sigma_{11,1} + \sigma_{12,2} + f_1 &= 0 \\
-\sigma_{21,1} + \sigma_{22,2} + f_2 &= 0
+\sigma_{00,0} + \sigma_{01,1} + f_0 &= 0 \\
+\sigma_{10,0} + \sigma_{11,1} + f_1 &= 0
 \end{aligned}
 \;\right\}
 \qquad\Longleftrightarrow\qquad
@@ -454,11 +454,11 @@ $$
 - Heat flow had one balance law, $q_{i,i} = f$.
   Elasticity has two in 2D and three in 3D, one for each component of force.
 - The rectangle must also not spin.
-  Taking moments about its center, the shear forces on the right and left faces turn it counterclockwise by $\sigma_{21}\,dx_2\,dx_1$, and those on the top and bottom faces turn it clockwise by $\sigma_{12}\,dx_1\,dx_2$.
-  Everything else is smaller by a further factor of $dx_1$ or $dx_2$.
-  So $\sigma_{12} = \sigma_{21}$: the **stress tensor is symmetric**, and in 2D it has three independent components, $\sigma_{11}$, $\sigma_{22}$, and $\sigma_{12}$.
+  Taking moments about its center, the shear forces on the right and left faces turn it counterclockwise by $\sigma_{10}\,dx_1\,dx_0$, and those on the top and bottom faces turn it clockwise by $\sigma_{01}\,dx_0\,dx_1$.
+  Everything else is smaller by a further factor of $dx_0$ or $dx_1$.
+  So $\sigma_{01} = \sigma_{10}$: the **stress tensor is symmetric**, and in 2D it has three independent components, $\sigma_{00}$, $\sigma_{11}$, and $\sigma_{01}$.
 - In 3D the same argument gives $\sigma_{ij} = \sigma_{ji}$, six independent components.
-- For a steel part, the weight is $f_2 = -\rho\,g \approx -7.7 \times 10^{-5}$ N/mm³.
+- For a steel part, the weight is $f_1 = -\rho\,g \approx -7.7 \times 10^{-5}$ N/mm³.
   Across a 100 mm part it changes the stress by less than 0.01 MPa, so the examples on these pages set $f_i = 0$.
 :::
 
@@ -506,7 +506,7 @@ $$
 :::
 
 For steel, $\mu$ = `{python} gpa(MU)` GPa and $\lambda$ = `{python} gpa(LAM)` GPa.
-Here $\sigma_{kk} = \sigma_{11} + \sigma_{22} + \sigma_{33}$ and $\varepsilon_{kk} = \varepsilon_{11} + \varepsilon_{22} + \varepsilon_{33}$, the change of volume per unit volume.
+Here $\sigma_{kk} = \sigma_{00} + \sigma_{11} + \sigma_{22}$ and $\varepsilon_{kk} = \varepsilon_{00} + \varepsilon_{11} + \varepsilon_{22}$, the change of volume per unit volume.
 
 A general linear material ties every stress component to every strain component:
 
@@ -535,7 +535,7 @@ This is **Voigt notation**, the form the finite element code uses:
 
 ::: {.derivation}
 $$
-\underbrace{\begin{pmatrix} \sigma_{11} \\ \sigma_{22} \\ \sigma_{33} \\ \sigma_{23} \\ \sigma_{13} \\ \sigma_{12} \end{pmatrix}}_{\{\sigma\}}
+\underbrace{\begin{pmatrix} \sigma_{00} \\ \sigma_{11} \\ \sigma_{22} \\ \sigma_{12} \\ \sigma_{02} \\ \sigma_{01} \end{pmatrix}}_{\{\sigma\}}
 =
 \underbrace{\begin{bmatrix}
 \lambda + 2\mu & \lambda & \lambda & 0 & 0 & 0 \\
@@ -545,7 +545,7 @@ $$
 0 & 0 & 0 & 0 & \mu & 0 \\
 0 & 0 & 0 & 0 & 0 & \mu
 \end{bmatrix}}_{\mathbf{D}\text{, isotropic}}
-\underbrace{\begin{pmatrix} \varepsilon_{11} \\ \varepsilon_{22} \\ \varepsilon_{33} \\ \gamma_{23} \\ \gamma_{13} \\ \gamma_{12} \end{pmatrix}}_{\{\varepsilon\}}
+\underbrace{\begin{pmatrix} \varepsilon_{00} \\ \varepsilon_{11} \\ \varepsilon_{22} \\ \gamma_{12} \\ \gamma_{02} \\ \gamma_{01} \end{pmatrix}}_{\{\varepsilon\}}
 $$
 :::
 
@@ -553,7 +553,7 @@ $$
 - The strain vector holds the **engineering** shear strains $\gamma_{ij} = 2\varepsilon_{ij}$.
   With that choice, the energy $\sigma_{ij}\varepsilon_{ij}$, a sum of nine terms, equals the dot product $\{\sigma\}^T\{\varepsilon\}$ of six.
 - $\mathbf{D}$ is symmetric because $c_{ijkl} = c_{klij}$, and positive definite because the strain energy is positive.
-- The upper-left $3 \times 3$ block couples the three normal strains through $\lambda$: pulling along $x_1$ changes $\sigma_{22}$ and $\sigma_{33}$ unless the material is free to narrow.
+- The upper-left $3 \times 3$ block couples the three normal strains through $\lambda$: pulling along $x_0$ changes $\sigma_{11}$ and $\sigma_{22}$ unless the material is free to narrow.
 - The lower-right block is diagonal: in an isotropic material, a shear strain produces only the shear stress on the same plane.
 :::
 
@@ -570,11 +570,11 @@ Wood, rolled sheet, and fiber composites are stiffer along some directions than 
 In axes aligned with the grain or the fibers, such an **orthotropic** material still has no coupling between normal and shear components (@fig-e2-cpatterns b).
 In axes turned away from the fibers, every entry fills in, and the matrix looks like the anisotropic pattern (c).
 
-Explore this in the plane below, for a thin sheet in plane stress, where $\mathbf{D}$ is $3 \times 3$ and acts on $(\varepsilon_{11}, \varepsilon_{22}, \gamma_{12})$.
+Explore this in the plane below, for a thin sheet in plane stress, where $\mathbf{D}$ is $3 \times 3$ and acts on $(\varepsilon_{00}, \varepsilon_{11}, \gamma_{01})$.
 The polar plot shows the stiffness of a strip cut from the sheet in each direction: $E(\phi) = \sigma/\varepsilon$ for a pull along the angle $\phi$.
 An isotropic material draws a circle.
 A fiber composite is a narrow figure eight, stiff along its fibers and soft across them.
-Turn the fibers and watch the off-diagonal entries in the last column: a pull along $x_1$ then also shears the square.
+Turn the fibers and watch the off-diagonal entries in the last column: a pull along $x_0$ then also shears the square.
 
 ```{ojs}
 //| echo: false
@@ -585,8 +585,8 @@ MATS = new Map([
   ["carbon fibers in epoxy (orthotropic)", {E1: 181, E2: 10.3, G12: 7.17, nu12: 0.28, iso: false}]
 ])
 viewof mat = Inputs.select(MATS, {label: "Material", value: MATS.get("carbon fibers in epoxy (orthotropic)"), width: 300})
-viewof fib = Inputs.range([-90, 90], {value: 30, step: 5, label: "Fiber angle θ from x₁ (°)"})
-viewof pull = Inputs.radio(["σ₁₁: pull along x₁", "σ₂₂: pull along x₂", "σ₁₂: shear"], {value: "σ₁₁: pull along x₁", label: "Apply 100 MPa"})
+viewof fib = Inputs.range([-90, 90], {value: 30, step: 5, label: "Fiber angle θ from x₀ (°)"})
+viewof pull = Inputs.radio(["σ₀₀: pull along x₀", "σ₁₁: pull along x₁", "σ₀₁: shear"], {value: "σ₀₀: pull along x₀", label: "Apply 100 MPa"})
 ```
 
 ```{ojs}
@@ -594,7 +594,7 @@ viewof pull = Inputs.radio(["σ₁₁: pull along x₁", "σ₂₂: pull along x
 {
   const th = fib * Math.PI / 180;
   const C = lamina({...mat, theta: mat.iso ? 0 : th});
-  const sig = pull.startsWith("σ₁₁") ? [0.1, 0, 0] : pull.startsWith("σ₂₂") ? [0, 0.1, 0] : [0, 0, 0.1];   // GPa
+  const sig = pull.startsWith("σ₀₀") ? [0.1, 0, 0] : pull.startsWith("σ₁₁") ? [0, 0.1, 0] : [0, 0, 0.1];   // GPa
   const S = inv3(C), e = [0, 1, 2].map(r => S[r][0] * sig[0] + S[r][1] * sig[1] + S[r][2] * sig[2]);
   const emax = Math.max(...e.map(Math.abs)), magC = Math.round(0.12 / emax);
   const sz = Math.max(200, Math.min(270, Math.floor(width / 3) - 10));
@@ -616,9 +616,9 @@ viewof pull = Inputs.radio(["σ₁₁: pull along x₁", "σ₂₂: pull along x
       <div>${sq}${html([cap(`A square under ${pull.slice(0, 3)} = 100 MPa, deformation magnified ${magC} times.`)])}</div>
       <div style="flex:1; min-width:14rem; font-size:0.93rem; line-height:1.6">
         The strain under this stress:<br>
-        &nbsp; ε₁₁ = ${fmtS(1e3 * e[0], 3)} × 10⁻³<br>
-        &nbsp; ε₂₂ = ${fmtS(1e3 * e[1], 3)} × 10⁻³<br>
-        &nbsp; γ₁₂ = ${fmtS(1e3 * e[2], 3)} × 10⁻³<br><br>
+        &nbsp; ε₀₀ = ${fmtS(1e3 * e[0], 3)} × 10⁻³<br>
+        &nbsp; ε₁₁ = ${fmtS(1e3 * e[1], 3)} × 10⁻³<br>
+        &nbsp; γ₀₁ = ${fmtS(1e3 * e[2], 3)} × 10⁻³<br><br>
         ${mat.iso ? "An isotropic material has no preferred direction, so the fiber angle does nothing, and a normal stress never causes a shear strain."
           : Math.abs(Math.sin(2 * th)) < 1e-9 ? "With the fibers along an axis, the material axes are the coordinate axes: no coupling between normal and shear."
           : html`<span style="color:#e67e22"><b>Coupling:</b></span> the orange entries are nonzero, so a normal stress also produces a shear strain, and a shear stress also stretches the square.`}
@@ -640,16 +640,16 @@ fig_planes_path = save(EF.fig_planes(), "E2_Fig7_Planes.png")
 ![The two ways a three-dimensional body becomes a two-dimensional problem. (a) A thin plate loaded in its plane: the stresses on the faces are zero, so they are zero through the thin plate. (b) A long body with the same cross-section and the same loads all along its length, held at its ends: every cross-section deforms in the same way, and nothing moves along the length.](`{python} fig_planes_path`){#fig-e2-planes width=100%}
 
 Every body is three-dimensional.
-A two-dimensional model keeps the unknowns $u_1(x_1, x_2)$ and $u_2(x_1, x_2)$ and assumes something about the third direction.
-There are two common assumptions, and they lead to two different matrices $\mathbf{D}$ that act on $\{\varepsilon\} = (\varepsilon_{11}, \varepsilon_{22}, \gamma_{12})^T$.
+A two-dimensional model keeps the unknowns $u_0(x_0, x_1)$ and $u_1(x_0, x_1)$ and assumes something about the third direction.
+There are two common assumptions, and they lead to two different matrices $\mathbf{D}$ that act on $\{\varepsilon\} = (\varepsilon_{00}, \varepsilon_{11}, \gamma_{01})^T$.
 
 **Plane stress** (@fig-e2-planes a) suits a thin plate loaded in its own plane: a gusset plate, a bracket, a plate with a hole.
-Its faces are free, so $\sigma_{33} = \sigma_{13} = \sigma_{23} = 0$ on the faces, and since the plate is thin they are taken to be zero throughout.
-The plate is then free to thin where it is pulled: $\varepsilon_{33} \neq 0$.
+Its faces are free, so $\sigma_{22} = \sigma_{02} = \sigma_{12} = 0$ on the faces, and since the plate is thin they are taken to be zero throughout.
+The plate is then free to thin where it is pulled: $\varepsilon_{22} \neq 0$.
 
 **Plane strain** (@fig-e2-planes b) suits a long body loaded evenly along its length: a dam, a retaining wall, a tunnel lining, a long beam loaded across its section.
-Far from the ends, every cross-section deforms the same way and no point moves along $x_3$, so $\varepsilon_{33} = \varepsilon_{13} = \varepsilon_{23} = 0$.
-Holding the length fixed takes a stress along it: $\sigma_{33} \neq 0$.
+Far from the ends, every cross-section deforms the same way and no point moves along $x_2$, so $\varepsilon_{22} = \varepsilon_{02} = \varepsilon_{12} = 0$.
+Holding the length fixed takes a stress along it: $\sigma_{22} \neq 0$.
 
 ::: {.derivation}
 $$
@@ -657,26 +657,26 @@ $$
 \text{plane stress:}\quad
 \mathbf{D} &= \frac{E}{1 - \nu^2}
 \begin{bmatrix} 1 & \nu & 0 \\ \nu & 1 & 0 \\ 0 & 0 & \tfrac{1 - \nu}{2} \end{bmatrix},
-&\varepsilon_{33} &= -\frac{\nu}{E}\left(\sigma_{11} + \sigma_{22}\right) \\[6pt]
+&\varepsilon_{22} &= -\frac{\nu}{E}\left(\sigma_{00} + \sigma_{11}\right) \\[6pt]
 \text{plane strain:}\quad
 \mathbf{D} &= \frac{E}{(1 + \nu)(1 - 2\nu)}
 \begin{bmatrix} 1 - \nu & \nu & 0 \\ \nu & 1 - \nu & 0 \\ 0 & 0 & \tfrac{1 - 2\nu}{2} \end{bmatrix},
-&\sigma_{33} &= \nu\left(\sigma_{11} + \sigma_{22}\right)
+&\sigma_{22} &= \nu\left(\sigma_{00} + \sigma_{11}\right)
 \end{aligned}
 $$
 :::
 
 ::: {.step .notes}
-- Plane strain is the $3 \times 3$ block of the isotropic $6 \times 6$ matrix above that acts on $(\varepsilon_{11}, \varepsilon_{22}, \gamma_{12})$, with $\varepsilon_{33} = 0$: diagonal $\lambda + 2\mu$, off-diagonal $\lambda$, shear $\mu$.
+- Plane strain is the $3 \times 3$ block of the isotropic $6 \times 6$ matrix above that acts on $(\varepsilon_{00}, \varepsilon_{11}, \gamma_{01})$, with $\varepsilon_{22} = 0$: diagonal $\lambda + 2\mu$, off-diagonal $\lambda$, shear $\mu$.
 - Plane stress has the same form with $\lambda$ replaced by $\bar\lambda = 2\lambda\mu/(\lambda + 2\mu)$, which is how Hughes writes it.
   The smaller $\bar\lambda$ comes from letting the plate thin out.
-- For steel, plane stress has $D_{11}$ = `{python} gpa(E / (1 - NU**2))` GPa and plane strain has $D_{11}$ = `{python} gpa(E * (1 - NU) / ((1 + NU) * (1 - 2 * NU)))` GPa.
-  Plane strain is the stiffer model, because the material cannot escape along $x_3$.
+- For steel, plane stress has $D_{00}$ = `{python} gpa(E / (1 - NU**2))` GPa and plane strain has $D_{00}$ = `{python} gpa(E * (1 - NU) / ((1 + NU) * (1 - 2 * NU)))` GPa.
+  Plane strain is the stiffer model, because the material cannot escape along $x_2$.
 - In plane stress, the forces are carried by a plate of thickness $t$, and the integrals on the next page carry a factor $t$.
-  In plane strain, everything is per unit length along $x_3$.
-- The out-of-plane quantity, $\varepsilon_{33}$ or $\sigma_{33}$, is not an unknown.
-  It is recovered from the in-plane stresses afterward, and it matters for yielding: the von Mises stress on the next page includes $\sigma_{33}$.
-- In plane strain, $\mathbf{D}$ grows without bound as $\nu \to \tfrac{1}{2}$, because a material that cannot change volume and cannot move along $x_3$ resists any change of area.
+  In plane strain, everything is per unit length along $x_2$.
+- The out-of-plane quantity, $\varepsilon_{22}$ or $\sigma_{22}$, is not an unknown.
+  It is recovered from the in-plane stresses afterward, and it matters for yielding: the von Mises stress on the next page includes $\sigma_{22}$.
+- In plane strain, $\mathbf{D}$ grows without bound as $\nu \to \tfrac{1}{2}$, because a material that cannot change volume and cannot move along $x_2$ resists any change of area.
   Nearly incompressible materials such as rubber are still linear elastic at small strains, but the standard displacement elements lock for them, and they need the mixed and reduced-integration methods of Hughes Chapter 4.
   These pages keep $\nu \le 0.45$.
 :::
@@ -705,10 +705,10 @@ $$
 - $\Gamma_{g_i}$ is where $u_i$ is prescribed: $u_i = g_i$, in mm.
 - $\Gamma_{h_i}$ is where the traction component is prescribed: $\sigma_{ij}\,n_j = h_i$, in MPa.
 - The split can be **different for each direction**.
-  A roller on a horizontal surface prescribes $u_2$ but leaves the body free to slide, so its point belongs to $\Gamma_{g_2}$ and to $\Gamma_{h_1}$ with $h_1 = 0$ (@fig-e2-supports).
-- A **free surface** is a boundary condition: it belongs to $\Gamma_{h_1}$ and $\Gamma_{h_2}$, with $h_1 = h_2 = 0$.
+  A roller on a horizontal surface prescribes $u_1$ but leaves the body free to slide, so its point belongs to $\Gamma_{g_1}$ and to $\Gamma_{h_0}$ with $h_0 = 0$ (@fig-e2-supports).
+- A **free surface** is a boundary condition: it belongs to $\Gamma_{h_0}$ and $\Gamma_{h_1}$, with $h_0 = h_1 = 0$.
   This is the elasticity version of "insulated means $h = 0$".
-- A **line of symmetry** with normal $\underline{e}_1$ allows no displacement across it and no shear along it: $u_1 = 0$ and $h_2 = 0$.
+- A **line of symmetry** with normal $\underline{e}_0$ allows no displacement across it and no shear along it: $u_0 = 0$ and $h_1 = 0$.
 - The supports must prevent every rigid-body motion: in 2D, two translations and one rotation.
   If they do not, the displacement is not unique (any rigid motion can be added), and the stiffness matrix on the next page is singular.
 :::
@@ -719,25 +719,25 @@ $$
 fig_bcs_path = save(EF.fig_bcs(), "E2_Fig9_BCs.png")
 ```
 
-![The quarter of the plate with a hole that symmetry allows us to model, with the boundary split twice. (a) For direction 1, only the left edge has $u_1$ prescribed; every other edge, including the hole and the bottom line of symmetry, has $h_1$ prescribed. (b) For direction 2, only the bottom edge has $u_2$ prescribed. The two splits are different, and each one covers the whole boundary.](`{python} fig_bcs_path`){#fig-e2-bcs width=100%}
+![The quarter of the plate with a hole that symmetry allows us to model, with the boundary split twice. (a) For direction 0, only the left edge has $u_0$ prescribed; every other edge, including the hole and the bottom line of symmetry, has $h_0$ prescribed. (b) For direction 1, only the bottom edge has $u_1$ prescribed. The two splits are different, and each one covers the whole boundary.](`{python} fig_bcs_path`){#fig-e2-bcs width=100%}
 
 @fig-e2-bcs shows a case where the two splits differ everywhere.
 The plate with a hole is symmetric about both center lines, so one quarter is enough, with symmetry conditions on the cut edges.
-On the left edge, $u_1 = 0$ and $h_2 = 0$; on the bottom edge, $u_2 = 0$ and $h_1 = 0$.
-The right edge is pulled, $h_1 = \sigma$ and $h_2 = 0$, and the top edge and the hole are free.
-These conditions also stop every rigid-body motion: the left edge prevents sliding along $x_1$, the bottom edge prevents sliding along $x_2$, and together they prevent the rotation.
+On the left edge, $u_0 = 0$ and $h_1 = 0$; on the bottom edge, $u_1 = 0$ and $h_0 = 0$.
+The right edge is pulled, $h_0 = \sigma$ and $h_1 = 0$, and the top edge and the hole are free.
+These conditions also stop every rigid-body motion: the left edge prevents sliding along $x_0$, the bottom edge prevents sliding along $x_1$, and together they prevent the rotation.
 
 ## The strong form
 
 Collecting the pieces gives the strong form $(\mathrm{S})$ stated at the top of the page.
-In two dimensions it is two coupled partial differential equations for $u_1$ and $u_2$.
+In two dimensions it is two coupled partial differential equations for $u_0$ and $u_1$.
 For an isotropic material with constant $\lambda$ and $\mu$, substituting the strain into Hooke's law and the stress into equilibrium gives **Navier's equations**:
 
 ::: {.derivation}
 $$
 \begin{aligned}
-(\lambda + 2\mu)\,u_{1,11} + \mu\,u_{1,22} + (\lambda + \mu)\,u_{2,12} + f_1 &= 0 \\
-(\lambda + \mu)\,u_{1,12} + \mu\,u_{2,11} + (\lambda + 2\mu)\,u_{2,22} + f_2 &= 0
+(\lambda + 2\mu)\,u_{0,00} + \mu\,u_{0,11} + (\lambda + \mu)\,u_{1,01} + f_0 &= 0 \\
+(\lambda + \mu)\,u_{0,01} + \mu\,u_{1,00} + (\lambda + 2\mu)\,u_{1,11} + f_1 &= 0
 \end{aligned}
 \qquad\Longleftrightarrow\qquad
 \mu\,u_{i,jj} + (\lambda + \mu)\,u_{j,ji} + f_i = 0
@@ -748,7 +748,7 @@ $$
 - This is the plane strain form; plane stress replaces $\lambda$ by $\bar\lambda$.
 - Compare the heat equation, $-\kappa\,u_{,ii} = f$: one unknown, one Laplacian.
   Here each equation has a Laplacian-like part, $\mu\,u_{i,jj}$, plus the term $(\lambda + \mu)\,u_{j,ji}$, which **couples** the two components.
-  $u_1$ cannot be found without $u_2$.
+  $u_0$ cannot be found without $u_1$.
 - In the finite element method the coupling appears as $2 \times 2$ blocks in the stiffness matrix: every node has two unknowns, and every pair of nodes interacts in both directions.
 - The boundary conditions are $u_i = g_i$ on $\Gamma_{g_i}$ and $\sigma_{ij}\,n_j = h_i$ on $\Gamma_{h_i}$, one of each pair in each direction.
 :::
@@ -786,7 +786,7 @@ $$
 \underbrace{\int_\Omega w_{(i,j)}\,c_{ijkl}\,u_{(k,l)}\,d\Omega}_{a(\underline{w},\,\underline{u})\;=\;\text{internal virtual work}}
 \;=\;
 \underbrace{\int_\Omega w_i\,f_i\,d\Omega
-+ \sum_{i=1}^{2} \int_{\Gamma_{h_i}} w_i\,h_i\,d\Gamma}_{(\underline{w},\,\underline{f}) \,+\, (\underline{w},\,\underline{h})_\Gamma\;=\;\text{external virtual work}}
++ \sum_{i=0}^{1} \int_{\Gamma_{h_i}} w_i\,h_i\,d\Gamma}_{(\underline{w},\,\underline{f}) \,+\, (\underline{w},\,\underline{h})_\Gamma\;=\;\text{external virtual work}}
 \qquad \forall\, w_i \in \mathcal{V}_i
 $$
 :::
@@ -821,16 +821,16 @@ fig_cantilever_setup_path = save(EF.fig_cantilever_setup(), "E2_Fig10_Cantilever
 
 Few problems in elasticity have closed-form solutions, and fewer still have shapes worth building.
 One that does is the cantilever of @fig-e2-cantilever-setup, solved by Timoshenko and Goodier in *Theory of Elasticity*.
-With $x_2$ measured from the mid-depth and $I = t D^3/12$ = `{python} "{:,.0f}".format(I_CL)` mm⁴, the plane stress solution is
+With $x_1$ measured from the mid-depth and $I = t D^3/12$ = `{python} "{:,.0f}".format(I_CL)` mm⁴, the plane stress solution is
 
 ::: {.derivation}
 $$
 \begin{aligned}
-u_1 &= \frac{P\,x_2}{6EI}\left[(6L - 3x_1)\,x_1 + (2 + \nu)\left(x_2^2 - \frac{D^2}{4}\right)\right] \\
-u_2 &= -\frac{P}{6EI}\left[3\nu\,x_2^2\,(L - x_1) + \frac{(4 + 5\nu)\,D^2 x_1}{4} + (3L - x_1)\,x_1^2\right] \\[4pt]
-\sigma_{11} &= \frac{P\,(L - x_1)\,x_2}{I}, \qquad
-\sigma_{22} = 0, \qquad
-\sigma_{12} = -\frac{P}{2I}\left(\frac{D^2}{4} - x_2^2\right)
+u_0 &= \frac{P\,x_1}{6EI}\left[(6L - 3x_0)\,x_0 + (2 + \nu)\left(x_1^2 - \frac{D^2}{4}\right)\right] \\
+u_1 &= -\frac{P}{6EI}\left[3\nu\,x_1^2\,(L - x_0) + \frac{(4 + 5\nu)\,D^2 x_0}{4} + (3L - x_0)\,x_0^2\right] \\[4pt]
+\sigma_{00} &= \frac{P\,(L - x_0)\,x_1}{I}, \qquad
+\sigma_{11} = 0, \qquad
+\sigma_{01} = -\frac{P}{2I}\left(\frac{D^2}{4} - x_1^2\right)
 \end{aligned}
 $$
 :::
@@ -838,14 +838,14 @@ $$
 Each part of the strong form can be checked directly:
 
 ::: {.step .notes}
-- **Equilibrium in $x_1$:** $\sigma_{11,1} + \sigma_{12,2} = -P x_2/I + P x_2/I = 0$.
-  **In $x_2$:** $\sigma_{21,1} + \sigma_{22,2} = 0 + 0 = 0$.
+- **Equilibrium in $x_0$:** $\sigma_{00,0} + \sigma_{01,1} = -P x_1/I + P x_1/I = 0$.
+  **In $x_1$:** $\sigma_{10,0} + \sigma_{11,1} = 0 + 0 = 0$.
 - **Hooke's law:** differentiating $u_i$ gives the strains, and the plane stress $\mathbf{D}$ turns them into the stresses above.
-  For example, $u_{1,1} = P(L - x_1)x_2/(EI)$ and $u_{2,2} = -\nu P(L - x_1)x_2/(EI)$, so $\sigma_{22} = \tfrac{E}{1 - \nu^2}(\nu\,u_{1,1} + u_{2,2}) = 0$.
-- **Top and bottom edges**, $x_2 = \pm D/2$, with $\underline{n} = (0, \pm 1)$: $h_1 = \pm\sigma_{12} = 0$ and $h_2 = \pm\sigma_{22} = 0$.
+  For example, $u_{0,0} = P(L - x_0)x_1/(EI)$ and $u_{1,1} = -\nu P(L - x_0)x_1/(EI)$, so $\sigma_{11} = \tfrac{E}{1 - \nu^2}(\nu\,u_{0,0} + u_{1,1}) = 0$.
+- **Top and bottom edges**, $x_1 = \pm D/2$, with $\underline{n} = (0, \pm 1)$: $h_0 = \pm\sigma_{01} = 0$ and $h_1 = \pm\sigma_{11} = 0$.
   Both are free, in both directions.
-- **The loaded end**, $x_1 = L$, with $\underline{n} = (1, 0)$: $h_1 = \sigma_{11} = 0$ and $h_2 = \sigma_{21}$, a parabola whose resultant over the depth is $\int \sigma_{21}\,t\,dx_2 = -P$.
-- **The left end**, $x_1 = 0$: $u_1$ and $u_2$ take the values of the formulas there.
+- **The loaded end**, $x_0 = L$, with $\underline{n} = (1, 0)$: $h_0 = \sigma_{00} = 0$ and $h_1 = \sigma_{10}$, a parabola whose resultant over the depth is $\int \sigma_{10}\,t\,dx_1 = -P$.
+- **The left end**, $x_0 = 0$: $u_0$ and $u_1$ take the values of the formulas there.
   They are not zero: the end section warps slightly into an S-shape.
   A real wall that held the end perfectly flat would change the stresses near it, and by Saint-Venant's principle, nowhere else.
 :::
@@ -865,18 +865,18 @@ For a beam only four times as long as it is deep, that is a 4% difference.
 The page [Beams and Frames from Three-Dimensional Elasticity](Beam_Frame_Formulation.qmd) derives beam theory from elasticity, with shear deformation included.
 
 **Virtual work on the cantilever.**
-Take the virtual displacement $w_1 = 0$, $w_2 = (x_1/L)^2$ mm, which is zero on the left end, where both displacements are prescribed.
-Its only nonzero derivative is $w_{2,1} = 2x_1/L^2$, so $w_{(1,2)} = w_{(2,1)} = x_1/L^2$, and only $\sigma_{12}$ does internal virtual work:
+Take the virtual displacement $w_0 = 0$, $w_1 = (x_0/L)^2$ mm, which is zero on the left end, where both displacements are prescribed.
+Its only nonzero derivative is $w_{1,0} = 2x_0/L^2$, so $w_{(0,1)} = w_{(1,0)} = x_0/L^2$, and only $\sigma_{01}$ does internal virtual work:
 
 ::: {.derivation}
 $$
-\int_\Omega 2\,\sigma_{12}\,\frac{x_1}{L^2}\;t\,d\Omega
-= \frac{2t}{L^2}\int_0^L x_1\,dx_1 \int_{-D/2}^{D/2} \sigma_{12}\,dx_2
+\int_\Omega 2\,\sigma_{01}\,\frac{x_0}{L^2}\;t\,d\Omega
+= \frac{2t}{L^2}\int_0^L x_0\,dx_0 \int_{-D/2}^{D/2} \sigma_{01}\,dx_1
 = t \cdot \left(-\frac{P D^3}{12 I}\right) = -P \cdot (1\ \text{mm})
 $$
 :::
 
-The external virtual work is the end load moving through $w_2(L) = 1$ mm: $-P \cdot (1\ \text{mm})$, the same $-8000$ N·mm.
+The external virtual work is the end load moving through $w_1(L) = 1$ mm: $-P \cdot (1\ \text{mm})$, the same $-8000$ N·mm.
 The top and bottom edges add nothing, because $h_i = 0$ there, and the left end adds nothing, because $\underline{w} = \underline{0}$ there.
 
 ## Two problems without a closed-form solution
@@ -904,7 +904,7 @@ The stress settles back to $\sigma$ within a few radii.
 fig_kirsch_path = save(EF.fig_kirsch(), "E2_Fig13_Kirsch.png")
 ```
 
-![The stress $\sigma_{11}$ along the line through the center of the hole, perpendicular to the load. Kirsch's solution for an infinite plate reaches $3\sigma$ at the hole. Our plate is only four hole-diameters wide, and the empirical estimate for it (the dot) is higher.](`{python} fig_kirsch_path`){#fig-e2-kirsch width=62%}
+![The stress $\sigma_{00}$ along the line through the center of the hole, perpendicular to the load. Kirsch's solution for an infinite plate reaches $3\sigma$ at the hole. Our plate is only four hole-diameters wide, and the empirical estimate for it (the dot) is higher.](`{python} fig_kirsch_path`){#fig-e2-kirsch width=62%}
 
 Our plate is 100 mm wide with a 25 mm hole, so the remaining material on either side of the hole carries more than the remote stress.
 There is no exact solution for a finite plate.
