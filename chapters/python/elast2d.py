@@ -12,8 +12,9 @@ Hughes' conventions: nodes A = 1..nnp, local nodes a = 1..nen, elements
 e = 1..nel, directions i = 1, 2, the array ID(i, A) with 0 marking a
 prescribed displacement component, and LM(i, a, e) = ID(i, IEN(a, e)).  The
 arrays below are 0-based Python arrays that hold those 1-based numbers.
-Local nodes: corners counter-clockwise from (xi, eta) = (-1, -1), then for Q9
-the mid-side nodes counter-clockwise from the bottom, then the centre.
+Local nodes: the stride rule of Class 11, a = i + (p + 1) j for the node at
+(xi, eta) = (-1 + 2 i / p, -1 + 2 j / p), row by row from the bottom left, as in
+the class notes (Hughes and the heat code fem2d.py go counter-clockwise instead).
 
 Units: millimetres, newtons, and megapascals (N/mm^2).  Plane stress uses a
 thickness t; plane strain uses t = 1 mm, so forces are per millimetre of
@@ -27,8 +28,7 @@ import math
 import numpy as np
 
 # ------------------------------------------------------------------ elements
-LOCAL_IJ = {1: [(0, 0), (1, 0), (1, 1), (0, 1)],
-            2: [(0, 0), (2, 0), (2, 2), (0, 2), (1, 0), (2, 1), (1, 2), (0, 1), (1, 1)]}
+LOCAL_IJ = {p: [(i, j) for j in range(p + 1) for i in range(p + 1)] for p in (1, 2)}
 SIDE_PARAM = {"bottom": lambda t: (t, -1.0), "right": lambda t: (1.0, t),
               "top": lambda t: (t, 1.0), "left": lambda t: (-1.0, t)}
 
@@ -200,12 +200,10 @@ class Mesh:
 
 
 def side_local(p, side):
-    """Local node numbers (0-based) on one side of the parent square."""
-    cs = {"bottom": [0, 1], "right": [1, 2], "top": [2, 3], "left": [3, 0]}[side]
-    if p == 1:
-        return cs
-    mid = {"bottom": 4, "right": 5, "top": 6, "left": 7}[side]
-    return [cs[0], mid, cs[1]]
+    """Local node numbers (0-based) on one side of the parent square, by the stride rule."""
+    n = p + 1
+    return {"bottom": [k for k in range(n)], "right": [p + n * k for k in range(n)],
+            "top": [n * p + k for k in range(n)], "left": [n * k for k in range(n)]}[side]
 
 
 def rcm(nnp, IEN):

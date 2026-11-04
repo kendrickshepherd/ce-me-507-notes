@@ -37,7 +37,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../chapters/3_Support_FunctionSpaces.html" rel="next">
+<link href="../chapters/28_Class.html" rel="next">
 <link href="../chapters/26_Class.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -49,7 +49,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-25d60f11bf0350d4acb1bb2c5c0bf5d1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-bd990e089991ec7d162b92b5e37a2dc1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -349,6 +349,12 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Class 27: Voigt Notation and the Elasticity Matrix</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/28_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Class 28: The Galerkin Form of Elasticity and Assembly</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
@@ -466,14 +472,14 @@ window.Quarto = {
 <p>In <a href="../chapters/26_Class.html">Class 26</a>, we found the weak form of linear elasticity, which is the principle of virtual work:</p>
 <p><span class="math display">\[
 \int_\Omega w_{(i,j)}\,\sigma_{ij}\;d\Omega
-= \int_\Omega w_i\,f_i\;d\Omega + \sum_{i=1}^{n_{sd}}\left(\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma\right) .
+= \int_\Omega w_i\,f_i\;d\Omega + \sum_{i=0}^{n_{sd}-1}\left(\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma\right) .
 \]</span></p>
 <p>As in Class 26, <span class="math inline">\(w_i\)</span> is the virtual displacement, which some texts write as <span class="math inline">\(\hat{u}_i\)</span>, <span class="math inline">\(\delta u_i\)</span>, or <span class="math inline">\(\bar{u}_i\)</span>. These notes continue to use <span class="math inline">\(w_i\)</span>. The hat on the virtual strain vector <span class="math inline">\(\hat{\underline{\epsilon}}\)</span>, defined below, is used in the same spirit, to mark the strain of the virtual displacement.</p>
 <p>The stress is related to the displacement by Hooke’s law, <span class="math inline">\(\sigma_{ij} = c_{ijkl}\,\varepsilon_{kl} = c_{ijkl}\,u_{(k,l)}\)</span>, so the weak form can be written entirely in terms of the displacement:</p>
 <p><span class="math display">\[
 \underbrace{\int_\Omega w_{(i,j)}\,c_{ijkl}\,u_{(k,l)}\;d\Omega}_{a(\underline{w},\,\underline{u})}
 = \underbrace{\int_\Omega w_i\,f_i\;d\Omega}_{(\underline{w},\,\underline{f})}
-+ \underbrace{\sum_{i=1}^{n_{sd}}\left(\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma\right)}_{(\underline{w},\,\underline{h})_\Gamma} .
++ \underbrace{\sum_{i=0}^{n_{sd}-1}\left(\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma\right)}_{(\underline{w},\,\underline{h})_\Gamma} .
 \]</span></p>
 <p>This has the same structure as the weak form of the Poisson Equation, <span class="math inline">\(a(w,u) = (w,f) + (w,h)_\Gamma\)</span>. The integrand of <span class="math inline">\(a(\underline{w},\underline{u})\)</span>, however, is summed over four indices. In two dimensions it contains <span class="math inline">\(2^4 = 16\)</span> terms, and in three dimensions it contains <span class="math inline">\(3^4 = 81\)</span>. Before we can compute it with the finite element method, we need a more compact way to write it.</p>
 <p>Since the strain and the stress are symmetric, each has only three independent components in two dimensions, and six in three dimensions. <strong>Voigt notation</strong> stores these independent components in vectors, and stores the elastic coefficients in a matrix. The weak form then becomes a product of vectors and matrices, which is the form that is typically used.</p>
@@ -482,21 +488,21 @@ window.Quarto = {
 <p>We first assume two dimensions. Define the <strong>strain vector</strong> of the displacement, and the corresponding <strong>virtual strain vector</strong> of the virtual displacement, by</p>
 <p><span class="math display">\[
 \underline{\epsilon}(\underline{u}) =
-\begin{bmatrix} u_{1,1} \\ u_{2,2} \\ u_{1,2} + u_{2,1} \end{bmatrix}
+\begin{bmatrix} u_{0,0} \\ u_{1,1} \\ u_{0,1} + u_{1,0} \end{bmatrix}
 =: \underline{\epsilon},
 \qquad
 \underline{\epsilon}(\underline{w}) =
-\begin{bmatrix} w_{1,1} \\ w_{2,2} \\ w_{1,2} + w_{2,1} \end{bmatrix}
+\begin{bmatrix} w_{0,0} \\ w_{1,1} \\ w_{0,1} + w_{1,0} \end{bmatrix}
 =: \hat{\underline{\epsilon}} .
 \]</span></p>
-<p>The first two entries are the normal strains <span class="math inline">\(\varepsilon_{11}\)</span> and <span class="math inline">\(\varepsilon_{22}\)</span>. The third entry is <span class="math inline">\(u_{1,2} + u_{2,1} = 2\,\varepsilon_{12}\)</span>, which is called the <strong>engineering shear strain</strong>, <span class="math inline">\(\gamma_{12}\)</span>. It is the total change in the angle between two fibers that were originally along the <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span> directions. The reason that the third entry is the sum rather than the average will become clear below. This vector holds only the in-plane strains. The strains that involve the third direction, <span class="math inline">\(\varepsilon_{13}\)</span>, <span class="math inline">\(\varepsilon_{23}\)</span>, and <span class="math inline">\(\varepsilon_{33}\)</span>, are treated in the sections on plane strain and plane stress.</p>
+<p>The first two entries are the normal strains <span class="math inline">\(\varepsilon_{00}\)</span> and <span class="math inline">\(\varepsilon_{11}\)</span>. The third entry is <span class="math inline">\(u_{0,1} + u_{1,0} = 2\,\varepsilon_{01}\)</span>, which is called the <strong>engineering shear strain</strong>, <span class="math inline">\(\gamma_{01}\)</span>. It is the total change in the angle between two fibers that were originally along the <span class="math inline">\(x_0\)</span> and <span class="math inline">\(x_1\)</span> directions. The reason that the third entry is the sum rather than the average will become clear below. This vector holds only the in-plane strains. The strains that involve the third direction, <span class="math inline">\(\varepsilon_{02}\)</span>, <span class="math inline">\(\varepsilon_{12}\)</span>, and <span class="math inline">\(\varepsilon_{22}\)</span>, are treated in the sections on plane strain and plane stress.</p>
 <p>Define the <strong>elasticity matrix</strong> by</p>
 <p><span class="math display">\[
 \underline{\underline{D}} =
 \begin{bmatrix}
-D_{11} &amp; D_{12} &amp; D_{13} \\
-D_{21} &amp; D_{22} &amp; D_{23} \\
-D_{31} &amp; D_{32} &amp; D_{33}
+D_{00} &amp; D_{01} &amp; D_{02} \\
+D_{10} &amp; D_{11} &amp; D_{12} \\
+D_{20} &amp; D_{21} &amp; D_{22}
 \end{bmatrix},
 \qquad
 D_{IJ} = D_{JI} .
@@ -505,7 +511,7 @@ D_{IJ} = D_{JI} .
 <div id="tbl-c27-voigt" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-c27-voigt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;27.1: The Voigt index map in two dimensions. Both index pairs 12 and 21 map to 3.
+Table&nbsp;27.1: The Voigt index map in two dimensions. Both index pairs 01 and 10 map to 2.
 </figcaption>
 <div aria-describedby="tbl-c27-voigt-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -518,31 +524,31 @@ Table&nbsp;27.1: The Voigt index map in two dimensions. Both index pairs 12 and 
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: center;">1</td>
-<td style="text-align: center;">1</td>
-<td style="text-align: center;">1</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
 </tr>
 <tr class="even">
-<td style="text-align: center;">2</td>
-<td style="text-align: center;">2</td>
-<td style="text-align: center;">2</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
 </tr>
 <tr class="odd">
-<td style="text-align: center;">3</td>
-<td style="text-align: center;">1</td>
 <td style="text-align: center;">2</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">1</td>
 </tr>
 <tr class="even">
-<td style="text-align: center;">3</td>
 <td style="text-align: center;">2</td>
 <td style="text-align: center;">1</td>
+<td style="text-align: center;">0</td>
 </tr>
 </tbody>
 </table>
 </div>
 </figure>
 </div>
-<p>For example, <span class="math inline">\(D_{12} = c_{1122}\)</span> and <span class="math inline">\(D_{13} = c_{1112}\)</span>. Since both <span class="math inline">\(12\)</span> and <span class="math inline">\(21\)</span> map to <span class="math inline">\(3\)</span>, the entry <span class="math inline">\(D_{13}\)</span> could equally be written <span class="math inline">\(c_{1121}\)</span>, and the minor symmetries guarantee that these are the same number. The major symmetry, <span class="math inline">\(c_{ijkl} = c_{klij}\)</span>, gives <span class="math inline">\(D_{IJ} = D_{JI}\)</span>.</p>
+<p>For example, <span class="math inline">\(D_{01} = c_{0011}\)</span> and <span class="math inline">\(D_{02} = c_{0001}\)</span>. Since both <span class="math inline">\(01\)</span> and <span class="math inline">\(10\)</span> map to <span class="math inline">\(2\)</span>, the entry <span class="math inline">\(D_{02}\)</span> could equally be written <span class="math inline">\(c_{0010}\)</span>, and the minor symmetries guarantee that these are the same number. The major symmetry, <span class="math inline">\(c_{ijkl} = c_{klij}\)</span>, gives <span class="math inline">\(D_{IJ} = D_{JI}\)</span>.</p>
 </section>
 <section id="the-weak-form-in-voigt-notation" class="level2" data-number="27.2">
 <h2 data-number="27.2" class="anchored" data-anchor-id="the-weak-form-in-voigt-notation"><span class="header-section-number">27.2</span> The weak form in Voigt notation</h2>
@@ -552,10 +558,10 @@ Table&nbsp;27.1: The Voigt index map in two dimensions. Both index pairs 12 and 
 <p><span class="math display">\[
 \begin{aligned}
 w_{(i,j)}\,c_{ijkl}\,u_{(k,l)}
-= \;&amp; w_{1,1}\left(c_{1111}\,u_{1,1} + c_{1122}\,u_{2,2} + c_{1112}\,u_{1,2} + c_{1121}\,u_{2,1}\right) \\
-+ \;&amp; w_{2,2}\left(c_{2211}\,u_{1,1} + c_{2222}\,u_{2,2} + c_{2212}\,u_{1,2} + c_{2221}\,u_{2,1}\right) \\
-+ \;&amp; w_{1,2}\left(c_{1211}\,u_{1,1} + c_{1222}\,u_{2,2} + c_{1212}\,u_{1,2} + c_{1221}\,u_{2,1}\right) \\
-+ \;&amp; w_{2,1}\left(c_{2111}\,u_{1,1} + c_{2122}\,u_{2,2} + c_{2112}\,u_{1,2} + c_{2121}\,u_{2,1}\right) .
+= \;&amp; w_{0,0}\left(c_{0000}\,u_{0,0} + c_{0011}\,u_{1,1} + c_{0001}\,u_{0,1} + c_{0010}\,u_{1,0}\right) \\
++ \;&amp; w_{1,1}\left(c_{1100}\,u_{0,0} + c_{1111}\,u_{1,1} + c_{1101}\,u_{0,1} + c_{1110}\,u_{1,0}\right) \\
++ \;&amp; w_{0,1}\left(c_{0100}\,u_{0,0} + c_{0111}\,u_{1,1} + c_{0101}\,u_{0,1} + c_{0110}\,u_{1,0}\right) \\
++ \;&amp; w_{1,0}\left(c_{1000}\,u_{0,0} + c_{1011}\,u_{1,1} + c_{1001}\,u_{0,1} + c_{1010}\,u_{1,0}\right) .
 \end{aligned}
 \]</span></p>
 <p>Next, multiply out the Voigt form:</p>
@@ -563,16 +569,16 @@ w_{(i,j)}\,c_{ijkl}\,u_{(k,l)}
 \begin{aligned}
 \hat{\underline{\epsilon}}^T\,\underline{\underline{D}}\;\underline{\epsilon}
 &amp;=
-\begin{bmatrix} w_{1,1} &amp; w_{2,2} &amp; w_{1,2} + w_{2,1} \end{bmatrix}
+\begin{bmatrix} w_{0,0} &amp; w_{1,1} &amp; w_{0,1} + w_{1,0} \end{bmatrix}
 \begin{bmatrix}
-D_{11} &amp; D_{12} &amp; D_{13} \\
-&amp; D_{22} &amp; D_{23} \\
-\text{sym.} &amp; &amp; D_{33}
+D_{00} &amp; D_{01} &amp; D_{02} \\
+&amp; D_{11} &amp; D_{12} \\
+\text{sym.} &amp; &amp; D_{22}
 \end{bmatrix}
-\begin{bmatrix} u_{1,1} \\ u_{2,2} \\ u_{1,2} + u_{2,1} \end{bmatrix} \\[4pt]
-&amp;= \;w_{1,1}\left(D_{11}\,u_{1,1} + D_{12}\,u_{2,2} + D_{13}\left(u_{1,2} + u_{2,1}\right)\right) \\
-&amp;\quad + w_{2,2}\left(D_{12}\,u_{1,1} + D_{22}\,u_{2,2} + D_{23}\left(u_{1,2} + u_{2,1}\right)\right) \\
-&amp;\quad + \left(w_{1,2} + w_{2,1}\right)\left(D_{13}\,u_{1,1} + D_{23}\,u_{2,2} + D_{33}\left(u_{1,2} + u_{2,1}\right)\right) .
+\begin{bmatrix} u_{0,0} \\ u_{1,1} \\ u_{0,1} + u_{1,0} \end{bmatrix} \\[4pt]
+&amp;= \;w_{0,0}\left(D_{00}\,u_{0,0} + D_{01}\,u_{1,1} + D_{02}\left(u_{0,1} + u_{1,0}\right)\right) \\
+&amp;\quad + w_{1,1}\left(D_{01}\,u_{0,0} + D_{11}\,u_{1,1} + D_{12}\left(u_{0,1} + u_{1,0}\right)\right) \\
+&amp;\quad + \left(w_{0,1} + w_{1,0}\right)\left(D_{02}\,u_{0,0} + D_{12}\,u_{1,1} + D_{22}\left(u_{0,1} + u_{1,0}\right)\right) .
 \end{aligned}
 \]</span></p>
 <p>Replacing each <span class="math inline">\(D_{IJ}\)</span> with the corresponding <span class="math inline">\(c_{ijkl}\)</span> from <a href="#tbl-c27-voigt" class="quarto-xref">Table&nbsp;<span>27.1</span></a>, and using the major and minor symmetries to choose the order of the indices in each term, turns these three lines into exactly the 16 terms above. Therefore</p>
@@ -586,31 +592,31 @@ D_{11} &amp; D_{12} &amp; D_{13} \\
 <img src="generated_images/Class27/C27_Fig1_SixteenTerms.png" class="img-fluid figure-img" style="width:95.0%">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c27-sixteen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;27.1: (a) The coefficient in each of the 16 terms of the tensor form, with a row for each derivative of <span class="math inline">\(\underline{w}\)</span> and a column for each derivative of <span class="math inline">\(\underline{u}\)</span>. (b) The elasticity matrix of the Voigt form. Cells of the same color hold the same number. The last two rows of (a) combine into the single last row of (b), because the virtual strain vector holds the sum <span class="math inline">\(w_{1,2} + w_{2,1}\)</span>, and the last two columns combine in the same way. The four outlined shear terms in (a) become the single entry <span class="math inline">\(D_{33}\)</span> in (b).
+Figure&nbsp;27.1: (a) The coefficient in each of the 16 terms of the tensor form, with a row for each derivative of <span class="math inline">\(\underline{w}\)</span> and a column for each derivative of <span class="math inline">\(\underline{u}\)</span>. (b) The elasticity matrix of the Voigt form. Cells of the same color hold the same number. The last two rows of (a) combine into the single last row of (b), because the virtual strain vector holds the sum <span class="math inline">\(w_{0,1} + w_{1,0}\)</span>, and the last two columns combine in the same way. The four outlined shear terms in (a) become the single entry <span class="math inline">\(D_{22}\)</span> in (b).
 </figcaption>
 </figure>
 </div>
-<p>The shear terms show why the strain vector contains the sum <span class="math inline">\(u_{1,2} + u_{2,1}\)</span>. In the tensor form there are four shear terms, one for each combination of <span class="math inline">\(12\)</span> and <span class="math inline">\(21\)</span>, outlined in <a href="#fig-c27-sixteen" class="quarto-xref">Figure&nbsp;<span>27.1</span></a> a:</p>
+<p>The shear terms show why the strain vector contains the sum <span class="math inline">\(u_{0,1} + u_{1,0}\)</span>. In the tensor form there are four shear terms, one for each combination of <span class="math inline">\(01\)</span> and <span class="math inline">\(10\)</span>, outlined in <a href="#fig-c27-sixteen" class="quarto-xref">Figure&nbsp;<span>27.1</span></a> a:</p>
 <p><span class="math display">\[
 \begin{aligned}
-&amp;w_{1,2}\,c_{1212}\,u_{1,2} + w_{1,2}\,c_{1221}\,u_{2,1} + w_{2,1}\,c_{2112}\,u_{1,2} + w_{2,1}\,c_{2121}\,u_{2,1} \\
-&amp;\qquad = c_{1212}\left(w_{1,2} + w_{2,1}\right)\left(u_{1,2} + u_{2,1}\right) .
+&amp;w_{0,1}\,c_{0101}\,u_{0,1} + w_{0,1}\,c_{0110}\,u_{1,0} + w_{1,0}\,c_{1001}\,u_{0,1} + w_{1,0}\,c_{1010}\,u_{1,0} \\
+&amp;\qquad = c_{0101}\left(w_{0,1} + w_{1,0}\right)\left(u_{0,1} + u_{1,0}\right) .
 \end{aligned}
 \]</span></p>
-<p>The Voigt form has a single shear entry in each vector, so the single product <span class="math inline">\(\left(w_{1,2} + w_{2,1}\right) D_{33}\left(u_{1,2} + u_{2,1}\right)\)</span> must account for all four terms. This works with <span class="math inline">\(D_{33} = c_{1212}\)</span> only if each vector holds the full sum, <span class="math inline">\(\gamma_{12} = 2\,\varepsilon_{12}\)</span>, rather than the tensor component <span class="math inline">\(\varepsilon_{12}\)</span>.</p>
+<p>The Voigt form has a single shear entry in each vector, so the single product <span class="math inline">\(\left(w_{0,1} + w_{1,0}\right) D_{22}\left(u_{0,1} + u_{1,0}\right)\)</span> must account for all four terms. This works with <span class="math inline">\(D_{22} = c_{0101}\)</span> only if each vector holds the full sum, <span class="math inline">\(\gamma_{01} = 2\,\varepsilon_{01}\)</span>, rather than the tensor component <span class="math inline">\(\varepsilon_{01}\)</span>.</p>
 <p>The same matrix also gives the stress. The product <span class="math inline">\(c_{ijkl}\,u_{(k,l)}\)</span> is the stress <span class="math inline">\(\sigma_{ij}\)</span>, and in Voigt notation it is</p>
 <p><span class="math display">\[
 \underline{\sigma} = \underline{\underline{D}}\;\underline{\epsilon},
 \qquad\text{or}\qquad
 \sigma_I = D_{IJ}\,\epsilon_J ,
 \qquad\text{where}\qquad
-\underline{\sigma} = \begin{bmatrix} \sigma_1 \\ \sigma_2 \\ \sigma_3 \end{bmatrix} = \begin{bmatrix} \sigma_{11} \\ \sigma_{22} \\ \sigma_{12} \end{bmatrix} .
+\underline{\sigma} = \begin{bmatrix} \sigma_0 \\ \sigma_1 \\ \sigma_2 \end{bmatrix} = \begin{bmatrix} \sigma_{00} \\ \sigma_{11} \\ \sigma_{01} \end{bmatrix} .
 \]</span></p>
-<p>Note that the stress vector holds the shear stress <span class="math inline">\(\sigma_{12}\)</span> itself, without a factor of 2. The factor of 2 appears only in the strain vector.</p>
+<p>Note that the stress vector holds the shear stress <span class="math inline">\(\sigma_{01}\)</span> itself, without a factor of 2. The factor of 2 appears only in the strain vector.</p>
 <p>With these definitions, the weak form of <a href="../chapters/26_Class.html">Class 26</a> becomes</p>
 <p><span class="math display">\[
 \int_\Omega \underline{\epsilon}(\underline{w})^T\,\underline{\underline{D}}\;\underline{\epsilon}(\underline{u})\;d\Omega
-= \int_\Omega w_i\,f_i\;d\Omega + \sum_{i=1}^{n_{sd}}\left(\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma\right) .
+= \int_\Omega w_i\,f_i\;d\Omega + \sum_{i=0}^{n_{sd}-1}\left(\int_{\Gamma_{h_i}} w_i\,h_i\;d\Gamma\right) .
 \]</span></p>
 <p>The same steps apply in three spatial dimensions, with six entries in each vector and a <span class="math inline">\(6\times 6\)</span> elasticity matrix.</p>
 </section>
@@ -620,23 +626,23 @@ Figure&nbsp;27.1: (a) The coefficient in each of the 16 terms of the tensor form
 <p><span class="math display">\[
 c_{ijkl}(\underline{x}) = \mu(\underline{x})\left(\delta_{ik}\,\delta_{jl} + \delta_{il}\,\delta_{jk}\right) + \lambda(\underline{x})\,\delta_{ij}\,\delta_{kl} .
 \]</span></p>
-<p>The entries of <span class="math inline">\(\underline{\underline{D}}\)</span> then follow from <a href="#tbl-c27-voigt" class="quarto-xref">Table&nbsp;<span>27.1</span></a>, using <span class="math inline">\(\delta_{11} = \delta_{22} = 1\)</span> and <span class="math inline">\(\delta_{12} = \delta_{21} = 0\)</span>:</p>
+<p>The entries of <span class="math inline">\(\underline{\underline{D}}\)</span> then follow from <a href="#tbl-c27-voigt" class="quarto-xref">Table&nbsp;<span>27.1</span></a>, using <span class="math inline">\(\delta_{00} = \delta_{11} = 1\)</span> and <span class="math inline">\(\delta_{01} = \delta_{10} = 0\)</span>:</p>
 <div class="derivation">
 <p><span class="math display">\[
 \begin{aligned}
+D_{00} &amp;= c_{0000} = \mu\left(\delta_{00}\delta_{00} + \delta_{00}\delta_{00}\right) + \lambda\,\delta_{00}\delta_{00} = \lambda + 2\mu \\
+D_{01} &amp;= c_{0011} = \mu\left(\delta_{01}\delta_{01} + \delta_{01}\delta_{01}\right) + \lambda\,\delta_{00}\delta_{11} = \lambda \\
+D_{02} &amp;= c_{0001} = \mu\left(\delta_{00}\delta_{01} + \delta_{01}\delta_{00}\right) + \lambda\,\delta_{00}\delta_{01} = 0 \\
 D_{11} &amp;= c_{1111} = \mu\left(\delta_{11}\delta_{11} + \delta_{11}\delta_{11}\right) + \lambda\,\delta_{11}\delta_{11} = \lambda + 2\mu \\
-D_{12} &amp;= c_{1122} = \mu\left(\delta_{12}\delta_{12} + \delta_{12}\delta_{12}\right) + \lambda\,\delta_{11}\delta_{22} = \lambda \\
-D_{13} &amp;= c_{1112} = \mu\left(\delta_{11}\delta_{12} + \delta_{12}\delta_{11}\right) + \lambda\,\delta_{11}\delta_{12} = 0 \\
-D_{22} &amp;= c_{2222} = \mu\left(\delta_{22}\delta_{22} + \delta_{22}\delta_{22}\right) + \lambda\,\delta_{22}\delta_{22} = \lambda + 2\mu \\
-D_{23} &amp;= c_{2212} = \mu\left(\delta_{21}\delta_{22} + \delta_{22}\delta_{21}\right) + \lambda\,\delta_{22}\delta_{12} = 0 \\
-D_{33} &amp;= c_{1212} = \mu\left(\delta_{11}\delta_{22} + \delta_{12}\delta_{21}\right) + \lambda\,\delta_{12}\delta_{12} = \mu
+D_{12} &amp;= c_{1101} = \mu\left(\delta_{10}\delta_{11} + \delta_{11}\delta_{10}\right) + \lambda\,\delta_{11}\delta_{01} = 0 \\
+D_{22} &amp;= c_{0101} = \mu\left(\delta_{00}\delta_{11} + \delta_{01}\delta_{10}\right) + \lambda\,\delta_{01}\delta_{01} = \mu
 \end{aligned}
 \]</span></p>
 </div>
-<p>The zeros in <span class="math inline">\(D_{13}\)</span> and <span class="math inline">\(D_{23}\)</span> state that, in an isotropic material, a normal strain produces no shear stress, and a shear strain produces no normal stress.</p>
-<p>In three dimensions, the vectors hold six entries, ordered <span class="math inline">\(11\)</span>, <span class="math inline">\(22\)</span>, <span class="math inline">\(33\)</span>, <span class="math inline">\(23\)</span>, <span class="math inline">\(13\)</span>, <span class="math inline">\(12\)</span>, and a homogeneous, isotropic material has</p>
+<p>The zeros in <span class="math inline">\(D_{02}\)</span> and <span class="math inline">\(D_{12}\)</span> state that, in an isotropic material, a normal strain produces no shear stress, and a shear strain produces no normal stress.</p>
+<p>In three dimensions, the vectors hold six entries, ordered <span class="math inline">\(00\)</span>, <span class="math inline">\(11\)</span>, <span class="math inline">\(22\)</span>, <span class="math inline">\(12\)</span>, <span class="math inline">\(02\)</span>, <span class="math inline">\(01\)</span>, and a homogeneous, isotropic material has</p>
 <p><span class="math display">\[
-\underbrace{\begin{bmatrix} \sigma_{11} \\ \sigma_{22} \\ \sigma_{33} \\ \sigma_{23} \\ \sigma_{13} \\ \sigma_{12} \end{bmatrix}}_{\underline{\sigma}}
+\underbrace{\begin{bmatrix} \sigma_{00} \\ \sigma_{11} \\ \sigma_{22} \\ \sigma_{12} \\ \sigma_{02} \\ \sigma_{01} \end{bmatrix}}_{\underline{\sigma}}
 =
 \underbrace{\begin{bmatrix}
 \lambda + 2\mu &amp; \lambda &amp; \lambda &amp; 0 &amp; 0 &amp; 0 \\
@@ -646,17 +652,17 @@ D_{33} &amp;= c_{1212} = \mu\left(\delta_{11}\delta_{22} + \delta_{12}\delta_{21
 0 &amp; 0 &amp; 0 &amp; 0 &amp; \mu &amp; 0 \\
 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; \mu
 \end{bmatrix}}_{\underline{\underline{D}}}
-\underbrace{\begin{bmatrix} u_{1,1} \\ u_{2,2} \\ u_{3,3} \\ u_{2,3} + u_{3,2} \\ u_{1,3} + u_{3,1} \\ u_{1,2} + u_{2,1} \end{bmatrix}}_{\underline{\epsilon}} .
+\underbrace{\begin{bmatrix} u_{0,0} \\ u_{1,1} \\ u_{2,2} \\ u_{1,2} + u_{2,1} \\ u_{0,2} + u_{2,0} \\ u_{0,1} + u_{1,0} \end{bmatrix}}_{\underline{\epsilon}} .
 \]</span></p>
 <p>Written out row by row, this is</p>
 <p><span class="math display">\[
 \begin{aligned}
-\sigma_{11} &amp;= 2\mu\,\varepsilon_{11} + \lambda\left(\varepsilon_{11} + \varepsilon_{22} + \varepsilon_{33}\right), &amp;
-\sigma_{23} &amp;= \mu\left(u_{2,3} + u_{3,2}\right) = 2\mu\,\varepsilon_{23}, \\
-\sigma_{22} &amp;= 2\mu\,\varepsilon_{22} + \lambda\left(\varepsilon_{11} + \varepsilon_{22} + \varepsilon_{33}\right), &amp;
-\sigma_{13} &amp;= \mu\left(u_{1,3} + u_{3,1}\right) = 2\mu\,\varepsilon_{13}, \\
-\sigma_{33} &amp;= 2\mu\,\varepsilon_{33} + \lambda\left(\varepsilon_{11} + \varepsilon_{22} + \varepsilon_{33}\right), &amp;
-\sigma_{12} &amp;= \mu\left(u_{1,2} + u_{2,1}\right) = 2\mu\,\varepsilon_{12},
+\sigma_{00} &amp;= 2\mu\,\varepsilon_{00} + \lambda\left(\varepsilon_{00} + \varepsilon_{11} + \varepsilon_{22}\right), &amp;
+\sigma_{12} &amp;= \mu\left(u_{1,2} + u_{2,1}\right) = 2\mu\,\varepsilon_{12}, \\
+\sigma_{11} &amp;= 2\mu\,\varepsilon_{11} + \lambda\left(\varepsilon_{00} + \varepsilon_{11} + \varepsilon_{22}\right), &amp;
+\sigma_{02} &amp;= \mu\left(u_{0,2} + u_{2,0}\right) = 2\mu\,\varepsilon_{02}, \\
+\sigma_{22} &amp;= 2\mu\,\varepsilon_{22} + \lambda\left(\varepsilon_{00} + \varepsilon_{11} + \varepsilon_{22}\right), &amp;
+\sigma_{01} &amp;= \mu\left(u_{0,1} + u_{1,0}\right) = 2\mu\,\varepsilon_{01},
 \end{aligned}
 \]</span></p>
 <p>which agrees with the compact form <span class="math inline">\(\sigma_{ij} = 2\mu\,\varepsilon_{ij} + \lambda\,\varepsilon_{kk}\,\delta_{ij}\)</span> of Class 26.</p>
@@ -665,7 +671,7 @@ D_{33} &amp;= c_{1212} = \mu\left(\delta_{11}\delta_{22} + \delta_{12}\delta_{21
 <h2 data-number="27.4" class="anchored" data-anchor-id="material-properties"><span class="header-section-number">27.4</span> Material properties</h2>
 <p>The positive definiteness of the elastic coefficients, from <a href="../chapters/26_Class.html">Class 26</a>, limits the values that the material properties can take. For an isotropic material, it requires <span class="math inline">\(E &gt; 0\)</span> and <span class="math inline">\(-1 &lt; \nu &lt; \tfrac{1}{2}\)</span>, and most metals have <span class="math inline">\(\nu\)</span> between about 0.25 and 0.35. As <span class="math inline">\(\nu\)</span> approaches <span class="math inline">\(\tfrac{1}{2}\)</span>, the material becomes nearly incompressible, as rubber is, and <span class="math inline">\(\lambda\)</span>, and with it <span class="math inline">\(\underline{\underline{D}}\)</span>, grows without bound. Standard displacement-based methods to solve the equations of elasticity become too stiff for incompressible and nearly incompressible materials, which is called locking. Hughes Chapter 4 describes some ways to address locking.</p>
 <p>Not every material is isotropic. Wood, rolled metal sheet, and fiber-reinforced composites are stiffer in some directions than in others, and <span class="math inline">\(\underline{\underline{D}}\)</span> then has more independent entries: nine in three dimensions for an orthotropic material, which has three perpendicular planes of symmetry, and 21 for the most general material.</p>
-<p>Wood is commonly idealized as orthotropic. Its three material directions are longitudinal (<span class="math inline">\(L\)</span>, along the grain), radial (<span class="math inline">\(R\)</span>, across the growth rings), and tangential (<span class="math inline">\(T\)</span>, tangent to the growth rings), and it is often ten or more times stiffer along the grain than across it. Each direction has its own Young’s modulus, <span class="math inline">\(E_L\)</span>, <span class="math inline">\(E_R\)</span>, and <span class="math inline">\(E_T\)</span>, and each plane has its own shear modulus, <span class="math inline">\(G_{RT}\)</span>, <span class="math inline">\(G_{LT}\)</span>, and <span class="math inline">\(G_{LR}\)</span>. The Poisson’s ratio <span class="math inline">\(\nu_{LR}\)</span> is the ratio of the contraction in the <span class="math inline">\(R\)</span> direction to the extension in the <span class="math inline">\(L\)</span> direction under a stress in the <span class="math inline">\(L\)</span> direction, and the other ratios are defined in the same way. With <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span>, and <span class="math inline">\(x_3\)</span> aligned with <span class="math inline">\(L\)</span>, <span class="math inline">\(R\)</span>, and <span class="math inline">\(T\)</span>, the law is simplest to write with the inverse of <span class="math inline">\(\underline{\underline{D}}\)</span>, which gives the strain produced by each stress:</p>
+<p>Wood is commonly idealized as orthotropic. Its three material directions are longitudinal (<span class="math inline">\(L\)</span>, along the grain), radial (<span class="math inline">\(R\)</span>, across the growth rings), and tangential (<span class="math inline">\(T\)</span>, tangent to the growth rings), and it is often ten or more times stiffer along the grain than across it. Each direction has its own Young’s modulus, <span class="math inline">\(E_L\)</span>, <span class="math inline">\(E_R\)</span>, and <span class="math inline">\(E_T\)</span>, and each plane has its own shear modulus, <span class="math inline">\(G_{RT}\)</span>, <span class="math inline">\(G_{LT}\)</span>, and <span class="math inline">\(G_{LR}\)</span>. The Poisson’s ratio <span class="math inline">\(\nu_{LR}\)</span> is the ratio of the contraction in the <span class="math inline">\(R\)</span> direction to the extension in the <span class="math inline">\(L\)</span> direction under a stress in the <span class="math inline">\(L\)</span> direction, and the other ratios are defined in the same way. With <span class="math inline">\(x_0\)</span>, <span class="math inline">\(x_1\)</span>, and <span class="math inline">\(x_2\)</span> aligned with <span class="math inline">\(L\)</span>, <span class="math inline">\(R\)</span>, and <span class="math inline">\(T\)</span>, the law is simplest to write with the inverse of <span class="math inline">\(\underline{\underline{D}}\)</span>, which gives the strain produced by each stress:</p>
 <p><span class="math display">\[
 \underline{\epsilon}
 =
@@ -679,8 +685,8 @@ D_{33} &amp;= c_{1212} = \mu\left(\delta_{11}\delta_{22} + \delta_{12}\delta_{21
 \end{bmatrix}}_{\underline{\underline{D}}^{-1}}
 \underline{\sigma} ,
 \]</span></p>
-<p>with <span class="math inline">\(\underline{\sigma}\)</span> and <span class="math inline">\(\underline{\epsilon}\)</span> ordered <span class="math inline">\(11\)</span>, <span class="math inline">\(22\)</span>, <span class="math inline">\(33\)</span>, <span class="math inline">\(23\)</span>, <span class="math inline">\(13\)</span>, <span class="math inline">\(12\)</span> as above. The symmetry of the matrix requires <span class="math inline">\(\nu_{LR}/E_L = \nu_{RL}/E_R\)</span>, and likewise for the other two pairs, which leaves nine independent constants. Its inverse, <span class="math inline">\(\underline{\underline{D}}\)</span>, has the same pattern of zeros as for an isotropic material: each normal stress depends on all three normal strains, now with unequal coefficients, and each shear stress depends only on its own shear strain.</p>
-<p>The radial and tangential directions follow the growth rings, so they turn from point to point around the center of the tree. The matrix above therefore holds in the local <span class="math inline">\(L\)</span>, <span class="math inline">\(R\)</span>, <span class="math inline">\(T\)</span> axes at each point. In a board cut far from the center, the rings are nearly flat, and one set of axes serves for the whole board, which is the usual idealization of lumber. Otherwise, <span class="math inline">\(\underline{\underline{D}}\)</span> must be rotated into the <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span>, <span class="math inline">\(x_3\)</span> axes at each point, and it then varies over the body, just as a conductivity can.</p>
+<p>with <span class="math inline">\(\underline{\sigma}\)</span> and <span class="math inline">\(\underline{\epsilon}\)</span> ordered <span class="math inline">\(00\)</span>, <span class="math inline">\(11\)</span>, <span class="math inline">\(22\)</span>, <span class="math inline">\(12\)</span>, <span class="math inline">\(02\)</span>, <span class="math inline">\(01\)</span> as above. The symmetry of the matrix requires <span class="math inline">\(\nu_{LR}/E_L = \nu_{RL}/E_R\)</span>, and likewise for the other two pairs, which leaves nine independent constants. Its inverse, <span class="math inline">\(\underline{\underline{D}}\)</span>, has the same pattern of zeros as for an isotropic material: each normal stress depends on all three normal strains, now with unequal coefficients, and each shear stress depends only on its own shear strain.</p>
+<p>The radial and tangential directions follow the growth rings, so they turn from point to point around the center of the tree. The matrix above therefore holds in the local <span class="math inline">\(L\)</span>, <span class="math inline">\(R\)</span>, <span class="math inline">\(T\)</span> axes at each point. In a board cut far from the center, the rings are nearly flat, and one set of axes serves for the whole board, which is the usual idealization of lumber. Otherwise, <span class="math inline">\(\underline{\underline{D}}\)</span> must be rotated into the <span class="math inline">\(x_0\)</span>, <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span> axes at each point, and it then varies over the body, just as a conductivity can.</p>
 <p>In axes that are not aligned with the directions of the material, the zeros of <span class="math inline">\(\underline{\underline{D}}\)</span> fill in, so a normal strain produces a shear stress. The appendix <a href="../chapters/Elasticity2D.html#hookes-law-the-elasticity-tensor">Linear Elasticity I</a> shows the elasticity matrix of a fiber composite as its fibers are turned.</p>
 </section>
 <section id="from-three-dimensions-to-two-dimensions" class="level2" data-number="27.5">
@@ -700,81 +706,81 @@ Figure&nbsp;27.2: The two assumptions. (a) Plane stress: a thin plate loaded in 
 <h3 data-number="27.5.1" class="anchored" data-anchor-id="plane-strain"><span class="header-section-number">27.5.1</span> Plane strain</h3>
 <p>Plane strain describes a long object, such as a dam or the W-shape of <a href="#fig-c27-planes" class="quarto-xref">Figure&nbsp;<span>27.2</span></a> b, for which one cross-section represents the whole. The displacements in the cross-section do not depend on <span class="math inline">\(z\)</span>, and nothing moves along the length:</p>
 <p><span class="math display">\[
-u_1(x,y,z) = u_1(x,y), \qquad u_2(x,y,z) = u_2(x,y), \qquad u_3(x,y,z) = 0 .
+u_0(x,y,z) = u_0(x,y), \qquad u_1(x,y,z) = u_1(x,y), \qquad u_2(x,y,z) = 0 .
 \]</span></p>
 <p>Therefore</p>
 <p><span class="math display">\[
-0 = \frac{\partial u_1}{\partial z} = \frac{\partial u_2}{\partial z} = \frac{\partial u_3}{\partial z} = \frac{\partial u_3}{\partial y} = \frac{\partial u_3}{\partial x}
+0 = \frac{\partial u_0}{\partial z} = \frac{\partial u_1}{\partial z} = \frac{\partial u_2}{\partial z} = \frac{\partial u_2}{\partial y} = \frac{\partial u_2}{\partial x}
 \qquad\Longrightarrow\qquad
 \varepsilon_{xz} = \varepsilon_{yz} = \varepsilon_{zz} = 0 .
 \]</span></p>
 <p>Setting these strains to zero in the three-dimensional law gives</p>
 <p><span class="math display">\[
 \begin{aligned}
-\sigma_{11} &amp;= 2\mu\,\varepsilon_{11} + \lambda\left(\varepsilon_{11} + \varepsilon_{22}\right), &amp;
-\sigma_{33} &amp;= \lambda\left(\varepsilon_{11} + \varepsilon_{22}\right), \\
-\sigma_{22} &amp;= 2\mu\,\varepsilon_{22} + \lambda\left(\varepsilon_{11} + \varepsilon_{22}\right), &amp;
-\sigma_{23} &amp;= \sigma_{13} = 0, \\
-\sigma_{12} &amp;= 2\mu\,\varepsilon_{12} ,
+\sigma_{00} &amp;= 2\mu\,\varepsilon_{00} + \lambda\left(\varepsilon_{00} + \varepsilon_{11}\right), &amp;
+\sigma_{22} &amp;= \lambda\left(\varepsilon_{00} + \varepsilon_{11}\right), \\
+\sigma_{11} &amp;= 2\mu\,\varepsilon_{11} + \lambda\left(\varepsilon_{00} + \varepsilon_{11}\right), &amp;
+\sigma_{12} &amp;= \sigma_{02} = 0, \\
+\sigma_{01} &amp;= 2\mu\,\varepsilon_{01} ,
 \end{aligned}
 \]</span></p>
 <p>so that</p>
 <p><span class="math display">\[
-\begin{bmatrix} \sigma_{11} \\ \sigma_{22} \\ \sigma_{12} \end{bmatrix}
+\begin{bmatrix} \sigma_{00} \\ \sigma_{11} \\ \sigma_{01} \end{bmatrix}
 =
 \begin{bmatrix} \lambda + 2\mu &amp; \lambda &amp; 0 \\ \lambda &amp; \lambda + 2\mu &amp; 0 \\ 0 &amp; 0 &amp; \mu \end{bmatrix}
-\begin{bmatrix} u_{1,1} \\ u_{2,2} \\ u_{1,2} + u_{2,1} \end{bmatrix} .
+\begin{bmatrix} u_{0,0} \\ u_{1,1} \\ u_{0,1} + u_{1,0} \end{bmatrix} .
 \]</span></p>
-<p>This is the two-dimensional matrix found above for an isotropic material. Note that <span class="math inline">\(\sigma_{33}\)</span> is not zero: a stress along the length is needed to keep the body from stretching or shortening in that direction. It is not an unknown of the problem, and it is computed afterward from the in-plane strains.</p>
+<p>This is the two-dimensional matrix found above for an isotropic material. Note that <span class="math inline">\(\sigma_{22}\)</span> is not zero: a stress along the length is needed to keep the body from stretching or shortening in that direction. It is not an unknown of the problem, and it is computed afterward from the in-plane strains.</p>
 </section>
 <section id="plane-stress" class="level3" data-number="27.5.2">
 <h3 data-number="27.5.2" class="anchored" data-anchor-id="plane-stress"><span class="header-section-number">27.5.2</span> Plane stress</h3>
 <p>Plane stress describes a very slim object, such as the plate of <a href="#fig-c27-planes" class="quarto-xref">Figure&nbsp;<span>27.2</span></a> a, whose faces carry no load. Since the faces are free and the plate is thin, the stresses that act on planes parallel to the faces are taken to be zero throughout:</p>
 <p><span class="math display">\[
-u_1(x,y,z) = u_1(x,y), \qquad u_2(x,y,z) = u_2(x,y), \qquad \sigma_{33} = \sigma_{13} = \sigma_{23} = 0 .
+u_0(x,y,z) = u_0(x,y), \qquad u_1(x,y,z) = u_1(x,y), \qquad \sigma_{22} = \sigma_{02} = \sigma_{12} = 0 .
 \]</span></p>
 <p>Using the three-dimensional isotropic law,</p>
 <div class="derivation">
 <p><span class="math display">\[
 \begin{aligned}
-\sigma_{23} &amp;= 0 = 2\mu\,\varepsilon_{23} &amp;&amp;\Longrightarrow\quad \varepsilon_{23} = 0, \\
-\sigma_{13} &amp;= 0 = 2\mu\,\varepsilon_{13} &amp;&amp;\Longrightarrow\quad \varepsilon_{13} = 0, \\
-\sigma_{33} &amp;= 0 = 2\mu\,\varepsilon_{33} + \lambda\left(\varepsilon_{11} + \varepsilon_{22} + \varepsilon_{33}\right) &amp;&amp;\Longrightarrow\quad \varepsilon_{33} = -\frac{\lambda\left(\varepsilon_{11} + \varepsilon_{22}\right)}{\lambda + 2\mu} .
+\sigma_{12} &amp;= 0 = 2\mu\,\varepsilon_{12} &amp;&amp;\Longrightarrow\quad \varepsilon_{12} = 0, \\
+\sigma_{02} &amp;= 0 = 2\mu\,\varepsilon_{02} &amp;&amp;\Longrightarrow\quad \varepsilon_{02} = 0, \\
+\sigma_{22} &amp;= 0 = 2\mu\,\varepsilon_{22} + \lambda\left(\varepsilon_{00} + \varepsilon_{11} + \varepsilon_{22}\right) &amp;&amp;\Longrightarrow\quad \varepsilon_{22} = -\frac{\lambda\left(\varepsilon_{00} + \varepsilon_{11}\right)}{\lambda + 2\mu} .
 \end{aligned}
 \]</span></p>
 </div>
-<p>Unlike plane strain, <span class="math inline">\(\varepsilon_{33}\)</span> is not zero: the plate becomes thinner where it is stretched. Substituting <span class="math inline">\(\varepsilon_{33}\)</span> into the law for <span class="math inline">\(\sigma_{11}\)</span> gives</p>
+<p>Unlike plane strain, <span class="math inline">\(\varepsilon_{22}\)</span> is not zero: the plate becomes thinner where it is stretched. Substituting <span class="math inline">\(\varepsilon_{22}\)</span> into the law for <span class="math inline">\(\sigma_{00}\)</span> gives</p>
 <div class="derivation">
 <p><span class="math display">\[
 \begin{aligned}
-\sigma_{11}
-&amp;= 2\mu\,\varepsilon_{11} + \lambda\left(\varepsilon_{11} + \varepsilon_{22} - \frac{\lambda\left(\varepsilon_{11} + \varepsilon_{22}\right)}{\lambda + 2\mu}\right) \\
-&amp;= 2\mu\,\varepsilon_{11} + \frac{2\lambda\mu}{\lambda + 2\mu}\left(\varepsilon_{11} + \varepsilon_{22}\right)
-=: 2\mu\,\varepsilon_{11} + \bar{\lambda}\left(\varepsilon_{11} + \varepsilon_{22}\right) ,
+\sigma_{00}
+&amp;= 2\mu\,\varepsilon_{00} + \lambda\left(\varepsilon_{00} + \varepsilon_{11} - \frac{\lambda\left(\varepsilon_{00} + \varepsilon_{11}\right)}{\lambda + 2\mu}\right) \\
+&amp;= 2\mu\,\varepsilon_{00} + \frac{2\lambda\mu}{\lambda + 2\mu}\left(\varepsilon_{00} + \varepsilon_{11}\right)
+=: 2\mu\,\varepsilon_{00} + \bar{\lambda}\left(\varepsilon_{00} + \varepsilon_{11}\right) ,
 \end{aligned}
 \]</span></p>
 </div>
-<p>where <span class="math inline">\(\bar{\lambda} = 2\lambda\mu/(\lambda + 2\mu)\)</span>. In the same way, <span class="math inline">\(\sigma_{22} = 2\mu\,\varepsilon_{22} + \bar{\lambda}\left(\varepsilon_{11} + \varepsilon_{22}\right)\)</span>, and <span class="math inline">\(\sigma_{12} = 2\mu\,\varepsilon_{12}\)</span> as before, so that</p>
+<p>where <span class="math inline">\(\bar{\lambda} = 2\lambda\mu/(\lambda + 2\mu)\)</span>. In the same way, <span class="math inline">\(\sigma_{11} = 2\mu\,\varepsilon_{11} + \bar{\lambda}\left(\varepsilon_{00} + \varepsilon_{11}\right)\)</span>, and <span class="math inline">\(\sigma_{01} = 2\mu\,\varepsilon_{01}\)</span> as before, so that</p>
 <p><span class="math display">\[
-\begin{bmatrix} \sigma_{11} \\ \sigma_{22} \\ \sigma_{12} \end{bmatrix}
+\begin{bmatrix} \sigma_{00} \\ \sigma_{11} \\ \sigma_{01} \end{bmatrix}
 =
 \begin{bmatrix} \bar{\lambda} + 2\mu &amp; \bar{\lambda} &amp; 0 \\ \bar{\lambda} &amp; \bar{\lambda} + 2\mu &amp; 0 \\ 0 &amp; 0 &amp; \mu \end{bmatrix}
-\begin{bmatrix} u_{1,1} \\ u_{2,2} \\ u_{1,2} + u_{2,1} \end{bmatrix} .
+\begin{bmatrix} u_{0,0} \\ u_{1,1} \\ u_{0,1} + u_{1,0} \end{bmatrix} .
 \]</span></p>
 <p>The plane stress matrix has the same form as the plane strain matrix, with <span class="math inline">\(\lambda\)</span> replaced by <span class="math inline">\(\bar{\lambda}\)</span>. In terms of Young’s modulus and Poisson’s ratio, <span class="math inline">\(\bar{\lambda} + 2\mu = E/(1-\nu^2)\)</span> and <span class="math inline">\(\bar{\lambda} = \nu E/(1-\nu^2)\)</span>.</p>
-<p>For steel, with <span class="math inline">\(E\)</span> = 200 GPa and <span class="math inline">\(\nu\)</span> = 0.3, <span class="math inline">\(\lambda\)</span> = 115.4 GPa, <span class="math inline">\(\bar{\lambda}\)</span> = 65.9 GPa, and <span class="math inline">\(\mu\)</span> = 76.9 GPa. The first diagonal entry is then <span class="math inline">\(D_{11}\)</span> = 269.2 GPa in plane strain, and 219.8 GPa in plane stress. Plane strain is the stiffer of the two, because the material cannot expand or contract along the length of the body.</p>
+<p>For steel, with <span class="math inline">\(E\)</span> = 200 GPa and <span class="math inline">\(\nu\)</span> = 0.3, <span class="math inline">\(\lambda\)</span> = 115.4 GPa, <span class="math inline">\(\bar{\lambda}\)</span> = 65.9 GPa, and <span class="math inline">\(\mu\)</span> = 76.9 GPa. The first diagonal entry is then <span class="math inline">\(D_{00}\)</span> = 269.2 GPa in plane strain, and 219.8 GPa in plane stress. Plane strain is the stiffer of the two, because the material cannot expand or contract along the length of the body.</p>
 </section>
 </section>
 <section id="summary" class="level2" data-number="27.6">
 <h2 data-number="27.6" class="anchored" data-anchor-id="summary"><span class="header-section-number">27.6</span> Summary</h2>
 <ul>
-<li>In Voigt notation, the strain and the virtual strain are stored as vectors, <span class="math inline">\(\underline{\epsilon} = \left(u_{1,1},\, u_{2,2},\, u_{1,2} + u_{2,1}\right)\)</span> in two dimensions, and the elastic coefficients are stored in a symmetric matrix <span class="math inline">\(\underline{\underline{D}}\)</span>, with <span class="math inline">\(D_{IJ} = c_{ijkl}\)</span> through the index map of <a href="#tbl-c27-voigt" class="quarto-xref">Table&nbsp;<span>27.1</span></a>.</li>
+<li>In Voigt notation, the strain and the virtual strain are stored as vectors, <span class="math inline">\(\underline{\epsilon} = \left(u_{0,0},\, u_{1,1},\, u_{0,1} + u_{1,0}\right)\)</span> in two dimensions, and the elastic coefficients are stored in a symmetric matrix <span class="math inline">\(\underline{\underline{D}}\)</span>, with <span class="math inline">\(D_{IJ} = c_{ijkl}\)</span> through the index map of <a href="#tbl-c27-voigt" class="quarto-xref">Table&nbsp;<span>27.1</span></a>.</li>
 <li>The integrand of the weak form becomes <span class="math inline">\(w_{(i,j)}\,c_{ijkl}\,u_{(k,l)} = \hat{\underline{\epsilon}}^T\,\underline{\underline{D}}\;\underline{\epsilon}\)</span>, and the stress becomes <span class="math inline">\(\underline{\sigma} = \underline{\underline{D}}\;\underline{\epsilon}\)</span>.</li>
-<li>The shear entry of the strain vector is the engineering shear strain <span class="math inline">\(\gamma_{12} = u_{1,2} + u_{2,1} = 2\,\varepsilon_{12}\)</span>, so that one product in the Voigt form accounts for all four shear terms of the tensor form; the stress vector holds <span class="math inline">\(\sigma_{12}\)</span> without a factor of 2.</li>
+<li>The shear entry of the strain vector is the engineering shear strain <span class="math inline">\(\gamma_{01} = u_{0,1} + u_{1,0} = 2\,\varepsilon_{01}\)</span>, so that one product in the Voigt form accounts for all four shear terms of the tensor form; the stress vector holds <span class="math inline">\(\sigma_{01}\)</span> without a factor of 2.</li>
 <li>For an isotropic material, the diagonal entries are <span class="math inline">\(\lambda + 2\mu\)</span> for the normal strains and <span class="math inline">\(\mu\)</span> for the shear strains, and normal and shear components are not coupled.</li>
 <li>Positive definiteness requires <span class="math inline">\(E &gt; 0\)</span> and <span class="math inline">\(-1 &lt; \nu &lt; \tfrac{1}{2}\)</span>; anisotropic materials have more independent entries in <span class="math inline">\(\underline{\underline{D}}\)</span>, and can couple normal and shear components. An orthotropic material such as wood has nine, and in its material axes <span class="math inline">\(\underline{\underline{D}}\)</span> has the same pattern of zeros as for an isotropic material.</li>
-<li>Plane strain assumes that nothing varies or moves along the length of a long body, so <span class="math inline">\(\varepsilon_{33} = 0\)</span> and <span class="math inline">\(\sigma_{33} = \lambda\left(\varepsilon_{11} + \varepsilon_{22}\right)\)</span>.</li>
-<li>Plane stress assumes that a thin body carries no stress on planes parallel to its faces, so <span class="math inline">\(\sigma_{33} = 0\)</span>, the plate thins, and the elasticity matrix uses <span class="math inline">\(\bar{\lambda} = 2\lambda\mu/(\lambda + 2\mu)\)</span> in place of <span class="math inline">\(\lambda\)</span>.</li>
+<li>Plane strain assumes that nothing varies or moves along the length of a long body, so <span class="math inline">\(\varepsilon_{22} = 0\)</span> and <span class="math inline">\(\sigma_{22} = \lambda\left(\varepsilon_{00} + \varepsilon_{11}\right)\)</span>.</li>
+<li>Plane stress assumes that a thin body carries no stress on planes parallel to its faces, so <span class="math inline">\(\sigma_{22} = 0\)</span>, the plate thins, and the elasticity matrix uses <span class="math inline">\(\bar{\lambda} = 2\lambda\mu/(\lambda + 2\mu)\)</span> in place of <span class="math inline">\(\lambda\)</span>.</li>
 <li>The appendix <a href="../chapters/Elasticity2D.html">Linear Elasticity I</a> has an interactive view of the elasticity matrix and of the forces on a small block, and <a href="../chapters/Elasticity2D_FEM.html">Linear Elasticity II</a> uses <span class="math inline">\(\underline{\underline{D}}\)</span> to build the element stiffness matrix.</li>
 </ul>
 
@@ -1265,8 +1271,8 @@ u_1(x,y,z) = u_1(x,y), \qquad u_2(x,y,z) = u_2(x,y), \qquad \sigma_{33} = \sigma
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../chapters/3_Support_FunctionSpaces.html" class="pagination-link" aria-label="Support: Norms and Function Spaces">
-        <span class="nav-page-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../chapters/28_Class.html" class="pagination-link" aria-label="Class 28: The Galerkin Form of Elasticity and Assembly">
+        <span class="nav-page-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Class 28: The Galerkin Form of Elasticity and Assembly</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

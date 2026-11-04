@@ -49,7 +49,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-25d60f11bf0350d4acb1bb2c5c0bf5d1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-bd990e089991ec7d162b92b5e37a2dc1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -349,6 +349,12 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Class 27: Voigt Notation and the Elasticity Matrix</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/28_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Class 28: The Galerkin Form of Elasticity and Assembly</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
@@ -534,13 +540,13 @@ Figure&nbsp;8.1: Which of these are bases for <span class="math inline">\(\mathb
 </div>
 <div class="derivation">
 <p><span class="math display">\[
-y \approx b\,\ell_1(x) + (m+b)\,\ell_2(x)
+y \approx b\,\ell_0(x) + (m+b)\,\ell_1(x)
 \qquad \text{(polynomial degree 1)}
 \]</span></p>
 <p><span class="math display">\[
-\ell_1(x) = \frac{x - 1}{0 - 1}
+\ell_0(x) = \frac{x - 1}{0 - 1}
 \qquad\qquad
-\ell_2(x) = \frac{x - 0}{1 - 0}
+\ell_1(x) = \frac{x - 0}{1 - 0}
 \]</span></p>
 </div>
 <div class="step">
@@ -558,16 +564,16 @@ Figure&nbsp;8.2
 <p>For a quadratic, <span class="math inline">\(y = \alpha x^2 + \beta x + \gamma\)</span> on domain <span class="math inline">\([-1, 1]\)</span>:</p>
 <div class="derivation">
 <p><span class="math display">\[
-y(x) \approx (\alpha - \beta + \gamma)\,\ell_1(x) + \gamma\,\ell_2(x)
-             + (\alpha + \beta + \gamma)\,\ell_3(x)
+y(x) \approx (\alpha - \beta + \gamma)\,\ell_0(x) + \gamma\,\ell_1(x)
+             + (\alpha + \beta + \gamma)\,\ell_2(x)
 \qquad \text{(polynomial degree 2)}
 \]</span></p>
 <p><span class="math display">\[
-\ell_1(x) = \frac{(x-0)(x-1)}{(-1-0)(-1-1)}
+\ell_0(x) = \frac{(x-0)(x-1)}{(-1-0)(-1-1)}
 \qquad
-\ell_2(x) = \frac{(x-(-1))(x-1)}{(0-(-1))(0-1)}
+\ell_1(x) = \frac{(x-(-1))(x-1)}{(0-(-1))(0-1)}
 \qquad
-\ell_3(x) = \frac{(x-(-1))(x-0)}{(1-(-1))(1-0)}
+\ell_2(x) = \frac{(x-(-1))(x-0)}{(1-(-1))(1-0)}
 \]</span></p>
 </div>
 <div class="step">

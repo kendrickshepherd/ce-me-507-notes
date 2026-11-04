@@ -49,7 +49,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-25d60f11bf0350d4acb1bb2c5c0bf5d1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-bd990e089991ec7d162b92b5e37a2dc1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -348,6 +348,12 @@ window.Quarto = {
   <div class="sidebar-item-container"> 
   <a href="../chapters/27_Class.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Class 27: Voigt Notation and the Elasticity Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/28_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Class 28: The Galerkin Form of Elasticity and Assembly</span></span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
@@ -1755,8 +1761,8 @@ Figure&nbsp;21.9: (a) and (b) The four cubic functions of each basis on one elem
 <h3 data-number="21.3.3" class="anchored" data-anchor-id="cubic-hermite-polynomials"><span class="header-section-number">21.3.3</span> Cubic Hermite polynomials</h3>
 <p>Splines are one way to obtain <span class="math inline">\(C^1\)</span> continuity. An older approach, used in beam theory, makes the slope itself an unknown at every node. The Euler–Bernoulli beam weak form contains second derivatives (<span class="math inline">\(m=2\)</span>), so the slope of the deflection must not jump between elements. A cubic Hermite element uses the deflection <span class="math inline">\(w\)</span> and the rotation <span class="math inline">\(\theta = dw/dx\)</span> at each end,</p>
 <p><span class="math display">\[
-w^h(t)=h_{00}(t)\,w_1+L\,h_{10}(t)\,\theta_1
-       +h_{01}(t)\,w_2+L\,h_{11}(t)\,\theta_2,
+w^h(t)=h_{00}(t)\,w_0+L\,h_{10}(t)\,\theta_0
+       +h_{01}(t)\,w_1+L\,h_{11}(t)\,\theta_1,
 \qquad 0\le t\le 1,
 \]</span></p>
 <p>where <span class="math inline">\(L\)</span> is the element length and</p>

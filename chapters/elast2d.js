@@ -7,23 +7,37 @@
 // displacement component, and LM(i, a, e) = ID(i, IEN(a, e)).  JavaScript
 // arrays are 0-based, so IEN[e-1][a-1] holds the global number A of local
 // node a of element e, ID[i-1][A-1] holds ID(i, A), and LM[e-1][2(a-1) + i-1]
-// holds LM(i, a, e).  Local nodes: corners counter-clockwise from
-// (xi, eta) = (-1, -1), then for Q9 the mid-side nodes counter-clockwise
-// from the bottom, then the centre (the same as fem2d.js).
+// holds LM(i, a, e).  Local nodes: the stride rule of Class 11,
+// a = i + (p + 1) j for the node at (xi, eta) = (-1 + 2i/p, -1 + 2j/p), row by
+// row from the bottom left, as in the class notes (fem2d.js, like Hughes, goes
+// counter-clockwise instead, so its shape() is not used here).
 //
 // Units: millimetres, newtons, megapascals (N/mm^2).
 
-import {gauss, shape, makeCanvas, drawSpy} from "./fem2d.js";
+import {gauss, lagrange1d, makeCanvas, drawSpy} from "./fem2d.js";
 
 export const CANTILEVER = {L: 400, D: 100, t: 10, P: 8000};
 export const PLATE = {L: 200, W: 100, a: 12.5, t: 10, s: 50};
 export const WSHAPE = {name: "W250×73 (W10×49)", d: 253, bf: 254, tf: 14.2, tw: 8.6, q: 1.0};
 
-const LOCAL_IJ = {1: [[0, 0], [1, 0], [1, 1], [0, 1]],
-                  2: [[0, 0], [2, 0], [2, 2], [0, 2], [1, 0], [2, 1], [1, 2], [0, 1], [1, 1]]};
+const strideIJ = p => Array.from({length: (p + 1) ** 2}, (_, a) => [a % (p + 1), Math.floor(a / (p + 1))]);
+const LOCAL_IJ = {1: strideIJ(1), 2: strideIJ(2)};
 const SIDE_PARAM = {bottom: t => [t, -1], right: t => [1, t], top: t => [t, 1], left: t => [-1, t]};
-const SIDE_LOCAL = {1: {bottom: [0, 1], right: [1, 2], top: [2, 3], left: [3, 0]},
-                    2: {bottom: [0, 4, 1], right: [1, 5, 2], top: [2, 6, 3], left: [3, 7, 0]}};
+const strideSides = p => {
+  const n = p + 1, k = Array.from({length: n}, (_, m) => m);
+  return {bottom: k, right: k.map(m => p + n * m), top: k.map(m => n * p + m), left: k.map(m => n * m)};
+};
+const SIDE_LOCAL = {1: strideSides(1), 2: strideSides(2)};
+
+function shape(p, xi, eta) {
+  // N_a, N_a,xi, N_a,eta for a = 0..nen-1 in the stride order: tensor products N_i(xi) N_j(eta)
+  const X = lagrange1d(p, xi), Y = lagrange1d(p, eta);
+  const N = [], Nxi = [], Neta = [];
+  for (const [i, j] of LOCAL_IJ[p]) {
+    N.push(X.N[i] * Y.N[j]); Nxi.push(X.dN[i] * Y.N[j]); Neta.push(X.N[i] * Y.dN[j]);
+  }
+  return {N, Nxi, Neta};
+}
 
 // ------------------------------------------------------------- material
 export function dmatrix(E, nu, plane = "stress") {
@@ -534,8 +548,8 @@ export const GEOMETRIES = {
             make: (p, lev) => plateMesh(p, lev, true),
             sides: () => {
               const Lh = PLATE.L / 2, Wh = PLATE.W / 2, a = PLATE.a;
-              return [{name: "left", label: "left edge, x₁ = 0 (a line of symmetry)", pts: [[0, Wh], [0, a]]},
-                      {name: "bottom", label: "bottom edge, x₂ = 0 (a line of symmetry)", pts: [[a, 0], [Lh, 0]]},
+              return [{name: "left", label: "left edge, x₀ = 0 (a line of symmetry)", pts: [[0, Wh], [0, a]]},
+                      {name: "bottom", label: "bottom edge, x₁ = 0 (a line of symmetry)", pts: [[a, 0], [Lh, 0]]},
                       {name: "right", label: "right end", pts: [[Lh, 0], [Lh, Wh]]},
                       {name: "top", label: "top edge", pts: [[Lh, Wh], [0, Wh]]},
                       {name: "hole", label: "the hole", pts: d3range(17).map(k => [a * Math.cos(Math.PI / 2 * (16 - k) / 16), a * Math.sin(Math.PI / 2 * (16 - k) / 16)])}];
@@ -573,8 +587,8 @@ export const GEOMETRIES = {
                make: (p, lev) => cantileverMesh(p, [1, 2, 4, 8][lev - 1]),
                sides: () => {
                  const {L, D} = CANTILEVER;
-                 return [{name: "left", label: "fixed end, x₁ = 0", pts: [[0, D / 2], [0, -D / 2]]},
-                         {name: "right", label: "loaded end, x₁ = L", pts: [[L, -D / 2], [L, D / 2]]},
+                 return [{name: "left", label: "fixed end, x₀ = 0", pts: [[0, D / 2], [0, -D / 2]]},
+                         {name: "right", label: "loaded end, x₀ = L", pts: [[L, -D / 2], [L, D / 2]]},
                          {name: "top", label: "top edge", pts: [[L, D / 2], [0, D / 2]]},
                          {name: "bottom", label: "bottom edge", pts: [[0, -D / 2], [L, -D / 2]]}];
                },
@@ -616,7 +630,7 @@ export function deformedCanvas(width, mesh, sol, scale, pad = 0.06) {
   });
   let x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
   const m = pad * Math.max(x1 - x0, y1 - y0);
-  return makeCanvas(width, x0 - m, x1 + m, y0 - m, y1 + m, {xlabel: "x₁ (mm)", ylabel: "x₂ (mm)"});
+  return makeCanvas(width, x0 - m, x1 + m, y0 - m, y1 + m, {xlabel: "x₀ (mm)", ylabel: "x₁ (mm)"});
 }
 
 export function drawDeformed(cv, mesh, sol, valueAt, color, scale, k = 3) {
@@ -943,14 +957,14 @@ export function planeGraphic(geomKey, plane, {width = 340} = {}) {
   // the x3 axis
   const o = P(Math.min(...xs) - 0.06 * span, Math.min(...ys) - 0.06 * span, 0);
   const ax = (q, lab) => parts.push(`<line x1="${SX(o)}" y1="${SY(o)}" x2="${SX(q)}" y2="${SY(q)}" stroke="${RED}" stroke-width="1.3" marker-end="url(#ah)"/><text x="${SX(q) + 4}" y="${SY(q) - 3}" fill="${RED}" font-size="12">${lab}</text>`);
-  ax([o[0] + 0.18 * span, o[1]], "x₁"); ax([o[0], o[1] + 0.18 * span], "x₂");
-  ax([o[0] + 0.25 * span * k * dir[0] * 2, o[1] + 0.25 * span * k * dir[1] * 2], "x₃");
+  ax([o[0] + 0.18 * span, o[1]], "x₀"); ax([o[0], o[1] + 0.18 * span], "x₁");
+  ax([o[0] + 0.25 * span * k * dir[0] * 2, o[1] + 0.25 * span * k * dir[1] * 2], "x₂");
   const defs = `<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="${RED}"/></marker>
     <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#5b6b7c" stroke-width="1"/></pattern></defs>`;
   const svg = `<svg width="${W}" height="${H}" style="background:white">${defs}${parts.join("")}</svg>`;
   const text = plane === "stress"
-    ? `<b>Plane stress: a thin plate.</b> The faces x₃ = ±t/2 carry no load, so σ₃₃ = σ₁₃ = σ₂₃ = 0 through the thin thickness. The plate is free to thin or thicken: ε₃₃ = −ν(σ₁₁ + σ₂₂)/E ≠ 0.`
-    : `<b>Plane strain: a long body.</b> Far from its ends, or with its ends held (hatched), no slice can stretch along x₃: ε₃₃ = ε₁₃ = ε₂₃ = 0. Holding it takes a stress σ₃₃ = ν(σ₁₁ + σ₂₂) ≠ 0.`;
+    ? `<b>Plane stress: a thin plate.</b> The faces x₂ = ±t/2 carry no load, so σ₂₂ = σ₀₂ = σ₁₂ = 0 through the thin thickness. The plate is free to thin or thicken: ε₂₂ = −ν(σ₀₀ + σ₁₁)/E ≠ 0.`
+    : `<b>Plane strain: a long body.</b> Far from its ends, or with its ends held (hatched), no slice can stretch along x₂: ε₂₂ = ε₀₂ = ε₁₂ = 0. Holding it takes a stress σ₂₂ = ν(σ₀₀ + σ₁₁) ≠ 0.`;
   const div = document.createElement("div");
   div.style.cssText = "max-width:" + W + "px; font-size:0.9rem; line-height:1.45";
   div.innerHTML = svg + `<div style="margin-top:0.3rem">${text}</div>`;

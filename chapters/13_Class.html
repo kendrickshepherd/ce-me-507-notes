@@ -49,7 +49,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-25d60f11bf0350d4acb1bb2c5c0bf5d1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-bd990e089991ec7d162b92b5e37a2dc1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -349,6 +349,12 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Class 27: Voigt Notation and the Elasticity Matrix</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/28_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Class 28: The Galerkin Form of Elasticity and Assembly</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
@@ -481,8 +487,8 @@ DF = \frac{\partial \underline{x}}{\partial \underline{\xi}}
 <p><span class="math display">\[
 DF =
 \begin{bmatrix}
-\dfrac{\partial x_1}{\partial \xi} &amp; \dfrac{\partial x_1}{\partial \eta} \\[10pt]
-\dfrac{\partial x_2}{\partial \xi} &amp; \dfrac{\partial x_2}{\partial \eta}
+\dfrac{\partial x_0}{\partial \xi} &amp; \dfrac{\partial x_0}{\partial \eta} \\[10pt]
+\dfrac{\partial x_1}{\partial \xi} &amp; \dfrac{\partial x_1}{\partial \eta}
 \end{bmatrix}
 =
 \begin{bmatrix}
@@ -495,8 +501,8 @@ DF =
 <p>Two things to notice. The nodal coordinates <span class="math inline">\(\underline{x}_A^e\)</span> are constants, so the only thing being differentiated is the basis functions: <span class="math inline">\(DF\)</span> is built from <span class="math inline">\(\partial N_A/\partial \xi_j\)</span>, which is Homework 6 work. And <span class="math inline">\(DF\)</span> depends on <span class="math inline">\(\underline{\xi}\)</span>, so unless the element is a parallelogram it is a different matrix at every point.</p>
 <p>The determinant is the <strong>Jacobian</strong>,</p>
 <p><span class="math display">\[
-J = \det DF = \frac{\partial x_1}{\partial \xi}\frac{\partial x_2}{\partial \eta}
-            - \frac{\partial x_1}{\partial \eta}\frac{\partial x_2}{\partial \xi},
+J = \det DF = \frac{\partial x_0}{\partial \xi}\frac{\partial x_1}{\partial \eta}
+            - \frac{\partial x_0}{\partial \eta}\frac{\partial x_1}{\partial \xi},
 \qquad
 d\Omega = J\,d\xi\,d\eta,
 \]</span></p>
@@ -1086,14 +1092,14 @@ fitView(); render(true);
 <p><span class="math display">\[
 DF^{-1} = \frac{1}{J}
 \begin{bmatrix}
-\dfrac{\partial x_2}{\partial \eta} &amp; -\dfrac{\partial x_1}{\partial \eta} \\[10pt]
--\dfrac{\partial x_2}{\partial \xi} &amp; \dfrac{\partial x_1}{\partial \xi}
+\dfrac{\partial x_1}{\partial \eta} &amp; -\dfrac{\partial x_0}{\partial \eta} \\[10pt]
+-\dfrac{\partial x_1}{\partial \xi} &amp; \dfrac{\partial x_0}{\partial \xi}
 \end{bmatrix},
 \qquad\text{so}\qquad
 DF^{-T} = \frac{1}{J}
 \begin{bmatrix}
-\dfrac{\partial x_2}{\partial \eta} &amp; -\dfrac{\partial x_2}{\partial \xi} \\[10pt]
--\dfrac{\partial x_1}{\partial \eta} &amp; \dfrac{\partial x_1}{\partial \xi}
+\dfrac{\partial x_1}{\partial \eta} &amp; -\dfrac{\partial x_1}{\partial \xi} \\[10pt]
+-\dfrac{\partial x_0}{\partial \eta} &amp; \dfrac{\partial x_0}{\partial \xi}
 \end{bmatrix}.
 \]</span></p>
 <p>Note the <span class="math inline">\(1/J\)</span>. Everything said above about <span class="math inline">\(J\)</span> changing sign now has a second consequence: at <span class="math inline">\(J = 0\)</span> the spatial gradient does not exist, and near <span class="math inline">\(J = 0\)</span> it is large. An element that is merely folded gives wrong areas; an element that is folded also gives unusable derivatives, which is what actually enters the stiffness matrix.</p>

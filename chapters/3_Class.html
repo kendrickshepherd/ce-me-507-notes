@@ -49,7 +49,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-25d60f11bf0350d4acb1bb2c5c0bf5d1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-bd990e089991ec7d162b92b5e37a2dc1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -349,6 +349,12 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Class 27: Voigt Notation and the Elasticity Matrix</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/28_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Class 28: The Galerkin Form of Elasticity and Assembly</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
@@ -475,11 +481,11 @@ f := f \qquad \leftarrow \text{a function or value}
 </div>
 <div class="derivation">
 <p><span class="math display">\[
-\nabla f = \begin{bmatrix} \partial f_1/\partial x \\[2pt] \partial f_2/\partial x \end{bmatrix}
+\nabla f = \begin{bmatrix} \partial f_0/\partial x \\[2pt] \partial f_1/\partial x \end{bmatrix}
 \qquad ; \qquad
-f_{,1} = \frac{\partial f_1}{\partial x}
+f_{,0} = \frac{\partial f_0}{\partial x}
 \qquad
-f_{,2} = \frac{\partial f_2}{\partial x}
+f_{,1} = \frac{\partial f_1}{\partial x}
 \]</span></p>
 </div>
 <div class="derivation">
@@ -487,9 +493,9 @@ f_{,2} = \frac{\partial f_2}{\partial x}
 \text{(double gradient)}\qquad \nabla(\nabla f) := f_{,ij}
 \qquad\qquad
 \begin{bmatrix}
-f_{,11} &amp; f_{,12} &amp; f_{,13} \\
-f_{,21} &amp; f_{,22} &amp; f_{,23} \\
-f_{,31} &amp; f_{,32} &amp; f_{,33}
+f_{,00} &amp; f_{,01} &amp; f_{,02} \\
+f_{,10} &amp; f_{,11} &amp; f_{,12} \\
+f_{,20} &amp; f_{,21} &amp; f_{,22}
 \end{bmatrix}
 \]</span></p>
 </div>
@@ -502,7 +508,7 @@ f_{,31} &amp; f_{,32} &amp; f_{,33}
 </div>
 <div class="derivation">
 <p><span class="math display">\[
-f_{,ii} = f_{,11} + f_{,22} + f_{,33}
+f_{,ii} = f_{,00} + f_{,11} + f_{,22}
 = \frac{\partial^2 f}{\partial x^2} + \frac{\partial^2 f}{\partial y^2}
 + \frac{\partial^2 f}{\partial z^2}
 \]</span></p>
@@ -511,22 +517,22 @@ f_{,ii} = f_{,11} + f_{,22} + f_{,33}
 <p><span class="math display">\[
 \text{a vector (-valued function)}\qquad \underline{V} := V_i
 \qquad\qquad
-\underline{V} = \begin{bmatrix} V_1 \\ V_2 \\ V_3 \end{bmatrix}
+\underline{V} = \begin{bmatrix} V_0 \\ V_1 \\ V_2 \end{bmatrix}
 \]</span></p>
 </div>
 <div class="derivation">
 <p><span class="math display">\[
 \text{(divergence)}\qquad \nabla \cdot \underline{V} := V_{i,i}
 \qquad\qquad
-V_{i,i} = \frac{\partial v_1}{\partial x} + \frac{\partial v_2}{\partial y}
-+ \frac{\partial v_3}{\partial z} \quad \text{in 3D}
+V_{i,i} = \frac{\partial v_0}{\partial x} + \frac{\partial v_1}{\partial y}
++ \frac{\partial v_2}{\partial z} \quad \text{in 3D}
 \]</span></p>
 </div>
 <div class="derivation">
 <p><span class="math display">\[
 \text{(dot product)}\qquad \underline{V}\cdot\underline{n} := V_i n_i
 \qquad\qquad
-V_i n_i = V_1 n_1 + V_2 n_2 + V_3 n_3
+V_i n_i = V_0 n_0 + V_1 n_1 + V_2 n_2
 \]</span></p>
 </div>
 <div class="derivation">
@@ -718,8 +724,8 @@ Figure&nbsp;6.1
 <p>Assume <span class="math inline">\(\underline{v}\)</span>, <span class="math inline">\(\underline{w}\)</span> are vectors. The inner product of <span class="math inline">\(\underline{v}\)</span> and <span class="math inline">\(\underline{w}\)</span>, written <span class="math inline">\(\langle \underline{v}, \underline{w}\rangle\)</span>, is defined as</p>
 <div class="derivation">
 <p><span class="math display">\[
-\langle \underline{v}, \underline{w}\rangle = v_i w_i = \sum_{i=1}^{n} v_i w_i
-= v_1 w_1 + \cdots + v_n w_n
+\langle \underline{v}, \underline{w}\rangle = v_i w_i = \sum_{i=0}^{n-1} v_i w_i
+= v_0 w_0 + \cdots + v_{n-1} w_{n-1}
 \]</span></p>
 </div>
 <p>We show that <span class="math inline">\(\langle \cdot, \cdot \rangle\)</span> is <strong>bilinear</strong> if for an arbitrary set of coefficients <span class="math inline">\(\alpha\)</span>, <span class="math inline">\(\beta\)</span>, &amp; arbitrary vectors <span class="math inline">\(\underline{v}\)</span>, <span class="math inline">\(\underline{w}\)</span>, <span class="math inline">\(\underline{z}\)</span></p>

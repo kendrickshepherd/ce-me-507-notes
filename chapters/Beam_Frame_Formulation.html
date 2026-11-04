@@ -48,7 +48,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-25d60f11bf0350d4acb1bb2c5c0bf5d1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-bd990e089991ec7d162b92b5e37a2dc1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -348,6 +348,12 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Class 27: Voigt Notation and the Elasticity Matrix</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/28_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Class 28: The Galerkin Form of Elasticity and Assembly</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
@@ -477,26 +483,26 @@ window.Quarto = {
 <img src="generated_images/BeamFrame/BF_Fig1_Member.png" class="img-fluid figure-img" style="width:100.0%">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bf-member-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;J.1: (a) A member with length <span class="math inline">\(h^e\)</span> and cross-section <span class="math inline">\(A^e\)</span>, in its local principal axes <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span>, <span class="math inline">\(x_3\)</span>. (b) Members meeting at a node. Each member has its own local axes <span class="math inline">\(\underline{e}^e_j\)</span>, and the nodes are described in the global axes <span class="math inline">\(\underline{e}_i\)</span>.
+Figure&nbsp;J.1: (a) A member with length <span class="math inline">\(h^e\)</span> and cross-section <span class="math inline">\(A^e\)</span>, in its local principal axes <span class="math inline">\(x_0\)</span>, <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span>. (b) Members meeting at a node. Each member has its own local axes <span class="math inline">\(\underline{e}^e_j\)</span>, and the nodes are described in the global axes <span class="math inline">\(\underline{e}_i\)</span>.
 </figcaption>
 </figure>
 </div>
 <ol type="1">
 <li>The domain is the union of the members, <span class="math display">\[
-\Omega = \bigcup_{e=1}^{n_{el}} \Omega^e,
+\Omega = \bigcup_{e=0}^{n_{el}-1} \Omega^e,
 \qquad
-\Omega^e = \left\{ \left(x^e_1, x^e_2, x^e_3\right) \in \mathbb{R}^3 \;\middle|\; x^e_3 \in \left[0, h^e\right],\ \left(x^e_1, x^e_2\right) \in A^e \subset \mathbb{R}^2 \right\},
-\]</span> where <span class="math inline">\(h^e\)</span> is the length of the <span class="math inline">\(e\)</span>th member and <span class="math inline">\(A^e\)</span> is its cross-section. The coordinates <span class="math inline">\(x^e_1\)</span>, <span class="math inline">\(x^e_2\)</span>, <span class="math inline">\(x^e_3\)</span> are defined locally with respect to the principal axes of the member, so that <span class="math display">\[
-0 = \int_{A^e} x^e_1\;dA = \int_{A^e} x^e_2\;dA = \int_{A^e} x^e_1 x^e_2\;dA ,
-\]</span> and also <span class="math inline">\(0 = \int_{A^e} \rho\,x^e_1\,dA = \int_{A^e} \rho\,x^e_2\,dA = \int_{A^e} \rho\,x^e_1 x^e_2\,dA\)</span> (for example, when <span class="math inline">\(\rho\)</span> is constant over the cross-section).</li>
-<li><span class="math inline">\(\sigma_{\alpha\beta} = 0\)</span> for <span class="math inline">\(\alpha, \beta \in \{1, 2\}\)</span> (i.e.&nbsp;the stresses in the plane of the cross-section are negligible).</li>
+\Omega^e = \left\{ \left(x^e_0, x^e_1, x^e_2\right) \in \mathbb{R}^3 \;\middle|\; x^e_2 \in \left[0, h^e\right],\ \left(x^e_0, x^e_1\right) \in A^e \subset \mathbb{R}^2 \right\},
+\]</span> where <span class="math inline">\(h^e\)</span> is the length of the <span class="math inline">\(e\)</span>th member and <span class="math inline">\(A^e\)</span> is its cross-section. The coordinates <span class="math inline">\(x^e_0\)</span>, <span class="math inline">\(x^e_1\)</span>, <span class="math inline">\(x^e_2\)</span> are defined locally with respect to the principal axes of the member, so that <span class="math display">\[
+0 = \int_{A^e} x^e_0\;dA = \int_{A^e} x^e_1\;dA = \int_{A^e} x^e_0 x^e_1\;dA ,
+\]</span> and also <span class="math inline">\(0 = \int_{A^e} \rho\,x^e_0\,dA = \int_{A^e} \rho\,x^e_1\,dA = \int_{A^e} \rho\,x^e_0 x^e_1\,dA\)</span> (for example, when <span class="math inline">\(\rho\)</span> is constant over the cross-section).</li>
+<li><span class="math inline">\(\sigma_{\alpha\beta} = 0\)</span> for <span class="math inline">\(\alpha, \beta \in \{0, 1\}\)</span> (i.e.&nbsp;the stresses in the plane of the cross-section are negligible).</li>
 <li>The displacements are <span class="math display">\[
 \begin{aligned}
-u_1(x_1, x_2, x_3) &amp;= w_1(x_3) - x_2\,\theta_3(x_3), \\
-u_2(x_1, x_2, x_3) &amp;= w_2(x_3) + x_1\,\theta_3(x_3), \\
-u_3(x_1, x_2, x_3) &amp;= w_3(x_3) - x_1\,\theta_2(x_3) + x_2\,\theta_1(x_3),
+u_0(x_0, x_1, x_2) &amp;= w_0(x_2) - x_1\,\theta_2(x_2), \\
+u_1(x_0, x_1, x_2) &amp;= w_1(x_2) + x_0\,\theta_2(x_2), \\
+u_2(x_0, x_1, x_2) &amp;= w_2(x_2) - x_0\,\theta_1(x_2) + x_1\,\theta_0(x_2),
 \end{aligned}
-\]</span> that is, there is no warping of the cross-section (<a href="#fig-bf-disp" class="quarto-xref">Figure&nbsp;<span>J.2</span></a>). This is a modeling decision, and it can be relaxed by adding a warping term <span class="math inline">\(\omega(x_1, x_2)\,\theta_3'(x_3)\)</span> to <span class="math inline">\(u_3\)</span>, where <span class="math inline">\(\omega\)</span> is Saint-Venant’s warping function of the cross-section. If the twist is uniform, so that <span class="math inline">\(\theta_3''\)</span> is neglected, the derivation below is unchanged except that <span class="math inline">\(J = I_1 + I_2\)</span> in <span class="math inline">\(m_3 = \mu J\,\theta_3'\)</span> becomes the Saint-Venant torsion constant <span class="math inline">\(J = I_1 + I_2 - \int_A |\nabla\omega|^2\,dA\)</span>, computed in the <a href="../chapters/24_Torsion.html#warping">torsion example</a> of Class 24. If <span class="math inline">\(\theta_3''\)</span> is kept, as where warping is restrained at a support, the result is Vlasov’s theory of non-uniform torsion, with axial warping stresses <span class="math inline">\(E\,\omega\,\theta_3''\)</span>, a fourth-order torsion equation <span class="math inline">\(E\,C_w\,\theta_3'''' - \mu J\,\theta_3'' = C_3\)</span> with <span class="math inline">\(C_w = \int_A \omega^2\,dA\)</span> (and <span class="math inline">\(\omega\)</span> measured from the shear center), and a seventh degree of freedom, the warping, at each node.</li>
+\]</span> that is, there is no warping of the cross-section (<a href="#fig-bf-disp" class="quarto-xref">Figure&nbsp;<span>J.2</span></a>). This is a modeling decision, and it can be relaxed by adding a warping term <span class="math inline">\(\omega(x_0, x_1)\,\theta_2'(x_2)\)</span> to <span class="math inline">\(u_2\)</span>, where <span class="math inline">\(\omega\)</span> is Saint-Venant’s warping function of the cross-section. If the twist is uniform, so that <span class="math inline">\(\theta_2''\)</span> is neglected, the derivation below is unchanged except that <span class="math inline">\(J = I_0 + I_1\)</span> in <span class="math inline">\(m_2 = \mu J\,\theta_2'\)</span> becomes the Saint-Venant torsion constant <span class="math inline">\(J = I_0 + I_1 - \int_A |\nabla\omega|^2\,dA\)</span>, computed in the <a href="../chapters/24_Torsion.html#warping">torsion example</a> of Class 24. If <span class="math inline">\(\theta_2''\)</span> is kept, as where warping is restrained at a support, the result is Vlasov’s theory of non-uniform torsion, with axial warping stresses <span class="math inline">\(E\,\omega\,\theta_2''\)</span>, a fourth-order torsion equation <span class="math inline">\(E\,C_w\,\theta_2'''' - \mu J\,\theta_2'' = C_2\)</span> with <span class="math inline">\(C_w = \int_A \omega^2\,dA\)</span> (and <span class="math inline">\(\omega\)</span> measured from the shear center), and a seventh degree of freedom, the warping, at each node.</li>
 <li>The displacements are small.</li>
 <li>The deformation is elastic (not plastic), and, for simplicity, the material is homogeneous and isotropic, so that <span class="math inline">\(\sigma_{ij} = \lambda\,\varepsilon_{kk}\,\delta_{ij} + 2\mu\,\varepsilon_{ij}\)</span>.</li>
 </ol>
@@ -506,7 +512,7 @@ u_3(x_1, x_2, x_3) &amp;= w_3(x_3) - x_1\,\theta_2(x_3) + x_2\,\theta_1(x_3),
 <img src="generated_images/BeamFrame/BF_Fig2_Displacements.png" class="img-fluid figure-img" style="width:100.0%">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bf-disp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;J.2: The displacements of assumption 3 (exaggerated). Each cross-section translates by <span class="math inline">\((w_1, w_2, w_3)\)</span> and rotates as a rigid body by small angles <span class="math inline">\((\theta_1, \theta_2, \theta_3)\)</span>, so that <span class="math inline">\(\underline{u} = \underline{w} + \underline{\theta} \times \left(x_1\,\underline{e}_1 + x_2\,\underline{e}_2\right)\)</span>. (a) The twist <span class="math inline">\(\theta_3\)</span> moves the point <span class="math inline">\((x_1, x_2)\)</span> within the plane of the section. (b), (c) The rotations <span class="math inline">\(\theta_1\)</span> and <span class="math inline">\(\theta_2\)</span>, positive by the right-hand rule about <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span>, move it along the member, which gives the signs of <span class="math inline">\(x_2\,\theta_1\)</span> and <span class="math inline">\(-x_1\,\theta_2\)</span>. Dashed: undeformed; dotted: translated only; solid: translated and rotated.
+Figure&nbsp;J.2: The displacements of assumption 3 (exaggerated). Each cross-section translates by <span class="math inline">\((w_0, w_1, w_2)\)</span> and rotates as a rigid body by small angles <span class="math inline">\((\theta_0, \theta_1, \theta_2)\)</span>, so that <span class="math inline">\(\underline{u} = \underline{w} + \underline{\theta} \times \left(x_0\,\underline{e}_0 + x_1\,\underline{e}_1\right)\)</span>. (a) The twist <span class="math inline">\(\theta_2\)</span> moves the point <span class="math inline">\((x_0, x_1)\)</span> within the plane of the section. (b), (c) The rotations <span class="math inline">\(\theta_0\)</span> and <span class="math inline">\(\theta_1\)</span>, positive by the right-hand rule about <span class="math inline">\(x_0\)</span> and <span class="math inline">\(x_1\)</span>, move it along the member, which gives the signs of <span class="math inline">\(x_1\,\theta_0\)</span> and <span class="math inline">\(-x_0\,\theta_1\)</span>. Dashed: undeformed; dotted: translated only; solid: translated and rotated.
 </figcaption>
 </figure>
 </div>
@@ -531,29 +537,29 @@ u_i = g_i \text{ on } \Gamma_{g_i},
 <p><span class="math display">\[
 0 = \sigma_{\alpha\beta} = \lambda\,\varepsilon_{kk}\,\delta_{\alpha\beta} + 2\mu\,\varepsilon_{\alpha\beta}
 \quad\Longrightarrow\quad
-\varepsilon_{\alpha\alpha} = \frac{-\lambda}{\lambda + \mu}\,\varepsilon_{33}
+\varepsilon_{\alpha\alpha} = \frac{-\lambda}{\lambda + \mu}\,\varepsilon_{22}
 \quad\Longrightarrow\quad
-\varepsilon_{\alpha\beta} = \frac{-\lambda\,\varepsilon_{33}}{2(\lambda + \mu)}\,\delta_{\alpha\beta} . \qquad (\star)
+\varepsilon_{\alpha\beta} = \frac{-\lambda\,\varepsilon_{22}}{2(\lambda + \mu)}\,\delta_{\alpha\beta} . \qquad (\star)
 \]</span></p>
 <p>The remaining stresses are then</p>
 <p><span class="math display">\[
-\sigma_{33} = \lambda\,\varepsilon_{kk} + 2\mu\,\varepsilon_{33} = \lambda\,\varepsilon_{\alpha\alpha} + (\lambda + 2\mu)\,\varepsilon_{33}
+\sigma_{22} = \lambda\,\varepsilon_{kk} + 2\mu\,\varepsilon_{22} = \lambda\,\varepsilon_{\alpha\alpha} + (\lambda + 2\mu)\,\varepsilon_{22}
 \quad\Longrightarrow\quad
-\sigma_{33} = E\,\varepsilon_{33},
+\sigma_{22} = E\,\varepsilon_{22},
 \qquad
-\sigma_{\alpha 3} = 2\mu\,\varepsilon_{\alpha 3} .
+\sigma_{\alpha 2} = 2\mu\,\varepsilon_{\alpha 2} .
 \]</span></p>
 <p>From the displacements of assumption 3,</p>
 <p><span class="math display">\[
 \begin{aligned}
 \varepsilon_{\alpha\beta} &amp;= u_{(\alpha,\beta)} = 0
 &amp;&amp; \text{(note the inconsistency with } (\star)\text{, which is acceptable; see Hughes)}, \\
-\varepsilon_{13} &amp;= u_{(1,3)} = \tfrac{1}{2}\left(\frac{\partial u_1}{\partial x_3} + \frac{\partial u_3}{\partial x_1}\right) = \tfrac{1}{2}\left(w_1' - x_2\,\theta_3' - \theta_2\right), \\
-\varepsilon_{23} &amp;= u_{(2,3)} = \tfrac{1}{2}\left(\frac{\partial u_2}{\partial x_3} + \frac{\partial u_3}{\partial x_2}\right) = \tfrac{1}{2}\left(w_2' + x_1\,\theta_3' + \theta_1\right), \\
-\varepsilon_{33} &amp;= u_{3,3} = w_3' - x_1\,\theta_2' + x_2\,\theta_1' ,
+\varepsilon_{02} &amp;= u_{(0,2)} = \tfrac{1}{2}\left(\frac{\partial u_0}{\partial x_2} + \frac{\partial u_2}{\partial x_0}\right) = \tfrac{1}{2}\left(w_0' - x_1\,\theta_2' - \theta_1\right), \\
+\varepsilon_{12} &amp;= u_{(1,2)} = \tfrac{1}{2}\left(\frac{\partial u_1}{\partial x_2} + \frac{\partial u_2}{\partial x_1}\right) = \tfrac{1}{2}\left(w_1' + x_0\,\theta_2' + \theta_0\right), \\
+\varepsilon_{22} &amp;= u_{2,2} = w_2' - x_0\,\theta_1' + x_1\,\theta_0' ,
 \end{aligned}
 \]</span></p>
-<p>where a prime denotes <span class="math inline">\(d/dx_3\)</span>.</p>
+<p>where a prime denotes <span class="math inline">\(d/dx_2\)</span>.</p>
 </section>
 <section id="virtual-work" class="level2" data-number="J.3">
 <h2 data-number="J.3" class="anchored" data-anchor-id="virtual-work"><span class="header-section-number">J.3</span> Virtual work</h2>
@@ -567,17 +573,17 @@ u_i = g_i \text{ on } \Gamma_{g_i},
 \int_\Omega \rho\,u_{i,tt}\,\hat{u}_i\;d\Omega
 &amp;= -\int_\Omega \sigma_{ij}\,\hat{u}_{(i,j)}\;d\Omega + \int_\Omega f_i\,\hat{u}_i\;d\Omega + \int_{\Gamma_h} \hat{u}_i\,\sigma_{ij}\,n_j\;d\Gamma \\
 &amp;= -\int_\Omega \sigma_{ij}\,\hat{u}_{(i,j)}\;d\Omega + \int_\Omega f_i\,\hat{u}_i\;d\Omega + \int_{\Gamma_h} \hat{u}_i\,h_i\;d\Gamma \\
-&amp;= \sum_{e=1}^{n_{el}} \left\{ \int_0^{h^e}\!\!\int_{A^e} -\left[2\,\hat{u}_{(\alpha,3)}\,\sigma_{\alpha 3} + \hat{u}_{(3,3)}\,\sigma_{33}\right] dA\,dx_3
-+ \int_0^{h^e}\!\!\int_{A^e} \hat{u}_i\,f_i\;dA\,dx_3 \right\} + \int_{\Gamma_h} \hat{u}_i\,h_i\;d\Gamma ,
+&amp;= \sum_{e=0}^{n_{el}-1} \left\{ \int_0^{h^e}\!\!\int_{A^e} -\left[2\,\hat{u}_{(\alpha,2)}\,\sigma_{\alpha 2} + \hat{u}_{(2,2)}\,\sigma_{22}\right] dA\,dx_2
++ \int_0^{h^e}\!\!\int_{A^e} \hat{u}_i\,f_i\;dA\,dx_2 \right\} + \int_{\Gamma_h} \hat{u}_i\,h_i\;d\Gamma ,
 \end{aligned}
 \]</span></p>
-<p>where the factor of two comes from symmetry, <span class="math inline">\(\hat{u}_{(\alpha,3)}\,\sigma_{\alpha 3} = \hat{u}_{(3,\alpha)}\,\sigma_{3\alpha}\)</span>, and <span class="math inline">\(\sigma_{\alpha\beta} = 0\)</span>. Substituting the strains and displacements,</p>
+<p>where the factor of two comes from symmetry, <span class="math inline">\(\hat{u}_{(\alpha,2)}\,\sigma_{\alpha 2} = \hat{u}_{(2,\alpha)}\,\sigma_{2\alpha}\)</span>, and <span class="math inline">\(\sigma_{\alpha\beta} = 0\)</span>. Substituting the strains and displacements,</p>
 <p><span class="math display">\[
 \begin{aligned}
 \int_\Omega \rho\,u_{i,tt}\,\hat{u}_i\;d\Omega
-= \sum_{e=1}^{n_{el}} \Bigg\{ &amp; \int_0^{h^e}\!\!\int_{A^e} -\Big[\left(\hat{w}_1' - x_2\,\hat{\theta}_3' - \hat{\theta}_2\right)\sigma_{13} + \left(\hat{w}_2' + x_1\,\hat{\theta}_3' + \hat{\theta}_1\right)\sigma_{23} + \left(\hat{w}_3' - x_1\,\hat{\theta}_2' + x_2\,\hat{\theta}_1'\right)\sigma_{33}\Big]\,dA\,dx_3 \\
-&amp;+ \int_0^{h^e}\!\!\int_{A^e} \left(\hat{w}_1 - x_2\,\hat{\theta}_3\right) f_1 + \left(\hat{w}_2 + x_1\,\hat{\theta}_3\right) f_2 + \left(\hat{w}_3 - x_1\,\hat{\theta}_2 + x_2\,\hat{\theta}_1\right) f_3\;dA\,dx_3 \\
-&amp;+ \int_{\Gamma^e_h} \left(\hat{w}_1 - x_2\,\hat{\theta}_3\right) h_1 + \left(\hat{w}_2 + x_1\,\hat{\theta}_3\right) h_2 + \left(\hat{w}_3 - x_1\,\hat{\theta}_2 + x_2\,\hat{\theta}_1\right) h_3\;d\Gamma^e \Bigg\} .
+= \sum_{e=0}^{n_{el}-1} \Bigg\{ &amp; \int_0^{h^e}\!\!\int_{A^e} -\Big[\left(\hat{w}_0' - x_1\,\hat{\theta}_2' - \hat{\theta}_1\right)\sigma_{02} + \left(\hat{w}_1' + x_0\,\hat{\theta}_2' + \hat{\theta}_0\right)\sigma_{12} + \left(\hat{w}_2' - x_0\,\hat{\theta}_1' + x_1\,\hat{\theta}_0'\right)\sigma_{22}\Big]\,dA\,dx_2 \\
+&amp;+ \int_0^{h^e}\!\!\int_{A^e} \left(\hat{w}_0 - x_1\,\hat{\theta}_2\right) f_0 + \left(\hat{w}_1 + x_0\,\hat{\theta}_2\right) f_1 + \left(\hat{w}_2 - x_0\,\hat{\theta}_1 + x_1\,\hat{\theta}_0\right) f_2\;dA\,dx_2 \\
+&amp;+ \int_{\Gamma^e_h} \left(\hat{w}_0 - x_1\,\hat{\theta}_2\right) h_0 + \left(\hat{w}_1 + x_0\,\hat{\theta}_2\right) h_1 + \left(\hat{w}_2 - x_0\,\hat{\theta}_1 + x_1\,\hat{\theta}_0\right) h_2\;d\Gamma^e \Bigg\} .
 \end{aligned}
 \]</span></p>
 </section>
@@ -606,22 +612,22 @@ Table&nbsp;J.1: Stress resultants and loads per unit length of a member.
 <tbody>
 <tr class="odd">
 <td style="text-align: left;"><span class="math inline">\(q_\alpha\)</span></td>
-<td style="text-align: left;"><span class="math inline">\(\displaystyle\int_{A^e} \sigma_{\alpha 3}\;dA\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(\displaystyle\int_{A^e} \sigma_{\alpha 2}\;dA\)</span></td>
 <td style="text-align: left;">shear forces</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><span class="math inline">\(q_3\)</span></td>
-<td style="text-align: left;"><span class="math inline">\(\displaystyle\int_{A^e} \sigma_{33}\;dA\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(q_2\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(\displaystyle\int_{A^e} \sigma_{22}\;dA\)</span></td>
 <td style="text-align: left;">axial force</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;"><span class="math inline">\(m_1\)</span>, <span class="math inline">\(m_2\)</span></td>
-<td style="text-align: left;"><span class="math inline">\(\displaystyle\int_{A^e} \sigma_{33}\,x_2\;dA\)</span>, <span class="math inline">\(\displaystyle\int_{A^e} \sigma_{33}\,x_1\;dA\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(m_0\)</span>, <span class="math inline">\(m_1\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(\displaystyle\int_{A^e} \sigma_{22}\,x_1\;dA\)</span>, <span class="math inline">\(\displaystyle\int_{A^e} \sigma_{22}\,x_0\;dA\)</span></td>
 <td style="text-align: left;">bending moments</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><span class="math inline">\(m_3\)</span></td>
-<td style="text-align: left;"><span class="math inline">\(\displaystyle\int_{A^e} \left(\sigma_{23}\,x_1 - \sigma_{13}\,x_2\right) dA\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(m_2\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(\displaystyle\int_{A^e} \left(\sigma_{12}\,x_0 - \sigma_{02}\,x_1\right) dA\)</span></td>
 <td style="text-align: left;">torsional (twisting) moment, or torque <span class="math inline">\(T\)</span></td>
 </tr>
 <tr class="odd">
@@ -630,13 +636,13 @@ Table&nbsp;J.1: Stress resultants and loads per unit length of a member.
 <td style="text-align: left;">body (or inertial) forces per unit length</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><span class="math inline">\(\bar{C}_1\)</span>, <span class="math inline">\(\bar{C}_2\)</span></td>
-<td style="text-align: left;"><span class="math inline">\(\displaystyle\int_{A^e} f_3\,x_2\;dA\)</span>, <span class="math inline">\(\displaystyle\int_{A^e} f_3\,x_1\;dA\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(\bar{C}_0\)</span>, <span class="math inline">\(\bar{C}_1\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(\displaystyle\int_{A^e} f_2\,x_1\;dA\)</span>, <span class="math inline">\(\displaystyle\int_{A^e} f_2\,x_0\;dA\)</span></td>
 <td style="text-align: left;">applied moments per unit length</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;"><span class="math inline">\(\bar{C}_3\)</span></td>
-<td style="text-align: left;"><span class="math inline">\(\displaystyle\int_{A^e} \left(f_2\,x_1 - f_1\,x_2\right) dA\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(\bar{C}_2\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(\displaystyle\int_{A^e} \left(f_1\,x_0 - f_0\,x_1\right) dA\)</span></td>
 <td style="text-align: left;">applied torsional moment per unit length</td>
 </tr>
 </tbody>
@@ -648,20 +654,20 @@ Table&nbsp;J.1: Stress resultants and loads per unit length of a member.
 <p><span class="math display">\[
 \begin{aligned}
 \int_\Omega \rho\,u_{i,tt}\,\hat{u}_i\;d\Omega
-= \sum_{e=1}^{n_{el}} \Bigg\{ &amp; \int_0^{h^e} -\Big[\left(\hat{w}_1' - \hat{\theta}_2\right) q_1 + \left(\hat{w}_2' + \hat{\theta}_1\right) q_2 + \hat{w}_3'\,q_3 + \hat{\theta}_1'\,m_1 - \hat{\theta}_2'\,m_2 + \hat{\theta}_3'\,m_3\Big]\,dx_3 \\
-&amp;+ \int_0^{h^e} \hat{w}_1\,\bar{F}_1 + \hat{w}_2\,\bar{F}_2 + \hat{w}_3\,\bar{F}_3 + \hat{\theta}_1\,\bar{C}_1 - \hat{\theta}_2\,\bar{C}_2 + \hat{\theta}_3\,\bar{C}_3\;dx_3 \\
-&amp;+ \int_{\Gamma^e_h} \left(\hat{w}_1 - x_2\,\hat{\theta}_3\right) h_1 + \left(\hat{w}_2 + x_1\,\hat{\theta}_3\right) h_2 + \left(\hat{w}_3 - x_1\,\hat{\theta}_2 + x_2\,\hat{\theta}_1\right) h_3\;d\Gamma^e \Bigg\} .
+= \sum_{e=0}^{n_{el}-1} \Bigg\{ &amp; \int_0^{h^e} -\Big[\left(\hat{w}_0' - \hat{\theta}_1\right) q_0 + \left(\hat{w}_1' + \hat{\theta}_0\right) q_1 + \hat{w}_2'\,q_2 + \hat{\theta}_0'\,m_0 - \hat{\theta}_1'\,m_1 + \hat{\theta}_2'\,m_2\Big]\,dx_2 \\
+&amp;+ \int_0^{h^e} \hat{w}_0\,\bar{F}_0 + \hat{w}_1\,\bar{F}_1 + \hat{w}_2\,\bar{F}_2 + \hat{\theta}_0\,\bar{C}_0 - \hat{\theta}_1\,\bar{C}_1 + \hat{\theta}_2\,\bar{C}_2\;dx_2 \\
+&amp;+ \int_{\Gamma^e_h} \left(\hat{w}_0 - x_1\,\hat{\theta}_2\right) h_0 + \left(\hat{w}_1 + x_0\,\hat{\theta}_2\right) h_1 + \left(\hat{w}_2 - x_0\,\hat{\theta}_1 + x_1\,\hat{\theta}_0\right) h_2\;d\Gamma^e \Bigg\} .
 \end{aligned}
 \]</span></p>
 <p>Now, dealing with the boundary forces, the tractions on the lateral surface <span class="math inline">\(\partial A^e\)</span> of a member are combined with the loads per unit length along the member,</p>
 <p><span class="math display">\[
 F_i = \int_{\partial A^e} h_i\;d(\partial A^e) + \bar{F}_i,
 \qquad
-C_1 = \int_{\partial A^e} h_3\,x_2\;d(\partial A^e) + \bar{C}_1,
+C_0 = \int_{\partial A^e} h_2\,x_1\;d(\partial A^e) + \bar{C}_0,
 \qquad
-C_2 = \int_{\partial A^e} h_3\,x_1\;d(\partial A^e) + \bar{C}_2,
+C_1 = \int_{\partial A^e} h_2\,x_0\;d(\partial A^e) + \bar{C}_1,
 \qquad
-C_3 = \int_{\partial A^e} \left(h_2\,x_1 - h_1\,x_2\right) d(\partial A^e) + \bar{C}_3 ,
+C_2 = \int_{\partial A^e} \left(h_1\,x_0 - h_0\,x_1\right) d(\partial A^e) + \bar{C}_2 ,
 \]</span></p>
 <p>and the tractions on the ends of the members (at the nodes) give the end forces and moments</p>
 <p><span class="math display">\[
@@ -669,33 +675,33 @@ C_3 = \int_{\partial A^e} \left(h_2\,x_1 - h_1\,x_2\right) d(\partial A^e) + \ba
 \qquad
 \underline{M}_A =
 \begin{bmatrix}
-\int_{A^e} h_3\,x_2\;dA \\
-\int_{A^e} h_3\,x_1\;dA \\
-\int_{A^e} \left(h_2\,x_1 - h_1\,x_2\right) dA
+\int_{A^e} h_2\,x_1\;dA \\
+\int_{A^e} h_2\,x_0\;dA \\
+\int_{A^e} \left(h_1\,x_0 - h_0\,x_1\right) dA
 \end{bmatrix} .
 \]</span></p>
 <p>Integrating by parts along each member then gives</p>
 <p><span class="math display">\[
 \begin{aligned}
 \int_\Omega \rho\,u_{i,tt}\,\hat{u}_i\;d\Omega
-= \sum_{e=1}^{n_{el}} \Bigg\{ &amp; \int_0^{h^e} \hat{w}_1\left(q_1' + F_1\right) + \hat{w}_2\left(q_2' + F_2\right) + \hat{w}_3\left(q_3' + F_3\right) \\
-&amp;\qquad + \hat{\theta}_1\left(m_1' - q_2 + C_1\right) - \hat{\theta}_2\left(m_2' - q_1 + C_2\right) + \hat{\theta}_3\left(m_3' + C_3\right) dx_3 \Bigg\}
+= \sum_{e=0}^{n_{el}-1} \Bigg\{ &amp; \int_0^{h^e} \hat{w}_0\left(q_0' + F_0\right) + \hat{w}_1\left(q_1' + F_1\right) + \hat{w}_2\left(q_2' + F_2\right) \\
+&amp;\qquad + \hat{\theta}_0\left(m_0' - q_1 + C_0\right) - \hat{\theta}_1\left(m_1' - q_0 + C_1\right) + \hat{\theta}_2\left(m_2' + C_2\right) dx_2 \Bigg\}
 + \text{(nodal terms)},
 \end{aligned}
 \]</span></p>
-<p>where the nodal terms collect the end values <span class="math inline">\(\hat{w}_i\,q_i\)</span>, <span class="math inline">\(\hat{\theta}_1\,m_1\)</span>, <span class="math inline">\(\hat{\theta}_2\,m_2\)</span>, <span class="math inline">\(\hat{\theta}_3\,m_3\)</span> of each member together with the applied end forces and moments. When looking at the nodes, the sign of the end loads reverses, and the contributions of all of the members that meet at a node are transformed into the global axes and added, <span class="math inline">\(\sum_e \underline{t}^e\,\underline{q}^e_A\)</span> and <span class="math inline">\(\sum_e \underline{t}^e\,\underline{m}^e_A\)</span>.</p>
+<p>where the nodal terms collect the end values <span class="math inline">\(\hat{w}_i\,q_i\)</span>, <span class="math inline">\(\hat{\theta}_0\,m_0\)</span>, <span class="math inline">\(\hat{\theta}_1\,m_1\)</span>, <span class="math inline">\(\hat{\theta}_2\,m_2\)</span> of each member together with the applied end forces and moments. When looking at the nodes, the sign of the end loads reverses, and the contributions of all of the members that meet at a node are transformed into the global axes and added, <span class="math inline">\(\sum_e \underline{t}^e\,\underline{q}^e_A\)</span> and <span class="math inline">\(\sum_e \underline{t}^e\,\underline{m}^e_A\)</span>.</p>
 </section>
 <section id="the-strong-form" class="level2" data-number="J.5">
 <h2 data-number="J.5" class="anchored" data-anchor-id="the-strong-form"><span class="header-section-number">J.5</span> The strong form</h2>
 <p>In the static case, the variational formulation gives rise to the following strong system along each member:</p>
 <p><span class="math display">\[
 \begin{aligned}
-q_3' + F_3 &amp;= 0 &amp;&amp; \text{axial load} \\
+q_2' + F_2 &amp;= 0 &amp;&amp; \text{axial load} \\
+q_0' + F_0 &amp;= 0 &amp;&amp; \text{shear} \\
 q_1' + F_1 &amp;= 0 &amp;&amp; \text{shear} \\
-q_2' + F_2 &amp;= 0 &amp;&amp; \text{shear} \\
-m_1' - q_2 + C_1 &amp;= 0 &amp;&amp; \text{bending} \\
-m_2' - q_1 + C_2 &amp;= 0 &amp;&amp; \text{bending} \\
-m_3' + C_3 &amp;= 0 &amp;&amp; \text{torsion (with no warping)}
+m_0' - q_1 + C_0 &amp;= 0 &amp;&amp; \text{bending} \\
+m_1' - q_0 + C_1 &amp;= 0 &amp;&amp; \text{bending} \\
+m_2' + C_2 &amp;= 0 &amp;&amp; \text{torsion (with no warping)}
 \end{aligned}
 \]</span></p>
 <p>At the nodes,</p>
@@ -723,19 +729,19 @@ m_3' + C_3 &amp;= 0 &amp;&amp; \text{torsion (with no warping)}
 <p>The following constitutive laws also hold. Using the strains above and assumption 1,</p>
 <p><span class="math display">\[
 \begin{aligned}
-q_1 &amp;= \int_A \sigma_{13}\;dA = \int_A 2\mu\left[\tfrac{1}{2}\left(w_1' - x_2\,\theta_3' - \theta_2\right)\right] dA
-= \mu \int_A \left(w_1' - \theta_2\right) dA - \mu\,\theta_3' \int_A x_2\;dA
-= \mu\,A\,\gamma_1, \qquad \gamma_1 = w_1' - \theta_2, \\
-q_2 &amp;= \mu\,A\,\gamma_2, \qquad \gamma_2 = w_2' + \theta_1, \\
-q_3 &amp;= \int_A \sigma_{33}\;dA = E\int_A \left(w_3' - x_1\,\theta_2' + x_2\,\theta_1'\right) dA = E\,A\,\varepsilon, \qquad \varepsilon = w_3', \\
-m_1 &amp;= \int_A \sigma_{33}\,x_2\;dA = E\int_A \left(w_3' - x_1\,\theta_2' + x_2\,\theta_1'\right) x_2\;dA = E\,\theta_1' \int_A x_2^2\;dA = E\,I_1\,\kappa_1, \qquad \kappa_1 = \theta_1', \\
-m_2 &amp;= \int_A \sigma_{33}\,x_1\;dA = E\int_A \left(w_3' - x_1\,\theta_2' + x_2\,\theta_1'\right) x_1\;dA = -E\,\theta_2' \int_A x_1^2\;dA = -E\,I_2\,\kappa_2, \qquad \kappa_2 = \theta_2', \\
-m_3 &amp;= \int_A \left(\sigma_{23}\,x_1 - \sigma_{13}\,x_2\right) dA
-= \mu \int_A \left[\left(w_2' + x_1\,\theta_3' + \theta_1\right) x_1 - \left(w_1' - x_2\,\theta_3' - \theta_2\right) x_2\right] dA
-= \mu\,\theta_3' \int_A \left(x_1^2 + x_2^2\right) dA = \mu\,J\,\psi, \qquad \psi = \theta_3',
+q_0 &amp;= \int_A \sigma_{02}\;dA = \int_A 2\mu\left[\tfrac{1}{2}\left(w_0' - x_1\,\theta_2' - \theta_1\right)\right] dA
+= \mu \int_A \left(w_0' - \theta_1\right) dA - \mu\,\theta_2' \int_A x_1\;dA
+= \mu\,A\,\gamma_0, \qquad \gamma_0 = w_0' - \theta_1, \\
+q_1 &amp;= \mu\,A\,\gamma_1, \qquad \gamma_1 = w_1' + \theta_0, \\
+q_2 &amp;= \int_A \sigma_{22}\;dA = E\int_A \left(w_2' - x_0\,\theta_1' + x_1\,\theta_0'\right) dA = E\,A\,\varepsilon, \qquad \varepsilon = w_2', \\
+m_0 &amp;= \int_A \sigma_{22}\,x_1\;dA = E\int_A \left(w_2' - x_0\,\theta_1' + x_1\,\theta_0'\right) x_1\;dA = E\,\theta_0' \int_A x_1^2\;dA = E\,I_0\,\kappa_0, \qquad \kappa_0 = \theta_0', \\
+m_1 &amp;= \int_A \sigma_{22}\,x_0\;dA = E\int_A \left(w_2' - x_0\,\theta_1' + x_1\,\theta_0'\right) x_0\;dA = -E\,\theta_1' \int_A x_0^2\;dA = -E\,I_1\,\kappa_1, \qquad \kappa_1 = \theta_1', \\
+m_2 &amp;= \int_A \left(\sigma_{12}\,x_0 - \sigma_{02}\,x_1\right) dA
+= \mu \int_A \left[\left(w_1' + x_0\,\theta_2' + \theta_0\right) x_0 - \left(w_0' - x_1\,\theta_2' - \theta_1\right) x_1\right] dA
+= \mu\,\theta_2' \int_A \left(x_0^2 + x_1^2\right) dA = \mu\,J\,\psi, \qquad \psi = \theta_2',
 \end{aligned}
 \]</span></p>
-<p>where <span class="math inline">\(I_1 = \int_A x_2^2\,dA\)</span>, <span class="math inline">\(I_2 = \int_A x_1^2\,dA\)</span>, and <span class="math inline">\(J = \int_A \left(x_1^2 + x_2^2\right) dA = I_1 + I_2\)</span>. If the cross-section is allowed to warp, <span class="math inline">\(J\)</span> is instead the Saint-Venant torsion constant, computed in the <a href="../chapters/24_Torsion.html#frame-elements">torsion example</a> of Class 24. There, <span class="math inline">\(m_3\)</span> is the torque <span class="math inline">\(T\)</span> and <span class="math inline">\(\psi = \theta_3'\)</span> is the twist per unit length <span class="math inline">\(\theta\)</span>, so that <span class="math inline">\(m_3 = \mu J\,\psi\)</span> reads <span class="math inline">\(T = G J \theta\)</span>. In the shear forces, <span class="math inline">\(A\)</span> is usually replaced by an effective shear area <span class="math inline">\(A^s_\alpha\)</span>, so that <span class="math inline">\(q_\alpha = \mu\,A^s_\alpha\,\gamma_\alpha\)</span>, where <span class="math inline">\(\mu\)</span> is the second Lamé constant (the shear modulus <span class="math inline">\(G\)</span>).</p>
+<p>where <span class="math inline">\(I_0 = \int_A x_1^2\,dA\)</span>, <span class="math inline">\(I_1 = \int_A x_0^2\,dA\)</span>, and <span class="math inline">\(J = \int_A \left(x_0^2 + x_1^2\right) dA = I_0 + I_1\)</span>. If the cross-section is allowed to warp, <span class="math inline">\(J\)</span> is instead the Saint-Venant torsion constant, computed in the <a href="../chapters/24_Torsion.html#frame-elements">torsion example</a> of Class 24. There, <span class="math inline">\(m_2\)</span> is the torque <span class="math inline">\(T\)</span> and <span class="math inline">\(\psi = \theta_2'\)</span> is the twist per unit length <span class="math inline">\(\theta\)</span>, so that <span class="math inline">\(m_2 = \mu J\,\psi\)</span> reads <span class="math inline">\(T = G J \theta\)</span>. In the shear forces, <span class="math inline">\(A\)</span> is usually replaced by an effective shear area <span class="math inline">\(A^s_\alpha\)</span>, so that <span class="math inline">\(q_\alpha = \mu\,A^s_\alpha\,\gamma_\alpha\)</span>, where <span class="math inline">\(\mu\)</span> is the second Lamé constant (the shear modulus <span class="math inline">\(G\)</span>).</p>
 </section>
 <section id="time-dependent-terms" class="level2" data-number="J.7">
 <h2 data-number="J.7" class="anchored" data-anchor-id="time-dependent-terms"><span class="header-section-number">J.7</span> Time-dependent terms</h2>
@@ -743,57 +749,57 @@ m_3 &amp;= \int_A \left(\sigma_{23}\,x_1 - \sigma_{13}\,x_2\right) dA
 <p><span class="math display">\[
 \begin{aligned}
 \int_\Omega \rho\,u_{i,tt}\,\hat{u}_i\;d\Omega
-&amp;= \sum_{e=1}^{n_{el}} \int_0^{h^e}\!\!\int_{A^e} \rho\left(\hat{w}_1 - x_2\,\hat{\theta}_3\right) u_{1,tt} + \rho\left(\hat{w}_2 + x_1\,\hat{\theta}_3\right) u_{2,tt} + \rho\left(\hat{w}_3 - x_1\,\hat{\theta}_2 + x_2\,\hat{\theta}_1\right) u_{3,tt}\;dA\,dx_3 .
+&amp;= \sum_{e=0}^{n_{el}-1} \int_0^{h^e}\!\!\int_{A^e} \rho\left(\hat{w}_0 - x_1\,\hat{\theta}_2\right) u_{0,tt} + \rho\left(\hat{w}_1 + x_0\,\hat{\theta}_2\right) u_{1,tt} + \rho\left(\hat{w}_2 - x_0\,\hat{\theta}_1 + x_1\,\hat{\theta}_0\right) u_{2,tt}\;dA\,dx_2 .
 \end{aligned}
 \]</span></p>
 <p>Let</p>
 <p><span class="math display">\[
 r_i = \int_{A^e} \rho\,u_{i,tt}\;dA,
 \qquad
-s_1 = \int_{A^e} \rho\,u_{3,tt}\,x_2\;dA,
+s_0 = \int_{A^e} \rho\,u_{2,tt}\,x_1\;dA,
 \qquad
-s_2 = \int_{A^e} \rho\,u_{3,tt}\,x_1\;dA,
+s_1 = \int_{A^e} \rho\,u_{2,tt}\,x_0\;dA,
 \qquad
-s_3 = \int_{A^e} \rho\left(u_{2,tt}\,x_1 - u_{1,tt}\,x_2\right) dA ,
+s_2 = \int_{A^e} \rho\left(u_{1,tt}\,x_0 - u_{0,tt}\,x_1\right) dA ,
 \]</span></p>
 <p>so that</p>
 <p><span class="math display">\[
-\int_\Omega \rho\,u_{i,tt}\,\hat{u}_i\;d\Omega = \sum_{e=1}^{n_{el}} \int_0^{h^e} r_1\,\hat{w}_1 + r_2\,\hat{w}_2 + r_3\,\hat{w}_3 + s_1\,\hat{\theta}_1 - s_2\,\hat{\theta}_2 + s_3\,\hat{\theta}_3\;dx_3 .
+\int_\Omega \rho\,u_{i,tt}\,\hat{u}_i\;d\Omega = \sum_{e=0}^{n_{el}-1} \int_0^{h^e} r_0\,\hat{w}_0 + r_1\,\hat{w}_1 + r_2\,\hat{w}_2 + s_0\,\hat{\theta}_0 - s_1\,\hat{\theta}_1 + s_2\,\hat{\theta}_2\;dx_2 .
 \]</span></p>
 <p>Then, at the centroids of the members, the following equations hold:</p>
 <p><span class="math display">\[
+q_0' + F_0 = r_0, \quad
 q_1' + F_1 = r_1, \quad
 q_2' + F_2 = r_2, \quad
-q_3' + F_3 = r_3, \quad
-m_1' - q_2 + C_1 = s_1, \quad
-m_2' - q_1 + C_2 = s_2, \quad
-m_3' + C_3 = s_3 .
+m_0' - q_1 + C_0 = s_0, \quad
+m_1' - q_0 + C_1 = s_1, \quad
+m_2' + C_2 = s_2 .
 \]</span></p>
 <p>But, with the displacements of assumption 3 and the principal axes of assumption 1,</p>
 <p><span class="math display">\[
 \begin{aligned}
 r_i &amp;= \int_{A^e} \rho\,u_{i,tt}\;dA = \bar{\mu}\,w_{i,tt}, &amp;&amp; \bar{\mu} = \int_{A^e} \rho\;dA \ \text{(mass per unit length)}, \\
-s_1 &amp;= \int_{A^e} \rho\,u_{3,tt}\,x_2\;dA = \hat{I}_1\,\theta_{1,tt}, &amp;&amp; \hat{I}_1 = \int_{A^e} \rho\,x_2^2\;dA \ (= \rho\,I_1), \\
-s_2 &amp;= \int_{A^e} \rho\,u_{3,tt}\,x_1\;dA = -\hat{I}_2\,\theta_{2,tt}, &amp;&amp; \hat{I}_2 = \int_{A^e} \rho\,x_1^2\;dA \ (= \rho\,I_2), \\
-s_3 &amp;= \int_{A^e} \rho\left(u_{2,tt}\,x_1 - u_{1,tt}\,x_2\right) dA = \hat{J}\,\theta_{3,tt}, &amp;&amp; \hat{J} = \int_{A^e} \rho\left(x_1^2 + x_2^2\right) dA \ (= \rho\,J) .
+s_0 &amp;= \int_{A^e} \rho\,u_{2,tt}\,x_1\;dA = \hat{I}_0\,\theta_{0,tt}, &amp;&amp; \hat{I}_0 = \int_{A^e} \rho\,x_1^2\;dA \ (= \rho\,I_0), \\
+s_1 &amp;= \int_{A^e} \rho\,u_{2,tt}\,x_0\;dA = -\hat{I}_1\,\theta_{1,tt}, &amp;&amp; \hat{I}_1 = \int_{A^e} \rho\,x_0^2\;dA \ (= \rho\,I_1), \\
+s_2 &amp;= \int_{A^e} \rho\left(u_{1,tt}\,x_0 - u_{0,tt}\,x_1\right) dA = \hat{J}\,\theta_{2,tt}, &amp;&amp; \hat{J} = \int_{A^e} \rho\left(x_0^2 + x_1^2\right) dA \ (= \rho\,J) .
 \end{aligned}
 \]</span></p>
 <p>Synthesizing, we have</p>
 <p><span class="math display">\[
 \begin{aligned}
-&amp;\sum_{e=1}^{n_{el}} \int_0^{h^e} \bar{\mu}\,w_{1,tt}\,\hat{w}_1 + \bar{\mu}\,w_{2,tt}\,\hat{w}_2 + \bar{\mu}\,w_{3,tt}\,\hat{w}_3 + \hat{I}_1\,\theta_{1,tt}\,\hat{\theta}_1 + \hat{I}_2\,\theta_{2,tt}\,\hat{\theta}_2 + \hat{J}\,\theta_{3,tt}\,\hat{\theta}_3\;dx_3 \\
-&amp;\quad= \sum_{e=1}^{n_{el}} \int_0^{h^e} \hat{w}_1\left(q_1' + F_1\right) + \hat{w}_2\left(q_2' + F_2\right) + \hat{w}_3\left(q_3' + F_3\right) + \hat{\theta}_1\left(m_1' - q_2 + C_1\right) - \hat{\theta}_2\left(m_2' - q_1 + C_2\right) + \hat{\theta}_3\left(m_3' + C_3\right) dx_3 + \text{(nodal terms)} .
+&amp;\sum_{e=0}^{n_{el}-1} \int_0^{h^e} \bar{\mu}\,w_{0,tt}\,\hat{w}_0 + \bar{\mu}\,w_{1,tt}\,\hat{w}_1 + \bar{\mu}\,w_{2,tt}\,\hat{w}_2 + \hat{I}_0\,\theta_{0,tt}\,\hat{\theta}_0 + \hat{I}_1\,\theta_{1,tt}\,\hat{\theta}_1 + \hat{J}\,\theta_{2,tt}\,\hat{\theta}_2\;dx_2 \\
+&amp;\quad= \sum_{e=0}^{n_{el}-1} \int_0^{h^e} \hat{w}_0\left(q_0' + F_0\right) + \hat{w}_1\left(q_1' + F_1\right) + \hat{w}_2\left(q_2' + F_2\right) + \hat{\theta}_0\left(m_0' - q_1 + C_0\right) - \hat{\theta}_1\left(m_1' - q_0 + C_1\right) + \hat{\theta}_2\left(m_2' + C_2\right) dx_2 + \text{(nodal terms)} .
 \end{aligned}
 \]</span></p>
 <p>In differential form, these become</p>
 <p><span class="math display">\[
 \begin{aligned}
-q_3' + F_3 &amp;= \bar{\mu}\,w_{3,tt}, &amp;&amp; q_3 = E\,A\,w_3', \\
-q_1' + F_1 &amp;= \bar{\mu}\,w_{1,tt}, &amp;&amp; q_1 = \mu\,A^s_1\left(w_1' - \theta_2\right), \\
-q_2' + F_2 &amp;= \bar{\mu}\,w_{2,tt}, &amp;&amp; q_2 = \mu\,A^s_2\left(w_2' + \theta_1\right), \\
-m_1' - q_2 + C_1 &amp;= \hat{I}_1\,\theta_{1,tt}, &amp;&amp; m_1 = E\,I_1\,\theta_1', \\
-m_2' - q_1 + C_2 &amp;= -\hat{I}_2\,\theta_{2,tt}, &amp;&amp; m_2 = -E\,I_2\,\theta_2', \\
-m_3' + C_3 &amp;= \hat{J}\,\theta_{3,tt}, &amp;&amp; m_3 = \mu\,J\,\theta_3',
+q_2' + F_2 &amp;= \bar{\mu}\,w_{2,tt}, &amp;&amp; q_2 = E\,A\,w_2', \\
+q_0' + F_0 &amp;= \bar{\mu}\,w_{0,tt}, &amp;&amp; q_0 = \mu\,A^s_0\left(w_0' - \theta_1\right), \\
+q_1' + F_1 &amp;= \bar{\mu}\,w_{1,tt}, &amp;&amp; q_1 = \mu\,A^s_1\left(w_1' + \theta_0\right), \\
+m_0' - q_1 + C_0 &amp;= \hat{I}_0\,\theta_{0,tt}, &amp;&amp; m_0 = E\,I_0\,\theta_0', \\
+m_1' - q_0 + C_1 &amp;= -\hat{I}_1\,\theta_{1,tt}, &amp;&amp; m_1 = -E\,I_1\,\theta_1', \\
+m_2' + C_2 &amp;= \hat{J}\,\theta_{2,tt}, &amp;&amp; m_2 = \mu\,J\,\theta_2',
 \end{aligned}
 \]</span></p>
 <p>together with the conditions at the nodes,</p>
@@ -812,18 +818,18 @@ m_3' + C_3 &amp;= \hat{J}\,\theta_{3,tt}, &amp;&amp; m_3 = \mu\,J\,\theta_3',
 <p>Alternatively, in weak form, the equations are</p>
 <p><span class="math display">\[
 \begin{aligned}
-&amp;\sum_{e=1}^{n_{el}} \Bigg\{ \int_0^{h^e} \Big[\left(\hat{w}_1' - \hat{\theta}_2\right) \mu A^s_1 \left(w_1' - \theta_2\right) + \left(\hat{w}_2' + \hat{\theta}_1\right) \mu A^s_2 \left(w_2' + \theta_1\right) + \hat{w}_3'\,E A\,w_3' \\
-&amp;\qquad\qquad + \hat{\theta}_1'\,E I_1\,\theta_1' + \hat{\theta}_2'\,E I_2\,\theta_2' + \hat{\theta}_3'\,\mu J\,\theta_3'\Big]\,dx_3
-- \int_0^{h^e} \left(\hat{w}_1 F_1 + \hat{w}_2 F_2 + \hat{w}_3 F_3 + \hat{\theta}_1 C_1 - \hat{\theta}_2 C_2 + \hat{\theta}_3 C_3\right) dx_3 \Bigg\}
+&amp;\sum_{e=0}^{n_{el}-1} \Bigg\{ \int_0^{h^e} \Big[\left(\hat{w}_0' - \hat{\theta}_1\right) \mu A^s_0 \left(w_0' - \theta_1\right) + \left(\hat{w}_1' + \hat{\theta}_0\right) \mu A^s_1 \left(w_1' + \theta_0\right) + \hat{w}_2'\,E A\,w_2' \\
+&amp;\qquad\qquad + \hat{\theta}_0'\,E I_0\,\theta_0' + \hat{\theta}_1'\,E I_1\,\theta_1' + \hat{\theta}_2'\,\mu J\,\theta_2'\Big]\,dx_2
+- \int_0^{h^e} \left(\hat{w}_0 F_0 + \hat{w}_1 F_1 + \hat{w}_2 F_2 + \hat{\theta}_0 C_0 - \hat{\theta}_1 C_1 + \hat{\theta}_2 C_2\right) dx_2 \Bigg\}
 - \sum_{A \in \mathcal{F}} \left(\underline{\hat{w}}^T_A\,\underline{Q}_A + \underline{\hat{\theta}}^T_A\,\underline{M}_A\right) \\
-&amp;\quad= -\sum_{e=1}^{n_{el}} \int_0^{h^e} \hat{w}_1\,\bar{\mu}\,w_{1,tt} + \hat{w}_2\,\bar{\mu}\,w_{2,tt} + \hat{w}_3\,\bar{\mu}\,w_{3,tt} + \hat{\theta}_1\,\hat{I}_1\,\theta_{1,tt} + \hat{\theta}_2\,\hat{I}_2\,\theta_{2,tt} + \hat{\theta}_3\,\hat{J}\,\theta_{3,tt}\;dx_3 ,
+&amp;\quad= -\sum_{e=0}^{n_{el}-1} \int_0^{h^e} \hat{w}_0\,\bar{\mu}\,w_{0,tt} + \hat{w}_1\,\bar{\mu}\,w_{1,tt} + \hat{w}_2\,\bar{\mu}\,w_{2,tt} + \hat{\theta}_0\,\hat{I}_0\,\theta_{0,tt} + \hat{\theta}_1\,\hat{I}_1\,\theta_{1,tt} + \hat{\theta}_2\,\hat{J}\,\theta_{2,tt}\;dx_2 ,
 \end{aligned}
 \]</span></p>
 <p>where <span class="math inline">\(\mathcal{F}\)</span> is the set of nodes with known applied forces, and the Dirichlet conditions are imposed at the nodes with known displacements and angles. If the problem is static (no time dependence), the right side is zero, and</p>
 <p><span class="math display">\[
 \begin{aligned}
-&amp;\sum_{e=1}^{n_{el}} \int_0^{h^e} \Big[\left(\hat{w}_1' - \hat{\theta}_2\right) \mu A^s_1 \left(w_1' - \theta_2\right) + \left(\hat{w}_2' + \hat{\theta}_1\right) \mu A^s_2 \left(w_2' + \theta_1\right) + \hat{\theta}_1'\,E I_1\,\theta_1' + \hat{\theta}_2'\,E I_2\,\theta_2' + \hat{w}_3'\,E A\,w_3' + \hat{\theta}_3'\,\mu J\,\theta_3'\Big]\,dx_3 \\
-&amp;\quad= \sum_{e=1}^{n_{el}} \int_0^{h^e} \left(\hat{w}_1 F_1 + \hat{w}_2 F_2 + \hat{w}_3 F_3 + \hat{\theta}_1 C_1 - \hat{\theta}_2 C_2 + \hat{\theta}_3 C_3\right) dx_3
+&amp;\sum_{e=0}^{n_{el}-1} \int_0^{h^e} \Big[\left(\hat{w}_0' - \hat{\theta}_1\right) \mu A^s_0 \left(w_0' - \theta_1\right) + \left(\hat{w}_1' + \hat{\theta}_0\right) \mu A^s_1 \left(w_1' + \theta_0\right) + \hat{\theta}_0'\,E I_0\,\theta_0' + \hat{\theta}_1'\,E I_1\,\theta_1' + \hat{w}_2'\,E A\,w_2' + \hat{\theta}_2'\,\mu J\,\theta_2'\Big]\,dx_2 \\
+&amp;\quad= \sum_{e=0}^{n_{el}-1} \int_0^{h^e} \left(\hat{w}_0 F_0 + \hat{w}_1 F_1 + \hat{w}_2 F_2 + \hat{\theta}_0 C_0 - \hat{\theta}_1 C_1 + \hat{\theta}_2 C_2\right) dx_2
 + \sum_{A \in \mathcal{F}} \left(\underline{\hat{w}}^T_A\,\underline{Q}_A + \underline{\hat{\theta}}^T_A\,\underline{M}_A\right) .
 \end{aligned}
 \]</span></p>
@@ -831,32 +837,32 @@ m_3' + C_3 &amp;= \hat{J}\,\theta_{3,tt}, &amp;&amp; m_3 = \mu\,J\,\theta_3',
 </section>
 <section id="the-bernoullieuler-frame" class="level2" data-number="J.9">
 <h2 data-number="J.9" class="anchored" data-anchor-id="the-bernoullieuler-frame"><span class="header-section-number">J.9</span> The Bernoulli–Euler frame</h2>
-<p>If shear deformation is neglected, the rotations are no longer independent: setting the shear strains <span class="math inline">\(\gamma_1 = w_1' - \theta_2\)</span> and <span class="math inline">\(\gamma_2 = w_2' + \theta_1\)</span> to zero gives <span class="math inline">\(\theta_2 = w_1'\)</span> and <span class="math inline">\(\theta_1 = -w_2'\)</span>, so that</p>
+<p>If shear deformation is neglected, the rotations are no longer independent: setting the shear strains <span class="math inline">\(\gamma_0 = w_0' - \theta_1\)</span> and <span class="math inline">\(\gamma_1 = w_1' + \theta_0\)</span> to zero gives <span class="math inline">\(\theta_1 = w_0'\)</span> and <span class="math inline">\(\theta_0 = -w_1'\)</span>, so that</p>
 <p><span class="math display">\[
 \begin{aligned}
-u_1(x_1, x_2, x_3) &amp;= w_1(x_3) - x_2\,\theta_3(x_3), \\
-u_2(x_1, x_2, x_3) &amp;= w_2(x_3) + x_1\,\theta_3(x_3), \\
-u_3(x_1, x_2, x_3) &amp;= w_3(x_3) - x_1\,\frac{\partial w_1}{\partial x_3} - x_2\,\frac{\partial w_2}{\partial x_3} + \omega(x_1, x_2)\,\theta_3' ,
+u_0(x_0, x_1, x_2) &amp;= w_0(x_2) - x_1\,\theta_2(x_2), \\
+u_1(x_0, x_1, x_2) &amp;= w_1(x_2) + x_0\,\theta_2(x_2), \\
+u_2(x_0, x_1, x_2) &amp;= w_2(x_2) - x_0\,\frac{\partial w_0}{\partial x_2} - x_1\,\frac{\partial w_1}{\partial x_2} + \omega(x_0, x_1)\,\theta_2' ,
 \end{aligned}
 \]</span></p>
-<p>where <span class="math inline">\(\theta_3\)</span> is the twisting angle and the warping function <span class="math inline">\(\omega\)</span> is again assumed to be zero. (The signs follow from the Timoshenko kinematics above.) The strains are then <span class="math inline">\(\varepsilon_{\alpha\beta} = 0\)</span>, <span class="math inline">\(\varepsilon_{13} = -\tfrac{1}{2}\,x_2\,\theta_3'\)</span>, <span class="math inline">\(\varepsilon_{23} = \tfrac{1}{2}\,x_1\,\theta_3'\)</span>, and <span class="math inline">\(\varepsilon_{33} = w_3' - x_1\,w_1'' - x_2\,w_2''\)</span>. The same steps give <span class="math inline">\(q_3 = E A\,w_3'\)</span>, <span class="math inline">\(m_1 = -E I_1\,w_2''\)</span>, <span class="math inline">\(m_2 = -E I_2\,w_1''\)</span>, and <span class="math inline">\(m_3 = \mu J\,\theta_3'\)</span>, and taking the derivative of the moment equations to eliminate the shear forces gives, in the static case,</p>
+<p>where <span class="math inline">\(\theta_2\)</span> is the twisting angle and the warping function <span class="math inline">\(\omega\)</span> is again assumed to be zero. (The signs follow from the Timoshenko kinematics above.) The strains are then <span class="math inline">\(\varepsilon_{\alpha\beta} = 0\)</span>, <span class="math inline">\(\varepsilon_{02} = -\tfrac{1}{2}\,x_1\,\theta_2'\)</span>, <span class="math inline">\(\varepsilon_{12} = \tfrac{1}{2}\,x_0\,\theta_2'\)</span>, and <span class="math inline">\(\varepsilon_{22} = w_2' - x_0\,w_0'' - x_1\,w_1''\)</span>. The same steps give <span class="math inline">\(q_2 = E A\,w_2'\)</span>, <span class="math inline">\(m_0 = -E I_0\,w_1''\)</span>, <span class="math inline">\(m_1 = -E I_1\,w_0''\)</span>, and <span class="math inline">\(m_2 = \mu J\,\theta_2'\)</span>, and taking the derivative of the moment equations to eliminate the shear forces gives, in the static case,</p>
 <p><span class="math display">\[
 \begin{aligned}
-q_3' + F_3 &amp;= 0 &amp;&amp; \text{axial load} \\
-m_1'' - q_2' + C_1' = m_1'' + F_2 + C_1' &amp;= 0 &amp;&amp; \text{bending} \\
-m_2'' - q_1' + C_2' = m_2'' + F_1 + C_2' &amp;= 0 &amp;&amp; \text{bending} \\
-m_3' + C_3 &amp;= 0 &amp;&amp; \text{twisting (torsion)}
+q_2' + F_2 &amp;= 0 &amp;&amp; \text{axial load} \\
+m_0'' - q_1' + C_0' = m_0'' + F_1 + C_0' &amp;= 0 &amp;&amp; \text{bending} \\
+m_1'' - q_0' + C_1' = m_1'' + F_0 + C_1' &amp;= 0 &amp;&amp; \text{bending} \\
+m_2' + C_2 &amp;= 0 &amp;&amp; \text{twisting (torsion)}
 \end{aligned}
 \]</span></p>
-<p>The shear forces can then be post-processed from the moments. With the time-dependent terms, <span class="math inline">\(r_i = \bar{\mu}\,w_{i,tt}\)</span>, <span class="math inline">\(s_1 = -\hat{I}_1\,w_{2,tt}'\)</span>, <span class="math inline">\(s_2 = -\hat{I}_2\,w_{1,tt}'\)</span>, and <span class="math inline">\(s_3 = \hat{J}\,\theta_{3,tt}\)</span>, and the dynamic equations for a Bernoulli–Euler (not Timoshenko) frame are</p>
+<p>The shear forces can then be post-processed from the moments. With the time-dependent terms, <span class="math inline">\(r_i = \bar{\mu}\,w_{i,tt}\)</span>, <span class="math inline">\(s_0 = -\hat{I}_0\,w_{1,tt}'\)</span>, <span class="math inline">\(s_1 = -\hat{I}_1\,w_{0,tt}'\)</span>, and <span class="math inline">\(s_2 = \hat{J}\,\theta_{2,tt}\)</span>, and the dynamic equations for a Bernoulli–Euler (not Timoshenko) frame are</p>
 <p><span class="math display">\[
-q_3' + F_3 = r_3,
+q_2' + F_2 = r_2,
 \qquad
-m_1'' + F_2 - r_2 + C_1' = s_1',
+m_0'' + F_1 - r_1 + C_0' = s_0',
 \qquad
-m_2'' + F_1 - r_1 + C_2' = s_2',
+m_1'' + F_0 - r_0 + C_1' = s_1',
 \qquad
-m_3' + C_3 = s_3 .
+m_2' + C_2 = s_2 .
 \]</span></p>
 <p>For a single beam in a plane, these reduce to the familiar Bernoulli–Euler and axial equations,</p>
 <p><span class="math display">\[
@@ -884,19 +890,19 @@ m_3' + C_3 = s_3 .
 <p><span class="math display">\[
 \begin{aligned}
 q_\alpha' + F_\alpha + b\,q_{\alpha,t}' &amp;= r_\alpha + a\,\tilde{r}_\alpha, \qquad
-q_3' + F_3 + b\,q_{3,t}' = r_3 + a\,\tilde{r}_3, \\
-b\,m_{1,t}' + m_1' - q_2 + C_1 - b\,q_{2,t} &amp;= s_1 + a\,\tilde{s}_1, \\
-b\,m_{2,t}' + m_2' - q_1 + C_2 - b\,q_{1,t} &amp;= s_2 + a\,\tilde{s}_2, \\
-b\,m_{3,t}' + m_3' + C_3 &amp;= s_3 + a\,\tilde{s}_3 ,
+q_2' + F_2 + b\,q_{2,t}' = r_2 + a\,\tilde{r}_2, \\
+b\,m_{0,t}' + m_0' - q_1 + C_0 - b\,q_{1,t} &amp;= s_0 + a\,\tilde{s}_0, \\
+b\,m_{1,t}' + m_1' - q_0 + C_1 - b\,q_{0,t} &amp;= s_1 + a\,\tilde{s}_1, \\
+b\,m_{2,t}' + m_2' + C_2 &amp;= s_2 + a\,\tilde{s}_2 ,
 \end{aligned}
 \]</span></p>
 <p>and, for the Bernoulli–Euler frame, combining these gives four equations: two bending equations, a torsional equation, and an axial equation,</p>
 <p><span class="math display">\[
 \begin{aligned}
-b\,m_{1,t}'' + m_1'' &amp;= s_1' + a\,\tilde{s}_1' - F_2 + r_2 + a\,\tilde{r}_2 - C_1' &amp;&amp; \text{bending} \\
-b\,m_{2,t}'' + m_2'' &amp;= s_2' + a\,\tilde{s}_2' - F_1 + r_1 + a\,\tilde{r}_1 - C_2' &amp;&amp; \text{bending} \\
-b\,m_{3,t}' + m_3' + C_3 &amp;= s_3 + a\,\tilde{s}_3 &amp;&amp; \text{torsion} \\
-q_3' + b\,q_{3,t}' + F_3 &amp;= r_3 + a\,\tilde{r}_3 &amp;&amp; \text{axial}
+b\,m_{0,t}'' + m_0'' &amp;= s_0' + a\,\tilde{s}_0' - F_1 + r_1 + a\,\tilde{r}_1 - C_0' &amp;&amp; \text{bending} \\
+b\,m_{1,t}'' + m_1'' &amp;= s_1' + a\,\tilde{s}_1' - F_0 + r_0 + a\,\tilde{r}_0 - C_1' &amp;&amp; \text{bending} \\
+b\,m_{2,t}' + m_2' + C_2 &amp;= s_2 + a\,\tilde{s}_2 &amp;&amp; \text{torsion} \\
+q_2' + b\,q_{2,t}' + F_2 &amp;= r_2 + a\,\tilde{r}_2 &amp;&amp; \text{axial}
 \end{aligned}
 \]</span></p>
 <p>where <span class="math inline">\(m\)</span>, <span class="math inline">\(q\)</span>, <span class="math inline">\(r\)</span>, <span class="math inline">\(s\)</span>, <span class="math inline">\(C\)</span>, and <span class="math inline">\(F\)</span> are as before.</p>
@@ -947,29 +953,29 @@ t^e_{ij} = \underline{e}_i \cdot \underline{e}^e_j .
 \underline{\underline{\hat{k}}}^e
 = \underline{\underline{\bar{T}}}^e\,\underline{\underline{k}}^e\,\underline{\underline{\bar{T}}}^{e\,T}
 = \begin{bmatrix} \underline{\underline{I}} &amp; 0 \\ 0 &amp; \underline{\underline{T}}^e \end{bmatrix}
-\begin{bmatrix} \underline{\underline{k}}_{11} &amp; \underline{\underline{k}}_{12} \\ \underline{\underline{k}}_{21} &amp; \underline{\underline{k}}_{22} \end{bmatrix}
+\begin{bmatrix} \underline{\underline{k}}_{00} &amp; \underline{\underline{k}}_{01} \\ \underline{\underline{k}}_{10} &amp; \underline{\underline{k}}_{11} \end{bmatrix}
 \begin{bmatrix} \underline{\underline{I}} &amp; 0 \\ 0 &amp; \underline{\underline{T}}^{e\,T} \end{bmatrix}
-= \begin{bmatrix} \underline{\underline{k}}_{11} &amp; \underline{\underline{k}}_{12}\,\underline{\underline{T}}^{e\,T} \\ \underline{\underline{T}}^e\,\underline{\underline{k}}_{21} &amp; \underline{\underline{T}}^e\,\underline{\underline{k}}_{22}\,\underline{\underline{T}}^{e\,T} \end{bmatrix} .
+= \begin{bmatrix} \underline{\underline{k}}_{00} &amp; \underline{\underline{k}}_{01}\,\underline{\underline{T}}^{e\,T} \\ \underline{\underline{T}}^e\,\underline{\underline{k}}_{10} &amp; \underline{\underline{T}}^e\,\underline{\underline{k}}_{11}\,\underline{\underline{T}}^{e\,T} \end{bmatrix} .
 \]</span></p>
 <p>For a truss member discretized along its length, for example, the matrix <span class="math inline">\(\frac{1}{h}\,\mathrm{tridiag}(-1, 2, -1)\)</span> (with 1 in the two end positions) is reordered so that the two end degrees of freedom come last, and only those are rotated.</p>
 <p>Assembling all of the members gives</p>
 <p><span class="math display">\[
 \begin{bmatrix}
-\underline{\underline{k}}^{e_1}_{11} &amp; &amp; 0 &amp; \underline{\underline{k}}^{e_1}_{12}\,\underline{\underline{T}}^{e_1\,T} \\
+\underline{\underline{k}}^{e_0}_{00} &amp; &amp; 0 &amp; \underline{\underline{k}}^{e_0}_{01}\,\underline{\underline{T}}^{e_0\,T} \\
 &amp; \ddots &amp; &amp; \vdots \\
-0 &amp; &amp; \underline{\underline{k}}^{e_n}_{11} &amp; \underline{\underline{k}}^{e_n}_{12}\,\underline{\underline{T}}^{e_n\,T} \\
-\underline{\underline{T}}^{e_1}\,\underline{\underline{k}}^{e_1}_{21} &amp; \cdots &amp; \underline{\underline{T}}^{e_n}\,\underline{\underline{k}}^{e_n}_{21} &amp; \sum_e \underline{\underline{T}}^e\,\underline{\underline{k}}^e_{22}\,\underline{\underline{T}}^{e\,T}
+0 &amp; &amp; \underline{\underline{k}}^{e_n}_{00} &amp; \underline{\underline{k}}^{e_n}_{01}\,\underline{\underline{T}}^{e_n\,T} \\
+\underline{\underline{T}}^{e_0}\,\underline{\underline{k}}^{e_0}_{10} &amp; \cdots &amp; \underline{\underline{T}}^{e_n}\,\underline{\underline{k}}^{e_n}_{10} &amp; \sum_e \underline{\underline{T}}^e\,\underline{\underline{k}}^e_{11}\,\underline{\underline{T}}^{e\,T}
 \end{bmatrix}
-\begin{bmatrix} \underline{d}^{e_1} \\ \vdots \\ \underline{d}^{e_n} \\ \underline{D} \end{bmatrix}
+\begin{bmatrix} \underline{d}^{e_0} \\ \vdots \\ \underline{d}^{e_n} \\ \underline{D} \end{bmatrix}
 =
-\begin{bmatrix} \underline{f}^{e_1} \\ \vdots \\ \underline{f}^{e_n} \\ \sum_e \underline{\underline{T}}^e\,\underline{f}^e_2 + \sum_{A \in \mathcal{F}} \underline{F}_A \end{bmatrix} ,
+\begin{bmatrix} \underline{f}^{e_0} \\ \vdots \\ \underline{f}^{e_n} \\ \sum_e \underline{\underline{T}}^e\,\underline{f}^e_1 + \sum_{A \in \mathcal{F}} \underline{F}_A \end{bmatrix} ,
 \]</span></p>
 <p>plus the Dirichlet conditions, where <span class="math inline">\(\underline{d}^e\)</span> are the interior degrees of freedom of member <span class="math inline">\(e\)</span> and <span class="math inline">\(\underline{D}\)</span> are the global degrees of freedom of the nodes. This system can be solved using the Schur complement: the global nodal unknowns <span class="math inline">\(\underline{D}\)</span> are solved first, from</p>
 <p><span class="math display">\[
-\left(\sum_e \underline{\underline{T}}^e \left[\underline{\underline{k}}^e_{22} - \underline{\underline{k}}^e_{21}\left(\underline{\underline{k}}^e_{11}\right)^{-1}\underline{\underline{k}}^e_{12}\right] \underline{\underline{T}}^{e\,T}\right) \underline{D}
-= \sum_e \underline{\underline{T}}^e \left[\underline{f}^e_2 - \underline{\underline{k}}^e_{21}\left(\underline{\underline{k}}^e_{11}\right)^{-1} \underline{f}^e_1\right] + \sum_{A \in \mathcal{F}} \underline{F}_A ,
+\left(\sum_e \underline{\underline{T}}^e \left[\underline{\underline{k}}^e_{11} - \underline{\underline{k}}^e_{10}\left(\underline{\underline{k}}^e_{00}\right)^{-1}\underline{\underline{k}}^e_{01}\right] \underline{\underline{T}}^{e\,T}\right) \underline{D}
+= \sum_e \underline{\underline{T}}^e \left[\underline{f}^e_1 - \underline{\underline{k}}^e_{10}\left(\underline{\underline{k}}^e_{00}\right)^{-1} \underline{f}^e_0\right] + \sum_{A \in \mathcal{F}} \underline{F}_A ,
 \]</span></p>
-<p>and then the interior unknowns of every member are found independently (in parallel) from <span class="math inline">\(\underline{\underline{k}}^e_{11}\,\underline{d}^e = \underline{f}^e_1 - \underline{\underline{k}}^e_{12}\,\underline{\underline{T}}^{e\,T}\,\underline{D}\)</span>.</p>
+<p>and then the interior unknowns of every member are found independently (in parallel) from <span class="math inline">\(\underline{\underline{k}}^e_{00}\,\underline{d}^e = \underline{f}^e_0 - \underline{\underline{k}}^e_{01}\,\underline{\underline{T}}^{e\,T}\,\underline{D}\)</span>.</p>
 </section>
 </section>
 <section id="steps-for-a-frame-analysis-code" class="level2" data-number="J.12">
@@ -981,7 +987,7 @@ t^e_{ij} = \underline{e}_i \cdot \underline{e}^e_j .
 <li>Define the constraints at the nodes: what can transfer loads and moments?</li>
 <li>Define the basis functions associated with each phenomenon on each member.</li>
 <li>Create the ID arrays from each member into the global ID array, and the IEN array from each member to its IDs.</li>
-<li>Compute <span class="math inline">\(\underline{\underline{k}}\)</span> for each element, with blocks <span class="math inline">\(S_1S_1\)</span>, <span class="math inline">\(S_1M_1\)</span>, <span class="math inline">\(M_1S_1\)</span>, <span class="math inline">\(M_1M_1\)</span>, <span class="math inline">\(S_2S_2\)</span>, <span class="math inline">\(S_2M_2\)</span>, <span class="math inline">\(M_2S_2\)</span>, <span class="math inline">\(M_2M_2\)</span>, <span class="math inline">\(AA\)</span>, and <span class="math inline">\(TT\)</span>.</li>
+<li>Compute <span class="math inline">\(\underline{\underline{k}}\)</span> for each element, with blocks <span class="math inline">\(S_0S_0\)</span>, <span class="math inline">\(S_0M_0\)</span>, <span class="math inline">\(M_0S_0\)</span>, <span class="math inline">\(M_0M_0\)</span>, <span class="math inline">\(S_1S_1\)</span>, <span class="math inline">\(S_1M_1\)</span>, <span class="math inline">\(M_1S_1\)</span>, <span class="math inline">\(M_1M_1\)</span>, <span class="math inline">\(AA\)</span>, and <span class="math inline">\(TT\)</span>.</li>
 <li>Rotate the end degrees of freedom into global coordinates and assemble.</li>
 <li>Solve the system of equations.</li>
 <li>Add in the known displacements, and transform the results back into the members, rotating the global degrees of freedom and applying the local degrees of freedom.</li>

@@ -248,8 +248,8 @@ export function texVector(v, opts = {}) {
 }
 
 export function texSymbols(n, sym, {maxn = 14, show = 5} = {}) {
-  // a column of symbols d_1 ... d_n, truncated like texMatrix
-  const rows = indices(n, maxn, show).map(i => i === null ? "\\vdots" : `${sym}_{${i + 1}}`);
+  // a column of symbols d_0 ... d_{n-1}, truncated like texMatrix
+  const rows = indices(n, maxn, show).map(i => i === null ? "\\vdots" : `${sym}_{${i}}`);
   return "\\begin{bmatrix}" + rows.join(" \\\\ ") + "\\end{bmatrix}";
 }
 

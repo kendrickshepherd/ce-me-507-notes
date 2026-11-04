@@ -49,7 +49,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-25d60f11bf0350d4acb1bb2c5c0bf5d1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-bd990e089991ec7d162b92b5e37a2dc1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -347,6 +347,12 @@ window.Quarto = {
   <div class="sidebar-item-container"> 
   <a href="../chapters/27_Class.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Class 27: Voigt Notation and the Elasticity Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/28_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Class 28: The Galerkin Form of Elasticity and Assembly</span></span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
@@ -834,7 +840,7 @@ Figure&nbsp;4: The shear stress at three locations as the mesh is refined toward
 </section>
 <section id="frame-elements" class="level2">
 <h2 class="anchored" data-anchor-id="frame-elements">Relation to beam and frame elements</h2>
-<p>The <a href="../chapters/Beam_Frame_Formulation.html">appendix on beams and frames</a> reduces three-dimensional elasticity to equations along the axis of each member, with <span class="math inline">\(x\)</span>, <span class="math inline">\(y\)</span>, <span class="math inline">\(z\)</span> here written as <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span>, <span class="math inline">\(x_3\)</span>. One of its unknowns is the twist <span class="math inline">\(\theta_3(x_3)\)</span> of each cross-section, governed by <span class="math inline">\(m_3' + C_3 = 0\)</span> with <span class="math inline">\(m_3 = \mu J\,\theta_3'\)</span>, where <span class="math inline">\(\mu = G\)</span>. Its twisting moment, <a href="../chapters/Beam_Frame_Formulation.html#stress-resultants-and-applied-loads">defined in the appendix</a> as <span class="math inline">\(m_3 = \int_A \left(\sigma_{23}\,x_1 - \sigma_{13}\,x_2\right) dA\)</span>, is the torque <span class="math inline">\(T\)</span> of this page, and <span class="math inline">\(\theta_3'\)</span> is the twist per unit length <span class="math inline">\(\theta\)</span>, so <span class="math inline">\(m_3 = \mu J\,\theta_3'\)</span> is <span class="math inline">\(T = G J \theta\)</span>. The two models describe the same rotation of the cross-section, and differ only in whether it warps.</p>
+<p>The <a href="../chapters/Beam_Frame_Formulation.html">appendix on beams and frames</a> reduces three-dimensional elasticity to equations along the axis of each member, with <span class="math inline">\(x\)</span>, <span class="math inline">\(y\)</span>, <span class="math inline">\(z\)</span> here written as <span class="math inline">\(x_0\)</span>, <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span>. One of its unknowns is the twist <span class="math inline">\(\theta_2(x_2)\)</span> of each cross-section, governed by <span class="math inline">\(m_2' + C_2 = 0\)</span> with <span class="math inline">\(m_2 = \mu J\,\theta_2'\)</span>, where <span class="math inline">\(\mu = G\)</span>. Its twisting moment, <a href="../chapters/Beam_Frame_Formulation.html#stress-resultants-and-applied-loads">defined in the appendix</a> as <span class="math inline">\(m_2 = \int_A \left(\sigma_{12}\,x_0 - \sigma_{02}\,x_1\right) dA\)</span>, is the torque <span class="math inline">\(T\)</span> of this page, and <span class="math inline">\(\theta_2'\)</span> is the twist per unit length <span class="math inline">\(\theta\)</span>, so <span class="math inline">\(m_2 = \mu J\,\theta_2'\)</span> is <span class="math inline">\(T = G J \theta\)</span>. The two models describe the same rotation of the cross-section, and differ only in whether it warps.</p>
 <div id="tbl-tors-frame" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-tors-frame-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -857,22 +863,22 @@ Table&nbsp;3: The twist of a member in the two models.
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">in-plane displacements</td>
-<td style="text-align: left;"><span class="math inline">\(u_1 = -x_2\,\theta_3\)</span>, <span class="math inline">\(u_2 = x_1\,\theta_3\)</span></td>
-<td style="text-align: left;">the same, with <span class="math inline">\(\theta_3 = \theta\,x_3\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(u_0 = -x_1\,\theta_2\)</span>, <span class="math inline">\(u_1 = x_0\,\theta_2\)</span></td>
+<td style="text-align: left;">the same, with <span class="math inline">\(\theta_2 = \theta\,x_2\)</span></td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">axial displacement due to twist</td>
 <td style="text-align: left;">none</td>
-<td style="text-align: left;"><span class="math inline">\(u_3 = \theta\,\omega(x_1, x_2)\)</span>, the warping</td>
+<td style="text-align: left;"><span class="math inline">\(u_2 = \theta\,\omega(x_0, x_1)\)</span>, the warping</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">unknown</td>
-<td style="text-align: left;"><span class="math inline">\(\theta_3(x_3)\)</span> along the member</td>
-<td style="text-align: left;"><span class="math inline">\(\Phi(x_1, x_2)\)</span> over the cross-section</td>
+<td style="text-align: left;"><span class="math inline">\(\theta_2(x_2)\)</span> along the member</td>
+<td style="text-align: left;"><span class="math inline">\(\Phi(x_0, x_1)\)</span> over the cross-section</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">torsion constant</td>
-<td style="text-align: left;"><span class="math inline">\(J = \int_A \left(x_1^2 + x_2^2\right) dA = I_1 + I_2\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(J = \int_A \left(x_0^2 + x_1^2\right) dA = I_0 + I_1\)</span></td>
 <td style="text-align: left;"><span class="math inline">\(J = 2\int_A \Phi\;dA\)</span></td>
 </tr>
 <tr class="odd">
@@ -885,58 +891,58 @@ Table&nbsp;3: The twist of a member in the two models.
 </div>
 </figure>
 </div>
-<p>Without warping, the shear stresses <span class="math inline">\(\sigma_{13} = -\mu\,x_2\,\theta_3'\)</span> and <span class="math inline">\(\sigma_{23} = \mu\,x_1\,\theta_3'\)</span> act perpendicular to the radius. They are therefore not tangent to the faces of a non-circular section, and the faces are not free of load. Warping removes these stresses, and the polar moment overestimates the torsional stiffness of this I-section by a factor of about 190. The two constants agree only for a circular section, where <span class="math inline">\(\omega = 0\)</span>, as in the first check above.</p>
-<p>A frame model therefore uses the Saint-Venant constant: a two-dimensional finite element problem over the cross-section, such as this one, supplies <span class="math inline">\(J\)</span> to the one-dimensional elements along each member. In the other direction, the frame analysis gives the torque <span class="math inline">\(m_3\)</span> in each member, and this page turns it into shear stresses, <span class="math inline">\(\tau = (m_3/J)\,|\nabla\Phi|\)</span>. Assumption 2 of the appendix, <span class="math inline">\(\sigma_{\alpha\beta} = 0\)</span>, holds exactly here, since the only stresses are <span class="math inline">\(\tau_{xz}\)</span> and <span class="math inline">\(\tau_{yz}\)</span>.</p>
+<p>Without warping, the shear stresses <span class="math inline">\(\sigma_{02} = -\mu\,x_1\,\theta_2'\)</span> and <span class="math inline">\(\sigma_{12} = \mu\,x_0\,\theta_2'\)</span> act perpendicular to the radius. They are therefore not tangent to the faces of a non-circular section, and the faces are not free of load. Warping removes these stresses, and the polar moment overestimates the torsional stiffness of this I-section by a factor of about 190. The two constants agree only for a circular section, where <span class="math inline">\(\omega = 0\)</span>, as in the first check above.</p>
+<p>A frame model therefore uses the Saint-Venant constant: a two-dimensional finite element problem over the cross-section, such as this one, supplies <span class="math inline">\(J\)</span> to the one-dimensional elements along each member. In the other direction, the frame analysis gives the torque <span class="math inline">\(m_2\)</span> in each member, and this page turns it into shear stresses, <span class="math inline">\(\tau = (m_2/J)\,|\nabla\Phi|\)</span>. Assumption 2 of the appendix, <span class="math inline">\(\sigma_{\alpha\beta} = 0\)</span>, holds exactly here, since the only stresses are <span class="math inline">\(\tau_{xz}\)</span> and <span class="math inline">\(\tau_{yz}\)</span>.</p>
 <section id="warping" class="level3">
 <h3 class="anchored" data-anchor-id="warping">The warping function</h3>
 <p>In Saint-Venant’s theory, the displacements are</p>
 <p><span class="math display">\[
-u_1 = -\theta\,x_2\,x_3,
+u_0 = -\theta\,x_1\,x_2,
 \qquad
-u_2 = \theta\,x_1\,x_3,
+u_1 = \theta\,x_0\,x_2,
 \qquad
-u_3 = \theta\,\omega(x_1, x_2),
+u_2 = \theta\,\omega(x_0, x_1),
 \]</span></p>
-<p>which are those of the appendix with <span class="math inline">\(\theta_3 = \theta\,x_3\)</span>, together with an axial displacement proportional to the <strong>warping function</strong> <span class="math inline">\(\omega\)</span>, in mm². The shear strains then give the stresses</p>
+<p>which are those of the appendix with <span class="math inline">\(\theta_2 = \theta\,x_2\)</span>, together with an axial displacement proportional to the <strong>warping function</strong> <span class="math inline">\(\omega\)</span>, in mm². The shear strains then give the stresses</p>
 <p><span class="math display">\[
-\tau_{xz} = G\theta\left(\frac{\partial\omega}{\partial x_1} - x_2\right),
+\tau_{xz} = G\theta\left(\frac{\partial\omega}{\partial x_0} - x_1\right),
 \qquad
-\tau_{yz} = G\theta\left(\frac{\partial\omega}{\partial x_2} + x_1\right).
+\tau_{yz} = G\theta\left(\frac{\partial\omega}{\partial x_1} + x_0\right).
 \]</span></p>
-<p>Equilibrium, <span class="math inline">\(\partial\tau_{xz}/\partial x_1 + \partial\tau_{yz}/\partial x_2 = 0\)</span>, and a load-free outer surface, <span class="math inline">\(\tau_{xz}\,n_1 + \tau_{yz}\,n_2 = 0\)</span>, then give</p>
+<p>Equilibrium, <span class="math inline">\(\partial\tau_{xz}/\partial x_0 + \partial\tau_{yz}/\partial x_1 = 0\)</span>, and a load-free outer surface, <span class="math inline">\(\tau_{xz}\,n_0 + \tau_{yz}\,n_1 = 0\)</span>, then give</p>
 <p><span class="math display">\[
 -\nabla^2\omega = 0 \ \text{ in } A,
 \qquad
-\nabla\omega\cdot\underline{n} = x_2\,n_1 - x_1\,n_2 \ \text{ on the boundary}.
+\nabla\omega\cdot\underline{n} = x_1\,n_0 - x_0\,n_1 \ \text{ on the boundary}.
 \]</span></p>
-<p>This is again the same Poisson equation used in this course, now with <span class="math inline">\(f = 0\)</span> and Neumann data on the whole boundary. As in <a href="../chapters/23_Class.html">Class 23</a>, a pure Neumann problem determines <span class="math inline">\(\omega\)</span> only up to a constant, which here is a rigid axial movement of the section. Its data must also satisfy a compatibility condition, which they do, since <span class="math inline">\(\oint (x_2\,n_1 - x_1\,n_2)\,d\Gamma = \int_A \left(\partial x_2/\partial x_1 - \partial x_1/\partial x_2\right) dA = 0\)</span>. For this section, <span class="math inline">\(\omega\)</span> is odd in both <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span>, so the quarter model has <span class="math inline">\(\omega = 0\)</span> on the two axes of symmetry, which fixes the constant. <span class="math inline">\(\Phi\)</span> is even in both, which is why its quarter model has zero-flux conditions there instead.</p>
-<p>Comparing these stresses with <span class="math inline">\(\tau_{xz} = G\theta\,\partial\Phi/\partial x_2\)</span> and <span class="math inline">\(\tau_{yz} = -G\theta\,\partial\Phi/\partial x_1\)</span> gives</p>
+<p>This is again the same Poisson equation used in this course, now with <span class="math inline">\(f = 0\)</span> and Neumann data on the whole boundary. As in <a href="../chapters/23_Class.html">Class 23</a>, a pure Neumann problem determines <span class="math inline">\(\omega\)</span> only up to a constant, which here is a rigid axial movement of the section. Its data must also satisfy a compatibility condition, which they do, since <span class="math inline">\(\oint (x_1\,n_0 - x_0\,n_1)\,d\Gamma = \int_A \left(\partial x_1/\partial x_0 - \partial x_0/\partial x_1\right) dA = 0\)</span>. For this section, <span class="math inline">\(\omega\)</span> is odd in both <span class="math inline">\(x_0\)</span> and <span class="math inline">\(x_1\)</span>, so the quarter model has <span class="math inline">\(\omega = 0\)</span> on the two axes of symmetry, which fixes the constant. <span class="math inline">\(\Phi\)</span> is even in both, which is why its quarter model has zero-flux conditions there instead.</p>
+<p>Comparing these stresses with <span class="math inline">\(\tau_{xz} = G\theta\,\partial\Phi/\partial x_1\)</span> and <span class="math inline">\(\tau_{yz} = -G\theta\,\partial\Phi/\partial x_0\)</span> gives</p>
 <p><span class="math display">\[
-\frac{\partial\Phi}{\partial x_2} = \frac{\partial\omega}{\partial x_1} - x_2,
+\frac{\partial\Phi}{\partial x_1} = \frac{\partial\omega}{\partial x_0} - x_1,
 \qquad
--\frac{\partial\Phi}{\partial x_1} = \frac{\partial\omega}{\partial x_2} + x_1 ,
+-\frac{\partial\Phi}{\partial x_0} = \frac{\partial\omega}{\partial x_1} + x_0 ,
 \]</span></p>
 <p>so <span class="math inline">\(\Phi\)</span> and <span class="math inline">\(\omega\)</span> describe the same stresses, one through a Dirichlet problem and the other through a Neumann problem.</p>
-<p>Substituting the stresses into the torque, <span class="math inline">\(T = \int_A \left(x_1\,\tau_{yz} - x_2\,\tau_{xz}\right) dA = G\,J\,\theta\)</span>, gives</p>
+<p>Substituting the stresses into the torque, <span class="math inline">\(T = \int_A \left(x_0\,\tau_{yz} - x_1\,\tau_{xz}\right) dA = G\,J\,\theta\)</span>, gives</p>
 <p><span class="math display">\[
-J = I_1 + I_2 + \int_A \left(x_1\,\frac{\partial\omega}{\partial x_2} - x_2\,\frac{\partial\omega}{\partial x_1}\right) dA
-= I_1 + I_2 - \int_A |\nabla\omega|^2\;dA .
+J = I_0 + I_1 + \int_A \left(x_0\,\frac{\partial\omega}{\partial x_1} - x_1\,\frac{\partial\omega}{\partial x_0}\right) dA
+= I_0 + I_1 - \int_A |\nabla\omega|^2\;dA .
 \]</span></p>
-<p>The second form follows from the weak form of the problem for <span class="math inline">\(\omega\)</span> with <span class="math inline">\(\omega\)</span> itself as the weight function, <span class="math inline">\(\int_A |\nabla\omega|^2\,dA = \oint \omega\left(x_2\,n_1 - x_1\,n_2\right) d\Gamma\)</span>, and the divergence theorem. Warping can therefore only reduce the torsion constant below the polar moment, and the polar moment of the appendix is the case <span class="math inline">\(\omega = 0\)</span>.</p>
+<p>The second form follows from the weak form of the problem for <span class="math inline">\(\omega\)</span> with <span class="math inline">\(\omega\)</span> itself as the weight function, <span class="math inline">\(\int_A |\nabla\omega|^2\,dA = \oint \omega\left(x_1\,n_0 - x_0\,n_1\right) d\Gamma\)</span>, and the divergence theorem. Warping can therefore only reduce the torsion constant below the polar moment, and the polar moment of the appendix is the case <span class="math inline">\(\omega = 0\)</span>.</p>
 <div id="fig-tors-warping" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-tors-warping-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="generated_images/Class24/C24_Tors_Fig5_Warping.png" class="img-fluid figure-img" style="width:100.0%">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-tors-warping-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;5: (a) The warping function <span class="math inline">\(\omega\)</span> over the section, from the biquadratic solution on the quarter, which changes sign across each axis of symmetry. (b) The end of the beam seen from above, with the axial displacement <span class="math inline">\(u_3 = \theta\,\omega\)</span> at the mid-thickness of each flange, greatly exaggerated. Each flange rotates in its own plane, and the two flanges rotate in opposite directions.
+Figure&nbsp;5: (a) The warping function <span class="math inline">\(\omega\)</span> over the section, from the biquadratic solution on the quarter, which changes sign across each axis of symmetry. (b) The end of the beam seen from above, with the axial displacement <span class="math inline">\(u_2 = \theta\,\omega\)</span> at the mid-thickness of each flange, greatly exaggerated. Each flange rotates in its own plane, and the two flanges rotate in opposite directions.
 </figcaption>
 </figure>
 </div>
-<p><a href="#fig-tors-warping" class="quarto-xref">Figure&nbsp;<span>5</span></a> shows <span class="math inline">\(\omega\)</span> for this section. Along the mid-lines of the plates, <span class="math inline">\(\omega \approx x_1 x_2\)</span>, which is zero along the web, so the web hardly warps. Each flange instead rotates in its own plane: for a positive twist, one tip of the top flange moves along the beam and the other moves back, and the bottom flange does the opposite. Where this motion is prevented, as at a welded support, each flange must bend in its own plane, which is the source of the additional stiffness noted under the limits of the model.</p>
+<p><a href="#fig-tors-warping" class="quarto-xref">Figure&nbsp;<span>5</span></a> shows <span class="math inline">\(\omega\)</span> for this section. Along the mid-lines of the plates, <span class="math inline">\(\omega \approx x_0 x_1\)</span>, which is zero along the web, so the web hardly warps. Each flange instead rotates in its own plane: for a positive twist, one tip of the top flange moves along the beam and the other moves back, and the bottom flange does the opposite. Where this motion is prevented, as at a welded support, each flange must bend in its own plane, which is the source of the additional stiffness noted under the limits of the model.</p>
 <p>The two formulations also give a check on the finite element solutions. For each problem, the energy of the solution is <span class="math inline">\(\Pi = -\int_A \Phi\,dA\)</span> or <span class="math inline">\(\Pi = -\tfrac{1}{2}\int_A |\nabla\omega|^2\,dA\)</span>, and the energy of a finite element solution is never below the exact energy (<a href="../chapters/23_Class.html">Class 23</a>). Writing <span class="math inline">\(\Phi_h\)</span> and <span class="math inline">\(\omega_h\)</span> for the finite element solutions, this gives</p>
 <p><span class="math display">\[
-2\int_A \Phi_h\;dA \;\le\; J \;\le\; I_1 + I_2 - \int_A |\nabla\omega_h|^2\;dA ,
+2\int_A \Phi_h\;dA \;\le\; J \;\le\; I_0 + I_1 - \int_A |\nabla\omega_h|^2\;dA ,
 \]</span></p>
 <p>and <a href="#tbl-tors-bounds" class="quarto-xref">Table&nbsp;<span>4</span></a> shows the two approaching the same value from opposite sides.</p>
 <div id="tbl-tors-bounds" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -955,7 +961,7 @@ Table&nbsp;4: The torsion constant from the stress function and from the warping
 <tr class="header">
 <th style="text-align: right;">nodes in the quarter</th>
 <th style="text-align: right;"><span class="math inline">\(2\int_A \Phi_h\,dA\)</span> (mm⁴)</th>
-<th style="text-align: right;"><span class="math inline">\(I_1 + I_2 - \int_A \lvert\nabla\omega_h\rvert^2\,dA\)</span> (mm⁴)</th>
+<th style="text-align: right;"><span class="math inline">\(I_0 + I_1 - \int_A \lvert\nabla\omega_h\rvert^2\,dA\)</span> (mm⁴)</th>
 </tr>
 </thead>
 <tbody>
@@ -1004,7 +1010,7 @@ Table&nbsp;4: The torsion constant from the stress function and from the warping
 <li>The stress at a sharp re-entrant corner is singular and keeps growing with refinement, while the stresses on the faces converge.</li>
 <li>A membrane stretched over the same shape and inflated by a uniform pressure takes the shape of <span class="math inline">\(\Phi\)</span>, which relates torque to volume and stress to slope; the <a href="../chapters/24_Membrane.html">membrane page</a> treats the membrane in its own right.</li>
 <li>Beam and frame elements twist each cross-section in the same way but do not let it warp, so their <span class="math inline">\(J\)</span> is the polar moment, which is far too stiff for an open section; the <span class="math inline">\(J\)</span> computed here is the one a frame model needs.</li>
-<li>The warping function <span class="math inline">\(\omega\)</span> solves the same equation with Neumann data, and gives <span class="math inline">\(J = I_1 + I_2 - \int_A|\nabla\omega|^2\,dA\)</span>; computed with finite elements, the two formulations bound <span class="math inline">\(J\)</span> from below and from above.</li>
+<li>The warping function <span class="math inline">\(\omega\)</span> solves the same equation with Neumann data, and gives <span class="math inline">\(J = I_0 + I_1 - \int_A|\nabla\omega|^2\,dA\)</span>; computed with finite elements, the two formulations bound <span class="math inline">\(J\)</span> from below and from above.</li>
 </ul>
 
 

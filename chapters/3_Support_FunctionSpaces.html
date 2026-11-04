@@ -38,7 +38,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
 <link href="../chapters/Poisson1D_Heat.html" rel="next">
-<link href="../chapters/27_Class.html" rel="prev">
+<link href="../chapters/28_Class.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
@@ -49,7 +49,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-25d60f11bf0350d4acb1bb2c5c0bf5d1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-bd990e089991ec7d162b92b5e37a2dc1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -349,6 +349,12 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Class 27: Voigt Notation and the Elasticity Matrix</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/28_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Class 28: The Galerkin Form of Elasticity and Assembly</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
@@ -461,15 +467,15 @@ window.Quarto = {
 <p>For a finite list of numbers, the norm is the familiar one:</p>
 <div class="derivation">
 <p><span class="math display">\[
-\|\underline{u}\| = \sqrt{u_1^2 + u_2^2 + \cdots + u_n^2}
+\|\underline{u}\| = \sqrt{u_0^2 + u_1^2 + \cdots + u_{n-1}^2}
 \qquad\qquad
-\|\underline{u}\|^2 = \sum_{i=1}^{n} u_i^2
+\|\underline{u}\|^2 = \sum_{i=0}^{n-1} u_i^2
 \]</span></p>
 </div>
 <p>Now let those numbers be <strong>samples of a function</strong>, <span class="math inline">\(u_i = u(x_i)\)</span>. Adding more samples must not make the norm grow without bound, so each term carries a <strong>weight</strong> <span class="math inline">\(w_i\)</span> — the piece of the domain it stands for:</p>
 <div class="derivation">
 <p><span class="math display">\[
-\|\underline{u}\|^2 = \sum_{i=1}^{n} u_i^2 \, w_i
+\|\underline{u}\|^2 = \sum_{i=0}^{n-1} u_i^2 \, w_i
 \qquad \xrightarrow[\;n \to \infty\;]{} \qquad
 \int_0^L u^2 \, dx
 \]</span></p>
@@ -1068,8 +1074,8 @@ Figure&nbsp;D.1: All three have the <strong>same</strong> <span class="math inli
   </script>
 <nav class="page-navigation" aria-label="Page">
   <div class="nav-page nav-page-previous">
-      <a href="../chapters/27_Class.html" class="pagination-link" aria-label="Class 27: Voigt Notation and the Elasticity Matrix">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Class 27: Voigt Notation and the Elasticity Matrix</span></span>
+      <a href="../chapters/28_Class.html" class="pagination-link" aria-label="Class 28: The Galerkin Form of Elasticity and Assembly">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Class 28: The Galerkin Form of Elasticity and Assembly</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">

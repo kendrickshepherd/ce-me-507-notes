@@ -47,7 +47,7 @@ export function block2D({s11 = 0, s22 = 0, s12 = 0, E = 200000, nu = 0.3, mag = 
   let s = `<polygon points="${def.map(([x, y]) => `${X(x).toFixed(1)},${Y(y).toFixed(1)}`).join(" ")}" fill="#fde9d2" stroke="#e67e22" stroke-width="1.4"/>`;
   s += `<polygon points="${corners.map(([x, y]) => `${X(x)},${Y(y)}`).join(" ")}" fill="none" stroke="${INK}" stroke-width="1.6" stroke-dasharray="5 4"/>`;
   const gap = 10, sgap = 9;
-  for (const [n, v, col, nm] of [[[1, 0], s11, COMP.s11, "σ₁₁"], [[-1, 0], s11, COMP.s11, "σ₁₁"], [[0, 1], s22, COMP.s22, "σ₂₂"], [[0, -1], s22, COMP.s22, "σ₂₂"]]) {
+  for (const [n, v, col, nm] of [[[1, 0], s11, COMP.s11, "σ₀₀"], [[-1, 0], s11, COMP.s11, "σ₀₀"], [[0, 1], s22, COMP.s22, "σ₁₁"], [[0, -1], s22, COMP.s22, "σ₁₁"]]) {
     if (Math.abs(v) < 1e-9) continue;
     const L = nlen(v), base = [n[0] * (h + gap), n[1] * (h + gap)], tip = [base[0] + n[0] * L, base[1] + n[1] * L];
     s += v > 0 ? arrowSVG(X(base[0]), Y(base[1]), X(tip[0]), Y(tip[1]), col, 2.8, 11) : arrowSVG(X(tip[0]), Y(tip[1]), X(base[0]), Y(base[1]), col, 2.8, 11);
@@ -59,7 +59,7 @@ export function block2D({s11 = 0, s22 = 0, s12 = 0, E = 200000, nu = 0.3, mag = 
   if (Math.abs(s12) > 1e-9) {
     const L = slen(s12), sg = Math.sign(s12);
     // +x1 face: t2 = s21 along +x2 (for s12 > 0); -x1 face: along -x2; +x2 face: t1 = s12 along +x1; -x2 face: along -x1
-    for (const [face, dir, nm, lab] of [[[1, 0], [0, 1], "σ₂₁", true], [[-1, 0], [0, -1], "σ₂₁", false], [[0, 1], [1, 0], "σ₁₂", true], [[0, -1], [-1, 0], "σ₁₂", false]]) {
+    for (const [face, dir, nm, lab] of [[[1, 0], [0, 1], "σ₁₀", true], [[-1, 0], [0, -1], "σ₁₀", false], [[0, 1], [1, 0], "σ₀₁", true], [[0, -1], [-1, 0], "σ₀₁", false]]) {
       const mid = [face[0] * (h + sgap), face[1] * (h + sgap)], d = [dir[0] * sg * L / 2, dir[1] * sg * L / 2];
       s += arrowSVG(X(mid[0] - d[0]), Y(mid[1] - d[1]), X(mid[0] + d[0]), Y(mid[1] + d[1]), COMP.s12, 2.8, 11);
       if (lab) {
@@ -70,7 +70,7 @@ export function block2D({s11 = 0, s22 = 0, s12 = 0, E = 200000, nu = 0.3, mag = 
     }
   }
   s += arrowSVG(16, H - 16, 56, H - 16, INK, 1.2, 7) + arrowSVG(16, H - 16, 16, H - 56, INK, 1.2, 7);
-  s += label(62, H - 16, "x₁", INK, "start", 13) + label(16, H - 66, "x₂", INK, "middle", 13);
+  s += label(62, H - 16, "x₀", INK, "start", 13) + label(16, H - 66, "x₁", INK, "middle", 13);
   s += label(W - 8, H - 12, `deformation × ${mag}`, "#e67e22", "end", 11);
   const div = wrap(s, W, H);
   div.strain = st;
@@ -158,7 +158,7 @@ export function block3D({S = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], yaw = -2.3, pitc
   for (const f of front) s += arrowsOn(f, false);
   // axes
   const O = [W * 0.12, H * 0.86];
-  for (const [i, nm] of [[0, "x₁"], [1, "x₂"], [2, "x₃"]]) {
+  for (const [i, nm] of [[0, "x₀"], [1, "x₁"], [2, "x₂"]]) {
     const e = [0, 0, 0]; e[i] = 1;
     const r = R(e), B = [O[0] + 30 * r[0], O[1] - 30 * r[1]];
     s += arrowSVG(O[0], O[1], B[0], B[1], INK, 1.2, 7) + label(B[0] + 8 * r[0], B[1] - 8 * r[1], nm, INK, "middle", 12);
@@ -181,7 +181,7 @@ export function gradientSplit({H = [[0, 0], [0, 0]], size = 210} = {}) {
     let s = `<polygon points="${d.map(([x, y]) => `${X(x).toFixed(1)},${Y(y).toFixed(1)}`).join(" ")}" fill="${col}" fill-opacity="0.18" stroke="${col}" stroke-width="1.8"/>`;
     s += `<polygon points="${sq.map(([x, y]) => `${X(x)},${Y(y)}`).join(" ")}" fill="none" stroke="${INK}" stroke-width="1.2" stroke-dasharray="4 3"/>`;
     // the material line along x1 and along x2, and the angle each turns through
-    for (const [v, nm] of [[[h, 0], "dx₁"], [[0, h], "dx₂"]]) {
+    for (const [v, nm] of [[[h, 0], "dx₀"], [[0, h], "dx₁"]]) {
       const w = [v[0] + M[0][0] * v[0] + M[0][1] * v[1], v[1] + M[1][0] * v[0] + M[1][1] * v[1]];
       s += arrowSVG(X(0), Y(0), X(w[0]), Y(w[1]), col, 1.8, 7);
     }
@@ -244,7 +244,7 @@ export function polarModulus(C, {theta = 0, size = 280, Eref = null, isotropic =
   const fx = Math.cos(theta), fy = Math.sin(theta);
   if (!isotropic) s += `<line x1="${c - R * fx}" y1="${c + R * fy}" x2="${c + R * fx}" y2="${c - R * fy}" stroke="#555" stroke-width="1" stroke-dasharray="5 4"/>`;
   if (!isotropic) s += label(c + (R + 10) * fx, c - (R + 10) * fy, "fibers", "#555", fx >= 0 ? "start" : "end", 11);
-  s += label(c + R + 4, c + 12, "x₁", INK, "end", 12) + label(c + 10, c - R - 2, "x₂", INK, "start", 12);
+  s += label(c + R + 4, c + 12, "x₀", INK, "end", 12) + label(c + 10, c - R - 2, "x₁", INK, "start", 12);
   s += label(c, size - 8, `largest: ${(Emax).toFixed(Emax < 10 ? 2 : 0)} GPa (outer circle)`, "#555", "middle", 11);
   return wrap(s, size, size);
 }

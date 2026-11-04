@@ -49,7 +49,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-25d60f11bf0350d4acb1bb2c5c0bf5d1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-bd990e089991ec7d162b92b5e37a2dc1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -349,6 +349,12 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Class 27: Voigt Notation and the Elasticity Matrix</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/28_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Class 28: The Galerkin Form of Elasticity and Assembly</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
@@ -496,7 +502,7 @@ L(w) := (w,f) + (w,h)_{\Gamma_h} + (w,\hat{c})_{\Gamma_r}
 \]</span></p>
 <p>Three properties of <span class="math inline">\(B\)</span> will be used repeatedly.</p>
 <ul>
-<li><strong><span class="math inline">\(B\)</span> is bilinear</strong>, meaning that it is linear in each of its two arguments, so that, for example, <span class="math inline">\(B(w, u_1 + \alpha\,u_2) = B(w,u_1) + \alpha\,B(w,u_2)\)</span> for any number <span class="math inline">\(\alpha\)</span>. Similarly, <span class="math inline">\(L\)</span> is linear.</li>
+<li><strong><span class="math inline">\(B\)</span> is bilinear</strong>, meaning that it is linear in each of its two arguments, so that, for example, <span class="math inline">\(B(w, u_0 + \alpha\,u_1) = B(w,u_0) + \alpha\,B(w,u_1)\)</span> for any number <span class="math inline">\(\alpha\)</span>. Similarly, <span class="math inline">\(L\)</span> is linear.</li>
 <li><strong><span class="math inline">\(B\)</span> is symmetric</strong>, <span class="math inline">\(B(w,u) = B(u,w)\)</span>, whenever the conductivity is symmetric. In index notation, <span class="math inline">\(w_{,i}\,\kappa_{ij}\,u_{,j} = u_{,j}\,\kappa_{ij}\,w_{,i} = u_{,j}\,\kappa_{ji}\,w_{,i}\)</span>, where the last step uses <span class="math inline">\(\kappa_{ij} = \kappa_{ji}\)</span>, and the Robin term is unchanged when <span class="math inline">\(w\)</span> and <span class="math inline">\(u\)</span> are exchanged.</li>
 <li><strong><span class="math inline">\(B(w,w)\ge 0\)</span></strong> whenever the conductivity is positive definite and <span class="math inline">\(\hat{a}\ge 0\)</span>, since</li>
 </ul>
@@ -560,7 +566,7 @@ B(w,w) = \int_\Omega \nabla w\cdot\underline{\underline{\kappa}}\nabla w\;d\Omeg
 \]</span></p>
 <p>Since <span class="math inline">\(w\in\mathcal{V}\)</span> was arbitrary, this is the weak form (W).</p>
 <p>The weak form therefore states that the derivative of the energy at the solution is zero in every admissible direction <span class="math inline">\(w\)</span>. The test functions are the directions in which the solution can be changed without violating the Dirichlet condition. This is the reason that the weak form is also called the <strong>variational form</strong>: the calculation above is the basic step of the calculus of variations, and <span class="math inline">\(B(w,u) - L(w)\)</span> is called the first variation of <span class="math inline">\(\Pi\)</span> in the direction <span class="math inline">\(w\)</span>. In mechanics, <span class="math inline">\(w\)</span> is a virtual displacement, and the weak form is the principle of virtual work, which will return in the classes on elasticity.</p>
-<p><a href="#fig-c23-energy" class="quarto-xref">Figure&nbsp;<span>23.1</span></a> shows this for the wall of Class 22, with its outer face exchanging heat with air at <span class="math inline">\(h_c\)</span> = 10 W/(m²·K). Three directions <span class="math inline">\(w_1\)</span>, <span class="math inline">\(w_2\)</span>, and <span class="math inline">\(w_3\)</span> are chosen, each of which is zero at the interior face, where the temperature is prescribed. Moving away from the solution in any of these directions increases the energy, and each curve has zero slope at <span class="math inline">\(\varepsilon = 0\)</span>.</p>
+<p><a href="#fig-c23-energy" class="quarto-xref">Figure&nbsp;<span>23.1</span></a> shows this for the wall of Class 22, with its outer face exchanging heat with air at <span class="math inline">\(h_c\)</span> = 10 W/(m²·K). Three directions <span class="math inline">\(w_0\)</span>, <span class="math inline">\(w_1\)</span>, and <span class="math inline">\(w_2\)</span> are chosen, each of which is zero at the interior face, where the temperature is prescribed. Moving away from the solution in any of these directions increases the energy, and each curve has zero slope at <span class="math inline">\(\varepsilon = 0\)</span>.</p>
 <div id="fig-c23-energy" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-c23-energy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -574,11 +580,11 @@ Figure&nbsp;23.1: (a) The solution <span class="math inline">\(u\)</span> of the
 </section>
 <section id="uniqueness" class="level3" data-number="23.3.3">
 <h3 data-number="23.3.3" class="anchored" data-anchor-id="uniqueness"><span class="header-section-number">23.3.3</span> Uniqueness</h3>
-<p>The energy viewpoint also shows that the solution is unique. Suppose that <span class="math inline">\(u_1\)</span> and <span class="math inline">\(u_2\)</span> both solve (W), and let <span class="math inline">\(e = u_2 - u_1\in\mathcal{V}\)</span>. Applying the boxed identity twice, once with <span class="math inline">\(u = u_1\)</span> and <span class="math inline">\(v = u_2\)</span>, and once with the roles exchanged, gives</p>
+<p>The energy viewpoint also shows that the solution is unique. Suppose that <span class="math inline">\(u_0\)</span> and <span class="math inline">\(u_1\)</span> both solve (W), and let <span class="math inline">\(e = u_1 - u_0\in\mathcal{V}\)</span>. Applying the boxed identity twice, once with <span class="math inline">\(u = u_0\)</span> and <span class="math inline">\(v = u_1\)</span>, and once with the roles exchanged, gives</p>
 <p><span class="math display">\[
-\Pi(u_2) = \Pi(u_1) + \tfrac{1}{2}B(e,e)
+\Pi(u_1) = \Pi(u_0) + \tfrac{1}{2}B(e,e)
 \qquad\text{and}\qquad
-\Pi(u_1) = \Pi(u_2) + \tfrac{1}{2}B(e,e) .
+\Pi(u_0) = \Pi(u_1) + \tfrac{1}{2}B(e,e) .
 \]</span></p>
 <p>Adding these two equations gives <span class="math inline">\(B(e,e) = 0\)</span>, that is,</p>
 <p><span class="math display">\[
@@ -590,7 +596,7 @@ Figure&nbsp;23.1: (a) The solution <span class="math inline">\(u\)</span> of the
 <li>If <span class="math inline">\(\Gamma_g\)</span> is not empty, then <span class="math inline">\(e = 0\)</span> on <span class="math inline">\(\Gamma_g\)</span>, since <span class="math inline">\(e\in\mathcal{V}\)</span>, and the constant must be zero.</li>
 <li>If <span class="math inline">\(\Gamma_g\)</span> is empty, but <span class="math inline">\(\hat{a} &gt; 0\)</span> on some part of <span class="math inline">\(\Gamma_r\)</span>, then the second integral can only be zero if <span class="math inline">\(e = 0\)</span> on that part, and again the constant must be zero.</li>
 </ul>
-<p>In either case, <span class="math inline">\(e = 0\)</span>, and <span class="math inline">\(u_1 = u_2\)</span>. The solution of the weak form, and therefore of the strong form, is unique provided that</p>
+<p>In either case, <span class="math inline">\(e = 0\)</span>, and <span class="math inline">\(u_0 = u_1\)</span>. The solution of the weak form, and therefore of the strong form, is unique provided that</p>
 <ol type="1">
 <li>the conductivity <span class="math inline">\(\underline{\underline{\kappa}}\)</span> is symmetric and positive definite throughout <span class="math inline">\(\Omega\)</span>,</li>
 <li><span class="math inline">\(\hat{a}\ge 0\)</span> on <span class="math inline">\(\Gamma_r\)</span>, and</li>
@@ -748,7 +754,7 @@ Table&nbsp;23.1: The smallest and largest eigenvalues of the stiffness matrix of
 </section>
 <section id="seeing-the-cases-on-a-small-problem" class="level2" data-number="23.7">
 <h2 data-number="23.7" class="anchored" data-anchor-id="seeing-the-cases-on-a-small-problem"><span class="header-section-number">23.7</span> Seeing the cases on a small problem</h2>
-<p>The widget below shows the energy <span class="math inline">\(\Pi(\underline{d}) = \tfrac{1}{2}\,\underline{d}^T\underline{\underline{K}}\,\underline{d} - \underline{d}^T\underline{F}\)</span> for the smallest possible problem: a bar of one linear element, with <span class="math inline">\(\kappa/L = 1\)</span>, whose two nodal values are <span class="math inline">\(d_1\)</span> (left end) and <span class="math inline">\(d_2\)</span> (right end). Each case uses a different pair of boundary conditions. The energy is shaded so that darker regions have lower energy, and the thin curves are curves of constant energy.</p>
+<p>The widget below shows the energy <span class="math inline">\(\Pi(\underline{d}) = \tfrac{1}{2}\,\underline{d}^T\underline{\underline{K}}\,\underline{d} - \underline{d}^T\underline{F}\)</span> for the smallest possible problem: a bar of one linear element, with <span class="math inline">\(\kappa/L = 1\)</span>, whose two nodal values are <span class="math inline">\(d_0\)</span> (left end) and <span class="math inline">\(d_1\)</span> (right end). Each case uses a different pair of boundary conditions. The energy is shaded so that darker regions have lower energy, and the thin curves are curves of constant energy.</p>
 <style>
 .ew{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;--acc:#b8322a;
     max-width:900px;margin:0 auto;color:var(--ink)}
@@ -865,8 +871,8 @@ function draw(){
     svg.appendChild(el('line',{x1:sx(t),y1:PY+PS,x2:sx(t),y2:PY+PS+4,stroke:GREY}));
     svg.appendChild(el('line',{x1:PX-4,y1:sy(t),x2:PX,y2:sy(t),stroke:GREY}));
   }
-  svg.appendChild(T(PX+PS/2,PY+PS+36,'d₁  (left node)',{a:'middle',fs:12,f:INK}));
-  var yl=T(18,PY+PS/2,'d₂  (right node)',{a:'middle',fs:12,f:INK});
+  svg.appendChild(T(PX+PS/2,PY+PS+36,'d₀  (left node)',{a:'middle',fs:12,f:INK}));
+  var yl=T(18,PY+PS/2,'d₁  (right node)',{a:'middle',fs:12,f:INK});
   yl.setAttribute('transform','rotate(-90 18 '+(PY+PS/2)+')'); svg.appendChild(yl);
   /* the solution, or the admissible set */
   var ev=eig(m.K), K=m.K, F=m.F, mat, ver, txt;
@@ -877,12 +883,12 @@ function draw(){
   function line(a1,b1,a2,b2,w){ svg.appendChild(el('line',{x1:sx(a1),y1:sy(b1),x2:sx(a2),y2:sy(b2),stroke:ACC,'stroke-width':w||2.6})); }
   if(mode==='DN'){
     line(1,D0,1,D1,2.2); dot(1,1.5);
-    svg.appendChild(T(sx(1)+8,sy(4.2),'d₁ = 1',{fs:12,f:ACC,w:700}));
+    svg.appendChild(T(sx(1)+8,sy(4.2),'d₀ = 1',{fs:12,f:ACC,w:700}));
     ver='One solution.';
     txt='On its own, K is singular (one eigenvalue is zero), and the energy is a tilted trough along the direction (1, 1). '+
-        'The Dirichlet condition allows only the candidates on the red line d₁ = 1, which crosses the trough. '+
-        'Along that line, Π is a parabola with a single minimum, at d₂ = 1.5. '+
-        'This is the reduced system K₂₂ d₂ = F₂ − K₂₁ g that the code solves after the Dirichlet row and column are removed.';
+        'The Dirichlet condition allows only the candidates on the red line d₀ = 1, which crosses the trough. '+
+        'Along that line, Π is a parabola with a single minimum, at d₁ = 1.5. '+
+        'This is the reduced system K₁₁ d₁ = F₁ − K₁₀ g that the code solves after the Dirichlet row and column are removed.';
   } else if(mode==='RN'){
     var det=K[0][0]*K[1][1]-K[0][1]*K[1][0], a1=(K[1][1]*F[0]-K[0][1]*F[1])/det, a2=(K[0][0]*F[1]-K[1][0]*F[0])/det;
     dot(a1,a2);
@@ -893,8 +899,8 @@ function draw(){
   } else if(mode==='NNb'){
     line(D0,D0+0.5,D1-0.5,D1);
     ver='Infinitely many solutions.';
-    txt='K is singular, because adding the same constant to d₁ and d₂ does not change the energy. '+
-        'Since F₁ + F₂ = 0, the heat entering at the right end equals the heat leaving at the left, and every point on the red line d₂ = d₁ + 0.5 is a minimum. '+
+    txt='K is singular, because adding the same constant to d₀ and d₁ does not change the energy. '+
+        'Since F₀ + F₁ = 0, the heat entering at the right end equals the heat leaving at the left, and every point on the red line d₁ = d₀ + 0.5 is a minimum. '+
         'The solutions differ only by a constant, and one more condition is needed to choose among them.';
   } else {
     var defs=el('defs',{}), mk=el('marker',{id:'e23ah',viewBox:'0 0 10 10',refX:8,refY:5,markerWidth:7,markerHeight:7,orient:'auto'});
@@ -904,7 +910,7 @@ function draw(){
     lab.setAttribute('stroke','#fff'); lab.setAttribute('stroke-width','3.5'); lab.setAttribute('paint-order','stroke');
     svg.appendChild(lab);
     ver='No solution.';
-    txt='K is singular, and F₁ + F₂ = 1 is not zero: heat enters at both ends and cannot leave, so no steady state exists. '+
+    txt='K is singular, and F₀ + F₁ = 1 is not zero: heat enters at both ends and cannot leave, so no steady state exists. '+
         'The energy decreases without bound along the direction (1, 1), so it has no lowest point, and K d = F has no solution.';
   }
   document.getElementById('e23mat').textContent=mat;
