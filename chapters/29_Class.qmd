@@ -1,0 +1,1168 @@
+---
+title: "Class 29: Supports, Symmetry, and Boundary Conditions in Elasticity"
+subtitle: "Rigid-body motions, statically determinate and redundant supports, symmetry, supports that are not aligned with the axes, and Saint-Venant's principle"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+format:
+  html:
+    page-layout: full
+    toc: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+import sys
+sys.path.append('python')
+import numpy as np
+from notes_style import use_chapter, save
+import c29_supports as C29
+IMGDIR = use_chapter("Class29")
+
+fig_mech_path = save(C29.fig_mechanisms(), "C29_Fig1_Mechanisms.png")
+fig_red_path = save(C29.fig_redundant(), "C29_Fig2_Redundant.png")
+fig_sym_path = save(C29.fig_symmetry(), "C29_Fig3_Symmetry.png")
+fig_inc_path = save(C29.fig_inclined(), "C29_Fig4_Inclined.png")
+fig_sv_path = save(C29.fig_saint_venant(), "C29_Fig5_SaintVenant.png")
+fig_one_path = save(C29.fig_one_element(30.0), "C29_Fig_OneElement.png")
+one = C29.one_element(30.0)
+
+# numbers quoted in the text
+clamp_peaks = [C29.gauss_stresses(C29.pulled_plate(ny, True))[:, 0].max() for ny in (2, 32)]
+gap2 = C29.normal_gap(C29.eighth_solution("spring", 1e2 * C29.E_STEEL / C29.HA))
+gap4 = C29.normal_gap(C29.eighth_solution("spring", 1e4 * C29.E_STEEL / C29.HA))
+hoop = C29.hoop_at_hole(C29.eighth_solution())[:, 1]
+point_peaks = [C29.block_peak(ny, False) for ny in (4, 32)]
+patch_peak = C29.block_peak(32, True)
+```
+
+In [Class 26](26_Class.qmd), the boundary of an elastic body was divided once for each direction, and in [Class 28](28_Class.qmd), the prescribed displacements and tractions entered the matrix equations through the ID array and the element force vector.
+The way each kind of boundary condition is imposed is the same as for the Poisson Equation, applied to one component of the displacement at a time.
+However, for elasticity, boundary conditions not only represent different behavior, but they also have different requirements.
+Every support drawn on a model is an idealization of a real connection, such as a bolt, a bearing, a weld, or the soil under a footing, and the choice of idealization often affects results.
+This class works to clarify some of those decisions.
+
+## Three kinds of boundary conditions for elastiticy
+
+| Kind | Poisson Equation | Elasticity, for each direction $i$ | How it enters the matrix equations |
+|:--|:--|:--|:--|
+| Dirichlet | $u = g$ on $\Gamma_g$ | $u_i = g_i$ on $\Gamma_{g_i}$ | $\mathrm{ID}(i, A) = -1$, and the known values move to the right-hand side through $-\sum_b \underline{\underline{k}}^e_{ab}\,\underline{g}_b$ |
+| Neumann | the flux is $h$ on $\Gamma_h$ | the traction is $\sigma_{ij}n_j = h_i$ on $\Gamma_{h_i}$ | $\int N_a\,h_i\,d\Gamma$ over the element sides on $\Gamma_{h_i}$ |
+| Robin | $\hat{a}\,u$ plus the flux is $\hat{c}$ on $\Gamma_r$ | a spring support, $\sigma_{ij}n_j + k_s\,u_i = \hat{c}_i$ | $\int N_a\,k_s\,N_b\,d\Gamma$ is added to $\underline{\underline{k}}^e$, and $\int N_a\,\hat{c}_i\,d\Gamma$ to $\underline{f}^e$ |
+
+: The three kinds of boundary condition in the Poisson Equation and in elasticity. {#tbl-c29-kinds}
+
+A free surface is a Neumann boundary on which both components of the traction are zero, so it requires no computation at all.
+A pressure $p$ pushing on a surface is a traction along its normal, $\underline{h} = -p\,\underline{n}$, so on a surface that is not aligned with the axes, both components of the traction are nonzero.
+
+The Robin condition describes an **elastic support**, in which the surface is held by springs whose stiffness per unit area is $k_s$, so that the traction is $h_i = -k_s\,u_i$.
+Examples are the soil under a slab or footing, a rubber bearing pad under a bridge girder, and the flexibility of a bolted connection.
+As in [Class 22](22_Class.qmd), a very stiff spring behaves like a fixed support, and a very soft one like a free surface.
+Soil can push on a slab but cannot pull on it, so a slab that lifts off the ground is described more accurately by springs that act only in compression.
+That makes the problem nonlinear, which is beyond the scope of this course.
+
+## Supports must prevent rigid-body motion
+
+### Rigid-body motions
+
+In [Class 23](23_Class.qmd), a temperature that is the same constant everywhere has no gradient, so it stores no energy, and the stiffness matrix of a body with only Neumann boundaries is singular.
+In elasticity, the displacements that store no energy are those that produce no strain.
+In two dimensions there are three of them, two translations and a rotation, which together are called the **rigid-body motions**:
+
+$$
+\underline{u}_r(\underline{x}) = \begin{bmatrix} c_0 - \theta\,x_1 \\ c_1 + \theta\,x_0 \end{bmatrix} ,
+$$
+
+where $c_0$ and $c_1$ are translations along $x_0$ and $x_1$, and $\theta$ is a small rotation about the origin.
+Its strains are $\varepsilon_{00} = u_{0,0} = 0$, $\varepsilon_{11} = u_{1,1} = 0$, and $2\varepsilon_{01} = u_{0,1} + u_{1,0} = -\theta + \theta = 0$.
+A body in three dimensions has six rigid-body motions, three translations and three rotations.
+
+Since the basis functions reproduce linear fields exactly, every rigid-body motion can be represented by a vector of nodal displacements $\underline{d}_r$.
+It produces no strain, so $a(\underline{w}^h, \underline{u}_r) = 0$ for every $\underline{w}^h$, and the stiffness matrix assembled before any supports are applied satisfies $\underline{\underline{K}}\,\underline{d}_r = \underline{0}$ for each of the three motions.
+The supports must remove all three.
+For a connected mesh, the stiffness matrix that remains after the prescribed rows and columns are removed is positive definite exactly when no rigid-body motion satisfies every support.
+The mathematical result behind this is **Korn's inequality**, which bounds the size of a displacement by the size of its strain once the rigid-body motions are excluded, in the same way that a Dirichlet boundary bounds the temperature by its gradient in the Poisson Equation.
+
+### Recognizing a mechanism
+
+Each support component prevents one point from moving in one direction.
+The direction in which it can push or pull on the body is called its **line of action**.
+A rigid-body motion is described by three numbers, $c_0$, $c_1$, and $\theta$, so at least three support components are needed to prevent all of them.
+Three are not always enough.
+In two dimensions, the supports prevent every rigid-body motion unless the lines of action are all parallel, which leaves a translation free, or all pass through a single point, which leaves a rotation about that point free (@fig-c29-mech).
+These are the same conditions that are used in statics to decide whether a body is held in place.
+A body that can still move in this way is called a **mechanism**.
+
+The arrangement in @fig-c29-mech c is easy to miss.
+The pin prevents both translations, and the roller appears to prevent rotation, but a small rotation about the pin moves the point at the roller at right angles to the roller's line of action, and the roller allows that.
+
+![Four ways of supporting a body, with the lines of action of the rollers dashed. (a) A pin and a roller: the three lines of action are neither parallel nor concurrent, and the body is held. (b) Three rollers with parallel lines of action: the body can slide along them. (c) A pin, and a roller whose line of action passes through the pin: the body can turn about the pin. (d) A ring on three rollers whose lines of action meet at its center: the ring can spin. In (b) to (d), the orange outline and arrow show the motion that is left free.](`{python} fig_mech_path`){#fig-c29-mech width=100%}
+
+### Loads on a body that is not supported
+
+In Class 23, a solution with only Neumann boundaries exists only if the total heat entering the body is zero, $\underline{1}^T\underline{F} = 0$.
+In elasticity, multiplying $\underline{\underline{K}}\,\underline{d} = \underline{F}$ by $\underline{d}_r^T$ for each rigid-body motion gives $\underline{d}_r^T\underline{F} = 0$, so the loads must do no work on any rigid-body motion.
+For the two translations and the rotation, this condition is
+
+$$
+\sum F_0 = 0, \qquad \sum F_1 = 0, \qquad \sum M = 0 ,
+$$
+
+which states that the applied loads are in equilibrium.
+If they are, there are infinitely many solutions, which differ by a rigid-body motion, and if they are not, there is no static solution, because the loads would set the body in motion.
+A spacecraft, a pressure vessel, and a test specimen pulled at both ends are loaded in this way.
+Nothing holds them in place, but a finite element model of each still needs supports that remove the rigid-body motions, without resisting the deformation that the loads cause.
+The next section describes such supports.
+
+## Statically determinate and redundant supports
+
+Supports with exactly three components whose lines of action are neither parallel nor concurrent are **statically determinate**.
+The three equations of equilibrium of the whole body then determine the three reactions, whatever the material and the mesh.
+Such supports only prevent rigid-body motion.
+They cannot cause stress of their own, because the body is free to take whatever shape the loads produce.
+
+Supports with more components are **statically indeterminate**, or **redundant**.
+There are more reactions than equations of equilibrium, so the reactions depend on the stiffness of the body, and the supports can resist deformation that the loads would otherwise cause.
+@fig-c29-red shows the difference for a steel plate, 200 mm by 100 mm and 10 mm thick, pulled at its right end by a uniform traction of 50 MPa.
+
+- In (a), the left end rests on rollers that hold $u_0$, and its midpoint is also held in $u_1$.
+  Under the pull, the plate stretches along $x_0$ and contracts along $x_1$ by the Poisson effect.
+  The rollers allow the contraction, so the solution is the uniform stress $\sigma_{00} = 50$ MPa, with $\sigma_{11} = \sigma_{01} = 0$, which the elements reproduce exactly.
+- In (b), the left end is clamped.
+  The clamp prevents the contraction at the left end, and so it causes a stress $\sigma_{11}$ across the plate that the pull alone does not.
+  This stress is largest at the clamp and has nearly disappeared about one depth of the plate away from it.
+- The exact solution of the clamped plate has infinite stress at the two corners of the clamp, where a free edge meets a fixed one.
+  As (c) shows, the largest stress in the finite element solution rises from `{python} f"{clamp_peaks[0]:.1f}"` MPa to `{python} f"{clamp_peaks[1]:.1f}"` MPa as the mesh is refined, and it continues to rise with further refinement.
+  No mesh gives a converged value there.
+
+The rollers in (a) also have more than three components, but they agree with the deformation that the pull causes, so they do not resist it.
+Whether a support causes stress depends on whether it resists the deformation of the body, and supports that are statically determinate never do.
+
+![A plate pulled at its right end by 50 MPa, with two idealizations of its left end. The color shows $\sigma_{11}$, the stress across the plate. (a) The left end on rollers, with its midpoint held in $u_1$: $\sigma_{11}$ is zero everywhere, to roundoff. (b) The left end clamped: the clamp prevents the Poisson contraction, which causes $\sigma_{11}$ near the clamp. (c) The largest $\sigma_{00}$ at any Gauss point as the mesh is refined, with twice as many elements along the plate as through its depth. With the rollers, it is exactly 50 MPa on every mesh; with the clamp, it grows without limit, because the exact stress at the corners of the clamp is infinite.](`{python} fig_red_path`){#fig-c29-red width=100%}
+
+A uniform rise in temperature $\Delta T$ makes a body that is free to move expand by the strain $\alpha\,\Delta T$ in every direction, where $\alpha$ is the coefficient of thermal expansion, without any stress.
+Statically determinate supports allow this expansion, so they cause no stress, while redundant supports that prevent it cause stresses that can be large.
+Class 31 studies thermal stress in more detail.
+
+### Reactions as a check
+
+The rows of $\underline{\underline{K}}$ for the prescribed components were left out of the matrix equation in Class 28, but they are not discarded.
+Let $\underline{\underline{K}}_{\text{complete}}$ be the stiffness matrix assembled for every displacement component, $2n_{np} \times 2n_{np}$ in two dimensions, before any rows or columns are removed.
+Let $\underline{d}_{\text{complete}}$ hold every displacement component, the solved values from $\underline{d}$ at the unknown components and the prescribed values $g_{iA}$ at the others.
+Let $\underline{F}_{\text{complete}}$ hold the applied loads, the body force and the tractions, for every component, without the terms that moved the prescribed displacements to the right-hand side.
+The **reactions**, the forces that the supports apply to the body, are then
+
+$$
+\underline{R} = \underline{\underline{K}}_{\text{complete}}\,\underline{d}_{\text{complete}} - \underline{F}_{\text{complete}} .
+$$
+
+In the rows of the unknown components, this is zero, since those rows are the equations that were solved, so $\underline{R}$ is nonzero only at the prescribed components.
+For a body without spring supports, $\underline{d}_r^T\underline{\underline{K}}_{\text{complete}} = \underline{0}^T$ for every rigid-body motion, so the reactions and the applied loads together always satisfy the three equations of equilibrium, whatever the mesh.
+The sum of the reactions is therefore not a check on accuracy, but it is a useful check that the loads were applied where, and with the magnitude, that was intended.
+
+When the supports are statically determinate, the reactions can be computed by hand from statics before the analysis, and the finite element reactions must agree with them.
+When a body whose loads are already in equilibrium, such as a specimen pulled at both ends, is held by determinate supports only to remove its rigid-body motions, the reactions must be zero.
+Nonzero reactions then show that the loads are not balanced as intended.
+
+## Supports, interactively
+
+The widget below models the plate of @fig-c29-red in plane stress, with 16 by 8 elements.
+Any node on the boundary can be given a support, and the widget reports whether the supports leave a mechanism, whether they are statically determinate, and what the reactions are.
+
+- Click a node on the boundary to change its support.
+  Each click moves through a roller that holds the component normal to that side, a roller that holds the other component, a pin, and no support.
+- Use the support buttons for common arrangements, and the load buttons to change the load.
+- The dashed outline is the undeformed plate, and its dots are the nodes that can be clicked.
+- When the supports leave a mechanism, the widget shows the motion that is free; otherwise it shows the deformed plate, magnified, colored by the von Mises stress.
+  The supports, the applied loads (blue), and the reactions (green) are drawn where the nodes of the deformed plate have moved, so a pin stays in place and a roller moves along the surface it rolls on.
+- The loads on the edges are uniform tractions, 5 MPa down on the top edge and 50 MPa along $x_0$ on the ends, and the temperature rise is uniform.
+
+::: {html-table-processing="none"}
+```{=html}
+<style>
+.c29{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;color:var(--ink)}
+.c29 .bar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:10px 14px;background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.c29 .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey);margin-right:2px}
+.c29 .bar .gap{width:10px}
+.c29 button{font:inherit;font-size:13px;padding:4px 10px;border:1px solid #c3c9d2;border-radius:6px;background:#fff;cursor:pointer;color:var(--ink)}
+.c29 button:hover{background:#eef1f5}
+.c29 button[aria-pressed="true"]{background:#18202b;color:#fff;border-color:#18202b}
+.c29 svg{display:block;width:100%;height:auto}
+.c29 .panel{border:1px solid var(--faint);border-radius:8px;background:#fff;padding:6px;margin-bottom:10px}
+.c29 .read{font-size:.88em;background:var(--paper);border:1px solid var(--faint);border-radius:8px;padding:9px 12px;line-height:1.6;margin-bottom:22px}
+.c29 .read b{color:#b8322a}
+.c29 .read b.ok{color:#1e3a5f}
+.c29 input[type=range]{vertical-align:middle;width:150px}
+.c29 svg [data-node]:hover{fill:rgba(31,111,235,.28)}
+.c29 .h29{font-size:.86em;font-weight:600;color:#42506a;margin:2px 2px 6px}
+.c29 table.m{border-collapse:collapse;font-family:monospace;font-size:12px;margin:2px}
+.c29 table.m td,.c29 table.m th{border:1px solid #e3e7ec;padding:2px 6px;text-align:right;white-space:nowrap}
+.c29 table.m th{background:#f3f5f8;color:#42506a;font-weight:600}
+.c29 table.m td.rot{background:#fde3c8}
+.c29 table.m td.out{background:#eceef1;color:#a5adb7}
+.c29 .val{font-family:monospace;font-size:12px;color:var(--grey);min-width:3.5em;display:inline-block}
+</style>
+<script>
+// A small plane-stress solver shared by the three widgets on this page: four-node
+// elements on a rectangle, nodes numbered across the depth to keep the band narrow,
+// local nodes by the stride rule, and a banded Cholesky factorization.
+window.C29 = window.C29 || (function(){
+  const G = 1/Math.sqrt(3), SG = [[-1,-1],[1,-1],[-1,1],[1,1]];
+  function mesh(L, H, nx, ny){
+    const X = [], node = (i, j) => j + (ny+1)*i;
+    for (let i=0;i<=nx;i++) for (let j=0;j<=ny;j++) X.push([L*i/nx, H*j/ny]);
+    const IEN = [], EC = [], EIJ = [];
+    for (let ex=0;ex<nx;ex++) for (let ey=0;ey<ny;ey++){
+      IEN.push([node(ex,ey), node(ex+1,ey), node(ex,ey+1), node(ex+1,ey+1)]);
+      EC.push([L*(ex+0.5)/nx, H*(ey+0.5)/ny]); EIJ.push([ex, ey]);
+    }
+    return {L, H, nx, ny, X, IEN, EC, EIJ, node, nnp:X.length, nel:IEN.length, hx:L/nx, hy:H/ny};
+  }
+  function dmat(E, nu){ const c = E/(1-nu*nu); return [[c, c*nu, 0], [c*nu, c, 0], [0, 0, c*(1-nu)/2]]; }
+  function Bm(xi, eta, hx, hy){
+    const B = [new Array(8).fill(0), new Array(8).fill(0), new Array(8).fill(0)];
+    SG.forEach(([a, b], k) => {
+      const dx = a*(1+b*eta)/(2*hx), dy = b*(1+a*xi)/(2*hy);
+      B[0][2*k] = dx; B[1][2*k+1] = dy; B[2][2*k] = dy; B[2][2*k+1] = dx;
+    });
+    return B;
+  }
+  // k^e and, for a uniform free strain eps0, the load integral of B^T D eps0; every element is the same rectangle
+  function elementArrays(M, D, t, eps0){
+    const k = Array.from({length:8}, () => new Array(8).fill(0)), f = new Array(8).fill(0), J = M.hx*M.hy/4;
+    for (const xi of [-G, G]) for (const eta of [-G, G]){
+      const B = Bm(xi, eta, M.hx, M.hy);
+      const DB = [0,1,2].map(r => B[0].map((_, c) => D[r][0]*B[0][c] + D[r][1]*B[1][c] + D[r][2]*B[2][c]));
+      for (let p=0;p<8;p++){
+        for (let q=0;q<8;q++) k[p][q] += (B[0][p]*DB[0][q] + B[1][p]*DB[1][q] + B[2][p]*DB[2][q])*J*t;
+        if (eps0) f[p] += (DB[0][p]*eps0[0] + DB[1][p]*eps0[1] + DB[2][p]*eps0[2])*J*t;
+      }
+    }
+    return {k, f: eps0 ? f : null};
+  }
+  const dofs = (M, e) => M.IEN[e].flatMap(A => [2*A, 2*A+1]);
+  // held: a Set of held components 2A + i (all held at zero); F: nodal loads
+  function solve(M, el, held, F){
+    const n2 = 2*M.nnp, ID = new Int32Array(n2).fill(-1);
+    let neq = 0;
+    for (let q=0;q<n2;q++) if (!held.has(q)) ID[q] = neq++;
+    let bw = 0;
+    for (let e=0;e<M.nel;e++){
+      const P = dofs(M, e).map(q => ID[q]).filter(v => v >= 0);
+      if (P.length) bw = Math.max(bw, Math.max(...P) - Math.min(...P));
+    }
+    const w = bw + 1, A = new Float64Array(Math.max(neq*w, 1)), b = new Float64Array(neq), Fall = Float64Array.from(F);
+    for (let e=0;e<M.nel;e++){
+      const dd = dofs(M, e);
+      for (let p=0;p<8;p++){
+        if (el.f) Fall[dd[p]] += el.f[p];
+        const P = ID[dd[p]]; if (P < 0) continue;
+        for (let q=0;q<8;q++){ const Q = ID[dd[q]]; if (Q >= P) A[P*w + Q - P] += el.k[p][q]; }
+      }
+    }
+    for (let q=0;q<n2;q++) if (ID[q] >= 0) b[ID[q]] = Fall[q];
+    let dmax = 0; for (let i=0;i<neq;i++) dmax = Math.max(dmax, A[i*w]);
+    for (let i=0;i<neq;i++){
+      let s = A[i*w];
+      for (let k=Math.max(0, i-bw); k<i; k++){ const u = A[k*w + i - k]; s -= u*u; }
+      if (!(s > 1e-9*dmax)) return {ok:false, neq};
+      const d = Math.sqrt(s); A[i*w] = d;
+      const jm = Math.min(neq-1, i+bw);
+      for (let j=i+1;j<=jm;j++){
+        let v = A[i*w + j - i];
+        for (let k=Math.max(0, j-bw); k<i; k++) v -= A[k*w + i - k]*A[k*w + j - k];
+        A[i*w + j - i] = v/d;
+      }
+    }
+    const y = new Float64Array(neq), x = new Float64Array(neq);
+    for (let i=0;i<neq;i++){ let v = b[i]; for (let k=Math.max(0, i-bw); k<i; k++) v -= A[k*w + i - k]*y[k]; y[i] = v/A[i*w]; }
+    for (let i=neq-1;i>=0;i--){ let v = y[i]; const jm = Math.min(neq-1, i+bw); for (let j=i+1;j<=jm;j++) v -= A[i*w + j - i]*x[j]; x[i] = v/A[i*w]; }
+    const U = new Float64Array(n2);
+    for (let q=0;q<n2;q++) if (ID[q] >= 0) U[q] = x[ID[q]];
+    const R = new Float64Array(n2);            // R = K U - F at the held components
+    for (let e=0;e<M.nel;e++){
+      const dd = dofs(M, e);
+      for (let p=0;p<8;p++){ let v = 0; for (let q=0;q<8;q++) v += el.k[p][q]*U[dd[q]]; R[dd[p]] += v; }
+    }
+    for (let q=0;q<n2;q++) R[q] = held.has(q) ? R[q] - Fall[q] : 0;
+    return {ok:true, U, R, neq};
+  }
+  function centerStress(M, D, U, e, eps0){
+    const B = Bm(0, 0, M.hx, M.hy), dd = dofs(M, e);
+    const eps = [0,1,2].map(r => B[r].reduce((s, v, c) => s + v*U[dd[c]], 0) - (eps0 ? eps0[r] : 0));
+    return [0,1,2].map(r => D[r][0]*eps[0] + D[r][1]*eps[1] + D[r][2]*eps[2]);
+  }
+  const vonMises = s => Math.sqrt(s[0]*s[0] - s[0]*s[1] + s[1]*s[1] + 3*s[2]*s[2]);
+  // uniform traction h on the boundary segment between nodes A and B: half of the force to each
+  function segmentLoad(F, M, A, B, h, t){
+    const len = Math.hypot(M.X[B][0]-M.X[A][0], M.X[B][1]-M.X[A][1]);
+    for (const N of [A, B]){ F[2*N] += h[0]*len*t/2; F[2*N+1] += h[1]*len*t/2; }
+  }
+  function ramp(stops){
+    return v => {
+      v = Math.max(0, Math.min(1, v));
+      const n = stops.length - 1, k = Math.min(n-1, Math.floor(v*n)), f = v*n - k, a = stops[k], b = stops[k+1];
+      return `rgb(${[0,1,2].map(i => Math.round(a[i] + f*(b[i]-a[i]))).join(",")})`;
+    };
+  }
+  const seq = ramp([[255,255,229],[254,227,145],[254,196,79],[254,153,41],[236,112,20],[204,76,2],[140,45,4]]);
+  const div = ramp([[33,102,172],[103,169,207],[209,229,240],[247,247,247],[253,219,199],[239,138,98],[178,24,43]]);
+  const el = (tag, a, inner) => `<${tag} ${Object.entries(a).map(([k, v]) => `${k}="${v}"`).join(" ")}>${inner || ""}</${tag}>`;
+  function arrow(x1, y1, x2, y2, color, w){
+    const L = Math.hypot(x2-x1, y2-y1); if (L < 1) return "";
+    const ux = (x2-x1)/L, uy = (y2-y1)/L, h = Math.min(8, 0.45*L);
+    return el("line", {x1, y1, x2: x2 - ux*h*0.8, y2: y2 - uy*h*0.8, stroke: color, "stroke-width": w || 1.6}) +
+      el("polygon", {points: `${x2},${y2} ${x2 - ux*h - uy*h*0.45},${y2 - uy*h + ux*h*0.45} ${x2 - ux*h + uy*h*0.45},${y2 - uy*h - ux*h*0.45}`, fill: color});
+  }
+  // a roller (open triangle on wheels) or a pin (filled triangle on hatching), apex at (x, y); (ux, uy) points into the body
+  function support(x, y, ux, uy, kind, color){
+    const vx = -uy, vy = ux, s = 11, bx = x - ux*s, by = y - uy*s;
+    let o = el("polygon", {points: `${x},${y} ${bx + vx*s*0.6},${by + vy*s*0.6} ${bx - vx*s*0.6},${by - vy*s*0.6}`,
+      fill: kind === "pin" ? color : "#fff", stroke: color, "stroke-width": 1.3});
+    let gx = bx, gy = by;
+    if (kind === "roller"){
+      for (const k of [-0.32, 0.32]) o += el("circle", {cx: bx + vx*s*k - ux*2.6, cy: by + vy*s*k - uy*2.6, r: 2.3, fill: "#fff", stroke: color, "stroke-width": 1});
+      gx -= ux*5.2; gy -= uy*5.2;
+    }
+    o += el("line", {x1: gx + vx*9, y1: gy + vy*9, x2: gx - vx*9, y2: gy - vy*9, stroke: color, "stroke-width": 1.3});
+    if (kind === "pin") for (let k=-0.8;k<=0.81;k+=0.4) o += el("line", {x1: gx + vx*9*k, y1: gy + vy*9*k, x2: gx + vx*9*k - ux*4 - vx*3, y2: gy + vy*9*k - uy*4 - vy*3, stroke: color, "stroke-width": 0.8});
+    return o;
+  }
+  return {mesh, dmat, elementArrays, solve, centerStress, vonMises, segmentLoad, seq, div, el, arrow, support, dofs};
+})();
+</script>
+
+<div class="c29" id="c29w1">
+  <div class="bar">
+    <b>SUPPORTS</b>
+    <button data-pre="pinroller">pin and roller</button>
+    <button data-pre="parallel">three parallel rollers</button>
+    <button data-pre="through">roller through the pin</button>
+    <button data-pre="twopins">pins at both ends</button>
+    <button data-pre="clamped">left end clamped</button>
+    <button data-pre="none">no supports</button>
+  </div>
+  <div class="bar">
+    <b>LOAD</b>
+    <button data-load="top">a load on the top</button>
+    <button data-load="right">a pull on the right end</button>
+    <button data-load="both">equal pulls on both ends</button>
+    <button data-load="heat">a temperature rise of 50 °C</button>
+  </div>
+  <div class="panel"><svg id="c29w1svg" viewBox="0 0 640 352" role="img" aria-label="A plate with supports at chosen nodes, its deformed shape, and the reactions"></svg></div>
+  <div class="read" id="c29w1read"></div>
+</div>
+
+<script>
+(function(){
+  const C = window.C29, L = 200, H = 100, T = 10, E = 200000, NU = 0.3, NX = 16, NY = 8;
+  const S = 50, Q = 5, ALPHA = 12e-6, DT = 50;
+  const M = C.mesh(L, H, NX, NY), D = C.dmat(E, NU);
+  const EPS = [ALPHA*DT, ALPHA*DT, 0];
+  const elPlain = C.elementArrays(M, D, T, null), elHeat = C.elementArrays(M, D, T, EPS);
+  const xc = L/2, yc = H/2;
+  const sc = 2.3, ox = 90, oy = 55, X = x => ox + sc*x, Y = y => oy + sc*(H - y);
+  const st = {sup: new Map(), load: "top", phase: 0, anim: null};
+  const onB = A => { const [x, y] = M.X[A]; return {bot: y < 1e-9, top: y > H - 1e-9, left: x < 1e-9, right: x > L - 1e-9}; };
+  const boundary = []; for (let A=0;A<M.nnp;A++){ const b = onB(A); if (b.bot || b.top || b.left || b.right) boundary.push(A); }
+  const N = (x, y) => M.node(Math.round(x/(L/NX)), Math.round(y/(H/NY)));
+  // support codes: 1 holds u1, 2 holds u0, 3 holds both (a pin)
+  const PRESETS = {
+    pinroller: [[0, 0, 3], [L, 0, 1]],
+    parallel: [[0, 0, 1], [L/2, 0, 1], [L, 0, 1]],
+    through: [[0, 0, 3], [L, 0, 2]],
+    twopins: [[0, 0, 3], [L, 0, 3]],
+    clamped: [...Array(NY+1).keys()].map(j => [0, H*j/NY, 3]),
+    none: []
+  };
+  function setPreset(k){ st.sup = new Map(PRESETS[k].map(([x, y, c]) => [N(x, y), c])); st.pre = k; render(); }
+  function loads(){
+    const F = new Float64Array(2*M.nnp);
+    const edge = (sel, h) => { for (let k=0;k<sel.length-1;k++) C.segmentLoad(F, M, sel[k], sel[k+1], h, T); };
+    const right = [...Array(NY+1).keys()].map(j => M.node(NX, j)), left = [...Array(NY+1).keys()].map(j => M.node(0, j));
+    const top = [...Array(NX+1).keys()].map(i => M.node(i, NY));
+    if (st.load === "top") edge(top, [0, -Q]);
+    if (st.load === "right" || st.load === "both") edge(right, [S, 0]);
+    if (st.load === "both") edge(left, [-S, 0]);
+    return F;
+  }
+  function heldSet(){
+    const s = new Set();
+    st.sup.forEach((c, A) => { if (c & 2) s.add(2*A); if (c & 1) s.add(2*A+1); });
+    return s;
+  }
+  // the rigid-body motions u = (c0 - th y~, c1 + th x~), x~ = (x - xc)/L, that the supports allow
+  function freeModes(){
+    const rows = [];
+    st.sup.forEach((c, A) => {
+      const xt = (M.X[A][0]-xc)/L, yt = (M.X[A][1]-yc)/L;
+      if (c & 2) rows.push([1, 0, -yt]);
+      if (c & 1) rows.push([0, 1, xt]);
+    });
+    const Gm = [[0,0,0],[0,0,0],[0,0,0]];
+    rows.forEach(r => { for (let i=0;i<3;i++) for (let j=0;j<3;j++) Gm[i][j] += r[i]*r[j]; });
+    const {vals, vecs} = jacobi3(Gm);
+    const modes = []; vals.forEach((v, k) => { if (v < 1e-9) modes.push(vecs.map(r => r[k])); });
+    return {n: rows.length, rank: 3 - modes.length, modes};
+  }
+  function jacobi3(A0){
+    const A = A0.map(r => r.slice()), V = [[1,0,0],[0,1,0],[0,0,1]];
+    for (let sweep=0; sweep<50; sweep++){
+      let off = 0; for (let p=0;p<3;p++) for (let q=p+1;q<3;q++) off += A[p][q]*A[p][q];
+      if (off < 1e-30) break;
+      for (let p=0;p<3;p++) for (let q=p+1;q<3;q++){
+        if (Math.abs(A[p][q]) < 1e-300) continue;
+        const th = 0.5*Math.atan2(2*A[p][q], A[q][q]-A[p][p]), c = Math.cos(th), s = Math.sin(th);
+        for (let k=0;k<3;k++){ const akp = A[k][p], akq = A[k][q]; A[k][p] = c*akp - s*akq; A[k][q] = s*akp + c*akq; }
+        for (let k=0;k<3;k++){ const apk = A[p][k], aqk = A[q][k]; A[p][k] = c*apk - s*aqk; A[q][k] = s*apk + c*aqk; }
+        for (let k=0;k<3;k++){ const vkp = V[k][p], vkq = V[k][q]; V[k][p] = c*vkp - s*vkq; V[k][q] = s*vkp + c*vkq; }
+      }
+    }
+    return {vals: [0,1,2].map(i => A[i][i]), vecs: V};
+  }
+  const ur = (m, A) => { const xt = (M.X[A][0]-xc)/L, yt = (M.X[A][1]-yc)/L; return [m[0] - m[2]*yt, m[1] + m[2]*xt]; };
+  function describe(m){
+    const mag = Math.hypot(m[0], m[1], m[2]);
+    if (Math.abs(m[2]) < 1e-6*mag){
+      if (Math.abs(m[1]) < 1e-6*mag) return "a translation along x₀";
+      if (Math.abs(m[0]) < 1e-6*mag) return "a translation along x₁";
+      return "a translation";
+    }
+    const px = xc - L*m[1]/m[2], py = yc + L*m[0]/m[2], r0 = v => (Math.abs(v) < 0.5 ? 0 : v).toFixed(0);
+    return `a rotation about the point (${r0(px)}, ${r0(py)}) mm`;
+  }
+  const sgn = s => s.replace(/^-(0\.0+)$/, "$1").replace("-", "−");
+  const kN = v => sgn((v/1000).toFixed(2)), kNm = v => sgn((v/1e6).toFixed(3));
+  // the supports follow their nodes on the deformed shape: a pin does not move, and a roller
+  // moves along the surface it rolls on
+  function supportsSVG(P){
+    let o = "";
+    st.sup.forEach((c, A) => {
+      const b = onB(A), [x, y] = P(A);
+      const into = b.bot ? [0, -1] : b.top ? [0, 1] : b.left ? [1, 0] : [-1, 0];
+      if (c === 3){ o += C.support(x, y, into[0], into[1], "pin", "#1e3a5f"); return; }
+      const i = c === 2 ? 0 : 1, normalHere = (i === 1 && (b.bot || b.top)) || (i === 0 && (b.left || b.right));
+      if (normalHere){
+        const u = i === 1 ? (b.bot ? [0, -1] : [0, 1]) : (b.left ? [1, 0] : [-1, 0]);
+        o += C.support(x, y, u[0], u[1], "roller", "#1e3a5f");
+      } else {
+        // a roller that holds the component along the side: drawn just outside the side, on a short link
+        const out = [-into[0], -into[1]], ax = x + out[0]*14, ay = y + out[1]*14;
+        const u = i === 1 ? [0, -1] : [1, 0];
+        o += C.el("line", {x1: x, y1: y, x2: ax, y2: ay, stroke: "#1e3a5f", "stroke-width": 1.3});
+        o += C.support(ax, ay, u[0], u[1], "roller", "#1e3a5f");
+      }
+    });
+    return o;
+  }
+  // the uniform tractions, drawn as distributed loads: an arrow at each node of the loaded
+  // edge, on the deformed shape, with a line joining their outer ends
+  function loadsSVG(P){
+    let o = "";
+    const blue = "#1f6feb", line = pts => C.el("polyline", {points: pts.map(p => p.join(",")).join(" "), fill: "none", stroke: blue, "stroke-width": 1.4});
+    const edge = (nodes, dx, dy, push) => {
+      const outer = nodes.map(A => { const [x, y] = P(A); return [x + dx*26, y + dy*26]; });
+      nodes.forEach((A, k) => {
+        const [x, y] = P(A), [ox, oy] = outer[k];
+        o += push ? C.arrow(ox, oy, x + dx*2, y + dy*2, blue, 1.3) : C.arrow(x + dx*2, y + dy*2, ox, oy, blue, 1.3);
+      });
+      o += line(outer);
+    };
+    if (st.load === "top") edge([...Array(NX+1).keys()].map(i => M.node(i, NY)), 0, -1, true);
+    if (st.load === "right" || st.load === "both") edge([...Array(NY+1).keys()].map(j => M.node(NX, j)), 1, 0, false);
+    if (st.load === "both") edge([...Array(NY+1).keys()].map(j => M.node(0, j)), -1, 0, false);
+    if (st.load === "heat") o += C.el("text", {x: X(L/2), y: Y(H) - 12, "text-anchor": "middle", "font-size": 13, fill: blue}, "temperature rise ΔT = 50 °C everywhere");
+    return o;
+  }
+  // Three layers: the deformed plate with its loads, supports, and reactions, redrawn on every frame
+  // of an animation; the undeformed plate, dashed, with its nodes; and the click targets on those
+  // nodes, drawn once so that a click is not lost between frames.
+  const RING = [...[...Array(NX+1).keys()].map(i => M.node(i, 0)), ...[...Array(NY).keys()].map(j => M.node(NX, j+1)),
+                ...[...Array(NX).keys()].map(i => M.node(NX-1-i, NY)), ...[...Array(NY-1).keys()].map(j => M.node(0, NY-1-j))];
+  function draw(U, colors, ghost){
+    const svg = document.getElementById("c29w1svg");
+    if (!svg.querySelector("#c29w1hit")){
+      svg.innerHTML = `<g id="c29w1body"></g><g id="c29w1ref" style="pointer-events:none">` +
+        C.el("rect", {x: X(0), y: Y(H), width: sc*L, height: sc*H, fill: "none", stroke: "#18202b", "stroke-width": 1.1, "stroke-dasharray": "6 4"}) +
+        boundary.map(A => C.el("circle", {cx: X(M.X[A][0]), cy: Y(M.X[A][1]), r: 2.2, fill: "#18202b"})).join("") +
+        `</g><g id="c29w1hit">` +
+        boundary.map(A => C.el("circle", {cx: X(M.X[A][0]), cy: Y(M.X[A][1]), r: 7, fill: "transparent", stroke: "none", "data-node": A, style: "cursor:pointer"})).join("") + `</g>`;
+    }
+    let o = "";
+    const P = A => [X(M.X[A][0] + (U ? U[2*A] : 0)), Y(M.X[A][1] + (U ? U[2*A+1] : 0))];
+    for (let e=0;e<M.nel;e++){
+      const [a, b, c, d] = M.IEN[e], pts = [P(a), P(b), P(d), P(c)].map(p => p.join(",")).join(" ");
+      o += C.el("polygon", {points: pts, fill: colors ? colors[e] : (ghost ? "#fde3c8" : "#e3eef8"), stroke: ghost ? "#e9a466" : "#9aa3ad", "stroke-width": 0.5});
+    }
+    o += C.el("polygon", {points: RING.map(A => P(A).join(",")).join(" "), fill: "none", stroke: ghost ? "#e67e22" : "#5a4632", "stroke-width": 1.6});
+    o += loadsSVG(P) + supportsSVG(P);
+    if (st.reac) o += st.reac;
+    if (colors){
+      for (let k=0;k<=40;k++) o += C.el("rect", {x: 410 + k*2.5, y: 336, width: 2.6, height: 8, fill: C.seq(k/40)});
+      o += C.el("text", {x: 406, y: 346, "text-anchor": "end", "font-size": 11, fill: "#6b7684"}, "von Mises 0");
+      o += C.el("text", {x: 516, y: 346, "font-size": 11, fill: "#6b7684"}, st.vmax.toFixed(st.vmax < 10 ? 1 : 0) + " MPa or more");
+    }
+    svg.querySelector("#c29w1body").innerHTML = o;
+  }
+  function render(){
+    if (st.anim){ cancelAnimationFrame(st.anim); st.anim = null; }
+    document.querySelectorAll("#c29w1 [data-pre]").forEach(b => b.setAttribute("aria-pressed", b.dataset.pre === st.pre ? "true" : "false"));
+    document.querySelectorAll("#c29w1 [data-load]").forEach(b => b.setAttribute("aria-pressed", b.dataset.load === st.load ? "true" : "false"));
+    const F = loads(), heat = st.load === "heat", fm = freeModes(), read = document.getElementById("c29w1read");
+    st.reac = "";
+    let h = `${fm.n} support component${fm.n === 1 ? "" : "s"} (a pin counts as two). A plate in its plane has three rigid-body motions.<br>`;
+    if (fm.modes.length){
+      const m = fm.modes[0], amax = Math.max(...boundary.map(A => Math.hypot(...ur(m, A)))), one = fm.modes.length === 1;
+      // a solution exists only if the loads do no work on every free motion
+      let fn = 0; for (let A=0;A<M.nnp;A++) fn += Math.hypot(F[2*A], F[2*A+1]);
+      const loadFree = fm.modes.every(mm => {
+        let work = 0, big = 0;
+        for (let A=0;A<M.nnp;A++){ const u = ur(mm, A); work += F[2*A]*u[0] + F[2*A+1]*u[1]; big = Math.max(big, Math.hypot(...u)); }
+        return Math.abs(work) <= 1e-9*Math.max(fn, 1)*big;
+      });
+      h += `<b>A mechanism:</b> the supports leave ${one ? describe(m) : (fm.modes.length === 3 ? "all three rigid-body motions" : "two independent rigid-body motions")} free, so K is singular. `;
+      h += loadFree ? `The loads do no work on ${one ? "this motion" : "these motions"}, so solutions exist, but any amount of ${one ? "it" : "them"} can be added to a solution.`
+                    : `The loads do work on ${one ? "this motion" : "at least one of these motions"}, so there is no static solution: the plate would move.`;
+      h += "<br>Click a node on the boundary to add a support.";
+      read.innerHTML = h;
+      const amp = 0.07*L/amax, t0 = performance.now();
+      const step = now => {
+        const s = Math.sin((now - t0)/420), U = new Float64Array(2*M.nnp);
+        for (let A=0;A<M.nnp;A++){ const u = ur(m, A); U[2*A] = amp*s*u[0]; U[2*A+1] = amp*s*u[1]; }
+        draw(U, null, true); st.anim = requestAnimationFrame(step);
+      };
+      st.anim = requestAnimationFrame(step);
+      return;
+    }
+    const sol = C.solve(M, heat ? elHeat : elPlain, heldSet(), F);
+    if (!sol.ok){ read.innerHTML = h + "<b>The solver could not factor K.</b>"; draw(null, null); return; }
+    const sig = [...Array(M.nel).keys()].map(e => C.centerStress(M, D, sol.U, e, heat ? EPS : null)), vm = sig.map(C.vonMises);
+    const sorted = vm.slice().sort((a, b) => a - b);
+    st.vmax = Math.max(1, 1.1*sorted[Math.floor(0.95*(sorted.length - 1))]);   // so that the spike at a point support does not wash out the rest
+    const umax = Math.max(...sol.U.map(Math.abs)), mag = umax > 0 ? 0.06*L/umax : 0;
+    const U = sol.U.map(v => v*mag), colors = vm.map(v => C.seq(v/st.vmax));
+    // reactions
+    let rmax = 0; sol.R.forEach(v => rmax = Math.max(rmax, Math.abs(v)));
+    let R0 = 0, R1 = 0, RM = 0, F0 = 0, F1 = 0, FM = 0;
+    for (let A=0;A<M.nnp;A++){
+      const x = M.X[A][0]-xc, y = M.X[A][1]-yc;
+      R0 += sol.R[2*A]; R1 += sol.R[2*A+1]; RM += x*sol.R[2*A+1] - y*sol.R[2*A];
+      F0 += F[2*A]; F1 += F[2*A+1]; FM += x*F[2*A+1] - y*F[2*A];
+      for (const i of [0, 1]){
+        const r = sol.R[2*A+i]; if (Math.abs(r) < 1e-6*Math.max(rmax, 1)) continue;
+        const len = 8 + 34*Math.abs(r)/rmax, px = X(M.X[A][0] + U[2*A]), py = Y(M.X[A][1] + U[2*A+1]);
+        const dx = i === 0 ? Math.sign(r) : 0, dy = i === 1 ? -Math.sign(r) : 0;
+        st.reac += C.arrow(px - dx*(len+3), py - dy*(len+3), px - dx*3, py - dy*3, "#0d9488", 2.2);
+      }
+    }
+    const redundant = fm.n - 3;
+    if (redundant === 0){
+      // statics alone: three reactions from three equations of equilibrium
+      const comps = []; st.sup.forEach((c, A) => { if (c & 2) comps.push([A, 0]); if (c & 1) comps.push([A, 1]); });
+      const Am = [[0,0,0],[0,0,0],[0,0,0]];
+      comps.forEach(([A, i], k) => { const x = M.X[A][0]-xc, y = M.X[A][1]-yc; Am[0][k] = i === 0 ? 1 : 0; Am[1][k] = i === 1 ? 1 : 0; Am[2][k] = i === 0 ? -y : x; });
+      const r = solve3(Am, [-F0, -F1, -FM]);
+      h += `<b class="ok">Statically determinate:</b> three support components, and the plate is held. From statics alone, the reactions are ` +
+        comps.map(([A, i], k) => `${kN(r[k])} kN along x${i ? "₁" : "₀"} at node ${A}`).join(", ") +
+        `; the finite element reactions are ` + comps.map(([A, i]) => `${kN(sol.R[2*A+i])} kN`).join(", ") + ".<br>";
+    } else {
+      h += `<b>Statically indeterminate:</b> ${fm.n} support components, ${redundant} more than the three equations of equilibrium can determine, so the reactions depend on the stiffness of the plate.<br>`;
+    }
+    h += `Sum of the reactions: ${kN(R0)} kN along x₀, ${kN(R1)} kN along x₁, and a moment of ${kNm(RM)} kN·m about the center; ` +
+      `sum of the applied loads: ${kN(F0)} kN, ${kN(F1)} kN, and ${kNm(FM)} kN·m.<br>` +
+      `Largest von Mises stress at an element center: <strong>${Math.max(...vm).toFixed(1)} MPa</strong>` + (mag ? `; displacements magnified ${mag.toFixed(0)} times.` : ".");
+    read.innerHTML = h;
+    draw(U, colors);
+  }
+  function solve3(A, b){
+    const M3 = A.map((r, i) => [...r, b[i]]);
+    for (let c=0;c<3;c++){
+      let p = c; for (let r=c+1;r<3;r++) if (Math.abs(M3[r][c]) > Math.abs(M3[p][c])) p = r;
+      [M3[c], M3[p]] = [M3[p], M3[c]];
+      for (let r=0;r<3;r++) if (r !== c){ const f = M3[r][c]/M3[c][c]; for (let k=c;k<4;k++) M3[r][k] -= f*M3[c][k]; }
+    }
+    return [0,1,2].map(i => M3[i][3]/M3[i][i]);
+  }
+  document.getElementById("c29w1svg").addEventListener("click", ev => {
+    const t = ev.target.closest("[data-node]"); if (!t) return;
+    const A = +t.dataset.node, b = onB(A), first = (b.bot || b.top) ? 1 : 2, other = 3 - first;
+    const order = [0, first, other, 3], c = st.sup.get(A) || 0, next = order[(order.indexOf(c) + 1) % 4];
+    if (next) st.sup.set(A, next); else st.sup.delete(A);
+    st.pre = null; render();
+  });
+  document.querySelectorAll("#c29w1 [data-pre]").forEach(b => b.addEventListener("click", () => setPreset(b.dataset.pre)));
+  document.querySelectorAll("#c29w1 [data-load]").forEach(b => b.addEventListener("click", () => { st.load = b.dataset.load; render(); }));
+  setPreset("pinroller");
+})();
+</script>
+```
+:::
+
+### Things to try
+
+1. With the pin and roller, switch among the four loads.
+   The reactions from statics and from the finite element solution agree.
+   Under the equal pulls, the reactions are zero, and under the temperature rise, the plate expands without any stress.
+2. Press **three parallel rollers**.
+   With the load on the top, the plate can still slide along $x_0$, but the load does no work on that motion, so solutions exist but are not unique.
+   With the pull on the right end, there is no solution at all.
+3. Press **roller through the pin**, and watch the plate turn about the pin.
+   Then click the roller at the bottom right corner until it holds $u_1$ instead of $u_0$, and the plate is held.
+4. Press **pins at both ends** and choose the temperature rise.
+   The pins prevent the expansion along $x_0$, and the plate is stressed, with large stresses near the pins.
+   Compare the result with the pin and roller.
+5. Press **left end clamped** with the pull on the right end, which is the case of @fig-c29-red b.
+6. Click nodes to build your own supports.
+   Try to find three support components that still leave a mechanism.
+
+## Symmetry
+
+If the geometry, the material, the supports, and the loads of a body are all symmetric about a plane, then so is its displacement: the displacement at any point is the mirror image of the displacement at the mirrored point.
+Mirroring a vector reverses its component normal to the plane and keeps its tangential component.
+A point on the plane is its own mirror image, so there the normal component of the displacement must equal its own negative, which means that it is zero.
+For the same reason, the tangential traction on the plane is zero.
+A plane of symmetry is therefore modeled as a roller support. 
+On a plane normal to $x_0$, for example,
+
+$$
+u_0 = 0 \quad\text{and}\quad h_1 = 0 .
+$$
+
+If the loads are instead **antisymmetric**, so that the mirror image of each load is reversed, then the displacement is the negative of the mirror image.
+On the plane, the tangential component of the displacement is zero, and so is the normal traction.
+On a plane normal to $x_0$,
+
+$$
+u_1 = 0 \quad\text{and}\quad h_0 = 0 .
+$$
+
+@fig-c29-sym shows both cases for a deep beam, 600 mm long and 150 mm deep, supported at its two bottom corners and loaded on two patches of its top.
+Half of the beam, with the appropriate conditions on the plane, has the same solution as the whole beam, with half as many unknowns.
+A body with two planes of symmetry can be modeled by a quarter, as for the plate with a hole in the [Linear Elasticity II](Elasticity2D_FEM.qmd) appendix, and a body with more planes by a smaller part still.
+
+![A deep beam on a support at each bottom corner, with a support at the bottom of its midspan that holds $u_0$. The triangles mark held components and point along them. (a) With the same load on both patches, the displacement at a point is the mirror image of the displacement at the mirrored point, as the orange arrows show: $u_0$ changes sign and $u_1$ does not, so $u_0 = 0$ on the plane of symmetry. (b) With the loads reversed on the right, $u_1$ changes sign and $u_0$ does not, so $u_1 = 0$ on the plane. (c, d) The left half of the beam, with the corresponding component held on the plane, has the same solution as the whole beam, to roundoff. The displacements are magnified.](`{python} fig_sym_path`){#fig-c29-sym width=100%}
+
+Symmetry conditions require all four of the geometry, the material, the supports, and the loads to be symmetric.
+A symmetric structure under unsymmetric loads cannot be modeled by half of it with symmetry conditions.
+However, since the problem is linear, any set of loads can be split into a symmetric part and an antisymmetric part, the average of the loads and their mirror image, and half of the difference.
+Each part can be solved on half of the body, one with symmetry conditions and the other with antisymmetry conditions, and the two solutions added.
+
+The modes of vibration and of buckling of a symmetric structure, which later courses consider, need not be symmetric, and many are antisymmetric.
+Symmetry conditions must be used with care in those problems, since a model of half of the structure with symmetry conditions finds only the symmetric modes.
+
+## Symmetry, interactively
+
+The widget below models the beam of @fig-c29-sym with 32 by 8 elements, in plane stress.
+The colors show $\sigma_{00}$ at the center of each element, red in tension and blue in compression.
+
+- Use the load buttons to choose symmetric loads, antisymmetric loads, or a load on the left patch only.
+- Use the model buttons to solve the whole beam, or its left half with symmetry or antisymmetry conditions on the plane.
+  A half model is drawn with its mirror image on the right, reflected according to its conditions, and the dashed orange outline is the deformed shape of the whole beam for comparison.
+- **The two halves added** splits the loads into their symmetric and antisymmetric parts, solves each on the left half, and adds the two solutions.
+
+::: {html-table-processing="none"}
+```{=html}
+<div class="c29" id="c29w2">
+  <div class="bar">
+    <b>LOAD</b>
+    <button data-case="sym">symmetric</button>
+    <button data-case="anti">antisymmetric</button>
+    <button data-case="one">left patch only</button>
+    <span class="gap"></span>
+    <b>MODEL</b>
+    <button data-model="full">whole beam</button>
+    <button data-model="symhalf">left half, symmetry</button>
+    <button data-model="antihalf">left half, antisymmetry</button>
+    <button data-model="sum">the two halves added</button>
+  </div>
+  <div class="panel"><svg id="c29w2svg" viewBox="0 0 680 300" role="img" aria-label="A deep beam modeled whole or by half, with symmetry or antisymmetry conditions"></svg></div>
+  <div class="read" id="c29w2read"></div>
+</div>
+<script>
+(function(){
+  const C = window.C29, L = 600, H = 150, T = 10, E = 200000, NU = 0.3, NX = 32, NY = 8, Qp = 10, PW = 75;
+  const D = C.dmat(E, NU), Mf = C.mesh(L, H, NX, NY), Mh = C.mesh(L/2, H, NX/2, NY);
+  const elF = C.elementArrays(Mf, D, T, null), elH = C.elementArrays(Mh, D, T, null);
+  const st = {cs: "sym", model: "full"};
+  const sc = 1.0, ox = 40, oy = 70, X = x => ox + sc*x, Y = y => oy + sc*(H - y);
+  // patch loads on the top edge: [center, sign], sign 1 pushes down
+  const CASES = {sym: [[150, 1], [450, 1]], anti: [[150, 1], [450, -1]], one: [[150, 1]]};
+  function patchLoads(M, parts){
+    const F = new Float64Array(2*M.nnp);
+    for (let i=0;i<M.nx;i++){
+      const xm = M.L*(i+0.5)/M.nx;
+      parts.forEach(([c, s]) => { if (Math.abs(xm - c) < PW/2) C.segmentLoad(F, M, M.node(i, M.ny), M.node(i+1, M.ny), [0, -s*Qp], T); });
+    }
+    return F;
+  }
+  function solveFull(parts){
+    const held = new Set([2*Mf.node(0, 0)+1, 2*Mf.node(NX, 0)+1, 2*Mf.node(NX/2, 0)]);
+    return C.solve(Mf, elF, held, patchLoads(Mf, parts));
+  }
+  function solveHalf(parts, kind){
+    const held = new Set([2*Mh.node(0, 0)+1, 2*Mh.node(NX/2, 0)]);
+    for (let j=0;j<=NY;j++) held.add(2*Mh.node(NX/2, j) + (kind === "sym" ? 0 : 1));
+    return C.solve(Mh, elH, held, patchLoads(Mh, parts.filter(([c]) => c < L/2)));
+  }
+  // the whole-beam displacement from a half solution, by reflection
+  function mirrored(Uh, kind){
+    const U = new Float64Array(2*Mf.nnp);
+    for (let i=0;i<=NX;i++) for (let j=0;j<=NY;j++){
+      const A = Mf.node(i, j), ih = i <= NX/2 ? i : NX - i, B = Mh.node(ih, j);
+      let u0 = Uh[2*B], u1 = Uh[2*B+1];
+      if (i > NX/2){ if (kind === "sym") u0 = -u0; else u1 = -u1; }
+      U[2*A] = u0; U[2*A+1] = u1;
+    }
+    return U;
+  }
+  function render(){
+    document.querySelectorAll("#c29w2 [data-case]").forEach(b => b.setAttribute("aria-pressed", b.dataset.case === st.cs ? "true" : "false"));
+    document.querySelectorAll("#c29w2 [data-model]").forEach(b => b.setAttribute("aria-pressed", b.dataset.model === st.model ? "true" : "false"));
+    const parts = CASES[st.cs], full = solveFull(parts);
+    let U, neq = full.neq, label;
+    if (st.model === "full"){ U = full.U; label = "the whole beam"; }
+    else if (st.model === "symhalf" || st.model === "antihalf"){
+      const kind = st.model === "symhalf" ? "sym" : "anti", h = solveHalf(parts, kind);
+      U = mirrored(h.U, kind); neq = h.neq; label = `the left half with ${kind === "sym" ? "symmetry" : "antisymmetry"} conditions`;
+    } else {
+      // split the loads: the right patch, mirrored onto the left, gives sR
+      const sL = (parts.find(([c]) => c < L/2) || [0, 0])[1], sR = (parts.find(([c]) => c > L/2) || [0, 0])[1];
+      const hs = solveHalf([[150, (sL + sR)/2]], "sym"), ha = solveHalf([[150, (sL - sR)/2]], "anti");
+      const Us = mirrored(hs.U, "sym"), Ua = mirrored(ha.U, "anti");
+      U = Us.map((v, k) => v + Ua[k]); neq = hs.neq; label = "the two halves added";
+    }
+    const umax = Math.max(...full.U.map(Math.abs)), mag = 0.12*H/umax;
+    let diff = 0; U.forEach((v, k) => diff = Math.max(diff, Math.abs(v - full.U[k])));
+    const sig = [...Array(Mf.nel).keys()].map(e => C.centerStress(Mf, D, U, e)[0]);
+    const smax = Math.max(...[...Array(Mf.nel).keys()].map(e => Math.abs(C.centerStress(Mf, D, full.U, e)[0])));
+    // drawing
+    let o = C.el("rect", {x: X(0), y: Y(H), width: sc*L, height: sc*H, fill: "none", stroke: "#9aa3ad", "stroke-dasharray": "4 3"});
+    const P = (A, V) => [X(Mf.X[A][0] + mag*V[2*A]), Y(Mf.X[A][1] + mag*V[2*A+1])];
+    const half = st.model !== "full" && st.model !== "sum";
+    for (let e=0;e<Mf.nel;e++){
+      const [a, b, c, d] = Mf.IEN[e], right = Mf.EC[e][0] > L/2;
+      o += C.el("polygon", {points: [P(a, U), P(b, U), P(d, U), P(c, U)].map(p => p.join(",")).join(" "),
+        fill: C.div(0.5 + 0.5*sig[e]/smax), stroke: "#7d8792", "stroke-width": 0.4, opacity: half && right ? 0.45 : 1});
+    }
+    // the whole beam's deformed outline for comparison
+    const ring = [...[...Array(NX+1).keys()].map(i => Mf.node(i, 0)), ...[...Array(NY+1).keys()].slice(1).map(j => Mf.node(NX, j)),
+                  ...[...Array(NX+1).keys()].reverse().slice(1).map(i => Mf.node(i, NY)), ...[...Array(NY).keys()].reverse().slice(1).map(j => Mf.node(0, j))];
+    if (st.model !== "full") o += C.el("polygon", {points: ring.map(A => P(A, full.U).join(",")).join(" "), fill: "none", stroke: "#e67e22", "stroke-width": 1.8, "stroke-dasharray": "6 4"});
+    o += C.el("line", {x1: X(L/2), y1: Y(H) - 40, x2: X(L/2), y2: Y(0) + 30, stroke: "#59636e", "stroke-width": 1, "stroke-dasharray": "8 3 2 3"});
+    // loads
+    parts.forEach(([c, s]) => { for (const x of [c - 25, c, c + 25]){ const y0 = Y(H) - 6, y1 = Y(H) - 36; o += s > 0 ? C.arrow(X(x), y1, X(x), y0, "#c0392b", 1.4) : C.arrow(X(x), y0, X(x), y1, "#c0392b", 1.4); } });
+    // supports
+    const sup = (x, y, ux, uy) => C.support(X(x), Y(y), ux, uy, "roller", "#1e3a5f");
+    o += sup(0, 0, 0, -1) + sup(L, 0, 0, -1);
+    o += C.el("polygon", {points: `${X(L/2)},${Y(0)+3} ${X(L/2)+11},${Y(0)+9} ${X(L/2)+11},${Y(0)-3}`, fill: "#1e3a5f"});
+    if (half) for (let j=0;j<=NY;j++){
+      const x = X(L/2), y = Y(H*j/NY);
+      o += st.model === "symhalf"
+        ? C.el("polygon", {points: `${x+2},${y} ${x+11},${y-5} ${x+11},${y+5}`, fill: "#1e3a5f"})
+        : C.el("polygon", {points: `${x+7},${y-1} ${x+2},${y+8} ${x+12},${y+8}`, fill: "#1e3a5f"});
+    }
+    for (let k=0;k<=40;k++) o += C.el("rect", {x: 470 + k*3, y: 282, width: 3.1, height: 8, fill: C.div(k/40)});
+    o += C.el("text", {x: 466, y: 290, "text-anchor": "end", "font-size": 11, fill: "#6b7684"}, `σ₀₀ −${smax.toFixed(0)} MPa`);
+    o += C.el("text", {x: 596, y: 290, "font-size": 11, fill: "#6b7684"}, `+${smax.toFixed(0)} MPa`);
+    if (half) o += C.el("text", {x: X(3*L/4), y: Y(0) + 40, "text-anchor": "middle", "font-size": 12, fill: "#6b7684"}, "mirror image of the left half");
+    document.getElementById("c29w2svg").innerHTML = o;
+    // readout
+    const rel = diff/umax, match = rel < 1e-8;
+    let h = `Model: ${label}, with ${neq} equations (the whole beam has ${full.neq}). Displacements magnified ${mag.toFixed(0)} times.<br>`;
+    h += `Largest difference from the whole-beam solution: ${match ? "zero, to roundoff" : (100*rel).toFixed(0) + "% of its largest displacement"}.<br>`;
+    if (!match && st.model === "symhalf") h += "<b>The loads are not symmetric,</b> so the mirror image of the half model is the solution of a different problem, with the left patch's load on both patches.";
+    else if (!match && st.model === "antihalf") h += "<b>The loads are not antisymmetric,</b> so the half model solves a different problem, with the left patch's load reversed on the right.";
+    else if (st.model === "sum") h += `The symmetric part of the loads is the average of the loads and their mirror image, and the antisymmetric part is half of their difference. Since the problem is linear, the two half solutions add to the solution of the whole beam.`;
+    else if (st.model !== "full") h += `<b class="ok">The conditions on the plane match the loads,</b> so the half model gives the whole solution.`;
+    document.getElementById("c29w2read").innerHTML = h;
+  }
+  document.querySelectorAll("#c29w2 [data-case]").forEach(b => b.addEventListener("click", () => { st.cs = b.dataset.case; render(); }));
+  document.querySelectorAll("#c29w2 [data-model]").forEach(b => b.addEventListener("click", () => { st.model = b.dataset.model; render(); }));
+  render();
+})();
+</script>
+```
+:::
+
+### Things to try
+
+1. With the symmetric loads, compare the whole beam with the left half and symmetry conditions.
+   The solutions are the same, with about half as many equations.
+2. Choose the antisymmetric loads, and keep the symmetry conditions.
+   The half model is now wrong, since it assumes that the right patch is loaded like the left one.
+   Switch to the antisymmetry conditions.
+3. Choose the load on the left patch only.
+   Neither half model alone is correct, but **the two halves added** reproduces the whole beam exactly.
+
+## Supports that are not aligned with the axes
+
+A plane of symmetry need not be normal to one of the axes.
+A square plate with a hole at its center, pulled equally on all four edges, has four planes of symmetry: the two axes and the two diagonals (@fig-c29-inc a).
+One eighth of the plate is enough to model it, but on its diagonal side, the condition that the normal component of the displacement is zero,
+
+$$
+\underline{u}\cdot\underline{n} = u_0\,n_0 + u_1\,n_1 = 0 ,
+$$
+
+involves both components at once.
+Other examples are a roller on a sloping surface, such as a dam on rock that slopes, and a body that rests on a smooth curved surface.
+The ID array marks each Cartesian component as prescribed or unknown, so it cannot express this condition directly.
+There are two common ways to impose it.
+
+### Rotating the unknowns at a node
+
+The first is to **rotate the unknowns** of each node on the inclined surface, so that they become the components along the normal $\underline{n}$ and along the tangent $\underline{t} = (-n_1, n_0)$:
+
+$$
+\begin{bmatrix} u_n \\ u_t \end{bmatrix} = \underline{\underline{R}}_A \begin{bmatrix} u_0 \\ u_1 \end{bmatrix},
+\qquad
+\underline{\underline{R}}_A = \begin{bmatrix} n_0 & n_1 \\ -n_1 & n_0 \end{bmatrix} .
+$$
+
+Since $\underline{\underline{R}}_A$ is a rotation, its inverse is its transpose.
+In each element that contains such a node, the element arrays are transformed as $\underline{\underline{T}}^T\underline{\underline{k}}^e\,\underline{\underline{T}}$ and $\underline{\underline{T}}^T\underline{f}^e$, where $\underline{\underline{T}}$ is a block-diagonal matrix with $\underline{\underline{R}}_A^T$ in the block of each rotated node and the identity in the others.
+The normal component $u_n$ is then marked as prescribed in the ID array, and assembly proceeds as before.
+After the solution, the Cartesian components are recovered from $\underline{\underline{R}}_A^T$, and the reaction at the node is the force along its normal.
+
+### An example with one element
+
+@fig-c29-one shows the simplest case.
+A single square element, 100 mm on a side and 10 mm thick, is pinned at its local node 0, and its local node 1 rests on a roller on a surface inclined at the angle $\alpha$.
+A load of 10 kN pushes down on its top, 5 kN at each of nodes 2 and 3.
+With only one element, the global and local node numbers can be taken to be the same, so $\underline{\underline{k}}^e$ is also the complete stiffness matrix.
+The outward normal of the surface is $\underline{n} = (\sin\alpha, -\cos\alpha)$, and the tangent $\underline{t} = (-n_1, n_0) = (\cos\alpha, \sin\alpha)$ points up the slope.
+
+Only node 1 is rotated, so $\underline{\underline{T}}$ has $\underline{\underline{R}}_1^T$ in the diagonal block of node 1 and the identity in the other three.
+Since $\underline{\underline{T}}$ is block diagonal, the transformation changes only the blocks in the row and the column of node 1:
+
+$$
+\left(\underline{\underline{T}}^T\underline{\underline{k}}^e\,\underline{\underline{T}}\right)_{ab} =
+\begin{cases}
+\underline{\underline{R}}_1\,\underline{\underline{k}}^e_{11}\,\underline{\underline{R}}_1^T, & a = b = 1, \\
+\underline{\underline{R}}_1\,\underline{\underline{k}}^e_{1b}, & a = 1,\ b \neq 1, \\
+\underline{\underline{k}}^e_{a1}\,\underline{\underline{R}}_1^T, & a \neq 1,\ b = 1, \\
+\underline{\underline{k}}^e_{ab}, & \text{otherwise.}
+\end{cases}
+$$
+
+The rows and columns $\hat{p} = 2$ and $3$ now belong to $u_n$ and $u_t$ at node 1, instead of $u_0$ and $u_1$ (@fig-c29-one b).
+The load vector is transformed in the same way, as $\underline{\underline{T}}^T\underline{f}^e$, which here leaves it unchanged, since node 1 carries no load.
+
+The ID array then marks both components at node 0 and the normal component at node 1 as prescribed (@tbl-c29-one).
+
+| local node $a$ | 0 | 1 | 2 | 3 |
+|:--|:-:|:-:|:-:|:-:|
+| first unknown and its equation number | $u_0$: $-1$ | $u_n$: $-1$ | $u_0$: 1 | $u_0$: 3 |
+| second unknown and its equation number | $u_1$: $-1$ | $u_t$: 0 | $u_1$: 2 | $u_1$: 4 |
+
+: The unknowns of the example and their equation numbers, with the unknowns of node 1 rotated. {#tbl-c29-one}
+
+Since every prescribed value is zero, assembly simply leaves out the rows and columns $\hat{p} = 0$, 1, and 2, and the $5 \times 5$ system that remains has the unknowns $u_t$ at node 1 and both components at nodes 2 and 3.
+After the solution, the Cartesian displacement of node 1 is $\underline{\underline{R}}_1^T\,(0, u_t)^T = u_t\,\underline{t}$, which lies along the surface, and the reaction in row $\hat{p} = 2$ is the force that the surface applies to the element along $\underline{n}$.
+For $\alpha = 30°$, node 1 slides `{python} f"{abs(one['d'][3])*1000:.2f}"` µm down the slope, and the surface pushes on the element with `{python} f"{abs(one['R'][2])/1000:.2f}"` kN normal to it.
+The pin carries `{python} f"{one['R'][0]/1000:.2f}"` kN along $x_0$ and `{python} f"{one['R'][1]/1000:.2f}"` kN along $x_1$, and together with the load, these reactions satisfy the three equations of equilibrium.
+
+![(a) A square element, pinned at node 0, with node 1 on a roller on a surface inclined at $\alpha = 30°$, and 5 kN pushing down at nodes 2 and 3. At node 1, the unknowns are the components along the normal $\underline{n}$ and the tangent $\underline{t}$ of the surface. (b) The element stiffness matrix after the rotation, in its $2 \times 2$ blocks: only the blocks in the row and column of node 1 change (shaded), and its rows 2 and 3 now belong to $u_n$ and $u_t$. The rows and columns of the three prescribed components (gray) are left out in assembly, which leaves a $5 \times 5$ system. (c) The deformed element, magnified: node 1 slides along the surface, and the surface pushes on it along its normal.](`{python} fig_one_path`){#fig-c29-one width=100%}
+
+The widget below repeats the example for any angle of the surface, with every number shown.
+It shows $\underline{\underline{k}}^e$ before or after the rotation, in units of $10^6$ N/mm, with the rows and columns of node 1 shaded, and then the $5 \times 5$ system that assembly produces and its solution.
+
+::: {html-table-processing="none"}
+```{=html}
+<div class="c29" id="c29w4">
+  <div class="bar">
+    <b>ANGLE OF THE SURFACE</b>
+    <input type="range" id="c29w4a" min="-45" max="60" step="5" value="30"><span class="val" id="c29w4av"></span>
+    <span class="gap"></span>
+    <b>ELEMENT MATRIX</b>
+    <button data-show="before">before the rotation</button>
+    <button data-show="after">after the rotation</button>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start">
+    <div class="panel" style="flex:1 1 280px;max-width:340px"><svg id="c29w4svg" viewBox="0 0 330 300" role="img" aria-label="A square element pinned at one corner and on an inclined roller at another, deformed"></svg></div>
+    <div class="panel" style="flex:1 1 420px;overflow-x:auto"><div class="h29" id="c29w4kh"></div><div id="c29w4k"></div></div>
+  </div>
+  <div class="panel" style="overflow-x:auto"><div class="h29">The system after assembly, with only the rows and columns of the unknowns: K in units of 10⁶ N/mm, F in kN, and the solution d in µm; the shaded row and column belong to node 1</div><div id="c29w4sys"></div></div>
+  <div class="read" id="c29w4read"></div>
+</div>
+<script>
+(function(){
+  const C = window.C29, E = 200000, NU = 0.3, T = 10, LX = 100, P = 10000;
+  const D = C.dmat(E, NU), ke = C.elementArrays({hx: LX, hy: LX}, D, T, null).k;     // local nodes by the stride rule
+  const X = [[0, 0], [LX, 0], [0, LX], [LX, LX]];
+  const st = {a: 30, show: "after"};
+  const mul = (A, B) => A.map(r => B[0].map((_, j) => r.reduce((s, v, k) => s + v*B[k][j], 0)));
+  const tr = A => A[0].map((_, j) => A.map(r => r[j]));
+  const num = (v, k) => { const s = (Math.abs(v) < 0.5*10**-k ? 0 : v).toFixed(k); return s.replace("-", "−"); };
+  function solveDense(A0, b0){
+    const n = b0.length, A = A0.map((r, i) => [...r, b0[i]]);
+    for (let c=0;c<n;c++){
+      let p = c; for (let r=c+1;r<n;r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+      [A[c], A[p]] = [A[p], A[c]];
+      for (let r=c+1;r<n;r++){ const f = A[r][c]/A[c][c]; for (let k=c;k<=n;k++) A[r][k] -= f*A[c][k]; }
+    }
+    const x = new Array(n).fill(0);
+    for (let i=n-1;i>=0;i--){ let v = A[i][n]; for (let k=i+1;k<n;k++) v -= A[i][k]*x[k]; x[i] = v/A[i][i]; }
+    return x;
+  }
+  function compute(){
+    const a = st.a*Math.PI/180, n = [Math.sin(a), -Math.cos(a)], t = [-n[1], n[0]], R = [[n[0], n[1]], [-n[1], n[0]]];
+    const Tm = Array.from({length: 8}, (_, i) => Array.from({length: 8}, (_, j) => i === j ? 1 : 0));
+    Tm[2][2] = R[0][0]; Tm[2][3] = R[1][0]; Tm[3][2] = R[0][1]; Tm[3][3] = R[1][1];          // the block R^T of node 1
+    const kr = mul(tr(Tm), mul(ke, Tm));
+    const F = [0, 0, 0, 0, 0, -P/2, 0, -P/2];                                                 // T^T F = F: node 1 has no load
+    const free = [3, 4, 5, 6, 7];
+    const K = free.map(p => free.map(q => kr[p][q])), Fr = free.map(p => F[p]);
+    const df = solveDense(K, Fr), d = new Array(8).fill(0); free.forEach((p, k) => d[p] = df[k]);
+    const U = [0, 1, 2, 3].map(A => A === 1 ? [R[0][0]*d[2] + R[1][0]*d[3], R[0][1]*d[2] + R[1][1]*d[3]] : [d[2*A], d[2*A+1]]);
+    const Rx = kr.map((row, p) => row.reduce((s, v, q) => s + v*d[q], 0) - F[p]);
+    return {n, t, kr, K, Fr, d, U, Rx, free};
+  }
+  function render(){
+    document.getElementById("c29w4av").textContent = `${st.a}°`;
+    document.querySelectorAll("#c29w4 [data-show]").forEach(b => b.setAttribute("aria-pressed", b.dataset.show === st.show ? "true" : "false"));
+    const r = compute(), after = st.show === "after", M = after ? r.kr : ke;
+    // the matrix
+    const lab = p => { const a = p >> 1, i = p & 1; return `${p} (${a}, ${a === 1 && after ? (i ? "t" : "n") : i})`; };
+    let h = `<table class="m"><tr><th>p̂ (a, i)</th>${[...Array(8).keys()].map(q => `<th>${q}</th>`).join("")}</tr>`;
+    for (let p=0;p<8;p++){
+      h += `<tr><th>${lab(p)}</th>`;
+      for (let q=0;q<8;q++){
+        const nfix = after ? 3 : 2, out = p < nfix || q < nfix, rot = (p >> 1) === 1 || (q >> 1) === 1;   // gray: prescribed
+        h += `<td class="${out ? "out" : rot ? "rot" : ""}">${num(M[p][q]/1e6, 3)}</td>`;
+      }
+      h += "</tr>";
+    }
+    document.getElementById("c29w4k").innerHTML = h + "</table>";
+    document.getElementById("c29w4kh").textContent = after
+      ? "Tᵀ kᵉ T, after the rotation: shaded entries changed; gray rows and columns are prescribed"
+      : "kᵉ, before the rotation: gray rows and columns are prescribed (node 0 is pinned); the shaded ones, those of node 1, are the ones the rotation changes, since its condition involves both u₀ and u₁, neither of which can be marked as prescribed";
+    // the system
+    const names = ["uₜ at node 1", "u₀ at node 2", "u₁ at node 2", "u₀ at node 3", "u₁ at node 3"];
+    let g = `<table class="m"><tr><th>P</th><th>unknown</th>${[0,1,2,3,4].map(Q => `<th>${Q}</th>`).join("")}<th>F (kN)</th><th>d (µm)</th></tr>`;
+    for (let P_=0;P_<5;P_++){
+      g += `<tr><th>${P_}</th><th>${names[P_]}</th>${r.K[P_].map((v, Q) => `<td class="${P_ === 0 || Q === 0 ? "rot" : ""}">${num(v/1e6, 3)}</td>`).join("")}<td>${num(r.Fr[P_]/1000, 2)}</td><td>${num(r.d[r.free[P_]]*1000, 3)}</td></tr>`;
+    }
+    document.getElementById("c29w4sys").innerHTML = g + "</table>";
+    // the drawing
+    const sc = 1.25, ox = 70, oy = 205, Xs = x => ox + sc*x, Ys = y => oy - sc*y;
+    const umax = Math.max(...r.U.flat().map(Math.abs)), mag = 14/(sc*umax);
+    const Pd = A => [Xs(X[A][0] + mag*r.U[A][0]), Ys(X[A][1] + mag*r.U[A][1])];
+    const sq = f => [0, 1, 3, 2].map(A => f(A).join(",")).join(" ");
+    let o = C.el("polygon", {points: sq(A => [Xs(X[A][0]), Ys(X[A][1])]), fill: "none", stroke: "#18202b", "stroke-dasharray": "6 4", "stroke-width": 1.1});
+    o += C.el("polygon", {points: sq(Pd), fill: "#e3eef8", stroke: "#5a4632", "stroke-width": 1.6, opacity: 0.92});
+    // the inclined surface and the roller, at the deformed node 1
+    const [x1, y1] = Pd(1), ns = [r.n[0], -r.n[1]], ts = [r.t[0], -r.t[1]], gx = x1 + 16.2*ns[0], gy = y1 + 16.2*ns[1];
+    o += C.el("line", {x1: gx - 75*ts[0], y1: gy - 75*ts[1], x2: gx + 75*ts[0], y2: gy + 75*ts[1], stroke: "#1e3a5f", "stroke-width": 1.6});
+    for (let k=-70;k<=70;k+=12) o += C.el("line", {x1: gx + k*ts[0], y1: gy + k*ts[1], x2: gx + k*ts[0] + 6*ns[0] - 4*ts[0], y2: gy + k*ts[1] + 6*ns[1] - 4*ts[1], stroke: "#1e3a5f", "stroke-width": 0.8});
+    o += C.support(x1, y1, -ns[0], -ns[1], "roller", "#1e3a5f");
+    o += C.support(Xs(0), Ys(0), 0, -1, "pin", "#1e3a5f");
+    o += C.arrow(x1, y1, x1 + 30*ns[0], y1 + 30*ns[1], "#7c3aed", 1.6) + C.el("text", {x: x1 + 36*ns[0] + 4, y: y1 + 36*ns[1] + 4, "font-size": 13, fill: "#7c3aed"}, "n");
+    o += C.arrow(x1, y1, x1 + 30*ts[0], y1 + 30*ts[1], "#e67e22", 1.6) + C.el("text", {x: x1 + 38*ts[0], y: y1 + 38*ts[1] + 4, "font-size": 13, fill: "#e67e22"}, "t");
+    for (const A of [2, 3]){ const [x, y] = Pd(A); o += C.arrow(x, y - 32, x, y - 3, "#1f6feb", 1.5); }
+    // reactions: the pin's two components, and the surface's push along its normal
+    const green = "#0d9488", rmax = Math.max(Math.abs(r.Rx[0]), Math.abs(r.Rx[1]), Math.abs(r.Rx[2]));
+    const L = v => 10 + 30*Math.abs(v)/rmax;
+    const [x0, y0] = Pd(0);
+    if (Math.abs(r.Rx[0]) > 1e-6*rmax){ const s = Math.sign(r.Rx[0]); o += C.arrow(x0 - s*(L(r.Rx[0]) + 3), y0 + 4, x0 - s*3, y0 + 4, green, 2); }
+    if (Math.abs(r.Rx[1]) > 1e-6*rmax){ const s = Math.sign(r.Rx[1]); o += C.arrow(x0 - 8, y0 + s*(L(r.Rx[1]) + 3), x0 - 8, y0 + s*3, green, 2); }
+    const fs = Math.sign(r.Rx[2]), fx = fs*ns[0], fy = fs*ns[1];
+    o += C.arrow(x1 + 3*fx, y1 + 3*fy, x1 + (L(r.Rx[2]) + 3)*fx, y1 + (L(r.Rx[2]) + 3)*fy, green, 2);
+    o += C.el("text", {x: 12, y: 290, "font-size": 11, fill: "#6b7684"}, `loads in blue, reactions in green; displacements magnified ${mag.toFixed(0)} times`);
+    document.getElementById("c29w4svg").innerHTML = o;
+    // the readout
+    const un = r.U[1][0]*r.n[0] + r.U[1][1]*r.n[1];
+    const sumx = r.Rx[0] + r.Rx[2]*r.n[0], sumy = r.Rx[1] + r.Rx[2]*r.n[1] - P;
+    document.getElementById("c29w4read").innerHTML =
+      `n = (${num(r.n[0], 3)}, ${num(r.n[1], 3)}) and t = (${num(r.t[0], 3)}, ${num(r.t[1], 3)}).<br>` +
+      `Node 1 moves uₜ = ${num(r.d[3]*1000, 3)} µm along t, so its Cartesian displacement is (${num(r.U[1][0]*1000, 3)}, ${num(r.U[1][1]*1000, 3)}) µm, and u · n = ${num(un*1000, 6)} µm, as prescribed.<br>` +
+      `The surface pushes on node 1 with ${num(Math.abs(r.Rx[2])/1000, 2)} kN along its normal, and the pin with ${num(r.Rx[0]/1000, 2)} kN along x₀ and ${num(r.Rx[1]/1000, 2)} kN along x₁. ` +
+      `With the 10 kN load, the forces sum to (${num(sumx/1000, 2)}, ${num(sumy/1000, 2)}) kN.`;
+  }
+  document.getElementById("c29w4a").addEventListener("input", ev => { st.a = +ev.target.value; render(); });
+  document.querySelectorAll("#c29w4 [data-show]").forEach(b => b.addEventListener("click", () => { st.show = b.dataset.show; render(); }));
+  render();
+})();
+</script>
+```
+:::
+
+#### Things to try
+
+1. Change the angle of the surface.
+   Node 1 always moves along the surface, and the reaction there stays normal to it, while only the shaded entries of the matrix change.
+2. Set the angle to 0°.
+   The surface is horizontal, $\underline{n} = (0, -1)$, and $\underline{t} = (1, 0)$, so $u_n = -u_1$ and $u_t = u_0$: the rotated matrix has the same entries as the original, with the rows and columns of node 1 swapped and some of their signs changed.
+3. Compare the matrix before and after the rotation.
+   The blocks outside the row and the column of node 1 are identical.
+
+### A stiff spring along the normal
+
+The second way is to hold the surface with a stiff spring along $\underline{n}$, a Robin condition whose stiffness acts only in the normal direction.
+It adds the boundary term $\int N_a\,k_s\,\underline{n}\,\underline{n}^T N_b\,d\Gamma$ to the $2 \times 2$ blocks of $\underline{\underline{k}}^e$ and leaves the unknowns as they are.
+This is called the **penalty method**.
+The condition is satisfied only approximately, with an error that decreases in proportion to $1/k_s$, and as in [Class 23](23_Class.qmd), a spring that is too stiff makes the matrix badly conditioned.
+
+### A plate with an inclined plane of symmetry
+
+@fig-c29-inc shows the plate, 200 mm square, with a hole 25 mm in diameter, pulled by 50 MPa on every edge, and modeled with biquadratic elements.
+The eighth with rotated unknowns and the quarter with ordinary Cartesian supports give the same stress around the hole, between `{python} f"{hoop.min():.1f}"` and `{python} f"{hoop.max():.1f}"` MPa.
+This is close to the value $2s = 100$ MPa for a hole in an infinite plate under equal pulls $s$ in both directions.
+With a spring of stiffness 100 $E/a$, where $a$ is the radius of the hole, the largest normal displacement on the diagonal is `{python} f"{100*gap2:.2f}"`% of the largest displacement in the plate, and with $10^4\,E/a$, it is `{python} f"{100*gap4:.4f}"`%.
+At about $10^6\,E/a$, the matrix becomes so badly conditioned that the solver used here reports it as singular.
+
+![(a) A square plate with a hole, pulled equally on all four edges, has four planes of symmetry, shown dash-dotted, so one eighth (shaded) is enough to model it. (b) The eighth, deformed and magnified (blue), over its undeformed mesh (gray). On the axis, $u_1 = 0$, and on the diagonal, the unknowns of each node are rotated and $\underline{u}\cdot\underline{n} = 0$ is prescribed: the nodes slide along the diagonal but do not leave it. (c) The stress $\sigma_{\theta\theta}$ around the hole from the quarter with Cartesian supports and from the eighth with rotated unknowns. They agree, and both are close to $2s$, the value for an infinite plate. (d) Holding the diagonal by a spring along $\underline{n}$ instead: the normal displacement on the diagonal decreases in proportion to $1/k_s$.](`{python} fig_inc_path`){#fig-c29-inc width=100%}
+
+## Saint-Venant's principle
+
+The precise way in which a load is applied, or in which a support holds a body, is rarely known.
+**Saint-Venant's principle** states that two sets of loads with the same resultant force and the same resultant moment, applied over the same small part of the boundary, produce stresses that differ appreciably only near where they are applied.
+At a distance greater than about the size of the loaded region, which for a slender member is about its depth, the stresses are nearly the same.
+This is why the idealizations of structural analysis, such as point loads, pins, and fixed ends, give accurate results away from the loads and supports, and why beam theory can ignore how the load at the end of a beam is distributed.
+
+@fig-c29-sv a shows the cantilever of the [Linear Elasticity I](Elasticity2D.qmd) appendix, 400 mm long and 100 mm deep, once with the end conditions of the exact solution of Timoshenko and Goodier, and once with its left end clamped.
+The two idealizations of the wall give stresses that differ by a large fraction of the largest bending stress at the wall itself, but within one depth of the wall, the difference has fallen to about $10^{-4}$ of it, and further along the beam, it continues to decrease rapidly (@fig-c29-sv b).
+
+Concentrated loads and supports are the extreme case.
+In two dimensions, a force applied at a point produces a stress inversely proportional to the distance from the point, so the stress at the point is infinite, and so is the displacement.
+A finite element model that applies a force at a single node therefore has no converged value of the stress there.
+In @fig-c29-sv c, a 10 kN load on top of a block, applied at one node, gives a largest stress that doubles each time the mesh is refined, from `{python} f"{point_peaks[0]:.0f}"` MPa to `{python} f"{point_peaks[1]:.0f}"` MPa, while the same load spread over 50 mm converges to `{python} f"{patch_peak:.1f}"` MPa.
+The corners of the clamp in @fig-c29-red and the re-entrant corners of the W-shape in the [Linear Elasticity II](Elasticity2D_FEM.qmd) appendix behave in the same way.
+
+In practice, the stresses at a distance from point loads, point supports, and idealized connections can be trusted.
+Near them, either the actual detail, such as a bearing plate or the contact of a bolt, must be modeled, or the peak value should not be reported.
+
+![(a) The cantilever with its left end clamped, compared with the same cantilever with the exact end conditions: the change in $\sigma_{00}$, as a percentage of the largest bending stress, which is concentrated at the wall. (b) The largest change in any stress component at each distance from the wall, relative to the largest bending stress, on a logarithmic scale. Beyond about one depth, the two idealizations give nearly the same stresses. (c) A 10 kN load pushing down on the middle of the top of a block, 200 mm by 100 mm, on rollers: the largest $|\sigma_{11}|$ at a Gauss point grows in proportion to the number of elements when the load is applied at one node, and converges when it is spread over 50 mm.](`{python} fig_sv_path`){#fig-c29-sv width=100%}
+
+## Saint-Venant's principle, interactively
+
+The widget below models a strip 600 mm long and 100 mm deep, with 48 by 8 elements, pulled at its right end by a total force of 50 kN.
+Every distribution of the pull has the same resultant: 50 kN along $x_0$, through the middle of the end.
+If the pull is spread evenly over the end and the left end is on rollers, the stress is the uniform $\sigma_{00} = 50$ MPa.
+The colors show $\sigma_{00}$ at the center of each element, white at 50 MPa, and the graph shows, at each distance along the strip, the largest difference between any stress component and the uniform stress, relative to 50 MPa.
+
+- Use the load buttons to change how the pull is distributed over the right end, and the slider to change the width of the patch.
+- Use the support buttons to put the left end on rollers, with its midpoint held in $u_1$, or to clamp it.
+
+::: {html-table-processing="none"}
+```{=html}
+<div class="c29" id="c29w3">
+  <div class="bar">
+    <b>PULL</b>
+    <button data-dist="even">spread evenly</button>
+    <button data-dist="patch">on a patch at the middle</button>
+    <button data-dist="corners">at the two corners</button>
+    <button data-dist="node">at the middle node</button>
+    <span class="gap"></span>
+    <b>PATCH</b>
+    <input type="range" id="c29w3w" min="1" max="4" step="1" value="2"><span class="val" id="c29w3wv"></span>
+  </div>
+  <div class="bar">
+    <b>LEFT END</b>
+    <button data-left="rollers">on rollers</button>
+    <button data-left="clamped">clamped</button>
+  </div>
+  <div class="panel"><svg id="c29w3svg" viewBox="0 0 680 400" role="img" aria-label="A strip pulled at its right end, its stress, and the distance over which the stress differs from the uniform value"></svg></div>
+  <div class="read" id="c29w3read"></div>
+</div>
+<script>
+(function(){
+  const C = window.C29, L = 600, H = 100, T = 10, E = 200000, NU = 0.3, NX = 48, NY = 8, S = 50, P = S*H*T;
+  const D = C.dmat(E, NU), M = C.mesh(L, H, NX, NY), elK = C.elementArrays(M, D, T, null);
+  const st = {dist: "patch", left: "rollers", w: 2};
+  const sc = 0.92, ox = 72, oy = 40, X = x => ox + sc*x, Y = y => oy + sc*(H - y);
+  const gx0 = X(0), gx1 = X(L), gy0 = 200, gy1 = 360, LO = -4, HI = 1;     // the graph lies under the strip
+  const GX = x => gx0 + (gx1 - gx0)*x/(L/H), GY = v => gy1 - (gy1 - gy0)*(Math.log10(Math.max(v, 10**LO)) - LO)/(HI - LO);
+  function rightLoads(){
+    const F = new Float64Array(2*M.nnp), seg = (j, q) => C.segmentLoad(F, M, M.node(NX, j), M.node(NX, j+1), [q, 0], T), h = H/NY;
+    if (st.dist === "even") for (let j=0;j<NY;j++) seg(j, S);
+    if (st.dist === "patch"){ const k = st.w; for (let j=NY/2-k;j<NY/2+k;j++) seg(j, P/(2*k*h*T)); }
+    if (st.dist === "corners"){ seg(0, P/(2*h*T)); seg(NY-1, P/(2*h*T)); }
+    if (st.dist === "node") F[2*M.node(NX, NY/2)] += P;
+    return F;
+  }
+  function render(){
+    document.querySelectorAll("#c29w3 [data-dist]").forEach(b => b.setAttribute("aria-pressed", b.dataset.dist === st.dist ? "true" : "false"));
+    document.querySelectorAll("#c29w3 [data-left]").forEach(b => b.setAttribute("aria-pressed", b.dataset.left === st.left ? "true" : "false"));
+    document.getElementById("c29w3wv").textContent = `${2*st.w*H/NY} mm`;
+    document.getElementById("c29w3w").disabled = st.dist !== "patch";
+    const held = new Set();
+    for (let j=0;j<=NY;j++){ held.add(2*M.node(0, j)); if (st.left === "clamped") held.add(2*M.node(0, j)+1); }
+    held.add(2*M.node(0, NY/2)+1);
+    const sol = C.solve(M, elK, held, rightLoads());
+    const sig = [...Array(M.nel).keys()].map(e => C.centerStress(M, D, sol.U, e));
+    const dev = sig.map(s => Math.max(Math.abs(s[0] - S), Math.abs(s[1]), Math.abs(s[2]))/S);
+    const col = new Array(NX).fill(0); dev.forEach((v, e) => { const i = M.EIJ[e][0]; col[i] = Math.max(col[i], v); });
+    let o = "";
+    for (let e=0;e<M.nel;e++){
+      const [a, b, c, d] = M.IEN[e], pt = A => `${X(M.X[A][0])},${Y(M.X[A][1])}`;
+      o += C.el("polygon", {points: [pt(a), pt(b), pt(d), pt(c)].join(" "), fill: C.div(0.5 + 0.5*(sig[e][0] - S)/S), stroke: "#c9ced6", "stroke-width": 0.4});
+    }
+    o += C.el("rect", {x: X(0), y: Y(H), width: sc*L, height: sc*H, fill: "none", stroke: "#18202b", "stroke-width": 1});
+    for (let j=0;j<=NY;j+=2){                // a symbol at every other node, to keep them apart
+      const y = Y(H*j/NY);
+      o += C.support(X(0), y, 1, 0, st.left === "clamped" || j === NY/2 ? "pin" : "roller", "#1e3a5f");
+    }
+    // the pull
+    const F = rightLoads(), fmax = Math.max(...[...Array(NY+1).keys()].map(j => F[2*M.node(NX, j)]));
+    for (let j=0;j<=NY;j++){ const f = F[2*M.node(NX, j)]; if (f > 1e-9) o += C.arrow(X(L) + 3, Y(H*j/NY), X(L) + 3 + 28*f/fmax, Y(H*j/NY), "#c0392b", 1.6); }
+    for (let k=0;k<=40;k++) o += C.el("rect", {x: 440 + k*3, y: 152, width: 3.1, height: 8, fill: C.div(k/40)});
+    o += C.el("text", {x: 436, y: 160, "text-anchor": "end", "font-size": 11, fill: "#6b7684"}, "σ₀₀  0");
+    o += C.el("text", {x: 566, y: 160, "font-size": 11, fill: "#6b7684"}, "100 MPa");
+    // the graph
+    o += C.el("line", {x1: gx0, y1: gy1, x2: gx1, y2: gy1, stroke: "#59636e"}) + C.el("line", {x1: gx0, y1: gy0, x2: gx0, y2: gy1, stroke: "#59636e"});
+    const TICK = {"-4": "10⁻⁴", "-3": "10⁻³", "-2": "10⁻²", "-1": "10⁻¹", "0": "1", "1": "10"};
+    for (let p=LO;p<=HI;p++){ const y = GY(10**p); o += C.el("line", {x1: gx0 - 4, y1: y, x2: gx1, y2: y, stroke: "#eef0f3"}) + C.el("text", {x: gx0 - 7, y: y + 4, "text-anchor": "end", "font-size": 11, fill: "#6b7684"}, TICK[p]); }
+    for (let x=0;x<=6;x++) o += C.el("text", {x: GX(x), y: gy1 + 15, "text-anchor": "middle", "font-size": 11, fill: "#6b7684"}, x);
+    o += C.el("text", {x: (gx0 + gx1)/2, y: gy1 + 32, "text-anchor": "middle", "font-size": 12, fill: "#42506a"}, "distance from the left end, in depths of the strip");
+    o += C.el("text", {x: 14, y: (gy0 + gy1)/2, "text-anchor": "middle", "font-size": 12, fill: "#42506a", transform: `rotate(-90 14 ${(gy0 + gy1)/2})`}, "largest difference / 50 MPa");
+    for (const x of [1, L/H - 1]) o += C.el("line", {x1: GX(x), y1: gy0, x2: GX(x), y2: gy1, stroke: "#9aa3ad", "stroke-dasharray": "3 3"});
+    o += C.el("polyline", {points: col.map((v, i) => `${GX((i + 0.5)*L/NX/H).toFixed(1)},${GY(v).toFixed(1)}`).join(" "), fill: "none", stroke: "#c0392b", "stroke-width": 2});
+    document.getElementById("c29w3svg").innerHTML = o;
+    const at = d => col[Math.min(NX-1, Math.max(0, Math.floor((L - d*H)/(L/NX))))];    // the column of elements at d depths from the right end
+    const peak = Math.max(...sig.map(s => s[0]));
+    document.getElementById("c29w3read").innerHTML =
+      `Largest σ₀₀ at an element center: <strong>${peak.toFixed(1)} MPa</strong>.<br>` +
+      `Largest difference from the uniform stress, relative to 50 MPa, at a half depth from the loaded end: ${(100*at(0.5)).toFixed(1)}%; ` +
+      `at one depth: ${(100*at(1)).toFixed(2)}%; at two depths: ${(100*at(2)).toFixed(3)}%.`;
+  }
+  document.querySelectorAll("#c29w3 [data-dist]").forEach(b => b.addEventListener("click", () => { st.dist = b.dataset.dist; render(); }));
+  document.querySelectorAll("#c29w3 [data-left]").forEach(b => b.addEventListener("click", () => { st.left = b.dataset.left; render(); }));
+  document.getElementById("c29w3w").addEventListener("input", ev => { st.w = +ev.target.value; render(); });
+  render();
+})();
+</script>
+```
+:::
+
+### Things to try
+
+1. Switch among the four ways of applying the pull.
+   Each has the same resultant, so away from the right end, the stresses are the same.
+   Whichever way the pull is applied, the difference from the uniform stress is less than 10% at one depth from the end and about 0.1% at two depths.
+2. Make the patch narrower.
+   The peak stress near the end rises, but the region it affects stays about one depth long.
+3. Apply the pull at the middle node.
+   The stress at the node is limited only by the size of the elements next to it, as in @fig-c29-sv c.
+4. Clamp the left end.
+   A second disturbed region appears at the left end, also about one depth long, where the clamp prevents the Poisson contraction.
+
+## Summary
+
+- Each kind of boundary condition is imposed as for the Poisson Equation, one component at a time.
+  The Robin condition describes an elastic support, such as soil or a bearing pad.
+- The three rigid-body motions in two dimensions, two translations and a rotation, produce no strain, so the supports must prevent all of them.
+  Three support components do this unless their lines of action are all parallel or all pass through one point; otherwise the model is a mechanism and its stiffness matrix is singular.
+- A body that is not supported has a solution only if its loads are in equilibrium, the elastic counterpart of the condition on a body with only Neumann boundaries in Class 23.
+- Statically determinate supports have exactly three components, their reactions follow from statics alone, and they cause no stress of their own.
+  Redundant supports can resist deformation, such as the Poisson contraction or a thermal expansion, and so cause stress, which can be infinite at corners.
+- The reactions are computed from the rows of the complete stiffness matrix for the prescribed components, and they are a check on the loads and, for determinate supports, on the analysis.
+- A plane of symmetry has zero normal displacement and zero tangential traction, and a plane of antisymmetry has zero tangential displacement and zero normal traction.
+  Any loading can be split into symmetric and antisymmetric parts and each solved on half of the body.
+- A support that is not aligned with the axes, such as an inclined plane of symmetry, is imposed by rotating the unknowns of its nodes to normal and tangential components, or approximately by a stiff spring, the penalty method.
+- By Saint-Venant's principle, statically equivalent loads give nearly the same stresses beyond about the size of the loaded region.
+  Stresses at point loads, point supports, and sharp corners of idealized supports do not converge, and should be either modeled in more detail or not reported.
