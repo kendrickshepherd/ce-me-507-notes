@@ -1,0 +1,2076 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Finite Element Methods">
+
+<title>29&nbsp; Class 29: Supports, Symmetry, and Boundary Conditions in Elasticity – CE/ME 507 — Class Notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/3_Support_FunctionSpaces.html" rel="next">
+<link href="../chapters/28_Class.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-cb76554c71210f48e098573b9225a2ca.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script>
+window.MathJax = {
+  tex: {
+    tags: 'ams',
+    macros: {
+      RR: '{\\mathbb{R}}',
+      Om: '{\\Omega}'
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/29_Class.html"><span class="chapter-number">29</span>&nbsp; <span class="chapter-title">Class 29: Supports, Symmetry, and Boundary Conditions in Elasticity</span></a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Site">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">CE/ME 507 — Class Notes</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">CE/ME 507 — Class Notes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/2_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Class 2: Linear FEM</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Class 3: Index Notation, Function Spaces, and the Weak Form</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/4_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Class 4: Strong and Weak Forms of the Boundary Value Problem</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/5_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/6_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Class 6: Basis Functions and Lagrange Polynomials</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/7_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Class 7: From Galerkin to a Matrix Equation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/8_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Class 8: Assembly, Sparsity, and the Road to Quadrature</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/9_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Class 9: The Isoparametric Map and the Jacobian</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Class 10: Assembly with the IEN Array, and Quadrature on an Element</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Class 11: Tensor-Product Basis Functions in 2D</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Class 12: The Spatial Mapping</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Class 13: The Jacobian Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Class 14: The ID and IEN Arrays</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Class 15: Unidimensional Finite Element Code</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Class 16: Derivatives of the Solution</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Class 20: Quadrature in 2D, and Integrating Over a Face</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Class 21: CAD, Meshing, and Discretization Choice</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/22_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Class 22: Robin Boundary Conditions</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/23_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Class 23: Minimization, Symmetry, and Positive Definiteness</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Classes 24 and 25: Applications and Interpretation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">Classes 24 and 25 applications</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Seepage.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Groundwater Seepage Under a Dam</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Torsion.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Torsion of an I-Beam, and the Membrane Analogy</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Membrane.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deflection of a Pressurized Membrane</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Diffusion.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Diffusion Through a Damaged Landfill Liner</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/25_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Class 25: Applications and Interpretation, Continued</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/26_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Class 26: Linear Elasticity and the Principle of Virtual Work</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/27_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Class 27: Voigt Notation and the Elasticity Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/28_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Class 28: The Galerkin Form of Elasticity and Assembly</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/29_Class.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">29</span>&nbsp; <span class="chapter-title">Class 29: Supports, Symmetry, and Boundary Conditions in Elasticity</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">Appendices</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">1D Poisson I: Heat Conduction Through a Wall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">1D Poisson II: The Wall, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">1D Poisson III: An Axially Loaded Rod</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Elasticity2D.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">H</span>&nbsp; <span class="chapter-title">Linear Elasticity I: Stress, Strain, and the Strong Form</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Elasticity2D_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">I</span>&nbsp; <span class="chapter-title">Linear Elasticity II: Plane Elasticity, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Beam_Frame_Formulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">J</span>&nbsp; <span class="chapter-title">Beams and Frames from Three-Dimensional Elasticity</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#three-kinds-of-boundary-conditions-for-elastiticy" id="toc-three-kinds-of-boundary-conditions-for-elastiticy" class="nav-link active" data-scroll-target="#three-kinds-of-boundary-conditions-for-elastiticy"><span class="header-section-number">29.1</span> Three kinds of boundary conditions for elastiticy</a></li>
+  <li><a href="#supports-must-prevent-rigid-body-motion" id="toc-supports-must-prevent-rigid-body-motion" class="nav-link" data-scroll-target="#supports-must-prevent-rigid-body-motion"><span class="header-section-number">29.2</span> Supports must prevent rigid-body motion</a>
+  <ul class="collapse">
+  <li><a href="#rigid-body-motions" id="toc-rigid-body-motions" class="nav-link" data-scroll-target="#rigid-body-motions"><span class="header-section-number">29.2.1</span> Rigid-body motions</a></li>
+  <li><a href="#recognizing-a-mechanism" id="toc-recognizing-a-mechanism" class="nav-link" data-scroll-target="#recognizing-a-mechanism"><span class="header-section-number">29.2.2</span> Recognizing a mechanism</a></li>
+  <li><a href="#loads-on-a-body-that-is-not-supported" id="toc-loads-on-a-body-that-is-not-supported" class="nav-link" data-scroll-target="#loads-on-a-body-that-is-not-supported"><span class="header-section-number">29.2.3</span> Loads on a body that is not supported</a></li>
+  </ul></li>
+  <li><a href="#statically-determinate-and-redundant-supports" id="toc-statically-determinate-and-redundant-supports" class="nav-link" data-scroll-target="#statically-determinate-and-redundant-supports"><span class="header-section-number">29.3</span> Statically determinate and redundant supports</a>
+  <ul class="collapse">
+  <li><a href="#reactions-as-a-check" id="toc-reactions-as-a-check" class="nav-link" data-scroll-target="#reactions-as-a-check"><span class="header-section-number">29.3.1</span> Reactions as a check</a></li>
+  </ul></li>
+  <li><a href="#supports-interactively" id="toc-supports-interactively" class="nav-link" data-scroll-target="#supports-interactively"><span class="header-section-number">29.4</span> Supports, interactively</a>
+  <ul class="collapse">
+  <li><a href="#things-to-try" id="toc-things-to-try" class="nav-link" data-scroll-target="#things-to-try"><span class="header-section-number">29.4.1</span> Things to try</a></li>
+  </ul></li>
+  <li><a href="#symmetry" id="toc-symmetry" class="nav-link" data-scroll-target="#symmetry"><span class="header-section-number">29.5</span> Symmetry</a></li>
+  <li><a href="#symmetry-interactively" id="toc-symmetry-interactively" class="nav-link" data-scroll-target="#symmetry-interactively"><span class="header-section-number">29.6</span> Symmetry, interactively</a>
+  <ul class="collapse">
+  <li><a href="#things-to-try-1" id="toc-things-to-try-1" class="nav-link" data-scroll-target="#things-to-try-1"><span class="header-section-number">29.6.1</span> Things to try</a></li>
+  </ul></li>
+  <li><a href="#supports-that-are-not-aligned-with-the-axes" id="toc-supports-that-are-not-aligned-with-the-axes" class="nav-link" data-scroll-target="#supports-that-are-not-aligned-with-the-axes"><span class="header-section-number">29.7</span> Supports that are not aligned with the axes</a>
+  <ul class="collapse">
+  <li><a href="#rotating-the-unknowns-at-a-node" id="toc-rotating-the-unknowns-at-a-node" class="nav-link" data-scroll-target="#rotating-the-unknowns-at-a-node"><span class="header-section-number">29.7.1</span> Rotating the unknowns at a node</a></li>
+  <li><a href="#an-example-with-one-element" id="toc-an-example-with-one-element" class="nav-link" data-scroll-target="#an-example-with-one-element"><span class="header-section-number">29.7.2</span> An example with one element</a></li>
+  <li><a href="#a-stiff-spring-along-the-normal" id="toc-a-stiff-spring-along-the-normal" class="nav-link" data-scroll-target="#a-stiff-spring-along-the-normal"><span class="header-section-number">29.7.3</span> A stiff spring along the normal</a></li>
+  <li><a href="#a-plate-with-an-inclined-plane-of-symmetry" id="toc-a-plate-with-an-inclined-plane-of-symmetry" class="nav-link" data-scroll-target="#a-plate-with-an-inclined-plane-of-symmetry"><span class="header-section-number">29.7.4</span> A plate with an inclined plane of symmetry</a></li>
+  </ul></li>
+  <li><a href="#saint-venants-principle" id="toc-saint-venants-principle" class="nav-link" data-scroll-target="#saint-venants-principle"><span class="header-section-number">29.8</span> Saint-Venant’s principle</a></li>
+  <li><a href="#saint-venants-principle-interactively" id="toc-saint-venants-principle-interactively" class="nav-link" data-scroll-target="#saint-venants-principle-interactively"><span class="header-section-number">29.9</span> Saint-Venant’s principle, interactively</a>
+  <ul class="collapse">
+  <li><a href="#things-to-try-3" id="toc-things-to-try-3" class="nav-link" data-scroll-target="#things-to-try-3"><span class="header-section-number">29.9.1</span> Things to try</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">29.10</span> Summary</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content column-body" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">29</span>&nbsp; <span class="chapter-title">Class 29: Supports, Symmetry, and Boundary Conditions in Elasticity</span></h1>
+<p class="subtitle lead">Rigid-body motions, statically determinate and redundant supports, symmetry, supports that are not aligned with the axes, and Saint-Venant’s principle</p>
+</div>
+
+
+
+<div class="quarto-title-meta column-body">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>In <a href="../chapters/26_Class.html">Class 26</a>, the boundary of an elastic body was divided once for each direction, and in <a href="../chapters/28_Class.html">Class 28</a>, the prescribed displacements and tractions entered the matrix equations through the ID array and the element force vector. The way each kind of boundary condition is imposed is the same as for the Poisson Equation, applied to one component of the displacement at a time. However, for elasticity, boundary conditions not only represent different behavior, but they also have different requirements. Every support drawn on a model is an idealization of a real connection, such as a bolt, a bearing, a weld, or the soil under a footing, and the choice of idealization often affects results. This class works to clarify some of those decisions.</p>
+<section id="three-kinds-of-boundary-conditions-for-elastiticy" class="level2" data-number="29.1">
+<h2 data-number="29.1" class="anchored" data-anchor-id="three-kinds-of-boundary-conditions-for-elastiticy"><span class="header-section-number">29.1</span> Three kinds of boundary conditions for elastiticy</h2>
+<div id="tbl-c29-kinds" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-c29-kinds-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;29.1: The three kinds of boundary condition in the Poisson Equation and in elasticity.
+</figcaption>
+<div aria-describedby="tbl-c29-kinds-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Kind</th>
+<th style="text-align: left;">Poisson Equation</th>
+<th style="text-align: left;">Elasticity, for each direction <span class="math inline">\(i\)</span></th>
+<th style="text-align: left;">How it enters the matrix equations</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Dirichlet</td>
+<td style="text-align: left;"><span class="math inline">\(u = g\)</span> on <span class="math inline">\(\Gamma_g\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(u_i = g_i\)</span> on <span class="math inline">\(\Gamma_{g_i}\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(\mathrm{ID}(i, A) = -1\)</span>, and the known values move to the right-hand side through <span class="math inline">\(-\sum_b \underline{\underline{k}}^e_{ab}\,\underline{g}_b\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Neumann</td>
+<td style="text-align: left;">the flux is <span class="math inline">\(h\)</span> on <span class="math inline">\(\Gamma_h\)</span></td>
+<td style="text-align: left;">the traction is <span class="math inline">\(\sigma_{ij}n_j = h_i\)</span> on <span class="math inline">\(\Gamma_{h_i}\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(\int N_a\,h_i\,d\Gamma\)</span> over the element sides on <span class="math inline">\(\Gamma_{h_i}\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Robin</td>
+<td style="text-align: left;"><span class="math inline">\(\hat{a}\,u\)</span> plus the flux is <span class="math inline">\(\hat{c}\)</span> on <span class="math inline">\(\Gamma_r\)</span></td>
+<td style="text-align: left;">a spring support, <span class="math inline">\(\sigma_{ij}n_j + k_s\,u_i = \hat{c}_i\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(\int N_a\,k_s\,N_b\,d\Gamma\)</span> is added to <span class="math inline">\(\underline{\underline{k}}^e\)</span>, and <span class="math inline">\(\int N_a\,\hat{c}_i\,d\Gamma\)</span> to <span class="math inline">\(\underline{f}^e\)</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>A free surface is a Neumann boundary on which both components of the traction are zero, so it requires no computation at all. A pressure <span class="math inline">\(p\)</span> pushing on a surface is a traction along its normal, <span class="math inline">\(\underline{h} = -p\,\underline{n}\)</span>, so on a surface that is not aligned with the axes, both components of the traction are nonzero.</p>
+<p>The Robin condition describes an <strong>elastic support</strong>, in which the surface is held by springs whose stiffness per unit area is <span class="math inline">\(k_s\)</span>, so that the traction is <span class="math inline">\(h_i = -k_s\,u_i\)</span>. Examples are the soil under a slab or footing, a rubber bearing pad under a bridge girder, and the flexibility of a bolted connection. As in <a href="../chapters/22_Class.html">Class 22</a>, a very stiff spring behaves like a fixed support, and a very soft one like a free surface. Soil can push on a slab but cannot pull on it, so a slab that lifts off the ground is described more accurately by springs that act only in compression. That makes the problem nonlinear, which is beyond the scope of this course.</p>
+</section>
+<section id="supports-must-prevent-rigid-body-motion" class="level2" data-number="29.2">
+<h2 data-number="29.2" class="anchored" data-anchor-id="supports-must-prevent-rigid-body-motion"><span class="header-section-number">29.2</span> Supports must prevent rigid-body motion</h2>
+<section id="rigid-body-motions" class="level3" data-number="29.2.1">
+<h3 data-number="29.2.1" class="anchored" data-anchor-id="rigid-body-motions"><span class="header-section-number">29.2.1</span> Rigid-body motions</h3>
+<p>In <a href="../chapters/23_Class.html">Class 23</a>, a temperature that is the same constant everywhere has no gradient, so it stores no energy, and the stiffness matrix of a body with only Neumann boundaries is singular. In elasticity, the displacements that store no energy are those that produce no strain. In two dimensions there are three of them, two translations and a rotation, which together are called the <strong>rigid-body motions</strong>:</p>
+<p><span class="math display">\[
+\underline{u}_r(\underline{x}) = \begin{bmatrix} c_0 - \theta\,x_1 \\ c_1 + \theta\,x_0 \end{bmatrix} ,
+\]</span></p>
+<p>where <span class="math inline">\(c_0\)</span> and <span class="math inline">\(c_1\)</span> are translations along <span class="math inline">\(x_0\)</span> and <span class="math inline">\(x_1\)</span>, and <span class="math inline">\(\theta\)</span> is a small rotation about the origin. Its strains are <span class="math inline">\(\varepsilon_{00} = u_{0,0} = 0\)</span>, <span class="math inline">\(\varepsilon_{11} = u_{1,1} = 0\)</span>, and <span class="math inline">\(2\varepsilon_{01} = u_{0,1} + u_{1,0} = -\theta + \theta = 0\)</span>. A body in three dimensions has six rigid-body motions, three translations and three rotations.</p>
+<p>Since the basis functions reproduce linear fields exactly, every rigid-body motion can be represented by a vector of nodal displacements <span class="math inline">\(\underline{d}_r\)</span>. It produces no strain, so <span class="math inline">\(a(\underline{w}^h, \underline{u}_r) = 0\)</span> for every <span class="math inline">\(\underline{w}^h\)</span>, and the stiffness matrix assembled before any supports are applied satisfies <span class="math inline">\(\underline{\underline{K}}\,\underline{d}_r = \underline{0}\)</span> for each of the three motions. The supports must remove all three. For a connected mesh, the stiffness matrix that remains after the prescribed rows and columns are removed is positive definite exactly when no rigid-body motion satisfies every support. The mathematical result behind this is <strong>Korn’s inequality</strong>, which bounds the size of a displacement by the size of its strain once the rigid-body motions are excluded, in the same way that a Dirichlet boundary bounds the temperature by its gradient in the Poisson Equation.</p>
+</section>
+<section id="recognizing-a-mechanism" class="level3" data-number="29.2.2">
+<h3 data-number="29.2.2" class="anchored" data-anchor-id="recognizing-a-mechanism"><span class="header-section-number">29.2.2</span> Recognizing a mechanism</h3>
+<p>Each support component prevents one point from moving in one direction. The direction in which it can push or pull on the body is called its <strong>line of action</strong>. A rigid-body motion is described by three numbers, <span class="math inline">\(c_0\)</span>, <span class="math inline">\(c_1\)</span>, and <span class="math inline">\(\theta\)</span>, so at least three support components are needed to prevent all of them. Three are not always enough. In two dimensions, the supports prevent every rigid-body motion unless the lines of action are all parallel, which leaves a translation free, or all pass through a single point, which leaves a rotation about that point free (<a href="#fig-c29-mech" class="quarto-xref">Figure&nbsp;<span>29.1</span></a>). These are the same conditions that are used in statics to decide whether a body is held in place. A body that can still move in this way is called a <strong>mechanism</strong>.</p>
+<p>The arrangement in <a href="#fig-c29-mech" class="quarto-xref">Figure&nbsp;<span>29.1</span></a> c is easy to miss. The pin prevents both translations, and the roller appears to prevent rotation, but a small rotation about the pin moves the point at the roller at right angles to the roller’s line of action, and the roller allows that.</p>
+<div id="fig-c29-mech" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c29-mech-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class29/C29_Fig1_Mechanisms.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c29-mech-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;29.1: Four ways of supporting a body, with the lines of action of the rollers dashed. (a) A pin and a roller: the three lines of action are neither parallel nor concurrent, and the body is held. (b) Three rollers with parallel lines of action: the body can slide along them. (c) A pin, and a roller whose line of action passes through the pin: the body can turn about the pin. (d) A ring on three rollers whose lines of action meet at its center: the ring can spin. In (b) to (d), the orange outline and arrow show the motion that is left free.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="loads-on-a-body-that-is-not-supported" class="level3" data-number="29.2.3">
+<h3 data-number="29.2.3" class="anchored" data-anchor-id="loads-on-a-body-that-is-not-supported"><span class="header-section-number">29.2.3</span> Loads on a body that is not supported</h3>
+<p>In Class 23, a solution with only Neumann boundaries exists only if the total heat entering the body is zero, <span class="math inline">\(\underline{1}^T\underline{F} = 0\)</span>. In elasticity, multiplying <span class="math inline">\(\underline{\underline{K}}\,\underline{d} = \underline{F}\)</span> by <span class="math inline">\(\underline{d}_r^T\)</span> for each rigid-body motion gives <span class="math inline">\(\underline{d}_r^T\underline{F} = 0\)</span>, so the loads must do no work on any rigid-body motion. For the two translations and the rotation, this condition is</p>
+<p><span class="math display">\[
+\sum F_0 = 0, \qquad \sum F_1 = 0, \qquad \sum M = 0 ,
+\]</span></p>
+<p>which states that the applied loads are in equilibrium. If they are, there are infinitely many solutions, which differ by a rigid-body motion, and if they are not, there is no static solution, because the loads would set the body in motion. A spacecraft, a pressure vessel, and a test specimen pulled at both ends are loaded in this way. Nothing holds them in place, but a finite element model of each still needs supports that remove the rigid-body motions, without resisting the deformation that the loads cause. The next section describes such supports.</p>
+</section>
+</section>
+<section id="statically-determinate-and-redundant-supports" class="level2" data-number="29.3">
+<h2 data-number="29.3" class="anchored" data-anchor-id="statically-determinate-and-redundant-supports"><span class="header-section-number">29.3</span> Statically determinate and redundant supports</h2>
+<p>Supports with exactly three components whose lines of action are neither parallel nor concurrent are <strong>statically determinate</strong>. The three equations of equilibrium of the whole body then determine the three reactions, whatever the material and the mesh. Such supports only prevent rigid-body motion. They cannot cause stress of their own, because the body is free to take whatever shape the loads produce.</p>
+<p>Supports with more components are <strong>statically indeterminate</strong>, or <strong>redundant</strong>. There are more reactions than equations of equilibrium, so the reactions depend on the stiffness of the body, and the supports can resist deformation that the loads would otherwise cause. <a href="#fig-c29-red" class="quarto-xref">Figure&nbsp;<span>29.2</span></a> shows the difference for a steel plate, 200 mm by 100 mm and 10 mm thick, pulled at its right end by a uniform traction of 50 MPa.</p>
+<ul>
+<li>In (a), the left end rests on rollers that hold <span class="math inline">\(u_0\)</span>, and its midpoint is also held in <span class="math inline">\(u_1\)</span>. Under the pull, the plate stretches along <span class="math inline">\(x_0\)</span> and contracts along <span class="math inline">\(x_1\)</span> by the Poisson effect. The rollers allow the contraction, so the solution is the uniform stress <span class="math inline">\(\sigma_{00} = 50\)</span> MPa, with <span class="math inline">\(\sigma_{11} = \sigma_{01} = 0\)</span>, which the elements reproduce exactly.</li>
+<li>In (b), the left end is clamped. The clamp prevents the contraction at the left end, and so it causes a stress <span class="math inline">\(\sigma_{11}\)</span> across the plate that the pull alone does not. This stress is largest at the clamp and has nearly disappeared about one depth of the plate away from it.</li>
+<li>The exact solution of the clamped plate has infinite stress at the two corners of the clamp, where a free edge meets a fixed one. As (c) shows, the largest stress in the finite element solution rises from 52.5 MPa to 79.7 MPa as the mesh is refined, and it continues to rise with further refinement. No mesh gives a converged value there.</li>
+</ul>
+<p>The rollers in (a) also have more than three components, but they agree with the deformation that the pull causes, so they do not resist it. Whether a support causes stress depends on whether it resists the deformation of the body, and supports that are statically determinate never do.</p>
+<div id="fig-c29-red" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c29-red-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class29/C29_Fig2_Redundant.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c29-red-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;29.2: A plate pulled at its right end by 50 MPa, with two idealizations of its left end. The color shows <span class="math inline">\(\sigma_{11}\)</span>, the stress across the plate. (a) The left end on rollers, with its midpoint held in <span class="math inline">\(u_1\)</span>: <span class="math inline">\(\sigma_{11}\)</span> is zero everywhere, to roundoff. (b) The left end clamped: the clamp prevents the Poisson contraction, which causes <span class="math inline">\(\sigma_{11}\)</span> near the clamp. (c) The largest <span class="math inline">\(\sigma_{00}\)</span> at any Gauss point as the mesh is refined, with twice as many elements along the plate as through its depth. With the rollers, it is exactly 50 MPa on every mesh; with the clamp, it grows without limit, because the exact stress at the corners of the clamp is infinite.
+</figcaption>
+</figure>
+</div>
+<p>A uniform rise in temperature <span class="math inline">\(\Delta T\)</span> makes a body that is free to move expand by the strain <span class="math inline">\(\alpha\,\Delta T\)</span> in every direction, where <span class="math inline">\(\alpha\)</span> is the coefficient of thermal expansion, without any stress. Statically determinate supports allow this expansion, so they cause no stress, while redundant supports that prevent it cause stresses that can be large. Class 31 studies thermal stress in more detail.</p>
+<section id="reactions-as-a-check" class="level3" data-number="29.3.1">
+<h3 data-number="29.3.1" class="anchored" data-anchor-id="reactions-as-a-check"><span class="header-section-number">29.3.1</span> Reactions as a check</h3>
+<p>The rows of <span class="math inline">\(\underline{\underline{K}}\)</span> for the prescribed components were left out of the matrix equation in Class 28, but they are not discarded. Let <span class="math inline">\(\underline{\underline{K}}_{\text{complete}}\)</span> be the stiffness matrix assembled for every displacement component, <span class="math inline">\(2n_{np} \times 2n_{np}\)</span> in two dimensions, before any rows or columns are removed. Let <span class="math inline">\(\underline{d}_{\text{complete}}\)</span> hold every displacement component, the solved values from <span class="math inline">\(\underline{d}\)</span> at the unknown components and the prescribed values <span class="math inline">\(g_{iA}\)</span> at the others. Let <span class="math inline">\(\underline{F}_{\text{complete}}\)</span> hold the applied loads, the body force and the tractions, for every component, without the terms that moved the prescribed displacements to the right-hand side. The <strong>reactions</strong>, the forces that the supports apply to the body, are then</p>
+<p><span class="math display">\[
+\underline{R} = \underline{\underline{K}}_{\text{complete}}\,\underline{d}_{\text{complete}} - \underline{F}_{\text{complete}} .
+\]</span></p>
+<p>In the rows of the unknown components, this is zero, since those rows are the equations that were solved, so <span class="math inline">\(\underline{R}\)</span> is nonzero only at the prescribed components. For a body without spring supports, <span class="math inline">\(\underline{d}_r^T\underline{\underline{K}}_{\text{complete}} = \underline{0}^T\)</span> for every rigid-body motion, so the reactions and the applied loads together always satisfy the three equations of equilibrium, whatever the mesh. The sum of the reactions is therefore not a check on accuracy, but it is a useful check that the loads were applied where, and with the magnitude, that was intended.</p>
+<p>When the supports are statically determinate, the reactions can be computed by hand from statics before the analysis, and the finite element reactions must agree with them. When a body whose loads are already in equilibrium, such as a specimen pulled at both ends, is held by determinate supports only to remove its rigid-body motions, the reactions must be zero. Nonzero reactions then show that the loads are not balanced as intended.</p>
+</section>
+</section>
+<section id="supports-interactively" class="level2" data-number="29.4">
+<h2 data-number="29.4" class="anchored" data-anchor-id="supports-interactively"><span class="header-section-number">29.4</span> Supports, interactively</h2>
+<p>The widget below models the plate of <a href="#fig-c29-red" class="quarto-xref">Figure&nbsp;<span>29.2</span></a> in plane stress, with 16 by 8 elements. Any node on the boundary can be given a support, and the widget reports whether the supports leave a mechanism, whether they are statically determinate, and what the reactions are.</p>
+<ul>
+<li>Click a node on the boundary to change its support. Each click moves through a roller that holds the component normal to that side, a roller that holds the other component, a pin, and no support.</li>
+<li>Use the support buttons for common arrangements, and the load buttons to change the load.</li>
+<li>The dashed outline is the undeformed plate, and its dots are the nodes that can be clicked.</li>
+<li>When the supports leave a mechanism, the widget shows the motion that is free; otherwise it shows the deformed plate, magnified, colored by the von Mises stress. The supports, the applied loads (blue), and the reactions (green) are drawn where the nodes of the deformed plate have moved, so a pin stays in place and a roller moves along the surface it rolls on.</li>
+<li>The loads on the edges are uniform tractions, 5 MPa down on the top edge and 50 MPa along <span class="math inline">\(x_0\)</span> on the ends, and the temperature rise is uniform.</li>
+</ul>
+<style>
+.c29{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;color:var(--ink)}
+.c29 .bar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:10px 14px;background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.c29 .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey);margin-right:2px}
+.c29 .bar .gap{width:10px}
+.c29 button{font:inherit;font-size:13px;padding:4px 10px;border:1px solid #c3c9d2;border-radius:6px;background:#fff;cursor:pointer;color:var(--ink)}
+.c29 button:hover{background:#eef1f5}
+.c29 button[aria-pressed="true"]{background:#18202b;color:#fff;border-color:#18202b}
+.c29 svg{display:block;width:100%;height:auto}
+.c29 .panel{border:1px solid var(--faint);border-radius:8px;background:#fff;padding:6px;margin-bottom:10px}
+.c29 .read{font-size:.88em;background:var(--paper);border:1px solid var(--faint);border-radius:8px;padding:9px 12px;line-height:1.6;margin-bottom:22px}
+.c29 .read b{color:#b8322a}
+.c29 .read b.ok{color:#1e3a5f}
+.c29 input[type=range]{vertical-align:middle;width:150px}
+.c29 svg [data-node]:hover{fill:rgba(31,111,235,.28)}
+.c29 .h29{font-size:.86em;font-weight:600;color:#42506a;margin:2px 2px 6px}
+.c29 table.m{border-collapse:collapse;font-family:monospace;font-size:12px;margin:2px}
+.c29 table.m td,.c29 table.m th{border:1px solid #e3e7ec;padding:2px 6px;text-align:right;white-space:nowrap}
+.c29 table.m th{background:#f3f5f8;color:#42506a;font-weight:600}
+.c29 table.m td.rot{background:#fde3c8}
+.c29 table.m td.out{background:#eceef1;color:#a5adb7}
+.c29 .val{font-family:monospace;font-size:12px;color:var(--grey);min-width:3.5em;display:inline-block}
+</style>
+<script>
+// A small plane-stress solver shared by the three widgets on this page: four-node
+// elements on a rectangle, nodes numbered across the depth to keep the band narrow,
+// local nodes by the stride rule, and a banded Cholesky factorization.
+window.C29 = window.C29 || (function(){
+  const G = 1/Math.sqrt(3), SG = [[-1,-1],[1,-1],[-1,1],[1,1]];
+  function mesh(L, H, nx, ny){
+    const X = [], node = (i, j) => j + (ny+1)*i;
+    for (let i=0;i<=nx;i++) for (let j=0;j<=ny;j++) X.push([L*i/nx, H*j/ny]);
+    const IEN = [], EC = [], EIJ = [];
+    for (let ex=0;ex<nx;ex++) for (let ey=0;ey<ny;ey++){
+      IEN.push([node(ex,ey), node(ex+1,ey), node(ex,ey+1), node(ex+1,ey+1)]);
+      EC.push([L*(ex+0.5)/nx, H*(ey+0.5)/ny]); EIJ.push([ex, ey]);
+    }
+    return {L, H, nx, ny, X, IEN, EC, EIJ, node, nnp:X.length, nel:IEN.length, hx:L/nx, hy:H/ny};
+  }
+  function dmat(E, nu){ const c = E/(1-nu*nu); return [[c, c*nu, 0], [c*nu, c, 0], [0, 0, c*(1-nu)/2]]; }
+  function Bm(xi, eta, hx, hy){
+    const B = [new Array(8).fill(0), new Array(8).fill(0), new Array(8).fill(0)];
+    SG.forEach(([a, b], k) => {
+      const dx = a*(1+b*eta)/(2*hx), dy = b*(1+a*xi)/(2*hy);
+      B[0][2*k] = dx; B[1][2*k+1] = dy; B[2][2*k] = dy; B[2][2*k+1] = dx;
+    });
+    return B;
+  }
+  // k^e and, for a uniform free strain eps0, the load integral of B^T D eps0; every element is the same rectangle
+  function elementArrays(M, D, t, eps0){
+    const k = Array.from({length:8}, () => new Array(8).fill(0)), f = new Array(8).fill(0), J = M.hx*M.hy/4;
+    for (const xi of [-G, G]) for (const eta of [-G, G]){
+      const B = Bm(xi, eta, M.hx, M.hy);
+      const DB = [0,1,2].map(r => B[0].map((_, c) => D[r][0]*B[0][c] + D[r][1]*B[1][c] + D[r][2]*B[2][c]));
+      for (let p=0;p<8;p++){
+        for (let q=0;q<8;q++) k[p][q] += (B[0][p]*DB[0][q] + B[1][p]*DB[1][q] + B[2][p]*DB[2][q])*J*t;
+        if (eps0) f[p] += (DB[0][p]*eps0[0] + DB[1][p]*eps0[1] + DB[2][p]*eps0[2])*J*t;
+      }
+    }
+    return {k, f: eps0 ? f : null};
+  }
+  const dofs = (M, e) => M.IEN[e].flatMap(A => [2*A, 2*A+1]);
+  // held: a Set of held components 2A + i (all held at zero); F: nodal loads
+  function solve(M, el, held, F){
+    const n2 = 2*M.nnp, ID = new Int32Array(n2).fill(-1);
+    let neq = 0;
+    for (let q=0;q<n2;q++) if (!held.has(q)) ID[q] = neq++;
+    let bw = 0;
+    for (let e=0;e<M.nel;e++){
+      const P = dofs(M, e).map(q => ID[q]).filter(v => v >= 0);
+      if (P.length) bw = Math.max(bw, Math.max(...P) - Math.min(...P));
+    }
+    const w = bw + 1, A = new Float64Array(Math.max(neq*w, 1)), b = new Float64Array(neq), Fall = Float64Array.from(F);
+    for (let e=0;e<M.nel;e++){
+      const dd = dofs(M, e);
+      for (let p=0;p<8;p++){
+        if (el.f) Fall[dd[p]] += el.f[p];
+        const P = ID[dd[p]]; if (P < 0) continue;
+        for (let q=0;q<8;q++){ const Q = ID[dd[q]]; if (Q >= P) A[P*w + Q - P] += el.k[p][q]; }
+      }
+    }
+    for (let q=0;q<n2;q++) if (ID[q] >= 0) b[ID[q]] = Fall[q];
+    let dmax = 0; for (let i=0;i<neq;i++) dmax = Math.max(dmax, A[i*w]);
+    for (let i=0;i<neq;i++){
+      let s = A[i*w];
+      for (let k=Math.max(0, i-bw); k<i; k++){ const u = A[k*w + i - k]; s -= u*u; }
+      if (!(s > 1e-9*dmax)) return {ok:false, neq};
+      const d = Math.sqrt(s); A[i*w] = d;
+      const jm = Math.min(neq-1, i+bw);
+      for (let j=i+1;j<=jm;j++){
+        let v = A[i*w + j - i];
+        for (let k=Math.max(0, j-bw); k<i; k++) v -= A[k*w + i - k]*A[k*w + j - k];
+        A[i*w + j - i] = v/d;
+      }
+    }
+    const y = new Float64Array(neq), x = new Float64Array(neq);
+    for (let i=0;i<neq;i++){ let v = b[i]; for (let k=Math.max(0, i-bw); k<i; k++) v -= A[k*w + i - k]*y[k]; y[i] = v/A[i*w]; }
+    for (let i=neq-1;i>=0;i--){ let v = y[i]; const jm = Math.min(neq-1, i+bw); for (let j=i+1;j<=jm;j++) v -= A[i*w + j - i]*x[j]; x[i] = v/A[i*w]; }
+    const U = new Float64Array(n2);
+    for (let q=0;q<n2;q++) if (ID[q] >= 0) U[q] = x[ID[q]];
+    const R = new Float64Array(n2);            // R = K U - F at the held components
+    for (let e=0;e<M.nel;e++){
+      const dd = dofs(M, e);
+      for (let p=0;p<8;p++){ let v = 0; for (let q=0;q<8;q++) v += el.k[p][q]*U[dd[q]]; R[dd[p]] += v; }
+    }
+    for (let q=0;q<n2;q++) R[q] = held.has(q) ? R[q] - Fall[q] : 0;
+    return {ok:true, U, R, neq};
+  }
+  function centerStress(M, D, U, e, eps0){
+    const B = Bm(0, 0, M.hx, M.hy), dd = dofs(M, e);
+    const eps = [0,1,2].map(r => B[r].reduce((s, v, c) => s + v*U[dd[c]], 0) - (eps0 ? eps0[r] : 0));
+    return [0,1,2].map(r => D[r][0]*eps[0] + D[r][1]*eps[1] + D[r][2]*eps[2]);
+  }
+  const vonMises = s => Math.sqrt(s[0]*s[0] - s[0]*s[1] + s[1]*s[1] + 3*s[2]*s[2]);
+  // uniform traction h on the boundary segment between nodes A and B: half of the force to each
+  function segmentLoad(F, M, A, B, h, t){
+    const len = Math.hypot(M.X[B][0]-M.X[A][0], M.X[B][1]-M.X[A][1]);
+    for (const N of [A, B]){ F[2*N] += h[0]*len*t/2; F[2*N+1] += h[1]*len*t/2; }
+  }
+  function ramp(stops){
+    return v => {
+      v = Math.max(0, Math.min(1, v));
+      const n = stops.length - 1, k = Math.min(n-1, Math.floor(v*n)), f = v*n - k, a = stops[k], b = stops[k+1];
+      return `rgb(${[0,1,2].map(i => Math.round(a[i] + f*(b[i]-a[i]))).join(",")})`;
+    };
+  }
+  const seq = ramp([[255,255,229],[254,227,145],[254,196,79],[254,153,41],[236,112,20],[204,76,2],[140,45,4]]);
+  const div = ramp([[33,102,172],[103,169,207],[209,229,240],[247,247,247],[253,219,199],[239,138,98],[178,24,43]]);
+  const el = (tag, a, inner) => `<${tag} ${Object.entries(a).map(([k, v]) => `${k}="${v}"`).join(" ")}>${inner || ""}</${tag}>`;
+  function arrow(x1, y1, x2, y2, color, w){
+    const L = Math.hypot(x2-x1, y2-y1); if (L < 1) return "";
+    const ux = (x2-x1)/L, uy = (y2-y1)/L, h = Math.min(8, 0.45*L);
+    return el("line", {x1, y1, x2: x2 - ux*h*0.8, y2: y2 - uy*h*0.8, stroke: color, "stroke-width": w || 1.6}) +
+      el("polygon", {points: `${x2},${y2} ${x2 - ux*h - uy*h*0.45},${y2 - uy*h + ux*h*0.45} ${x2 - ux*h + uy*h*0.45},${y2 - uy*h - ux*h*0.45}`, fill: color});
+  }
+  // a roller (open triangle on wheels) or a pin (filled triangle on hatching), apex at (x, y); (ux, uy) points into the body
+  function support(x, y, ux, uy, kind, color){
+    const vx = -uy, vy = ux, s = 11, bx = x - ux*s, by = y - uy*s;
+    let o = el("polygon", {points: `${x},${y} ${bx + vx*s*0.6},${by + vy*s*0.6} ${bx - vx*s*0.6},${by - vy*s*0.6}`,
+      fill: kind === "pin" ? color : "#fff", stroke: color, "stroke-width": 1.3});
+    let gx = bx, gy = by;
+    if (kind === "roller"){
+      for (const k of [-0.32, 0.32]) o += el("circle", {cx: bx + vx*s*k - ux*2.6, cy: by + vy*s*k - uy*2.6, r: 2.3, fill: "#fff", stroke: color, "stroke-width": 1});
+      gx -= ux*5.2; gy -= uy*5.2;
+    }
+    o += el("line", {x1: gx + vx*9, y1: gy + vy*9, x2: gx - vx*9, y2: gy - vy*9, stroke: color, "stroke-width": 1.3});
+    if (kind === "pin") for (let k=-0.8;k<=0.81;k+=0.4) o += el("line", {x1: gx + vx*9*k, y1: gy + vy*9*k, x2: gx + vx*9*k - ux*4 - vx*3, y2: gy + vy*9*k - uy*4 - vy*3, stroke: color, "stroke-width": 0.8});
+    return o;
+  }
+  return {mesh, dmat, elementArrays, solve, centerStress, vonMises, segmentLoad, seq, div, el, arrow, support, dofs};
+})();
+</script>
+
+<div class="c29" id="c29w1">
+  <div class="bar">
+    <b>SUPPORTS</b>
+    <button data-pre="pinroller">pin and roller</button>
+    <button data-pre="parallel">three parallel rollers</button>
+    <button data-pre="through">roller through the pin</button>
+    <button data-pre="twopins">pins at both ends</button>
+    <button data-pre="clamped">left end clamped</button>
+    <button data-pre="none">no supports</button>
+  </div>
+  <div class="bar">
+    <b>LOAD</b>
+    <button data-load="top">a load on the top</button>
+    <button data-load="right">a pull on the right end</button>
+    <button data-load="both">equal pulls on both ends</button>
+    <button data-load="heat">a temperature rise of 50 °C</button>
+  </div>
+  <div class="panel"><svg id="c29w1svg" viewbox="0 0 640 352" role="img" aria-label="A plate with supports at chosen nodes, its deformed shape, and the reactions"></svg></div>
+  <div class="read" id="c29w1read"></div>
+</div>
+
+<script>
+(function(){
+  const C = window.C29, L = 200, H = 100, T = 10, E = 200000, NU = 0.3, NX = 16, NY = 8;
+  const S = 50, Q = 5, ALPHA = 12e-6, DT = 50;
+  const M = C.mesh(L, H, NX, NY), D = C.dmat(E, NU);
+  const EPS = [ALPHA*DT, ALPHA*DT, 0];
+  const elPlain = C.elementArrays(M, D, T, null), elHeat = C.elementArrays(M, D, T, EPS);
+  const xc = L/2, yc = H/2;
+  const sc = 2.3, ox = 90, oy = 55, X = x => ox + sc*x, Y = y => oy + sc*(H - y);
+  const st = {sup: new Map(), load: "top", phase: 0, anim: null};
+  const onB = A => { const [x, y] = M.X[A]; return {bot: y < 1e-9, top: y > H - 1e-9, left: x < 1e-9, right: x > L - 1e-9}; };
+  const boundary = []; for (let A=0;A<M.nnp;A++){ const b = onB(A); if (b.bot || b.top || b.left || b.right) boundary.push(A); }
+  const N = (x, y) => M.node(Math.round(x/(L/NX)), Math.round(y/(H/NY)));
+  // support codes: 1 holds u1, 2 holds u0, 3 holds both (a pin)
+  const PRESETS = {
+    pinroller: [[0, 0, 3], [L, 0, 1]],
+    parallel: [[0, 0, 1], [L/2, 0, 1], [L, 0, 1]],
+    through: [[0, 0, 3], [L, 0, 2]],
+    twopins: [[0, 0, 3], [L, 0, 3]],
+    clamped: [...Array(NY+1).keys()].map(j => [0, H*j/NY, 3]),
+    none: []
+  };
+  function setPreset(k){ st.sup = new Map(PRESETS[k].map(([x, y, c]) => [N(x, y), c])); st.pre = k; render(); }
+  function loads(){
+    const F = new Float64Array(2*M.nnp);
+    const edge = (sel, h) => { for (let k=0;k<sel.length-1;k++) C.segmentLoad(F, M, sel[k], sel[k+1], h, T); };
+    const right = [...Array(NY+1).keys()].map(j => M.node(NX, j)), left = [...Array(NY+1).keys()].map(j => M.node(0, j));
+    const top = [...Array(NX+1).keys()].map(i => M.node(i, NY));
+    if (st.load === "top") edge(top, [0, -Q]);
+    if (st.load === "right" || st.load === "both") edge(right, [S, 0]);
+    if (st.load === "both") edge(left, [-S, 0]);
+    return F;
+  }
+  function heldSet(){
+    const s = new Set();
+    st.sup.forEach((c, A) => { if (c & 2) s.add(2*A); if (c & 1) s.add(2*A+1); });
+    return s;
+  }
+  // the rigid-body motions u = (c0 - th y~, c1 + th x~), x~ = (x - xc)/L, that the supports allow
+  function freeModes(){
+    const rows = [];
+    st.sup.forEach((c, A) => {
+      const xt = (M.X[A][0]-xc)/L, yt = (M.X[A][1]-yc)/L;
+      if (c & 2) rows.push([1, 0, -yt]);
+      if (c & 1) rows.push([0, 1, xt]);
+    });
+    const Gm = [[0,0,0],[0,0,0],[0,0,0]];
+    rows.forEach(r => { for (let i=0;i<3;i++) for (let j=0;j<3;j++) Gm[i][j] += r[i]*r[j]; });
+    const {vals, vecs} = jacobi3(Gm);
+    const modes = []; vals.forEach((v, k) => { if (v < 1e-9) modes.push(vecs.map(r => r[k])); });
+    return {n: rows.length, rank: 3 - modes.length, modes};
+  }
+  function jacobi3(A0){
+    const A = A0.map(r => r.slice()), V = [[1,0,0],[0,1,0],[0,0,1]];
+    for (let sweep=0; sweep<50; sweep++){
+      let off = 0; for (let p=0;p<3;p++) for (let q=p+1;q<3;q++) off += A[p][q]*A[p][q];
+      if (off < 1e-30) break;
+      for (let p=0;p<3;p++) for (let q=p+1;q<3;q++){
+        if (Math.abs(A[p][q]) < 1e-300) continue;
+        const th = 0.5*Math.atan2(2*A[p][q], A[q][q]-A[p][p]), c = Math.cos(th), s = Math.sin(th);
+        for (let k=0;k<3;k++){ const akp = A[k][p], akq = A[k][q]; A[k][p] = c*akp - s*akq; A[k][q] = s*akp + c*akq; }
+        for (let k=0;k<3;k++){ const apk = A[p][k], aqk = A[q][k]; A[p][k] = c*apk - s*aqk; A[q][k] = s*apk + c*aqk; }
+        for (let k=0;k<3;k++){ const vkp = V[k][p], vkq = V[k][q]; V[k][p] = c*vkp - s*vkq; V[k][q] = s*vkp + c*vkq; }
+      }
+    }
+    return {vals: [0,1,2].map(i => A[i][i]), vecs: V};
+  }
+  const ur = (m, A) => { const xt = (M.X[A][0]-xc)/L, yt = (M.X[A][1]-yc)/L; return [m[0] - m[2]*yt, m[1] + m[2]*xt]; };
+  function describe(m){
+    const mag = Math.hypot(m[0], m[1], m[2]);
+    if (Math.abs(m[2]) < 1e-6*mag){
+      if (Math.abs(m[1]) < 1e-6*mag) return "a translation along x₀";
+      if (Math.abs(m[0]) < 1e-6*mag) return "a translation along x₁";
+      return "a translation";
+    }
+    const px = xc - L*m[1]/m[2], py = yc + L*m[0]/m[2], r0 = v => (Math.abs(v) < 0.5 ? 0 : v).toFixed(0);
+    return `a rotation about the point (${r0(px)}, ${r0(py)}) mm`;
+  }
+  const sgn = s => s.replace(/^-(0\.0+)$/, "$1").replace("-", "−");
+  const kN = v => sgn((v/1000).toFixed(2)), kNm = v => sgn((v/1e6).toFixed(3));
+  // the supports follow their nodes on the deformed shape: a pin does not move, and a roller
+  // moves along the surface it rolls on
+  function supportsSVG(P){
+    let o = "";
+    st.sup.forEach((c, A) => {
+      const b = onB(A), [x, y] = P(A);
+      const into = b.bot ? [0, -1] : b.top ? [0, 1] : b.left ? [1, 0] : [-1, 0];
+      if (c === 3){ o += C.support(x, y, into[0], into[1], "pin", "#1e3a5f"); return; }
+      const i = c === 2 ? 0 : 1, normalHere = (i === 1 && (b.bot || b.top)) || (i === 0 && (b.left || b.right));
+      if (normalHere){
+        const u = i === 1 ? (b.bot ? [0, -1] : [0, 1]) : (b.left ? [1, 0] : [-1, 0]);
+        o += C.support(x, y, u[0], u[1], "roller", "#1e3a5f");
+      } else {
+        // a roller that holds the component along the side: drawn just outside the side, on a short link
+        const out = [-into[0], -into[1]], ax = x + out[0]*14, ay = y + out[1]*14;
+        const u = i === 1 ? [0, -1] : [1, 0];
+        o += C.el("line", {x1: x, y1: y, x2: ax, y2: ay, stroke: "#1e3a5f", "stroke-width": 1.3});
+        o += C.support(ax, ay, u[0], u[1], "roller", "#1e3a5f");
+      }
+    });
+    return o;
+  }
+  // the uniform tractions, drawn as distributed loads: an arrow at each node of the loaded
+  // edge, on the deformed shape, with a line joining their outer ends
+  function loadsSVG(P){
+    let o = "";
+    const blue = "#1f6feb", line = pts => C.el("polyline", {points: pts.map(p => p.join(",")).join(" "), fill: "none", stroke: blue, "stroke-width": 1.4});
+    const edge = (nodes, dx, dy, push) => {
+      const outer = nodes.map(A => { const [x, y] = P(A); return [x + dx*26, y + dy*26]; });
+      nodes.forEach((A, k) => {
+        const [x, y] = P(A), [ox, oy] = outer[k];
+        o += push ? C.arrow(ox, oy, x + dx*2, y + dy*2, blue, 1.3) : C.arrow(x + dx*2, y + dy*2, ox, oy, blue, 1.3);
+      });
+      o += line(outer);
+    };
+    if (st.load === "top") edge([...Array(NX+1).keys()].map(i => M.node(i, NY)), 0, -1, true);
+    if (st.load === "right" || st.load === "both") edge([...Array(NY+1).keys()].map(j => M.node(NX, j)), 1, 0, false);
+    if (st.load === "both") edge([...Array(NY+1).keys()].map(j => M.node(0, j)), -1, 0, false);
+    if (st.load === "heat") o += C.el("text", {x: X(L/2), y: Y(H) - 12, "text-anchor": "middle", "font-size": 13, fill: blue}, "temperature rise ΔT = 50 °C everywhere");
+    return o;
+  }
+  // Three layers: the deformed plate with its loads, supports, and reactions, redrawn on every frame
+  // of an animation; the undeformed plate, dashed, with its nodes; and the click targets on those
+  // nodes, drawn once so that a click is not lost between frames.
+  const RING = [...[...Array(NX+1).keys()].map(i => M.node(i, 0)), ...[...Array(NY).keys()].map(j => M.node(NX, j+1)),
+                ...[...Array(NX).keys()].map(i => M.node(NX-1-i, NY)), ...[...Array(NY-1).keys()].map(j => M.node(0, NY-1-j))];
+  function draw(U, colors, ghost){
+    const svg = document.getElementById("c29w1svg");
+    if (!svg.querySelector("#c29w1hit")){
+      svg.innerHTML = `<g id="c29w1body"></g><g id="c29w1ref" style="pointer-events:none">` +
+        C.el("rect", {x: X(0), y: Y(H), width: sc*L, height: sc*H, fill: "none", stroke: "#18202b", "stroke-width": 1.1, "stroke-dasharray": "6 4"}) +
+        boundary.map(A => C.el("circle", {cx: X(M.X[A][0]), cy: Y(M.X[A][1]), r: 2.2, fill: "#18202b"})).join("") +
+        `</g><g id="c29w1hit">` +
+        boundary.map(A => C.el("circle", {cx: X(M.X[A][0]), cy: Y(M.X[A][1]), r: 7, fill: "transparent", stroke: "none", "data-node": A, style: "cursor:pointer"})).join("") + `</g>`;
+    }
+    let o = "";
+    const P = A => [X(M.X[A][0] + (U ? U[2*A] : 0)), Y(M.X[A][1] + (U ? U[2*A+1] : 0))];
+    for (let e=0;e<M.nel;e++){
+      const [a, b, c, d] = M.IEN[e], pts = [P(a), P(b), P(d), P(c)].map(p => p.join(",")).join(" ");
+      o += C.el("polygon", {points: pts, fill: colors ? colors[e] : (ghost ? "#fde3c8" : "#e3eef8"), stroke: ghost ? "#e9a466" : "#9aa3ad", "stroke-width": 0.5});
+    }
+    o += C.el("polygon", {points: RING.map(A => P(A).join(",")).join(" "), fill: "none", stroke: ghost ? "#e67e22" : "#5a4632", "stroke-width": 1.6});
+    o += loadsSVG(P) + supportsSVG(P);
+    if (st.reac) o += st.reac;
+    if (colors){
+      for (let k=0;k<=40;k++) o += C.el("rect", {x: 410 + k*2.5, y: 336, width: 2.6, height: 8, fill: C.seq(k/40)});
+      o += C.el("text", {x: 406, y: 346, "text-anchor": "end", "font-size": 11, fill: "#6b7684"}, "von Mises 0");
+      o += C.el("text", {x: 516, y: 346, "font-size": 11, fill: "#6b7684"}, st.vmax.toFixed(st.vmax < 10 ? 1 : 0) + " MPa or more");
+    }
+    svg.querySelector("#c29w1body").innerHTML = o;
+  }
+  function render(){
+    if (st.anim){ cancelAnimationFrame(st.anim); st.anim = null; }
+    document.querySelectorAll("#c29w1 [data-pre]").forEach(b => b.setAttribute("aria-pressed", b.dataset.pre === st.pre ? "true" : "false"));
+    document.querySelectorAll("#c29w1 [data-load]").forEach(b => b.setAttribute("aria-pressed", b.dataset.load === st.load ? "true" : "false"));
+    const F = loads(), heat = st.load === "heat", fm = freeModes(), read = document.getElementById("c29w1read");
+    st.reac = "";
+    let h = `${fm.n} support component${fm.n === 1 ? "" : "s"} (a pin counts as two). A plate in its plane has three rigid-body motions.<br>`;
+    if (fm.modes.length){
+      const m = fm.modes[0], amax = Math.max(...boundary.map(A => Math.hypot(...ur(m, A)))), one = fm.modes.length === 1;
+      // a solution exists only if the loads do no work on every free motion
+      let fn = 0; for (let A=0;A<M.nnp;A++) fn += Math.hypot(F[2*A], F[2*A+1]);
+      const loadFree = fm.modes.every(mm => {
+        let work = 0, big = 0;
+        for (let A=0;A<M.nnp;A++){ const u = ur(mm, A); work += F[2*A]*u[0] + F[2*A+1]*u[1]; big = Math.max(big, Math.hypot(...u)); }
+        return Math.abs(work) <= 1e-9*Math.max(fn, 1)*big;
+      });
+      h += `<b>A mechanism:</b> the supports leave ${one ? describe(m) : (fm.modes.length === 3 ? "all three rigid-body motions" : "two independent rigid-body motions")} free, so K is singular. `;
+      h += loadFree ? `The loads do no work on ${one ? "this motion" : "these motions"}, so solutions exist, but any amount of ${one ? "it" : "them"} can be added to a solution.`
+                    : `The loads do work on ${one ? "this motion" : "at least one of these motions"}, so there is no static solution: the plate would move.`;
+      h += "<br>Click a node on the boundary to add a support.";
+      read.innerHTML = h;
+      const amp = 0.07*L/amax, t0 = performance.now();
+      const step = now => {
+        const s = Math.sin((now - t0)/420), U = new Float64Array(2*M.nnp);
+        for (let A=0;A<M.nnp;A++){ const u = ur(m, A); U[2*A] = amp*s*u[0]; U[2*A+1] = amp*s*u[1]; }
+        draw(U, null, true); st.anim = requestAnimationFrame(step);
+      };
+      st.anim = requestAnimationFrame(step);
+      return;
+    }
+    const sol = C.solve(M, heat ? elHeat : elPlain, heldSet(), F);
+    if (!sol.ok){ read.innerHTML = h + "<b>The solver could not factor K.</b>"; draw(null, null); return; }
+    const sig = [...Array(M.nel).keys()].map(e => C.centerStress(M, D, sol.U, e, heat ? EPS : null)), vm = sig.map(C.vonMises);
+    const sorted = vm.slice().sort((a, b) => a - b);
+    st.vmax = Math.max(1, 1.1*sorted[Math.floor(0.95*(sorted.length - 1))]);   // so that the spike at a point support does not wash out the rest
+    const umax = Math.max(...sol.U.map(Math.abs)), mag = umax > 0 ? 0.06*L/umax : 0;
+    const U = sol.U.map(v => v*mag), colors = vm.map(v => C.seq(v/st.vmax));
+    // reactions
+    let rmax = 0; sol.R.forEach(v => rmax = Math.max(rmax, Math.abs(v)));
+    let R0 = 0, R1 = 0, RM = 0, F0 = 0, F1 = 0, FM = 0;
+    for (let A=0;A<M.nnp;A++){
+      const x = M.X[A][0]-xc, y = M.X[A][1]-yc;
+      R0 += sol.R[2*A]; R1 += sol.R[2*A+1]; RM += x*sol.R[2*A+1] - y*sol.R[2*A];
+      F0 += F[2*A]; F1 += F[2*A+1]; FM += x*F[2*A+1] - y*F[2*A];
+      for (const i of [0, 1]){
+        const r = sol.R[2*A+i]; if (Math.abs(r) < 1e-6*Math.max(rmax, 1)) continue;
+        const len = 8 + 34*Math.abs(r)/rmax, px = X(M.X[A][0] + U[2*A]), py = Y(M.X[A][1] + U[2*A+1]);
+        const dx = i === 0 ? Math.sign(r) : 0, dy = i === 1 ? -Math.sign(r) : 0;
+        st.reac += C.arrow(px - dx*(len+3), py - dy*(len+3), px - dx*3, py - dy*3, "#0d9488", 2.2);
+      }
+    }
+    const redundant = fm.n - 3;
+    if (redundant === 0){
+      // statics alone: three reactions from three equations of equilibrium
+      const comps = []; st.sup.forEach((c, A) => { if (c & 2) comps.push([A, 0]); if (c & 1) comps.push([A, 1]); });
+      const Am = [[0,0,0],[0,0,0],[0,0,0]];
+      comps.forEach(([A, i], k) => { const x = M.X[A][0]-xc, y = M.X[A][1]-yc; Am[0][k] = i === 0 ? 1 : 0; Am[1][k] = i === 1 ? 1 : 0; Am[2][k] = i === 0 ? -y : x; });
+      const r = solve3(Am, [-F0, -F1, -FM]);
+      h += `<b class="ok">Statically determinate:</b> three support components, and the plate is held. From statics alone, the reactions are ` +
+        comps.map(([A, i], k) => `${kN(r[k])} kN along x${i ? "₁" : "₀"} at node ${A}`).join(", ") +
+        `; the finite element reactions are ` + comps.map(([A, i]) => `${kN(sol.R[2*A+i])} kN`).join(", ") + ".<br>";
+    } else {
+      h += `<b>Statically indeterminate:</b> ${fm.n} support components, ${redundant} more than the three equations of equilibrium can determine, so the reactions depend on the stiffness of the plate.<br>`;
+    }
+    h += `Sum of the reactions: ${kN(R0)} kN along x₀, ${kN(R1)} kN along x₁, and a moment of ${kNm(RM)} kN·m about the center; ` +
+      `sum of the applied loads: ${kN(F0)} kN, ${kN(F1)} kN, and ${kNm(FM)} kN·m.<br>` +
+      `Largest von Mises stress at an element center: <strong>${Math.max(...vm).toFixed(1)} MPa</strong>` + (mag ? `; displacements magnified ${mag.toFixed(0)} times.` : ".");
+    read.innerHTML = h;
+    draw(U, colors);
+  }
+  function solve3(A, b){
+    const M3 = A.map((r, i) => [...r, b[i]]);
+    for (let c=0;c<3;c++){
+      let p = c; for (let r=c+1;r<3;r++) if (Math.abs(M3[r][c]) > Math.abs(M3[p][c])) p = r;
+      [M3[c], M3[p]] = [M3[p], M3[c]];
+      for (let r=0;r<3;r++) if (r !== c){ const f = M3[r][c]/M3[c][c]; for (let k=c;k<4;k++) M3[r][k] -= f*M3[c][k]; }
+    }
+    return [0,1,2].map(i => M3[i][3]/M3[i][i]);
+  }
+  document.getElementById("c29w1svg").addEventListener("click", ev => {
+    const t = ev.target.closest("[data-node]"); if (!t) return;
+    const A = +t.dataset.node, b = onB(A), first = (b.bot || b.top) ? 1 : 2, other = 3 - first;
+    const order = [0, first, other, 3], c = st.sup.get(A) || 0, next = order[(order.indexOf(c) + 1) % 4];
+    if (next) st.sup.set(A, next); else st.sup.delete(A);
+    st.pre = null; render();
+  });
+  document.querySelectorAll("#c29w1 [data-pre]").forEach(b => b.addEventListener("click", () => setPreset(b.dataset.pre)));
+  document.querySelectorAll("#c29w1 [data-load]").forEach(b => b.addEventListener("click", () => { st.load = b.dataset.load; render(); }));
+  setPreset("pinroller");
+})();
+</script>
+<section id="things-to-try" class="level3" data-number="29.4.1">
+<h3 data-number="29.4.1" class="anchored" data-anchor-id="things-to-try"><span class="header-section-number">29.4.1</span> Things to try</h3>
+<ol type="1">
+<li>With the pin and roller, switch among the four loads. The reactions from statics and from the finite element solution agree. Under the equal pulls, the reactions are zero, and under the temperature rise, the plate expands without any stress.</li>
+<li>Press <strong>three parallel rollers</strong>. With the load on the top, the plate can still slide along <span class="math inline">\(x_0\)</span>, but the load does no work on that motion, so solutions exist but are not unique. With the pull on the right end, there is no solution at all.</li>
+<li>Press <strong>roller through the pin</strong>, and watch the plate turn about the pin. Then click the roller at the bottom right corner until it holds <span class="math inline">\(u_1\)</span> instead of <span class="math inline">\(u_0\)</span>, and the plate is held.</li>
+<li>Press <strong>pins at both ends</strong> and choose the temperature rise. The pins prevent the expansion along <span class="math inline">\(x_0\)</span>, and the plate is stressed, with large stresses near the pins. Compare the result with the pin and roller.</li>
+<li>Press <strong>left end clamped</strong> with the pull on the right end, which is the case of <a href="#fig-c29-red" class="quarto-xref">Figure&nbsp;<span>29.2</span></a> b.</li>
+<li>Click nodes to build your own supports. Try to find three support components that still leave a mechanism.</li>
+</ol>
+</section>
+</section>
+<section id="symmetry" class="level2" data-number="29.5">
+<h2 data-number="29.5" class="anchored" data-anchor-id="symmetry"><span class="header-section-number">29.5</span> Symmetry</h2>
+<p>If the geometry, the material, the supports, and the loads of a body are all symmetric about a plane, then so is its displacement: the displacement at any point is the mirror image of the displacement at the mirrored point. Mirroring a vector reverses its component normal to the plane and keeps its tangential component. A point on the plane is its own mirror image, so there the normal component of the displacement must equal its own negative, which means that it is zero. For the same reason, the tangential traction on the plane is zero. A plane of symmetry is therefore modeled as a roller support. On a plane normal to <span class="math inline">\(x_0\)</span>, for example,</p>
+<p><span class="math display">\[
+u_0 = 0 \quad\text{and}\quad h_1 = 0 .
+\]</span></p>
+<p>If the loads are instead <strong>antisymmetric</strong>, so that the mirror image of each load is reversed, then the displacement is the negative of the mirror image. On the plane, the tangential component of the displacement is zero, and so is the normal traction. On a plane normal to <span class="math inline">\(x_0\)</span>,</p>
+<p><span class="math display">\[
+u_1 = 0 \quad\text{and}\quad h_0 = 0 .
+\]</span></p>
+<p><a href="#fig-c29-sym" class="quarto-xref">Figure&nbsp;<span>29.3</span></a> shows both cases for a deep beam, 600 mm long and 150 mm deep, supported at its two bottom corners and loaded on two patches of its top. Half of the beam, with the appropriate conditions on the plane, has the same solution as the whole beam, with half as many unknowns. A body with two planes of symmetry can be modeled by a quarter, as for the plate with a hole in the <a href="../chapters/Elasticity2D_FEM.html">Linear Elasticity II</a> appendix, and a body with more planes by a smaller part still.</p>
+<div id="fig-c29-sym" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c29-sym-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class29/C29_Fig3_Symmetry.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c29-sym-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;29.3: A deep beam on a support at each bottom corner, with a support at the bottom of its midspan that holds <span class="math inline">\(u_0\)</span>. The triangles mark held components and point along them. (a) With the same load on both patches, the displacement at a point is the mirror image of the displacement at the mirrored point, as the orange arrows show: <span class="math inline">\(u_0\)</span> changes sign and <span class="math inline">\(u_1\)</span> does not, so <span class="math inline">\(u_0 = 0\)</span> on the plane of symmetry. (b) With the loads reversed on the right, <span class="math inline">\(u_1\)</span> changes sign and <span class="math inline">\(u_0\)</span> does not, so <span class="math inline">\(u_1 = 0\)</span> on the plane. (c, d) The left half of the beam, with the corresponding component held on the plane, has the same solution as the whole beam, to roundoff. The displacements are magnified.
+</figcaption>
+</figure>
+</div>
+<p>Symmetry conditions require all four of the geometry, the material, the supports, and the loads to be symmetric. A symmetric structure under unsymmetric loads cannot be modeled by half of it with symmetry conditions. However, since the problem is linear, any set of loads can be split into a symmetric part and an antisymmetric part, the average of the loads and their mirror image, and half of the difference. Each part can be solved on half of the body, one with symmetry conditions and the other with antisymmetry conditions, and the two solutions added.</p>
+<p>The modes of vibration and of buckling of a symmetric structure, which later courses consider, need not be symmetric, and many are antisymmetric. Symmetry conditions must be used with care in those problems, since a model of half of the structure with symmetry conditions finds only the symmetric modes.</p>
+</section>
+<section id="symmetry-interactively" class="level2" data-number="29.6">
+<h2 data-number="29.6" class="anchored" data-anchor-id="symmetry-interactively"><span class="header-section-number">29.6</span> Symmetry, interactively</h2>
+<p>The widget below models the beam of <a href="#fig-c29-sym" class="quarto-xref">Figure&nbsp;<span>29.3</span></a> with 32 by 8 elements, in plane stress. The colors show <span class="math inline">\(\sigma_{00}\)</span> at the center of each element, red in tension and blue in compression.</p>
+<ul>
+<li>Use the load buttons to choose symmetric loads, antisymmetric loads, or a load on the left patch only.</li>
+<li>Use the model buttons to solve the whole beam, or its left half with symmetry or antisymmetry conditions on the plane. A half model is drawn with its mirror image on the right, reflected according to its conditions, and the dashed orange outline is the deformed shape of the whole beam for comparison.</li>
+<li><strong>The two halves added</strong> splits the loads into their symmetric and antisymmetric parts, solves each on the left half, and adds the two solutions.</li>
+</ul>
+<div class="c29" id="c29w2">
+  <div class="bar">
+    <b>LOAD</b>
+    <button data-case="sym">symmetric</button>
+    <button data-case="anti">antisymmetric</button>
+    <button data-case="one">left patch only</button>
+    <span class="gap"></span>
+    <b>MODEL</b>
+    <button data-model="full">whole beam</button>
+    <button data-model="symhalf">left half, symmetry</button>
+    <button data-model="antihalf">left half, antisymmetry</button>
+    <button data-model="sum">the two halves added</button>
+  </div>
+  <div class="panel"><svg id="c29w2svg" viewbox="0 0 680 300" role="img" aria-label="A deep beam modeled whole or by half, with symmetry or antisymmetry conditions"></svg></div>
+  <div class="read" id="c29w2read"></div>
+</div>
+<script>
+(function(){
+  const C = window.C29, L = 600, H = 150, T = 10, E = 200000, NU = 0.3, NX = 32, NY = 8, Qp = 10, PW = 75;
+  const D = C.dmat(E, NU), Mf = C.mesh(L, H, NX, NY), Mh = C.mesh(L/2, H, NX/2, NY);
+  const elF = C.elementArrays(Mf, D, T, null), elH = C.elementArrays(Mh, D, T, null);
+  const st = {cs: "sym", model: "full"};
+  const sc = 1.0, ox = 40, oy = 70, X = x => ox + sc*x, Y = y => oy + sc*(H - y);
+  // patch loads on the top edge: [center, sign], sign 1 pushes down
+  const CASES = {sym: [[150, 1], [450, 1]], anti: [[150, 1], [450, -1]], one: [[150, 1]]};
+  function patchLoads(M, parts){
+    const F = new Float64Array(2*M.nnp);
+    for (let i=0;i<M.nx;i++){
+      const xm = M.L*(i+0.5)/M.nx;
+      parts.forEach(([c, s]) => { if (Math.abs(xm - c) < PW/2) C.segmentLoad(F, M, M.node(i, M.ny), M.node(i+1, M.ny), [0, -s*Qp], T); });
+    }
+    return F;
+  }
+  function solveFull(parts){
+    const held = new Set([2*Mf.node(0, 0)+1, 2*Mf.node(NX, 0)+1, 2*Mf.node(NX/2, 0)]);
+    return C.solve(Mf, elF, held, patchLoads(Mf, parts));
+  }
+  function solveHalf(parts, kind){
+    const held = new Set([2*Mh.node(0, 0)+1, 2*Mh.node(NX/2, 0)]);
+    for (let j=0;j<=NY;j++) held.add(2*Mh.node(NX/2, j) + (kind === "sym" ? 0 : 1));
+    return C.solve(Mh, elH, held, patchLoads(Mh, parts.filter(([c]) => c < L/2)));
+  }
+  // the whole-beam displacement from a half solution, by reflection
+  function mirrored(Uh, kind){
+    const U = new Float64Array(2*Mf.nnp);
+    for (let i=0;i<=NX;i++) for (let j=0;j<=NY;j++){
+      const A = Mf.node(i, j), ih = i <= NX/2 ? i : NX - i, B = Mh.node(ih, j);
+      let u0 = Uh[2*B], u1 = Uh[2*B+1];
+      if (i > NX/2){ if (kind === "sym") u0 = -u0; else u1 = -u1; }
+      U[2*A] = u0; U[2*A+1] = u1;
+    }
+    return U;
+  }
+  function render(){
+    document.querySelectorAll("#c29w2 [data-case]").forEach(b => b.setAttribute("aria-pressed", b.dataset.case === st.cs ? "true" : "false"));
+    document.querySelectorAll("#c29w2 [data-model]").forEach(b => b.setAttribute("aria-pressed", b.dataset.model === st.model ? "true" : "false"));
+    const parts = CASES[st.cs], full = solveFull(parts);
+    let U, neq = full.neq, label;
+    if (st.model === "full"){ U = full.U; label = "the whole beam"; }
+    else if (st.model === "symhalf" || st.model === "antihalf"){
+      const kind = st.model === "symhalf" ? "sym" : "anti", h = solveHalf(parts, kind);
+      U = mirrored(h.U, kind); neq = h.neq; label = `the left half with ${kind === "sym" ? "symmetry" : "antisymmetry"} conditions`;
+    } else {
+      // split the loads: the right patch, mirrored onto the left, gives sR
+      const sL = (parts.find(([c]) => c < L/2) || [0, 0])[1], sR = (parts.find(([c]) => c > L/2) || [0, 0])[1];
+      const hs = solveHalf([[150, (sL + sR)/2]], "sym"), ha = solveHalf([[150, (sL - sR)/2]], "anti");
+      const Us = mirrored(hs.U, "sym"), Ua = mirrored(ha.U, "anti");
+      U = Us.map((v, k) => v + Ua[k]); neq = hs.neq; label = "the two halves added";
+    }
+    const umax = Math.max(...full.U.map(Math.abs)), mag = 0.12*H/umax;
+    let diff = 0; U.forEach((v, k) => diff = Math.max(diff, Math.abs(v - full.U[k])));
+    const sig = [...Array(Mf.nel).keys()].map(e => C.centerStress(Mf, D, U, e)[0]);
+    const smax = Math.max(...[...Array(Mf.nel).keys()].map(e => Math.abs(C.centerStress(Mf, D, full.U, e)[0])));
+    // drawing
+    let o = C.el("rect", {x: X(0), y: Y(H), width: sc*L, height: sc*H, fill: "none", stroke: "#9aa3ad", "stroke-dasharray": "4 3"});
+    const P = (A, V) => [X(Mf.X[A][0] + mag*V[2*A]), Y(Mf.X[A][1] + mag*V[2*A+1])];
+    const half = st.model !== "full" && st.model !== "sum";
+    for (let e=0;e<Mf.nel;e++){
+      const [a, b, c, d] = Mf.IEN[e], right = Mf.EC[e][0] > L/2;
+      o += C.el("polygon", {points: [P(a, U), P(b, U), P(d, U), P(c, U)].map(p => p.join(",")).join(" "),
+        fill: C.div(0.5 + 0.5*sig[e]/smax), stroke: "#7d8792", "stroke-width": 0.4, opacity: half && right ? 0.45 : 1});
+    }
+    // the whole beam's deformed outline for comparison
+    const ring = [...[...Array(NX+1).keys()].map(i => Mf.node(i, 0)), ...[...Array(NY+1).keys()].slice(1).map(j => Mf.node(NX, j)),
+                  ...[...Array(NX+1).keys()].reverse().slice(1).map(i => Mf.node(i, NY)), ...[...Array(NY).keys()].reverse().slice(1).map(j => Mf.node(0, j))];
+    if (st.model !== "full") o += C.el("polygon", {points: ring.map(A => P(A, full.U).join(",")).join(" "), fill: "none", stroke: "#e67e22", "stroke-width": 1.8, "stroke-dasharray": "6 4"});
+    o += C.el("line", {x1: X(L/2), y1: Y(H) - 40, x2: X(L/2), y2: Y(0) + 30, stroke: "#59636e", "stroke-width": 1, "stroke-dasharray": "8 3 2 3"});
+    // loads
+    parts.forEach(([c, s]) => { for (const x of [c - 25, c, c + 25]){ const y0 = Y(H) - 6, y1 = Y(H) - 36; o += s > 0 ? C.arrow(X(x), y1, X(x), y0, "#c0392b", 1.4) : C.arrow(X(x), y0, X(x), y1, "#c0392b", 1.4); } });
+    // supports
+    const sup = (x, y, ux, uy) => C.support(X(x), Y(y), ux, uy, "roller", "#1e3a5f");
+    o += sup(0, 0, 0, -1) + sup(L, 0, 0, -1);
+    o += C.el("polygon", {points: `${X(L/2)},${Y(0)+3} ${X(L/2)+11},${Y(0)+9} ${X(L/2)+11},${Y(0)-3}`, fill: "#1e3a5f"});
+    if (half) for (let j=0;j<=NY;j++){
+      const x = X(L/2), y = Y(H*j/NY);
+      o += st.model === "symhalf"
+        ? C.el("polygon", {points: `${x+2},${y} ${x+11},${y-5} ${x+11},${y+5}`, fill: "#1e3a5f"})
+        : C.el("polygon", {points: `${x+7},${y-1} ${x+2},${y+8} ${x+12},${y+8}`, fill: "#1e3a5f"});
+    }
+    for (let k=0;k<=40;k++) o += C.el("rect", {x: 470 + k*3, y: 282, width: 3.1, height: 8, fill: C.div(k/40)});
+    o += C.el("text", {x: 466, y: 290, "text-anchor": "end", "font-size": 11, fill: "#6b7684"}, `σ₀₀ −${smax.toFixed(0)} MPa`);
+    o += C.el("text", {x: 596, y: 290, "font-size": 11, fill: "#6b7684"}, `+${smax.toFixed(0)} MPa`);
+    if (half) o += C.el("text", {x: X(3*L/4), y: Y(0) + 40, "text-anchor": "middle", "font-size": 12, fill: "#6b7684"}, "mirror image of the left half");
+    document.getElementById("c29w2svg").innerHTML = o;
+    // readout
+    const rel = diff/umax, match = rel < 1e-8;
+    let h = `Model: ${label}, with ${neq} equations (the whole beam has ${full.neq}). Displacements magnified ${mag.toFixed(0)} times.<br>`;
+    h += `Largest difference from the whole-beam solution: ${match ? "zero, to roundoff" : (100*rel).toFixed(0) + "% of its largest displacement"}.<br>`;
+    if (!match && st.model === "symhalf") h += "<b>The loads are not symmetric,</b> so the mirror image of the half model is the solution of a different problem, with the left patch's load on both patches.";
+    else if (!match && st.model === "antihalf") h += "<b>The loads are not antisymmetric,</b> so the half model solves a different problem, with the left patch's load reversed on the right.";
+    else if (st.model === "sum") h += `The symmetric part of the loads is the average of the loads and their mirror image, and the antisymmetric part is half of their difference. Since the problem is linear, the two half solutions add to the solution of the whole beam.`;
+    else if (st.model !== "full") h += `<b class="ok">The conditions on the plane match the loads,</b> so the half model gives the whole solution.`;
+    document.getElementById("c29w2read").innerHTML = h;
+  }
+  document.querySelectorAll("#c29w2 [data-case]").forEach(b => b.addEventListener("click", () => { st.cs = b.dataset.case; render(); }));
+  document.querySelectorAll("#c29w2 [data-model]").forEach(b => b.addEventListener("click", () => { st.model = b.dataset.model; render(); }));
+  render();
+})();
+</script>
+<section id="things-to-try-1" class="level3" data-number="29.6.1">
+<h3 data-number="29.6.1" class="anchored" data-anchor-id="things-to-try-1"><span class="header-section-number">29.6.1</span> Things to try</h3>
+<ol type="1">
+<li>With the symmetric loads, compare the whole beam with the left half and symmetry conditions. The solutions are the same, with about half as many equations.</li>
+<li>Choose the antisymmetric loads, and keep the symmetry conditions. The half model is now wrong, since it assumes that the right patch is loaded like the left one. Switch to the antisymmetry conditions.</li>
+<li>Choose the load on the left patch only. Neither half model alone is correct, but <strong>the two halves added</strong> reproduces the whole beam exactly.</li>
+</ol>
+</section>
+</section>
+<section id="supports-that-are-not-aligned-with-the-axes" class="level2" data-number="29.7">
+<h2 data-number="29.7" class="anchored" data-anchor-id="supports-that-are-not-aligned-with-the-axes"><span class="header-section-number">29.7</span> Supports that are not aligned with the axes</h2>
+<p>A plane of symmetry need not be normal to one of the axes. A square plate with a hole at its center, pulled equally on all four edges, has four planes of symmetry: the two axes and the two diagonals (<a href="#fig-c29-inc" class="quarto-xref">Figure&nbsp;<span>29.5</span></a> a). One eighth of the plate is enough to model it, but on its diagonal side, the condition that the normal component of the displacement is zero,</p>
+<p><span class="math display">\[
+\underline{u}\cdot\underline{n} = u_0\,n_0 + u_1\,n_1 = 0 ,
+\]</span></p>
+<p>involves both components at once. Other examples are a roller on a sloping surface, such as a dam on rock that slopes, and a body that rests on a smooth curved surface. The ID array marks each Cartesian component as prescribed or unknown, so it cannot express this condition directly. There are two common ways to impose it.</p>
+<section id="rotating-the-unknowns-at-a-node" class="level3" data-number="29.7.1">
+<h3 data-number="29.7.1" class="anchored" data-anchor-id="rotating-the-unknowns-at-a-node"><span class="header-section-number">29.7.1</span> Rotating the unknowns at a node</h3>
+<p>The first is to <strong>rotate the unknowns</strong> of each node on the inclined surface, so that they become the components along the normal <span class="math inline">\(\underline{n}\)</span> and along the tangent <span class="math inline">\(\underline{t} = (-n_1, n_0)\)</span>:</p>
+<p><span class="math display">\[
+\begin{bmatrix} u_n \\ u_t \end{bmatrix} = \underline{\underline{R}}_A \begin{bmatrix} u_0 \\ u_1 \end{bmatrix},
+\qquad
+\underline{\underline{R}}_A = \begin{bmatrix} n_0 &amp; n_1 \\ -n_1 &amp; n_0 \end{bmatrix} .
+\]</span></p>
+<p>Since <span class="math inline">\(\underline{\underline{R}}_A\)</span> is a rotation, its inverse is its transpose. In each element that contains such a node, the element arrays are transformed as <span class="math inline">\(\underline{\underline{T}}^T\underline{\underline{k}}^e\,\underline{\underline{T}}\)</span> and <span class="math inline">\(\underline{\underline{T}}^T\underline{f}^e\)</span>, where <span class="math inline">\(\underline{\underline{T}}\)</span> is a block-diagonal matrix with <span class="math inline">\(\underline{\underline{R}}_A^T\)</span> in the block of each rotated node and the identity in the others. The normal component <span class="math inline">\(u_n\)</span> is then marked as prescribed in the ID array, and assembly proceeds as before. After the solution, the Cartesian components are recovered from <span class="math inline">\(\underline{\underline{R}}_A^T\)</span>, and the reaction at the node is the force along its normal.</p>
+</section>
+<section id="an-example-with-one-element" class="level3" data-number="29.7.2">
+<h3 data-number="29.7.2" class="anchored" data-anchor-id="an-example-with-one-element"><span class="header-section-number">29.7.2</span> An example with one element</h3>
+<p><a href="#fig-c29-one" class="quarto-xref">Figure&nbsp;<span>29.4</span></a> shows the simplest case. A single square element, 100 mm on a side and 10 mm thick, is pinned at its local node 0, and its local node 1 rests on a roller on a surface inclined at the angle <span class="math inline">\(\alpha\)</span>. A load of 10 kN pushes down on its top, 5 kN at each of nodes 2 and 3. With only one element, the global and local node numbers can be taken to be the same, so <span class="math inline">\(\underline{\underline{k}}^e\)</span> is also the complete stiffness matrix. The outward normal of the surface is <span class="math inline">\(\underline{n} = (\sin\alpha, -\cos\alpha)\)</span>, and the tangent <span class="math inline">\(\underline{t} = (-n_1, n_0) = (\cos\alpha, \sin\alpha)\)</span> points up the slope.</p>
+<p>Only node 1 is rotated, so <span class="math inline">\(\underline{\underline{T}}\)</span> has <span class="math inline">\(\underline{\underline{R}}_1^T\)</span> in the diagonal block of node 1 and the identity in the other three. Since <span class="math inline">\(\underline{\underline{T}}\)</span> is block diagonal, the transformation changes only the blocks in the row and the column of node 1:</p>
+<p><span class="math display">\[
+\left(\underline{\underline{T}}^T\underline{\underline{k}}^e\,\underline{\underline{T}}\right)_{ab} =
+\begin{cases}
+\underline{\underline{R}}_1\,\underline{\underline{k}}^e_{11}\,\underline{\underline{R}}_1^T, &amp; a = b = 1, \\
+\underline{\underline{R}}_1\,\underline{\underline{k}}^e_{1b}, &amp; a = 1,\ b \neq 1, \\
+\underline{\underline{k}}^e_{a1}\,\underline{\underline{R}}_1^T, &amp; a \neq 1,\ b = 1, \\
+\underline{\underline{k}}^e_{ab}, &amp; \text{otherwise.}
+\end{cases}
+\]</span></p>
+<p>The rows and columns <span class="math inline">\(\hat{p} = 2\)</span> and <span class="math inline">\(3\)</span> now belong to <span class="math inline">\(u_n\)</span> and <span class="math inline">\(u_t\)</span> at node 1, instead of <span class="math inline">\(u_0\)</span> and <span class="math inline">\(u_1\)</span> (<a href="#fig-c29-one" class="quarto-xref">Figure&nbsp;<span>29.4</span></a> b). The load vector is transformed in the same way, as <span class="math inline">\(\underline{\underline{T}}^T\underline{f}^e\)</span>, which here leaves it unchanged, since node 1 carries no load.</p>
+<p>The ID array then marks both components at node 0 and the normal component at node 1 as prescribed (<a href="#tbl-c29-one" class="quarto-xref">Table&nbsp;<span>29.2</span></a>).</p>
+<div id="tbl-c29-one" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-c29-one-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;29.2: The unknowns of the example and their equation numbers, with the unknowns of node 1 rotated.
+</figcaption>
+<div aria-describedby="tbl-c29-one-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">local node <span class="math inline">\(a\)</span></th>
+<th style="text-align: center;">0</th>
+<th style="text-align: center;">1</th>
+<th style="text-align: center;">2</th>
+<th style="text-align: center;">3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">first unknown and its equation number</td>
+<td style="text-align: center;"><span class="math inline">\(u_0\)</span>: <span class="math inline">\(-1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(u_n\)</span>: <span class="math inline">\(-1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(u_0\)</span>: 1</td>
+<td style="text-align: center;"><span class="math inline">\(u_0\)</span>: 3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">second unknown and its equation number</td>
+<td style="text-align: center;"><span class="math inline">\(u_1\)</span>: <span class="math inline">\(-1\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(u_t\)</span>: 0</td>
+<td style="text-align: center;"><span class="math inline">\(u_1\)</span>: 2</td>
+<td style="text-align: center;"><span class="math inline">\(u_1\)</span>: 4</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Since every prescribed value is zero, assembly simply leaves out the rows and columns <span class="math inline">\(\hat{p} = 0\)</span>, 1, and 2, and the <span class="math inline">\(5 \times 5\)</span> system that remains has the unknowns <span class="math inline">\(u_t\)</span> at node 1 and both components at nodes 2 and 3. After the solution, the Cartesian displacement of node 1 is <span class="math inline">\(\underline{\underline{R}}_1^T\,(0, u_t)^T = u_t\,\underline{t}\)</span>, which lies along the surface, and the reaction in row <span class="math inline">\(\hat{p} = 2\)</span> is the force that the surface applies to the element along <span class="math inline">\(\underline{n}\)</span>. For <span class="math inline">\(\alpha = 30°\)</span>, node 1 slides 3.30 µm down the slope, and the surface pushes on the element with 5.77 kN normal to it. The pin carries 2.89 kN along <span class="math inline">\(x_0\)</span> and 5.00 kN along <span class="math inline">\(x_1\)</span>, and together with the load, these reactions satisfy the three equations of equilibrium.</p>
+<div id="fig-c29-one" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c29-one-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class29/C29_Fig_OneElement.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c29-one-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;29.4: (a) A square element, pinned at node 0, with node 1 on a roller on a surface inclined at <span class="math inline">\(\alpha = 30°\)</span>, and 5 kN pushing down at nodes 2 and 3. At node 1, the unknowns are the components along the normal <span class="math inline">\(\underline{n}\)</span> and the tangent <span class="math inline">\(\underline{t}\)</span> of the surface. (b) The element stiffness matrix after the rotation, in its <span class="math inline">\(2 \times 2\)</span> blocks: only the blocks in the row and column of node 1 change (shaded), and its rows 2 and 3 now belong to <span class="math inline">\(u_n\)</span> and <span class="math inline">\(u_t\)</span>. The rows and columns of the three prescribed components (gray) are left out in assembly, which leaves a <span class="math inline">\(5 \times 5\)</span> system. (c) The deformed element, magnified: node 1 slides along the surface, and the surface pushes on it along its normal.
+</figcaption>
+</figure>
+</div>
+<p>The widget below repeats the example for any angle of the surface, with every number shown. It shows <span class="math inline">\(\underline{\underline{k}}^e\)</span> before or after the rotation, in units of <span class="math inline">\(10^6\)</span> N/mm, with the rows and columns of node 1 shaded, and then the <span class="math inline">\(5 \times 5\)</span> system that assembly produces and its solution.</p>
+<div class="c29" id="c29w4">
+  <div class="bar">
+    <b>ANGLE OF THE SURFACE</b>
+    <input type="range" id="c29w4a" min="-45" max="60" step="5" value="30"><span class="val" id="c29w4av"></span>
+    <span class="gap"></span>
+    <b>ELEMENT MATRIX</b>
+    <button data-show="before">before the rotation</button>
+    <button data-show="after">after the rotation</button>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start">
+    <div class="panel" style="flex:1 1 280px;max-width:340px"><svg id="c29w4svg" viewbox="0 0 330 300" role="img" aria-label="A square element pinned at one corner and on an inclined roller at another, deformed"></svg></div>
+    <div class="panel" style="flex:1 1 420px;overflow-x:auto"><div class="h29" id="c29w4kh"></div><div id="c29w4k"></div></div>
+  </div>
+  <div class="panel" style="overflow-x:auto"><div class="h29">The system after assembly, with only the rows and columns of the unknowns: K in units of 10⁶ N/mm, F in kN, and the solution d in µm; the shaded row and column belong to node 1</div><div id="c29w4sys"></div></div>
+  <div class="read" id="c29w4read"></div>
+</div>
+<script>
+(function(){
+  const C = window.C29, E = 200000, NU = 0.3, T = 10, LX = 100, P = 10000;
+  const D = C.dmat(E, NU), ke = C.elementArrays({hx: LX, hy: LX}, D, T, null).k;     // local nodes by the stride rule
+  const X = [[0, 0], [LX, 0], [0, LX], [LX, LX]];
+  const st = {a: 30, show: "after"};
+  const mul = (A, B) => A.map(r => B[0].map((_, j) => r.reduce((s, v, k) => s + v*B[k][j], 0)));
+  const tr = A => A[0].map((_, j) => A.map(r => r[j]));
+  const num = (v, k) => { const s = (Math.abs(v) < 0.5*10**-k ? 0 : v).toFixed(k); return s.replace("-", "−"); };
+  function solveDense(A0, b0){
+    const n = b0.length, A = A0.map((r, i) => [...r, b0[i]]);
+    for (let c=0;c<n;c++){
+      let p = c; for (let r=c+1;r<n;r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+      [A[c], A[p]] = [A[p], A[c]];
+      for (let r=c+1;r<n;r++){ const f = A[r][c]/A[c][c]; for (let k=c;k<=n;k++) A[r][k] -= f*A[c][k]; }
+    }
+    const x = new Array(n).fill(0);
+    for (let i=n-1;i>=0;i--){ let v = A[i][n]; for (let k=i+1;k<n;k++) v -= A[i][k]*x[k]; x[i] = v/A[i][i]; }
+    return x;
+  }
+  function compute(){
+    const a = st.a*Math.PI/180, n = [Math.sin(a), -Math.cos(a)], t = [-n[1], n[0]], R = [[n[0], n[1]], [-n[1], n[0]]];
+    const Tm = Array.from({length: 8}, (_, i) => Array.from({length: 8}, (_, j) => i === j ? 1 : 0));
+    Tm[2][2] = R[0][0]; Tm[2][3] = R[1][0]; Tm[3][2] = R[0][1]; Tm[3][3] = R[1][1];          // the block R^T of node 1
+    const kr = mul(tr(Tm), mul(ke, Tm));
+    const F = [0, 0, 0, 0, 0, -P/2, 0, -P/2];                                                 // T^T F = F: node 1 has no load
+    const free = [3, 4, 5, 6, 7];
+    const K = free.map(p => free.map(q => kr[p][q])), Fr = free.map(p => F[p]);
+    const df = solveDense(K, Fr), d = new Array(8).fill(0); free.forEach((p, k) => d[p] = df[k]);
+    const U = [0, 1, 2, 3].map(A => A === 1 ? [R[0][0]*d[2] + R[1][0]*d[3], R[0][1]*d[2] + R[1][1]*d[3]] : [d[2*A], d[2*A+1]]);
+    const Rx = kr.map((row, p) => row.reduce((s, v, q) => s + v*d[q], 0) - F[p]);
+    return {n, t, kr, K, Fr, d, U, Rx, free};
+  }
+  function render(){
+    document.getElementById("c29w4av").textContent = `${st.a}°`;
+    document.querySelectorAll("#c29w4 [data-show]").forEach(b => b.setAttribute("aria-pressed", b.dataset.show === st.show ? "true" : "false"));
+    const r = compute(), after = st.show === "after", M = after ? r.kr : ke;
+    // the matrix
+    const lab = p => { const a = p >> 1, i = p & 1; return `${p} (${a}, ${a === 1 && after ? (i ? "t" : "n") : i})`; };
+    let h = `<table class="m"><tr><th>p̂ (a, i)</th>${[...Array(8).keys()].map(q => `<th>${q}</th>`).join("")}</tr>`;
+    for (let p=0;p<8;p++){
+      h += `<tr><th>${lab(p)}</th>`;
+      for (let q=0;q<8;q++){
+        const nfix = after ? 3 : 2, out = p < nfix || q < nfix, rot = (p >> 1) === 1 || (q >> 1) === 1;   // gray: prescribed
+        h += `<td class="${out ? "out" : rot ? "rot" : ""}">${num(M[p][q]/1e6, 3)}</td>`;
+      }
+      h += "</tr>";
+    }
+    document.getElementById("c29w4k").innerHTML = h + "</table>";
+    document.getElementById("c29w4kh").textContent = after
+      ? "Tᵀ kᵉ T, after the rotation: shaded entries changed; gray rows and columns are prescribed"
+      : "kᵉ, before the rotation: gray rows and columns are prescribed (node 0 is pinned); the shaded ones, those of node 1, are the ones the rotation changes, since its condition involves both u₀ and u₁, neither of which can be marked as prescribed";
+    // the system
+    const names = ["uₜ at node 1", "u₀ at node 2", "u₁ at node 2", "u₀ at node 3", "u₁ at node 3"];
+    let g = `<table class="m"><tr><th>P</th><th>unknown</th>${[0,1,2,3,4].map(Q => `<th>${Q}</th>`).join("")}<th>F (kN)</th><th>d (µm)</th></tr>`;
+    for (let P_=0;P_<5;P_++){
+      g += `<tr><th>${P_}</th><th>${names[P_]}</th>${r.K[P_].map((v, Q) => `<td class="${P_ === 0 || Q === 0 ? "rot" : ""}">${num(v/1e6, 3)}</td>`).join("")}<td>${num(r.Fr[P_]/1000, 2)}</td><td>${num(r.d[r.free[P_]]*1000, 3)}</td></tr>`;
+    }
+    document.getElementById("c29w4sys").innerHTML = g + "</table>";
+    // the drawing
+    const sc = 1.25, ox = 70, oy = 205, Xs = x => ox + sc*x, Ys = y => oy - sc*y;
+    const umax = Math.max(...r.U.flat().map(Math.abs)), mag = 14/(sc*umax);
+    const Pd = A => [Xs(X[A][0] + mag*r.U[A][0]), Ys(X[A][1] + mag*r.U[A][1])];
+    const sq = f => [0, 1, 3, 2].map(A => f(A).join(",")).join(" ");
+    let o = C.el("polygon", {points: sq(A => [Xs(X[A][0]), Ys(X[A][1])]), fill: "none", stroke: "#18202b", "stroke-dasharray": "6 4", "stroke-width": 1.1});
+    o += C.el("polygon", {points: sq(Pd), fill: "#e3eef8", stroke: "#5a4632", "stroke-width": 1.6, opacity: 0.92});
+    // the inclined surface and the roller, at the deformed node 1
+    const [x1, y1] = Pd(1), ns = [r.n[0], -r.n[1]], ts = [r.t[0], -r.t[1]], gx = x1 + 16.2*ns[0], gy = y1 + 16.2*ns[1];
+    o += C.el("line", {x1: gx - 75*ts[0], y1: gy - 75*ts[1], x2: gx + 75*ts[0], y2: gy + 75*ts[1], stroke: "#1e3a5f", "stroke-width": 1.6});
+    for (let k=-70;k<=70;k+=12) o += C.el("line", {x1: gx + k*ts[0], y1: gy + k*ts[1], x2: gx + k*ts[0] + 6*ns[0] - 4*ts[0], y2: gy + k*ts[1] + 6*ns[1] - 4*ts[1], stroke: "#1e3a5f", "stroke-width": 0.8});
+    o += C.support(x1, y1, -ns[0], -ns[1], "roller", "#1e3a5f");
+    o += C.support(Xs(0), Ys(0), 0, -1, "pin", "#1e3a5f");
+    o += C.arrow(x1, y1, x1 + 30*ns[0], y1 + 30*ns[1], "#7c3aed", 1.6) + C.el("text", {x: x1 + 36*ns[0] + 4, y: y1 + 36*ns[1] + 4, "font-size": 13, fill: "#7c3aed"}, "n");
+    o += C.arrow(x1, y1, x1 + 30*ts[0], y1 + 30*ts[1], "#e67e22", 1.6) + C.el("text", {x: x1 + 38*ts[0], y: y1 + 38*ts[1] + 4, "font-size": 13, fill: "#e67e22"}, "t");
+    for (const A of [2, 3]){ const [x, y] = Pd(A); o += C.arrow(x, y - 32, x, y - 3, "#1f6feb", 1.5); }
+    // reactions: the pin's two components, and the surface's push along its normal
+    const green = "#0d9488", rmax = Math.max(Math.abs(r.Rx[0]), Math.abs(r.Rx[1]), Math.abs(r.Rx[2]));
+    const L = v => 10 + 30*Math.abs(v)/rmax;
+    const [x0, y0] = Pd(0);
+    if (Math.abs(r.Rx[0]) > 1e-6*rmax){ const s = Math.sign(r.Rx[0]); o += C.arrow(x0 - s*(L(r.Rx[0]) + 3), y0 + 4, x0 - s*3, y0 + 4, green, 2); }
+    if (Math.abs(r.Rx[1]) > 1e-6*rmax){ const s = Math.sign(r.Rx[1]); o += C.arrow(x0 - 8, y0 + s*(L(r.Rx[1]) + 3), x0 - 8, y0 + s*3, green, 2); }
+    const fs = Math.sign(r.Rx[2]), fx = fs*ns[0], fy = fs*ns[1];
+    o += C.arrow(x1 + 3*fx, y1 + 3*fy, x1 + (L(r.Rx[2]) + 3)*fx, y1 + (L(r.Rx[2]) + 3)*fy, green, 2);
+    o += C.el("text", {x: 12, y: 290, "font-size": 11, fill: "#6b7684"}, `loads in blue, reactions in green; displacements magnified ${mag.toFixed(0)} times`);
+    document.getElementById("c29w4svg").innerHTML = o;
+    // the readout
+    const un = r.U[1][0]*r.n[0] + r.U[1][1]*r.n[1];
+    const sumx = r.Rx[0] + r.Rx[2]*r.n[0], sumy = r.Rx[1] + r.Rx[2]*r.n[1] - P;
+    document.getElementById("c29w4read").innerHTML =
+      `n = (${num(r.n[0], 3)}, ${num(r.n[1], 3)}) and t = (${num(r.t[0], 3)}, ${num(r.t[1], 3)}).<br>` +
+      `Node 1 moves uₜ = ${num(r.d[3]*1000, 3)} µm along t, so its Cartesian displacement is (${num(r.U[1][0]*1000, 3)}, ${num(r.U[1][1]*1000, 3)}) µm, and u · n = ${num(un*1000, 6)} µm, as prescribed.<br>` +
+      `The surface pushes on node 1 with ${num(Math.abs(r.Rx[2])/1000, 2)} kN along its normal, and the pin with ${num(r.Rx[0]/1000, 2)} kN along x₀ and ${num(r.Rx[1]/1000, 2)} kN along x₁. ` +
+      `With the 10 kN load, the forces sum to (${num(sumx/1000, 2)}, ${num(sumy/1000, 2)}) kN.`;
+  }
+  document.getElementById("c29w4a").addEventListener("input", ev => { st.a = +ev.target.value; render(); });
+  document.querySelectorAll("#c29w4 [data-show]").forEach(b => b.addEventListener("click", () => { st.show = b.dataset.show; render(); }));
+  render();
+})();
+</script>
+<section id="things-to-try-2" class="level4" data-number="29.7.2.1">
+<h4 data-number="29.7.2.1" class="anchored" data-anchor-id="things-to-try-2"><span class="header-section-number">29.7.2.1</span> Things to try</h4>
+<ol type="1">
+<li>Change the angle of the surface. Node 1 always moves along the surface, and the reaction there stays normal to it, while only the shaded entries of the matrix change.</li>
+<li>Set the angle to 0°. The surface is horizontal, <span class="math inline">\(\underline{n} = (0, -1)\)</span>, and <span class="math inline">\(\underline{t} = (1, 0)\)</span>, so <span class="math inline">\(u_n = -u_1\)</span> and <span class="math inline">\(u_t = u_0\)</span>: the rotated matrix has the same entries as the original, with the rows and columns of node 1 swapped and some of their signs changed.</li>
+<li>Compare the matrix before and after the rotation. The blocks outside the row and the column of node 1 are identical.</li>
+</ol>
+</section>
+</section>
+<section id="a-stiff-spring-along-the-normal" class="level3" data-number="29.7.3">
+<h3 data-number="29.7.3" class="anchored" data-anchor-id="a-stiff-spring-along-the-normal"><span class="header-section-number">29.7.3</span> A stiff spring along the normal</h3>
+<p>The second way is to hold the surface with a stiff spring along <span class="math inline">\(\underline{n}\)</span>, a Robin condition whose stiffness acts only in the normal direction. It adds the boundary term <span class="math inline">\(\int N_a\,k_s\,\underline{n}\,\underline{n}^T N_b\,d\Gamma\)</span> to the <span class="math inline">\(2 \times 2\)</span> blocks of <span class="math inline">\(\underline{\underline{k}}^e\)</span> and leaves the unknowns as they are. This is called the <strong>penalty method</strong>. The condition is satisfied only approximately, with an error that decreases in proportion to <span class="math inline">\(1/k_s\)</span>, and as in <a href="../chapters/23_Class.html">Class 23</a>, a spring that is too stiff makes the matrix badly conditioned.</p>
+</section>
+<section id="a-plate-with-an-inclined-plane-of-symmetry" class="level3" data-number="29.7.4">
+<h3 data-number="29.7.4" class="anchored" data-anchor-id="a-plate-with-an-inclined-plane-of-symmetry"><span class="header-section-number">29.7.4</span> A plate with an inclined plane of symmetry</h3>
+<p><a href="#fig-c29-inc" class="quarto-xref">Figure&nbsp;<span>29.5</span></a> shows the plate, 200 mm square, with a hole 25 mm in diameter, pulled by 50 MPa on every edge, and modeled with biquadratic elements. The eighth with rotated unknowns and the quarter with ordinary Cartesian supports give the same stress around the hole, between 102.1 and 102.4 MPa. This is close to the value <span class="math inline">\(2s = 100\)</span> MPa for a hole in an infinite plate under equal pulls <span class="math inline">\(s\)</span> in both directions. With a spring of stiffness 100 <span class="math inline">\(E/a\)</span>, where <span class="math inline">\(a\)</span> is the radius of the hole, the largest normal displacement on the diagonal is 0.34% of the largest displacement in the plate, and with <span class="math inline">\(10^4\,E/a\)</span>, it is 0.0035%. At about <span class="math inline">\(10^6\,E/a\)</span>, the matrix becomes so badly conditioned that the solver used here reports it as singular.</p>
+<div id="fig-c29-inc" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c29-inc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class29/C29_Fig4_Inclined.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c29-inc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;29.5: (a) A square plate with a hole, pulled equally on all four edges, has four planes of symmetry, shown dash-dotted, so one eighth (shaded) is enough to model it. (b) The eighth, deformed and magnified (blue), over its undeformed mesh (gray). On the axis, <span class="math inline">\(u_1 = 0\)</span>, and on the diagonal, the unknowns of each node are rotated and <span class="math inline">\(\underline{u}\cdot\underline{n} = 0\)</span> is prescribed: the nodes slide along the diagonal but do not leave it. (c) The stress <span class="math inline">\(\sigma_{\theta\theta}\)</span> around the hole from the quarter with Cartesian supports and from the eighth with rotated unknowns. They agree, and both are close to <span class="math inline">\(2s\)</span>, the value for an infinite plate. (d) Holding the diagonal by a spring along <span class="math inline">\(\underline{n}\)</span> instead: the normal displacement on the diagonal decreases in proportion to <span class="math inline">\(1/k_s\)</span>.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="saint-venants-principle" class="level2" data-number="29.8">
+<h2 data-number="29.8" class="anchored" data-anchor-id="saint-venants-principle"><span class="header-section-number">29.8</span> Saint-Venant’s principle</h2>
+<p>The precise way in which a load is applied, or in which a support holds a body, is rarely known. <strong>Saint-Venant’s principle</strong> states that two sets of loads with the same resultant force and the same resultant moment, applied over the same small part of the boundary, produce stresses that differ appreciably only near where they are applied. At a distance greater than about the size of the loaded region, which for a slender member is about its depth, the stresses are nearly the same. This is why the idealizations of structural analysis, such as point loads, pins, and fixed ends, give accurate results away from the loads and supports, and why beam theory can ignore how the load at the end of a beam is distributed.</p>
+<p><a href="#fig-c29-sv" class="quarto-xref">Figure&nbsp;<span>29.6</span></a> a shows the cantilever of the <a href="../chapters/Elasticity2D.html">Linear Elasticity I</a> appendix, 400 mm long and 100 mm deep, once with the end conditions of the exact solution of Timoshenko and Goodier, and once with its left end clamped. The two idealizations of the wall give stresses that differ by a large fraction of the largest bending stress at the wall itself, but within one depth of the wall, the difference has fallen to about <span class="math inline">\(10^{-4}\)</span> of it, and further along the beam, it continues to decrease rapidly (<a href="#fig-c29-sv" class="quarto-xref">Figure&nbsp;<span>29.6</span></a> b).</p>
+<p>Concentrated loads and supports are the extreme case. In two dimensions, a force applied at a point produces a stress inversely proportional to the distance from the point, so the stress at the point is infinite, and so is the displacement. A finite element model that applies a force at a single node therefore has no converged value of the stress there. In <a href="#fig-c29-sv" class="quarto-xref">Figure&nbsp;<span>29.6</span></a> c, a 10 kN load on top of a block, applied at one node, gives a largest stress that doubles each time the mesh is refined, from 34 MPa to 270 MPa, while the same load spread over 50 mm converges to 20.8 MPa. The corners of the clamp in <a href="#fig-c29-red" class="quarto-xref">Figure&nbsp;<span>29.2</span></a> and the re-entrant corners of the W-shape in the <a href="../chapters/Elasticity2D_FEM.html">Linear Elasticity II</a> appendix behave in the same way.</p>
+<p>In practice, the stresses at a distance from point loads, point supports, and idealized connections can be trusted. Near them, either the actual detail, such as a bearing plate or the contact of a bolt, must be modeled, or the peak value should not be reported.</p>
+<div id="fig-c29-sv" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c29-sv-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class29/C29_Fig5_SaintVenant.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c29-sv-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;29.6: (a) The cantilever with its left end clamped, compared with the same cantilever with the exact end conditions: the change in <span class="math inline">\(\sigma_{00}\)</span>, as a percentage of the largest bending stress, which is concentrated at the wall. (b) The largest change in any stress component at each distance from the wall, relative to the largest bending stress, on a logarithmic scale. Beyond about one depth, the two idealizations give nearly the same stresses. (c) A 10 kN load pushing down on the middle of the top of a block, 200 mm by 100 mm, on rollers: the largest <span class="math inline">\(|\sigma_{11}|\)</span> at a Gauss point grows in proportion to the number of elements when the load is applied at one node, and converges when it is spread over 50 mm.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="saint-venants-principle-interactively" class="level2" data-number="29.9">
+<h2 data-number="29.9" class="anchored" data-anchor-id="saint-venants-principle-interactively"><span class="header-section-number">29.9</span> Saint-Venant’s principle, interactively</h2>
+<p>The widget below models a strip 600 mm long and 100 mm deep, with 48 by 8 elements, pulled at its right end by a total force of 50 kN. Every distribution of the pull has the same resultant: 50 kN along <span class="math inline">\(x_0\)</span>, through the middle of the end. If the pull is spread evenly over the end and the left end is on rollers, the stress is the uniform <span class="math inline">\(\sigma_{00} = 50\)</span> MPa. The colors show <span class="math inline">\(\sigma_{00}\)</span> at the center of each element, white at 50 MPa, and the graph shows, at each distance along the strip, the largest difference between any stress component and the uniform stress, relative to 50 MPa.</p>
+<ul>
+<li>Use the load buttons to change how the pull is distributed over the right end, and the slider to change the width of the patch.</li>
+<li>Use the support buttons to put the left end on rollers, with its midpoint held in <span class="math inline">\(u_1\)</span>, or to clamp it.</li>
+</ul>
+<div class="c29" id="c29w3">
+  <div class="bar">
+    <b>PULL</b>
+    <button data-dist="even">spread evenly</button>
+    <button data-dist="patch">on a patch at the middle</button>
+    <button data-dist="corners">at the two corners</button>
+    <button data-dist="node">at the middle node</button>
+    <span class="gap"></span>
+    <b>PATCH</b>
+    <input type="range" id="c29w3w" min="1" max="4" step="1" value="2"><span class="val" id="c29w3wv"></span>
+  </div>
+  <div class="bar">
+    <b>LEFT END</b>
+    <button data-left="rollers">on rollers</button>
+    <button data-left="clamped">clamped</button>
+  </div>
+  <div class="panel"><svg id="c29w3svg" viewbox="0 0 680 400" role="img" aria-label="A strip pulled at its right end, its stress, and the distance over which the stress differs from the uniform value"></svg></div>
+  <div class="read" id="c29w3read"></div>
+</div>
+<script>
+(function(){
+  const C = window.C29, L = 600, H = 100, T = 10, E = 200000, NU = 0.3, NX = 48, NY = 8, S = 50, P = S*H*T;
+  const D = C.dmat(E, NU), M = C.mesh(L, H, NX, NY), elK = C.elementArrays(M, D, T, null);
+  const st = {dist: "patch", left: "rollers", w: 2};
+  const sc = 0.92, ox = 72, oy = 40, X = x => ox + sc*x, Y = y => oy + sc*(H - y);
+  const gx0 = X(0), gx1 = X(L), gy0 = 200, gy1 = 360, LO = -4, HI = 1;     // the graph lies under the strip
+  const GX = x => gx0 + (gx1 - gx0)*x/(L/H), GY = v => gy1 - (gy1 - gy0)*(Math.log10(Math.max(v, 10**LO)) - LO)/(HI - LO);
+  function rightLoads(){
+    const F = new Float64Array(2*M.nnp), seg = (j, q) => C.segmentLoad(F, M, M.node(NX, j), M.node(NX, j+1), [q, 0], T), h = H/NY;
+    if (st.dist === "even") for (let j=0;j<NY;j++) seg(j, S);
+    if (st.dist === "patch"){ const k = st.w; for (let j=NY/2-k;j<NY/2+k;j++) seg(j, P/(2*k*h*T)); }
+    if (st.dist === "corners"){ seg(0, P/(2*h*T)); seg(NY-1, P/(2*h*T)); }
+    if (st.dist === "node") F[2*M.node(NX, NY/2)] += P;
+    return F;
+  }
+  function render(){
+    document.querySelectorAll("#c29w3 [data-dist]").forEach(b => b.setAttribute("aria-pressed", b.dataset.dist === st.dist ? "true" : "false"));
+    document.querySelectorAll("#c29w3 [data-left]").forEach(b => b.setAttribute("aria-pressed", b.dataset.left === st.left ? "true" : "false"));
+    document.getElementById("c29w3wv").textContent = `${2*st.w*H/NY} mm`;
+    document.getElementById("c29w3w").disabled = st.dist !== "patch";
+    const held = new Set();
+    for (let j=0;j<=NY;j++){ held.add(2*M.node(0, j)); if (st.left === "clamped") held.add(2*M.node(0, j)+1); }
+    held.add(2*M.node(0, NY/2)+1);
+    const sol = C.solve(M, elK, held, rightLoads());
+    const sig = [...Array(M.nel).keys()].map(e => C.centerStress(M, D, sol.U, e));
+    const dev = sig.map(s => Math.max(Math.abs(s[0] - S), Math.abs(s[1]), Math.abs(s[2]))/S);
+    const col = new Array(NX).fill(0); dev.forEach((v, e) => { const i = M.EIJ[e][0]; col[i] = Math.max(col[i], v); });
+    let o = "";
+    for (let e=0;e<M.nel;e++){
+      const [a, b, c, d] = M.IEN[e], pt = A => `${X(M.X[A][0])},${Y(M.X[A][1])}`;
+      o += C.el("polygon", {points: [pt(a), pt(b), pt(d), pt(c)].join(" "), fill: C.div(0.5 + 0.5*(sig[e][0] - S)/S), stroke: "#c9ced6", "stroke-width": 0.4});
+    }
+    o += C.el("rect", {x: X(0), y: Y(H), width: sc*L, height: sc*H, fill: "none", stroke: "#18202b", "stroke-width": 1});
+    for (let j=0;j<=NY;j+=2){                // a symbol at every other node, to keep them apart
+      const y = Y(H*j/NY);
+      o += C.support(X(0), y, 1, 0, st.left === "clamped" || j === NY/2 ? "pin" : "roller", "#1e3a5f");
+    }
+    // the pull
+    const F = rightLoads(), fmax = Math.max(...[...Array(NY+1).keys()].map(j => F[2*M.node(NX, j)]));
+    for (let j=0;j<=NY;j++){ const f = F[2*M.node(NX, j)]; if (f > 1e-9) o += C.arrow(X(L) + 3, Y(H*j/NY), X(L) + 3 + 28*f/fmax, Y(H*j/NY), "#c0392b", 1.6); }
+    for (let k=0;k<=40;k++) o += C.el("rect", {x: 440 + k*3, y: 152, width: 3.1, height: 8, fill: C.div(k/40)});
+    o += C.el("text", {x: 436, y: 160, "text-anchor": "end", "font-size": 11, fill: "#6b7684"}, "σ₀₀  0");
+    o += C.el("text", {x: 566, y: 160, "font-size": 11, fill: "#6b7684"}, "100 MPa");
+    // the graph
+    o += C.el("line", {x1: gx0, y1: gy1, x2: gx1, y2: gy1, stroke: "#59636e"}) + C.el("line", {x1: gx0, y1: gy0, x2: gx0, y2: gy1, stroke: "#59636e"});
+    const TICK = {"-4": "10⁻⁴", "-3": "10⁻³", "-2": "10⁻²", "-1": "10⁻¹", "0": "1", "1": "10"};
+    for (let p=LO;p<=HI;p++){ const y = GY(10**p); o += C.el("line", {x1: gx0 - 4, y1: y, x2: gx1, y2: y, stroke: "#eef0f3"}) + C.el("text", {x: gx0 - 7, y: y + 4, "text-anchor": "end", "font-size": 11, fill: "#6b7684"}, TICK[p]); }
+    for (let x=0;x<=6;x++) o += C.el("text", {x: GX(x), y: gy1 + 15, "text-anchor": "middle", "font-size": 11, fill: "#6b7684"}, x);
+    o += C.el("text", {x: (gx0 + gx1)/2, y: gy1 + 32, "text-anchor": "middle", "font-size": 12, fill: "#42506a"}, "distance from the left end, in depths of the strip");
+    o += C.el("text", {x: 14, y: (gy0 + gy1)/2, "text-anchor": "middle", "font-size": 12, fill: "#42506a", transform: `rotate(-90 14 ${(gy0 + gy1)/2})`}, "largest difference / 50 MPa");
+    for (const x of [1, L/H - 1]) o += C.el("line", {x1: GX(x), y1: gy0, x2: GX(x), y2: gy1, stroke: "#9aa3ad", "stroke-dasharray": "3 3"});
+    o += C.el("polyline", {points: col.map((v, i) => `${GX((i + 0.5)*L/NX/H).toFixed(1)},${GY(v).toFixed(1)}`).join(" "), fill: "none", stroke: "#c0392b", "stroke-width": 2});
+    document.getElementById("c29w3svg").innerHTML = o;
+    const at = d => col[Math.min(NX-1, Math.max(0, Math.floor((L - d*H)/(L/NX))))];    // the column of elements at d depths from the right end
+    const peak = Math.max(...sig.map(s => s[0]));
+    document.getElementById("c29w3read").innerHTML =
+      `Largest σ₀₀ at an element center: <strong>${peak.toFixed(1)} MPa</strong>.<br>` +
+      `Largest difference from the uniform stress, relative to 50 MPa, at a half depth from the loaded end: ${(100*at(0.5)).toFixed(1)}%; ` +
+      `at one depth: ${(100*at(1)).toFixed(2)}%; at two depths: ${(100*at(2)).toFixed(3)}%.`;
+  }
+  document.querySelectorAll("#c29w3 [data-dist]").forEach(b => b.addEventListener("click", () => { st.dist = b.dataset.dist; render(); }));
+  document.querySelectorAll("#c29w3 [data-left]").forEach(b => b.addEventListener("click", () => { st.left = b.dataset.left; render(); }));
+  document.getElementById("c29w3w").addEventListener("input", ev => { st.w = +ev.target.value; render(); });
+  render();
+})();
+</script>
+<section id="things-to-try-3" class="level3" data-number="29.9.1">
+<h3 data-number="29.9.1" class="anchored" data-anchor-id="things-to-try-3"><span class="header-section-number">29.9.1</span> Things to try</h3>
+<ol type="1">
+<li>Switch among the four ways of applying the pull. Each has the same resultant, so away from the right end, the stresses are the same. Whichever way the pull is applied, the difference from the uniform stress is less than 10% at one depth from the end and about 0.1% at two depths.</li>
+<li>Make the patch narrower. The peak stress near the end rises, but the region it affects stays about one depth long.</li>
+<li>Apply the pull at the middle node. The stress at the node is limited only by the size of the elements next to it, as in <a href="#fig-c29-sv" class="quarto-xref">Figure&nbsp;<span>29.6</span></a> c.</li>
+<li>Clamp the left end. A second disturbed region appears at the left end, also about one depth long, where the clamp prevents the Poisson contraction.</li>
+</ol>
+</section>
+</section>
+<section id="summary" class="level2" data-number="29.10">
+<h2 data-number="29.10" class="anchored" data-anchor-id="summary"><span class="header-section-number">29.10</span> Summary</h2>
+<ul>
+<li>Each kind of boundary condition is imposed as for the Poisson Equation, one component at a time. The Robin condition describes an elastic support, such as soil or a bearing pad.</li>
+<li>The three rigid-body motions in two dimensions, two translations and a rotation, produce no strain, so the supports must prevent all of them. Three support components do this unless their lines of action are all parallel or all pass through one point; otherwise the model is a mechanism and its stiffness matrix is singular.</li>
+<li>A body that is not supported has a solution only if its loads are in equilibrium, the elastic counterpart of the condition on a body with only Neumann boundaries in Class 23.</li>
+<li>Statically determinate supports have exactly three components, their reactions follow from statics alone, and they cause no stress of their own. Redundant supports can resist deformation, such as the Poisson contraction or a thermal expansion, and so cause stress, which can be infinite at corners.</li>
+<li>The reactions are computed from the rows of the complete stiffness matrix for the prescribed components, and they are a check on the loads and, for determinate supports, on the analysis.</li>
+<li>A plane of symmetry has zero normal displacement and zero tangential traction, and a plane of antisymmetry has zero tangential displacement and zero normal traction. Any loading can be split into symmetric and antisymmetric parts and each solved on half of the body.</li>
+<li>A support that is not aligned with the axes, such as an inclined plane of symmetry, is imposed by rotating the unknowns of its nodes to normal and tangential components, or approximately by a stiff spring, the penalty method.</li>
+<li>By Saint-Venant’s principle, statically equivalent loads give nearly the same stresses beyond about the size of the loaded region. Stresses at point loads, point supports, and sharp corners of idealized supports do not converge, and should be either modeled in more detail or not reported.</li>
+</ul>
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+<nav class="page-navigation column-body" aria-label="Page">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/28_Class.html" class="pagination-link" aria-label="Class 28: The Galerkin Form of Elasticity and Assembly">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Class 28: The Galerkin Form of Elasticity and Assembly</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/3_Support_FunctionSpaces.html" class="pagination-link" aria-label="Support: Norms and Function Spaces">
+        <span class="nav-page-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
