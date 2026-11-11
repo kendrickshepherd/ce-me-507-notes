@@ -843,4 +843,5 @@ Each of these depends on a theory of beams, plates, or shells, and has its own r
   Comparing against a different element, varying $\nu$, and looking for oscillating volumetric stresses are practical checks.
 - Refining the mesh helps slowly, raising the degree helps much more, and selective reduced integration, the B-bar method, and mixed methods remove volumetric locking.
   Plane stress does not lock.
-- Shear locking and membrane locking arise in the same way in beams, plates, and shells, and are left to a treatment of those theories.
+- Shear locking and membrane locking also arise in beams, plates, and shells, and are left to be addressed in those theories.
+- Further reading can be found in Hughes Chapter 4.

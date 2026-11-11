@@ -146,7 +146,7 @@ Whether a support causes stress depends on whether it resists the deformation of
 
 A uniform rise in temperature $\Delta T$ makes a body that is free to move expand by the strain $\alpha\,\Delta T$ in every direction, where $\alpha$ is the coefficient of thermal expansion, without any stress.
 Statically determinate supports allow this expansion, so they cause no stress, while redundant supports that prevent it cause stresses that can be large.
-Class 31 studies thermal stress in more detail.
+[Class 31](31_Class.qmd) studies thermal stress in more detail.
 
 ### Reactions as a check
 

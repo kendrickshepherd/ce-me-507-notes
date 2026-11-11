@@ -1,0 +1,931 @@
+---
+title: "Class 31: Thermoelasticity"
+subtitle: "Thermal expansion and thermal stress, the one-way coupling of heat conduction to elasticity, and when the coupling runs both ways"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+format:
+  html:
+    page-layout: full
+    toc: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+import sys
+sys.path.append('python')
+import math
+import numpy as np
+from notes_style import use_chapter, save
+import c31_thermo as C31
+IMGDIR = use_chapter("Class31")
+
+fig_exp_path = save(C31.fig_expansion(), "C31_Fig1_Expansion.png")
+f, spot, spot_sig = C31.fig_pipeline()
+fig_line_path = save(f, "C31_Fig2_Pipeline.png")
+f, freeres = C31.fig_free_plate()
+fig_free_path = save(f, "C31_Fig3_FreePlate.png")
+f, pcut, pwhole, rcut, rwhole = C31.fig_pipe()
+fig_pipe_path = save(f, "C31_Fig4_Pipe.png")
+f, degres = C31.fig_degree()
+fig_deg_path = save(f, "C31_Fig5_Degree.png")
+fig_blocks_path = save(C31.fig_blocks(), "C31_Fig6_Blocks.png")
+
+# numbers quoted in the text
+E_st, nu_st, a_st = C31.MATERIALS["steel"]
+E_al, nu_al, a_al = C31.MATERIALS["aluminum"]
+E_co, nu_co, a_co = C31.MATERIALS["concrete"]
+ref = E_st * a_st * 50.0                                   # steel, 50 degC
+f0 = lambda v: "%.0f" % v
+f1 = lambda v: "%.1f" % v
+f2 = lambda v: "%.2f" % v
+neg = lambda s: s.replace("-", "−")
+pct = lambda v: "%.0f%%" % (100 * v)
+
+def peak_vm(s):
+    sig, x = C31.gauss_stress(s, 3)
+    return C31.von_mises(sig).max()
+
+patch_peaks = [peak_vm(C31.plate("edge", "free", nx=n, ny=n // 4)) / ref for n in (24, 48, 96)]
+source_pmax = C31.principal_max(freeres["source"][1]).max()
+source_pmin = C31.principal_max(freeres["source"][1]).min()
+spurious = [np.abs(C31.gauss_stress(C31.plate("linear", "free", pu=1, pT=1, nx=n, ny=n // 4))[0]).max() / ref for n in (24, 48)]
+
+sig_w, x_w, h_w = rwhole
+r_w = np.hypot(x_w[..., 0], x_w[..., 1])
+hoop_inner_exact = float(C31.pipe_hoop_exact(np.array(50.0)))
+hoop_err = np.abs(h_w - C31.pipe_hoop_exact(r_w)).max() / abs(hoop_inner_exact)
+cut_max = np.abs(rcut[0]).max()
+
+s = C31.plate("uniform", "clamped")
+sig, x = C31.gauss_stress(s, 3)
+mid = np.abs(x[..., 0] - C31.PL / 2) < 15
+clamp_mid = sig[..., 0][mid].mean()
+
+s = C31.plate("uniform", "free", mat="bimetal")
+X = s.gu.X
+def v_at(xq):
+    A = int(np.argmin(np.hypot(X[:, 0] - xq, X[:, 1] - C31.PH / 2)))
+    return s.U[2 * A + 1]
+kappa_fe = (v_at(100.0) - 2 * v_at(200.0) + v_at(300.0)) / 100.0 ** 2
+kappa_ti = C31.bimetal_curvature(50.0)
+
+delta_st, delta_al = C31.coupling_constant("steel"), C31.coupling_constant("aluminum")
+
+def cs_excess(mat):
+    """(c_sigma - c_eps)/c = 9 K alpha^2 T0 / (rho c): how much the specific heat at
+    constant stress exceeds the one at constant strain."""
+    E, nu, a = C31.MATERIALS[mat]
+    rho, c = C31.THERMAL[mat]
+    return 9 * (E * 1e6 / (3 * (1 - 2 * nu))) * a * a * C31.T0_K / (rho * c)
+kelvin = C31.kelvin_dT("steel", 100.0)
+dT_buckle = math.pi ** 2 * (20.0 / 4) ** 2 / (a_st * 2000.0 ** 2)      # 2 m steel rod, 20 mm diameter, pinned
+shock_sl = 70000 * 9e-6 * 100 / (1 - 0.22)                          # soda-lime glass, 100 degC
+shock_bs = 63000 * 3.3e-6 * 100 / (1 - 0.20)                        # borosilicate glass
+```
+
+When the temperature of a body changes, its material expands or contracts.
+If nothing resists this, the body simply changes size and shape, and it is not stressed.
+If something does resist it, such as a support, another part of the same body, or a different material bonded to it, the result is a **thermal stress**.
+[Class 29](29_Class.qmd) showed one case: a uniform rise in temperature causes no stress with statically determinate supports, but can cause large stresses with redundant ones.
+This class develops the linear theory of thermoelasticity and its finite element implementation, in which the temperature from a heat conduction problem of Classes 19 to 25 becomes the load of an elasticity problem.
+It then describes when the coupling between the two fields also runs the other way, and where the linear theory stops being adequate.
+
+## Thermal expansion
+
+### The coefficient of thermal expansion
+
+A small piece of an isotropic material that is free to move, heated from the temperature $T_{\mathrm{ref}}$ to the temperature $T$, stretches equally in every direction, by the **thermal strain**
+
+$$
+\varepsilon^{\theta}_{ij} = \alpha\,\Delta T\,\delta_{ij}, \qquad \Delta T = T - T_{\mathrm{ref}} ,
+$$
+
+and does not shear.
+The constant $\alpha$ is the **coefficient of linear thermal expansion**, and $T_{\mathrm{ref}}$ is the temperature at which the body is free of stress, such as the temperature at which a structure was built, cast, or welded.
+The volume grows by $\varepsilon^{\theta}_{kk} = 3\alpha\,\Delta T$, so $3\alpha$ is the coefficient of volumetric expansion.
+
+| Material | $\alpha$ ($10^{-6}$/°C) | $E$ (GPa) | $E\,\alpha$ (MPa/°C) |
+|:--|--:|--:|--:|
+| Structural steel | 12 | 200 | 2.4 |
+| Stainless steel | 17 | 193 | 3.3 |
+| Aluminum alloys | 23 | 70 | 1.6 |
+| Copper | 17 | 117 | 2.0 |
+| Invar (an iron–nickel alloy) | 1.2 | 140 | 0.17 |
+| Concrete | 7 to 12 | 30 | about 0.3 |
+| Soda-lime (window) glass | 9 | 70 | 0.63 |
+| Borosilicate glass | 3.3 | 63 | 0.21 |
+| Wood, along the grain | 3 to 5 | | |
+| Wood, across the grain | 30 to 50 | | |
+| Polyethylene | 100 to 200 | about 1 | |
+| Carbon fiber composite, along the fibers | about 0 | | |
+
+: Typical coefficients of thermal expansion near room temperature. Actual values vary with the alloy, the mix, and the temperature. {#tbl-c31-alpha}
+
+The product $E\,\alpha$ in @tbl-c31-alpha is the stress caused by each degree of temperature change in a bar whose ends are held fixed (@fig-c31-expansion b), $\sigma = -E\,\alpha\,\Delta T$.
+For steel, a rise of 50 °C causes `{python} f0(ref)` MPa of compression, which is a large fraction of its yield stress.
+For concrete, a fall of only about 10 °C in a restrained slab causes about 3 MPa of tension, which is enough to crack it, and this is why slabs and pavements are built with joints.
+
+Many choices made in engineering are in part because of consequences from @tbl-c31-alpha.
+Reinforced concrete works in part because steel and concrete expand by nearly the same amount, so a change in temperature does not separate them.
+Bridges have expansion joints, and continuous welded rail is installed at a chosen neutral temperature so that it is neither too compressed in summer nor too stretched in winter.
+Laboratory glassware is made of borosilicate glass because its small $\alpha$ makes it resistant to sudden changes in temperature.
+
+The coefficient itself changes with temperature.
+For a large change in temperature, $\alpha$ in the formula above is the average, or secant, coefficient between $T_{\mathrm{ref}}$ and $T$.
+Materials that are not isotropic expand differently in different directions, so that $\varepsilon^{\theta}_{ij} = \alpha_{ij}\,\Delta T$, where $\alpha_{ij}$ is diagonal in the material axes.
+Wood, as in [Class 27](27_Class.qmd), expands about ten times as much across its grain as along it, and fiber composites can be designed to barely expand at all along their fibers.
+
+![Three ways a change in temperature can be resisted, or not. (a) A bar that is free to move lengthens by $\alpha\,\Delta T\,L$ and is not stressed. (b) The same bar between rigid walls cannot lengthen, so it is compressed by $E\,\alpha\,\Delta T$. (c) A strip of two bonded layers: the aluminum would expand more than the steel, so the strip bends.](`{python} fig_exp_path`){#fig-c31-expansion width=100%}
+
+### Hooke's law with a thermal strain
+
+The total strain of the body, computed from its displacements as before, is now the sum of an **elastic strain**, which produces stress, and the thermal strain, which does not:
+
+$$
+\varepsilon_{ij} = \varepsilon^{e}_{ij} + \varepsilon^{\theta}_{ij} .
+$$
+
+Hooke's law of [Class 26](26_Class.qmd) relates the stress to the elastic strain only,
+
+$$
+\sigma_{ij} = c_{ijkl}\left(\varepsilon_{kl} - \varepsilon^{\theta}_{kl}\right) ,
+$$
+
+which for an isotropic material is
+
+$$
+\sigma_{ij} = 2\mu\,\varepsilon_{ij} + \lambda\,\varepsilon_{kk}\,\delta_{ij} - \left(3\lambda + 2\mu\right)\alpha\,\Delta T\,\delta_{ij} ,
+\qquad 3\lambda + 2\mu = \frac{E}{1 - 2\nu} .
+$$
+
+The last term is a pressure, $3K\alpha\,\Delta T$ with the bulk modulus $K$ of [Class 30](30_Class.qmd), that a heated material exerts when its expansion is prevented.
+In the Voigt notation of [Class 27](27_Class.qmd),
+
+$$
+\underline{\sigma} = \underline{\underline{D}}\left(\underline{\epsilon} - \underline{\epsilon}^{\theta}\right),
+\qquad
+\underline{\epsilon}^{\theta} = \alpha\,\Delta T\begin{bmatrix} 1 & 1 & 1 & 0 & 0 & 0 \end{bmatrix}^T
+$$
+
+in three dimensions.
+The stress at any point must always be computed from the total strain minus the thermal strain.
+A computed stress of $\underline{\underline{D}}\,\underline{\epsilon}$ alone, without the thermal strain, is a common mistake, and it gives a large stress in a body that is free to expand.
+
+### Plane stress and plane strain
+
+The two plane assumptions of Class 27 treat the thermal strain differently, because they treat the third direction differently.
+In **plane stress**, the plate is free to change its thickness, so the in-plane thermal strain is simply $\alpha\,\Delta T$:
+
+$$
+\underline{\sigma} = \underline{\underline{D}}\left(\underline{\epsilon} - \alpha\,\Delta T\,\underline{m}\right),
+\qquad
+\underline{m} = \begin{bmatrix} 1 \\ 1 \\ 0 \end{bmatrix} ,
+$$
+
+with $\underline{\underline{D}}$ the plane stress matrix of Class 27.
+In **plane strain**, the body cannot expand along its length, $\varepsilon_{22} = 0$, so the thermal expansion in that direction is suppressed, and the material pushes harder in the plane.
+Writing the first row of the isotropic law with $\varepsilon_{22} = 0$,
+
+::: {.derivation}
+$$
+\begin{aligned}
+\sigma_{00} &= (\lambda + 2\mu)\,\varepsilon_{00} + \lambda\,\varepsilon_{11} - (3\lambda + 2\mu)\,\alpha\,\Delta T \\
+&= (\lambda + 2\mu)\left(\varepsilon_{00} - \beta\right) + \lambda\left(\varepsilon_{11} - \beta\right),
+\qquad \beta = \frac{3\lambda + 2\mu}{2\lambda + 2\mu}\,\alpha\,\Delta T = (1 + \nu)\,\alpha\,\Delta T ,
+\end{aligned}
+$$
+:::
+
+so that
+
+$$
+\underline{\sigma} = \underline{\underline{D}}\left(\underline{\epsilon} - (1 + \nu)\,\alpha\,\Delta T\,\underline{m}\right),
+\qquad
+\sigma_{22} = \nu\left(\sigma_{00} + \sigma_{11}\right) - E\,\alpha\,\Delta T ,
+$$
+
+with $\underline{\underline{D}}$ the plane strain matrix.
+The factor $1 + \nu$ is easy to forget, and the stress $\sigma_{22}$ along the length, which is needed to hold $\varepsilon_{22} = 0$, now includes the thermal term $-E\,\alpha\,\Delta T$.
+
+## Where thermal stress comes from
+
+A change in temperature does not by itself cause stress.
+It causes stress only when the thermal strain cannot be accommodated by a displacement of the body.
+
+### Compatibility of the thermal strain
+
+Three strains in two dimensions are computed from only two displacement components, $\varepsilon_{00} = u_{0,0}$, $\varepsilon_{11} = u_{1,1}$, and $2\varepsilon_{01} = u_{0,1} + u_{1,0}$, so they cannot be chosen independently.
+Differentiating each so that every term becomes a third derivative of the displacements,
+
+::: {.derivation}
+$$
+\varepsilon_{00,11} + \varepsilon_{11,00} - 2\,\varepsilon_{01,01}
+= u_{0,011} + u_{1,100} - \left(u_{0,101} + u_{1,001}\right) = 0 ,
+$$
+:::
+
+because the order of differentiation does not matter.
+This is the **compatibility condition**: a strain field that satisfies it is the strain of some displacement field, at least in a body without holes, and one that does not satisfy it is not.
+A free body is therefore stressed by a temperature exactly when its thermal strain is incompatible.
+
+In general, the in-plane thermal strain is $\varepsilon^{\theta}_{ij} = \alpha_{ij}\,\Delta T$, where the coefficients $\alpha_{ij}$ can differ from one direction to another, as in wood or a fiber composite, and from one point to another, as where two materials are bonded together.
+(In plane strain, holding $\varepsilon_{22} = 0$ adds to the in-plane thermal strain, as the factor $1 + \nu$ did above for an isotropic material.)
+Substituting it into the compatibility condition gives the general condition for a temperature to cause no stress in a free plate without holes,
+
+$$
+\left(\alpha_{00}\,\Delta T\right)_{,11} + \left(\alpha_{11}\,\Delta T\right)_{,00} - 2\left(\alpha_{01}\,\Delta T\right)_{,01} = 0 .
+$$
+
+In what follows, $\nabla^2$ is the Laplacian of [Class 3](3_Class.qmd), $\nabla^2 f = \nabla\cdot\nabla f = f_{,ii}$, the divergence of the gradient.
+Class 3 wrote it as $\Delta f$, but in this class $\Delta$ means a finite change, as in $\Delta T = T - T_{\mathrm{ref}}$, so the Laplacian is written $\nabla^2$ instead.
+
+The general condition simplifies in three steps.
+
+- **A single anisotropic material**, with the same $\alpha_{ij}$ everywhere:
+  $$
+  \alpha_{11}\,\Delta T_{,00} - 2\,\alpha_{01}\,\Delta T_{,01} + \alpha_{00}\,\Delta T_{,11} = 0 .
+  $$
+  This is not the steady heat conduction equation, $\kappa_{00}\,T_{,00} + 2\kappa_{01}\,T_{,01} + \kappa_{11}\,T_{,11} = 0$, unless the conductivities happen to be in the same proportions as the coefficients of expansion, so in an anisotropic material even a steady temperature generally causes stress.
+- **An isotropic material whose coefficient varies**, $\alpha_{ij} = \alpha(\underline{x})\,\delta_{ij}$, such as two bonded materials:
+  $$
+  \nabla^2\!\left(\alpha\,\Delta T\right) = 0 .
+  $$
+  Even a uniform $\Delta T$ violates this where $\alpha$ jumps from one material to the other, which is why the strip of @fig-c31-expansion c is stressed.
+- **A uniform isotropic material**, $\alpha_{ij} = \alpha\,\delta_{ij}$ with $\alpha$ constant:
+  $$
+  \alpha\left(\Delta T_{,00} + \Delta T_{,11}\right) = \alpha\,\nabla^2 T = 0 ,
+  $$
+  since $T_{\mathrm{ref}}$ is a constant.
+  In plane strain, $\alpha$ is replaced by $(1 + \nu)\,\alpha$, which does not change the condition.
+
+### Steady temperatures in a uniform isotropic plate
+
+A temperature with $\nabla^2 T = 0$ is one that satisfies the steady heat conduction equation of Classes 19 to 25 with no heat source.
+This gives a result that is surprising at first: **in a plate without holes and without redundant supports, a steady temperature with no heat source causes no in-plane stress**, however nonuniform it is.
+The plate bends and distorts, but it is not stressed.
+In three dimensions there are six compatibility conditions, $\varepsilon_{ij,kl} + \varepsilon_{kl,ij} - \varepsilon_{ik,jl} - \varepsilon_{jl,ik} = 0$, and for a uniform isotropic material, contracting them over $k$ and $l$ gives $T_{,ij} + \delta_{ij}\,\nabla^2 T = 0$.
+Its trace gives $\nabla^2 T = 0$, and then $T_{,ij} = 0$, so in three dimensions only a temperature that varies linearly in the coordinates causes no stress in a free body.
+
+@fig-c31-free shows this for a steel plate on a pin and a roller.
+Its middle column shows how the temperature becomes strain.
+Where the plate is free of stress, each cell of the grid grows by exactly $\alpha\,\Delta T$ in every direction, so the hot cells grow more than the cool ones, and the plate bends or distorts so that the cells still fit together.
+A temperature that varies linearly through the depth (a) bends the plate without stress.
+A steady temperature from a hot patch on the top edge (b) is far from uniform, yet the largest stress is only `{python} "%.1f%%" % (100 * patch_peaks[1])` of $E\,\alpha\,\Delta T$, and it is discretization error: it falls to `{python} "%.1f%%" % (100 * patch_peaks[0])`, `{python} "%.1f%%" % (100 * patch_peaks[1])`, and `{python} "%.2f%%" % (100 * patch_peaks[2])` on meshes of 24 × 6, 48 × 12, and 96 × 24 elements.
+Heat generated uniformly inside the plate (c) gives a temperature with $\nabla^2 T \neq 0$, and the plate is stressed even though nothing holds it: the hot interior is compressed, and the cooler edges are stretched, with a largest principal stress of `{python} f0(source_pmax)` MPa.
+
+![A steel plate, 400 mm by 100 mm in plane stress, on a pin at its lower left corner and a roller at its lower right corner, with a temperature rise of at most 50 °C. Left: the temperature. Middle: the displacement, magnified. Each arrow carries a point of the undeformed plate (dashed outline) to its place on the deformed grid, and the change in the size and shape of each grid cell shows the strain. Right: the deformed plate, magnified in the same way, colored by the largest principal stress. (a) A linear temperature, hot at the top: the cells at the hot top grow more than those at the cool bottom, so the plate bends, without stress. (b) The steady temperature from a hot patch on the top edge, with the rest of the boundary at the reference temperature: the cells near the patch grow and the plate distorts, but the stress is zero apart from discretization error. (c) Heat generated uniformly inside, with the edges at the reference temperature: the cooler material around the hot core keeps it from growing as much as it would on its own, so the grid barely changes shape, the cooler edges are in tension, and the hot core is in compression.](`{python} fig_free_path`){#fig-c31-free width=100%}
+
+### The sources of thermal stress
+
+Thermal stresses therefore arise in five ways.
+
+1. **Supports that prevent the expansion.**
+   Redundant supports, as in [Class 29](29_Class.qmd), resist even a uniform temperature.
+2. **Temperatures with heat sources.**
+   Heat generated inside a body, as by the hydration of cement in a thick concrete pour, by an electric current, or by absorbed radiation, makes $\nabla^2 T \neq 0$.
+   Thick concrete pours can crack at their surfaces this way while they cure.
+3. **Temperatures that are changing.**
+   During heating or cooling, the temperature is not yet steady, so $\nabla^2 T \neq 0$.
+   When a hot body's surface is suddenly cooled by $\Delta T$, the surface layer cannot contract because the interior holds it, and it is stretched by about $E\,\alpha\,\Delta T/(1-\nu)$ in both directions.
+   For a 100 °C quench, that is about `{python} f0(shock_sl)` MPa in soda-lime glass, more than its tensile strength, but only `{python} f0(shock_bs)` MPa in borosilicate glass.
+   This is **thermal shock**, and its analysis needs the transient heat equation, solved step by step in time.
+4. **Holes with heat flowing around them.**
+   A steady temperature does cause stress in a body with a hole when heat flows between the hole and the outside, as in the wall of a pipe.
+5. **Coefficients that differ from place to place or from direction to direction.**
+   Bonded materials would each expand by a different amount, as in @fig-c31-expansion c, and the bond forces them to agree.
+   In an anisotropic material, even a steady temperature is generally incompatible, as shown above.
+
+### A pipe with heat flowing through its wall
+
+@fig-c31-pipe shows the fourth case: a long steel pipe in plane strain, with an inner radius of 50 mm and an outer radius of 100 mm, whose inner surface is 50 °C hotter than its outer surface.
+The steady temperature, $\Delta T \ln(b/r)/\ln(b/a)$, satisfies $\nabla^2 T = 0$.
+If the pipe is cut along its length (b), modeled as a quarter on statically determinate supports, the hot inner material is free to expand, the cut opens, and the largest stress is only `{python} f2(cut_max)` MPa, which is discretization error.
+The whole pipe (c), modeled as a quarter with the rollers of [Class 29](29_Class.qmd) on its planes of symmetry, cannot open, and the hoop stress at its hot inner surface is about `{python} neg(f0(hoop_inner_exact))` MPa, a compression around the pipe.
+The computed hoop stress agrees with the exact solution of Timoshenko and Goodier to within `{python} "%.1f%%" % (100 * hoop_err)` of that value everywhere.
+
+![A steel pipe, inner radius 50 mm and outer radius 100 mm, in plane strain, with its inner surface 50 °C hotter than its outer surface. (a) The steady temperature. (b) A pipe cut along its length, as a quarter on three supports: it deforms, magnified, without stress. (c) The whole pipe, as a quarter with rollers on its planes of symmetry, colored by the hoop stress: compression at the hot inner surface and tension at the cool outer surface.](`{python} fig_pipe_path`){#fig-c31-pipe width=100%}
+
+## The finite element method with one-way coupling
+
+Frequently, we can model steady-state thermoelastic behavior by first solving for the temperature field and then using the solution to inform our elastic deformation.
+This is a form of one-way coupling, where heat informs elasticity but not vice versa.
+
+### The weak form with a thermal strain
+
+The principle of virtual work of [Class 26](26_Class.qmd) is largely unchanged when accounting for thermal strains, and the internal virtual work is $\int_\Omega \underline{\epsilon}(\underline{w})^T\,\underline{\sigma}\,d\Omega$.
+Only the stress has changed, to $\underline{\underline{D}}\left(\underline{\epsilon}(\underline{u}) - \underline{\epsilon}^{\theta}\right)$, and since the thermal strain is known once the temperature is, its term moves to the right-hand side:
+
+$$
+a(\underline{w}, \underline{u}) = (\underline{w}, \underline{f}) + (\underline{w}, \underline{h})_\Gamma
++ \int_\Omega \underline{\epsilon}(\underline{w})^T\,\underline{\underline{D}}\;\underline{\epsilon}^{\theta}\;d\Omega ,
+$$
+
+with $a(\cdot,\cdot)$, $(\cdot,\cdot)$, and $(\cdot,\cdot)_\Gamma$ as in [Class 28](28_Class.qmd).
+The stiffness matrix is the same as without the temperature.
+The element force vector of Class 28 gains one term for each local node $a$:
+
+$$
+\underline{f}^e_a = \int_{\Omega^e} N_a\,\underline{f}\;d\Omega
++ \int_{\Gamma^e \cap \Gamma_h} N_a\,\underline{h}\;d\Gamma
+- \sum_{b=0}^{n_{en}-1} \underline{\underline{k}}^e_{ab}\,\underline{g}_b
++ \int_{\Omega^e} \underline{\underline{B}}_a^T\,\underline{\underline{D}}\;\underline{\epsilon}^{\theta}\;d\Omega .
+$$
+
+The tractions $\underline{h}$ are still tractions of the total stress, so a free surface is still one with $\underline{h} = \underline{0}$; the thermal strain adds no boundary terms of its own.
+
+For a homogeneous material in plane stress, $\underline{\underline{D}}\,\underline{m}\,\alpha\,\Delta T = p_\theta\,\underline{m}$ with $p_\theta = E\,\alpha\,\Delta T/(1 - \nu)$, and integrating the thermal term by parts gives
+
+$$
+\int_\Omega \left(\nabla\cdot\underline{w}\right) p_\theta\;d\Omega = -\int_\Omega \underline{w}\cdot\nabla p_\theta\;d\Omega + \int_\Gamma p_\theta\,\underline{w}\cdot\underline{n}\;d\Gamma .
+$$
+
+A temperature therefore loads the body exactly as a body force $-\nabla p_\theta$, which points from hot material toward cooler material, together with an outward normal traction $p_\theta$ on the whole boundary.
+A uniform temperature gives only the outward traction, which a free body follows by expanding uniformly.
+
+### The procedure
+
+With the temperature known, the analysis is the elasticity of Classes 26 to 29 with an extra load:
+
+1. Solve the heat conduction problem for the nodal temperatures, as in Classes 19 to 25.
+   The simplest choice is to use the same mesh for both problems.
+2. At each quadrature point of each element, interpolate the temperature from its nodal values, $\Delta T(\underline{\xi}) = \sum_b N_b(\underline{\xi})\,\theta_b$, where $\theta_b$ is the temperature of node $b$ minus $T_{\mathrm{ref}}$, and form $\underline{\epsilon}^{\theta}$.
+3. Assemble the stiffness matrix and the force vector, including the thermal term, and solve for the displacements.
+4. Compute the stresses at the quadrature points as $\underline{\underline{D}}\left(\underline{\underline{B}}\,\underline{d}^e - \underline{\epsilon}^{\theta}\right)$.
+   The reactions of Class 29, $\underline{R} = \underline{\underline{K}}_{\mathrm{complete}}\,\underline{d}_{\mathrm{complete}} - \underline{F}_{\mathrm{complete}}$, must use a force vector that includes the thermal term.
+
+@fig-c31-pipeline shows the procedure for a steel plate heated by a source in a small disk at its center.
+The heated material grows and pushes the material around it outward, as the deformed grid in (b) shows, so it is compressed along the plate ($\sigma_{00}$) and across it ($\sigma_{11}$), and the cooler material above and below it is stretched along the plate, by up to `{python} f0(C31.principal_max(spot_sig).max())` MPa at the top and bottom edges.
+
+![The one-way procedure for a steel plate, 400 mm by 100 mm in plane stress, on a pin and a roller, with heat generated in the dashed disk and its edges held at the reference temperature. (a) The temperature from the heat conduction problem, with a largest rise of 50 °C. (b) The displacement, magnified: each arrow has a point of the undeformed plate (dashed outline) to its place on the deformed grid, measured from the pin at the lower left. The cells around the disk grow the most and push the top and bottom edges outward. (c) and (d) The deformed plate, magnified in the same way, colored by the two normal stresses.](`{python} fig_line_path`){#fig-c31-pipeline width=100%}
+
+### The coupled matrix equations
+
+Since the thermal strain is linear in the nodal temperatures, the thermal load is a matrix times the vector $\underline{\theta}$ of nodal temperature changes,
+
+$$
+\underline{\underline{K}}_{uu}\,\underline{d} - \underline{\underline{K}}_{u\theta}\,\underline{\theta} = \underline{F},
+\qquad
+\underline{\underline{k}}^e_{u\theta,\,ab} = \int_{\Omega^e} \underline{\underline{B}}_a^T\,\underline{\underline{D}}\;\underline{m}\,\alpha\,N_b\;d\Omega ,
+$$
+
+where $\underline{\underline{K}}_{uu}$ is the stiffness matrix of the previous classes, each block $\underline{\underline{k}}^e_{u\theta,\,ab}$ has two rows and one column, and $\underline{m}$ is replaced by $(1 + \nu)\,\underline{m}$ in plane strain.
+Together with the heat conduction equations $\underline{\underline{K}}_{\theta\theta}\,\underline{\theta} = \underline{Q}$, the two problems form one system whose matrix is block lower triangular (@fig-c31-blocks a).
+The temperatures do not depend on the displacements, so they are found first, and the displacements follow.
+This is what **one-way coupling** means.
+
+![The block structure of the coupled equations, with the nodal temperatures $\boldsymbol{\theta}$ and the nodal displacements $\mathbf{d}$ as unknowns. (a) One-way coupling: the block above the diagonal is zero, so the temperature can be solved first and the displacements afterward. (b) Two-way coupling, for one time step $\Delta t$ of the transient problem described below: the deformation also appears in the heat equation, through the transpose of the same coupling matrix.](`{python} fig_blocks_path`){#fig-c31-blocks width=90%}
+
+### Matching the degrees of the temperature and the displacement
+
+A free body under a linear temperature is not stressed, and the finite element solution should reproduce this.
+It does so only if the elements can represent the displacement of that free expansion.
+For a temperature that varies linearly through the depth, the free expansion includes displacements that are quadratic in the coordinates, which elements of degree 1 cannot represent.
+The elements then cannot quite follow the expansion, and a spurious stress appears, alternating in sign within each element (@fig-c31-degree a).
+It is `{python} "%.1f%%" % (100 * spurious[0])` of $E\,\alpha\,\Delta T$ on a mesh of 24 × 6 elements and `{python} "%.1f%%" % (100 * spurious[1])` on a mesh of 48 × 12, so it does decrease under refinement, but only in proportion to the element size.
+With displacements of degree 2 and the same temperature of degree 1 (b), the stress is zero to roundoff.
+
+In general, the strains of a displacement of degree $p$ are of degree $p - 1$ in one of the coordinates, so the thermal strain they can match is one degree lower than the displacement.
+The usual recommendation is therefore to interpolate the temperature with one degree less than the displacement, and commercial coupled elements commonly pair quadratic displacements with linear temperatures.
+The widget below uses that pair.
+
+![Spurious stress in a free steel plate under a temperature that varies linearly through the depth, on 24 × 6 elements, with a rise of 50 °C at the top. The exact stress is zero. (a) Displacements of degree 1 cannot follow the free expansion, and $\sigma_{11}$ alternates in sign within each element. (b) Displacements of degree 2 follow it exactly.](`{python} fig_deg_path`){#fig-c31-degree width=90%}
+
+## Thermoelasticity, interactively
+
+The widget below demonstrates the one-way procedure for a plate 400 mm long and 100 mm deep, in plane stress, with 48 × 12 elements.
+The temperature is found first, by steady heat conduction on the same elements with degree 1, and its thermal strain then loads the elastic plate, with displacements of degree 2 unless you choose degree 1.
+
+- Use the temperature buttons to choose how the plate is heated, and the slider to set the largest temperature change, which may be negative.
+  Except for the uniform rise, each temperature is computed in your browser from a heat conduction problem: a hot top edge and a cool bottom edge; a smooth hot patch on the top edge with the rest of the boundary at the reference temperature; heat generated uniformly inside; or heat generated in a small disk at the center.
+- Use the support buttons to put the plate on a pin and a roller, to clamp both ends, or to put its whole bottom edge on rollers, as for a slab resting on a smooth, rigid base.
+- Use the material buttons to choose steel, aluminum, concrete, or a strip with steel in its top half and aluminum in its bottom half.
+  The temperature is the same for every material, as if they conducted heat equally well.
+- The upper panel shows the temperature.
+  The lower panel shows the deformed plate, magnified, with its undeformed outline dashed, colored by the chosen stress at each quadrature point.
+  The colors run from $-E\,\alpha\,|\Delta T|$ to $E\,\alpha\,|\Delta T|$, using the steel's $E\,\alpha$ for the strip.
+
+::: {html-table-processing="none"}
+```{=html}
+<style>
+.c31{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;color:var(--ink)}
+.c31 .bar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:10px 14px;background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.c31 .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey);margin-right:2px}
+.c31 .bar .gap{width:10px}
+.c31 .grp{display:inline-flex;flex-wrap:wrap;gap:8px;align-items:center;margin-right:14px}
+.c31 button{font:inherit;font-size:13px;padding:4px 10px;border:1px solid #c3c9d2;border-radius:6px;background:#fff;cursor:pointer;color:var(--ink)}
+.c31 button:hover{background:#eef1f5}
+.c31 button[aria-pressed="true"]{background:#18202b;color:#fff;border-color:#18202b}
+.c31 svg{display:block;width:100%;height:auto}
+.c31 .panel{border:1px solid var(--faint);border-radius:8px;background:#fff;padding:6px;margin-bottom:10px}
+.c31 .read{font-size:.88em;background:var(--paper);border:1px solid var(--faint);border-radius:8px;padding:9px 12px;line-height:1.6;margin-bottom:22px}
+.c31 .read b{color:#b8322a}
+.c31 input[type=range]{vertical-align:middle;width:170px}
+.c31 .val{font-family:monospace;font-size:12px;color:var(--grey);min-width:4.5em;display:inline-block}
+</style>
+<div class="c31" id="c31w">
+  <div class="bar">
+    <span class="grp"><b>TEMPERATURE</b>
+    <button data-temp="uniform">uniform rise</button>
+    <button data-temp="linear">hot top, cool bottom</button>
+    <button data-temp="edge">hot patch on the top edge</button>
+    <button data-temp="source">heat generated inside</button>
+    <button data-temp="spot">heat generated at a spot</button></span>
+  </div>
+  <div class="bar">
+    <span class="grp"><b>LARGEST CHANGE</b>
+    <input type="range" id="c31dt" min="-50" max="50" step="5" value="50" aria-label="Largest temperature change"><span class="val" id="c31dtv"></span></span>
+    <span class="grp"><b>SUPPORTS</b>
+    <button data-sup="free">pin and roller</button>
+    <button data-sup="clamped">both ends clamped</button>
+    <button data-sup="rollers">bottom on rollers</button></span>
+  </div>
+  <div class="bar">
+    <span class="grp"><b>MATERIAL</b>
+    <button data-mat="steel">steel</button>
+    <button data-mat="aluminum">aluminum</button>
+    <button data-mat="concrete">concrete</button>
+    <button data-mat="bimetal">steel on aluminum</button></span>
+    <span class="grp"><b>DISPLACEMENT</b>
+    <button data-deg="2">degree 2</button>
+    <button data-deg="1">degree 1</button></span>
+  </div>
+  <div class="panel"><svg id="c31temp" viewBox="0 0 680 205" role="img" aria-label="The temperature of the plate"></svg></div>
+  <div class="bar">
+    <b>COLOR BY</b>
+    <button data-comp="0">σ₀₀, along the plate</button>
+    <button data-comp="1">σ₁₁, across the plate</button>
+    <button data-comp="3">largest principal stress</button>
+  </div>
+  <div class="panel"><svg id="c31stress" viewBox="0 0 680 290" role="img" aria-label="The deformed plate, colored by the stress"></svg></div>
+  <div class="read" id="c31read"></div>
+</div>
+<script>
+// One-way thermoelasticity on a 400 mm by 100 mm plate in plane stress: steady heat
+// conduction with degree 1, then elasticity with degree 2 (or 1) on the same elements,
+// loaded by the thermal strain.  Local nodes by the stride rule, nodes numbered up each
+// column, banded Cholesky.  Same data as c31_thermo.py.
+(function(){
+  const L = 400, H = 100, NX = 48, NY = 12;
+  const MATS = {steel: [200000, 0.30, 12e-6], aluminum: [70000, 0.33, 23e-6], concrete: [30000, 0.20, 10e-6]};
+  const NAMES = {steel: "Steel", aluminum: "Aluminum", concrete: "Concrete", bimetal: "Steel on aluminum"};
+  const st = {temp: "uniform", sup: "clamped", mat: "steel", deg: 2, comp: 0, dT: 50};
+  const GL = {1: [[0], [2]], 2: [[-0.5773502691896257, 0.5773502691896257], [1, 1]],
+    3: [[-0.7745966692414834, 0, 0.7745966692414834], [5/9, 8/9, 5/9]],
+    4: [[-0.8611363115940526, -0.3399810435848563, 0.3399810435848563, 0.8611363115940526],
+        [0.3478548451374538, 0.6521451548625461, 0.6521451548625461, 0.3478548451374538]]};
+
+  // ------------------------------------------------------------ elements
+  function lag(p, s){
+    const xs = Array.from({length: p + 1}, (_, i) => -1 + 2*i/p), N = [], dN = [];
+    for (let a=0;a<=p;a++){
+      let v = 1, d = 0;
+      for (let b=0;b<=p;b++) if (b !== a) v *= (s - xs[b])/(xs[a] - xs[b]);
+      for (let m=0;m<=p;m++){
+        if (m === a) continue;
+        let t = 1/(xs[a] - xs[m]);
+        for (let b=0;b<=p;b++) if (b !== a && b !== m) t *= (s - xs[b])/(xs[a] - xs[b]);
+        d += t;
+      }
+      N.push(v); dN.push(d);
+    }
+    return [N, dN];
+  }
+  const SH = new Map();
+  function shape(p, xi, eta){
+    const key = p + "," + xi + "," + eta;
+    if (!SH.has(key)){
+      const [Nx, dx] = lag(p, xi), [Ny, dy] = lag(p, eta), N = [], dN = [];
+      for (let j=0;j<=p;j++) for (let i=0;i<=p;i++){ N.push(Nx[i]*Ny[j]); dN.push([dx[i]*Ny[j], Nx[i]*dy[j]]); }
+      SH.set(key, {N, dN});
+    }
+    return SH.get(key);
+  }
+  function grid(p){
+    const m0 = p*NX + 1, m1 = p*NY + 1, node = (I, J) => J + m1*I, X = new Array(m0*m1), IEN = [];
+    for (let I=0;I<m0;I++) for (let J=0;J<m1;J++) X[node(I, J)] = [L*I/(m0 - 1), H*J/(m1 - 1)];
+    for (let e1=0;e1<NY;e1++) for (let e0=0;e0<NX;e0++){
+      const row = [];
+      for (let j=0;j<=p;j++) for (let i=0;i<=p;i++) row.push(node(p*e0 + i, p*e1 + j));
+      IEN.push(row);
+    }
+    return {p, m0, m1, node, X, IEN, nnp: X.length, nel: IEN.length, nen: (p + 1)**2};
+  }
+  // every element is the same rectangle, so the map is x = x_a + (L/NX)(xi + 1)/2, y likewise
+  const HX = L/NX, HY = H/NY, JAC = HX*HY/4;
+  const dxi = (dN, a) => [dN[a][0]*2/HX, dN[a][1]*2/HY];
+
+  // banded Cholesky solve of the symmetric matrix stored as rows of its upper band
+  function bandSolve(K, F, n, bw){
+    const w = bw + 1;
+    for (let i=0;i<n;i++){
+      let s = K[i*w];
+      for (let k=Math.max(0, i - bw);k<i;k++){ const v = K[k*w + i - k]; s -= v*v; }
+      const d = Math.sqrt(s), jm = Math.min(n - 1, i + bw);
+      K[i*w] = d;
+      for (let j=i+1;j<=jm;j++){
+        let v = K[i*w + j - i];
+        for (let k=Math.max(0, j - bw);k<i;k++) v -= K[k*w + i - k]*K[k*w + j - k];
+        K[i*w + j - i] = v/d;
+      }
+    }
+    const y = new Float64Array(n), x = new Float64Array(n);
+    for (let i=0;i<n;i++){ let v = F[i]; for (let k=Math.max(0, i - bw);k<i;k++) v -= K[k*w + i - k]*y[k]; y[i] = v/K[i*w]; }
+    for (let i=n-1;i>=0;i--){ let v = y[i]; const jm = Math.min(n - 1, i + bw); for (let j=i+1;j<=jm;j++) v -= K[i*w + j - i]*x[j]; x[i] = v/K[i*w]; }
+    return x;
+  }
+  function assemble(nunk, ndofs, edofs, fixedVal, elementArrays){
+    // edofs(e): global dof numbers of element e; fixedVal[q]: prescribed value or NaN
+    const ID = new Int32Array(ndofs).fill(-1);
+    let n = 0;
+    for (let q=0;q<ndofs;q++) if (isNaN(fixedVal[q])) ID[q] = n++;
+    let bw = 0;
+    const nel = NX*NY;
+    for (let e=0;e<nel;e++){
+      const P = edofs(e).map(q => ID[q]).filter(v => v >= 0);
+      if (P.length) bw = Math.max(bw, Math.max(...P) - Math.min(...P));
+    }
+    const w = bw + 1, K = new Float64Array(n*w), F = new Float64Array(n);
+    for (let e=0;e<nel;e++){
+      const dd = edofs(e), {k, f} = elementArrays(e), nd = dd.length;
+      for (let r=0;r<nd;r++){
+        const P = ID[dd[r]]; if (P < 0) continue;
+        F[P] += f[r];
+        for (let c=0;c<nd;c++){
+          const Q = ID[dd[c]];
+          if (Q < 0) F[P] -= k[r*nd + c]*fixedVal[dd[c]];
+          else if (Q >= P) K[P*w + Q - P] += k[r*nd + c];
+        }
+      }
+    }
+    const x = bandSolve(K, F, n, bw), u = new Float64Array(ndofs);
+    for (let q=0;q<ndofs;q++) u[q] = ID[q] >= 0 ? x[ID[q]] : fixedVal[q];
+    return u;
+  }
+
+  // ------------------------------------------------------- temperatures
+  const GT = grid(1), TCACHE = {};
+  function temperature(kind){                       // nodal values on GT, largest = 1
+    if (TCACHE[kind]) return TCACHE[kind];
+    const n = GT.nnp, fixed = new Float64Array(n).fill(NaN);
+    let T;
+    if (kind === "uniform") T = new Float64Array(n).fill(1);
+    else {
+      for (let A=0;A<n;A++){
+        const [x, y] = GT.X[A], edge = x < 1e-9 || x > L - 1e-9 || y < 1e-9 || y > H - 1e-9;
+        if (kind === "linear"){ if (y < 1e-9) fixed[A] = 0; if (y > H - 1e-9) fixed[A] = 1; }
+        else if (edge){
+          const r = (x - L/2)/(L/4);
+          fixed[A] = kind === "edge" && y > H - 1e-9 && Math.abs(r) < 1 ? Math.cos(0.5*Math.PI*r)**2 : 0;
+        }
+      }
+      const src = kind === "source" ? (() => 1) : kind === "spot" ? ((x, y) => Math.hypot(x - L/2, y - H/2) < 0.2*H ? 1 : 0) : null;
+      const [g4, w4] = GL[4];
+      T = assemble(0, n, e => GT.IEN[e], fixed, e => {
+        const k = new Float64Array(16), f = new Float64Array(4), A = GT.IEN[e], x0 = GT.X[A[0]];
+        for (let i=0;i<4;i++) for (let j=0;j<4;j++){
+          const {N, dN} = shape(1, g4[i], g4[j]), wt = w4[i]*w4[j]*JAC;
+          for (let a=0;a<4;a++){
+            const ga = dxi(dN, a);
+            for (let b=0;b<4;b++){ const gb = dxi(dN, b); k[a*4 + b] += wt*(ga[0]*gb[0] + ga[1]*gb[1]); }
+            if (src) f[a] += wt*N[a]*src(x0[0] + HX*(g4[i] + 1)/2, x0[1] + HY*(g4[j] + 1)/2);
+          }
+        }
+        return {k, f};
+      });
+      let mx = 0; for (let A=0;A<n;A++) mx = Math.max(mx, Math.abs(T[A]));
+      for (let A=0;A<n;A++) T[A] /= mx;
+    }
+    TCACHE[kind] = T;
+    return T;
+  }
+
+  // ------------------------------------------------------- elasticity, for a unit temperature scale
+  const GU = {1: grid(1), 2: grid(2)}, SCACHE = {};
+  const matOf = (mat, e) => mat === "bimetal" ? (Math.floor(e/NX) >= NY/2 ? MATS.steel : MATS.aluminum) : MATS[mat];
+  const dmat = ([E, nu]) => { const c = E/(1 - nu*nu); return [[c, c*nu, 0], [c*nu, c, 0], [0, 0, c*(1 - nu)/2]]; };
+  function tempAt(T, e, xi, eta){ const {N} = shape(1, xi, eta), A = GT.IEN[e]; return N[0]*T[A[0]] + N[1]*T[A[1]] + N[2]*T[A[2]] + N[3]*T[A[3]]; }
+  function bmat(dN, nen){
+    const B = [new Float64Array(2*nen), new Float64Array(2*nen), new Float64Array(2*nen)];
+    for (let a=0;a<nen;a++){ const [gx, gy] = dxi(dN, a); B[0][2*a] = gx; B[1][2*a + 1] = gy; B[2][2*a] = gy; B[2][2*a + 1] = gx; }
+    return B;
+  }
+  function solveElastic(){
+    const key = [st.temp, st.sup, st.mat, st.deg].join("|");
+    if (SCACHE[key]) return SCACHE[key];
+    const g = GU[st.deg], p = g.p, nen = g.nen, nd = 2*nen, T = temperature(st.temp);
+    const fixed = new Float64Array(2*g.nnp).fill(NaN), hold = (A, i) => { fixed[2*A + i] = 0; };
+    const BL = g.node(0, 0), BR = g.node(g.m0 - 1, 0);
+    if (st.sup === "free"){ hold(BL, 0); hold(BL, 1); hold(BR, 1); }
+    if (st.sup === "clamped") for (let J=0;J<g.m1;J++){ for (const I of [0, g.m0 - 1]){ hold(g.node(I, J), 0); hold(g.node(I, J), 1); } }
+    if (st.sup === "rollers"){ for (let I=0;I<g.m0;I++) hold(g.node(I, 0), 1); hold(BL, 0); }
+    const [gx, gw] = GL[p + 1];
+    const U = assemble(0, 2*g.nnp, e => g.IEN[e].flatMap(A => [2*A, 2*A + 1]), fixed, e => {
+      const k = new Float64Array(nd*nd), f = new Float64Array(nd), m = matOf(st.mat, e), D = dmat(m), al = m[2];
+      for (let i=0;i<gx.length;i++) for (let j=0;j<gx.length;j++){
+        const {dN} = shape(p, gx[i], gx[j]), B = bmat(dN, nen), wt = gw[i]*gw[j]*JAC;
+        const et = al*tempAt(T, e, gx[i], gx[j]);
+        const s0 = (D[0][0] + D[0][1])*et, s1 = (D[1][0] + D[1][1])*et;      // D (alpha dT m)
+        for (let r=0;r<nd;r++){
+          const DB0 = D[0][0]*B[0][r] + D[0][1]*B[1][r], DB1 = D[1][0]*B[0][r] + D[1][1]*B[1][r], DB2 = D[2][2]*B[2][r];
+          f[r] += wt*(B[0][r]*s0 + B[1][r]*s1);
+          for (let c=0;c<nd;c++) k[c*nd + r] += wt*(DB0*B[0][c] + DB1*B[1][c] + DB2*B[2][c]);
+        }
+      }
+      return {k, f};
+    });
+    // stresses at the Gauss points, (eta, xi) order
+    const sig = [];
+    for (let e=0;e<g.nel;e++){
+      const m = matOf(st.mat, e), D = dmat(m), al = m[2], ue = g.IEN[e].flatMap(A => [U[2*A], U[2*A + 1]]), v = [];
+      for (let j=0;j<gx.length;j++) for (let i=0;i<gx.length;i++){
+        const {dN} = shape(p, gx[i], gx[j]), B = bmat(dN, nen), et = al*tempAt(T, e, gx[i], gx[j]);
+        const eps = [0, 1, 2].map(r => B[r].reduce((s, b, c) => s + b*ue[c], 0));
+        eps[0] -= et; eps[1] -= et;
+        const s = [0, 1, 2].map(r => D[r][0]*eps[0] + D[r][1]*eps[1] + D[r][2]*eps[2]);
+        v.push([s[0], s[1], s[2]]);
+      }
+      sig.push(v);
+    }
+    const out = {g, U, sig, T};
+    SCACHE[key] = out;
+    return out;
+  }
+
+  // ------------------------------------------------------------ drawing
+  const el = (tag, a, inner) => `<${tag} ${Object.entries(a).map(([k, v]) => `${k}="${v}"`).join(" ")}>${inner || ""}</${tag}>`;
+  function ramp(stops){
+    return v => {
+      v = Math.max(0, Math.min(1, v));
+      const n = stops.length - 1, k = Math.min(n - 1, Math.floor(v*n)), f = v*n - k, a = stops[k], b = stops[k + 1];
+      return `rgb(${[0, 1, 2].map(i => Math.round(a[i] + f*(b[i] - a[i]))).join(",")})`;
+    };
+  }
+  const div = ramp([[33,102,172],[103,169,207],[209,229,240],[247,247,247],[253,219,199],[239,138,98],[178,24,43]]);
+  const minus = v => (v < 0 ? "−" : "") + Math.abs(v);
+  // the value shown for a Gauss point: a stress component, or the largest principal stress of the scaled stress
+  const val = (s, comp, dT) => comp < 3 ? s[comp]*dT :
+    (() => { const a = s[0]*dT, b = s[1]*dT, c = s[2]*dT; return 0.5*(a + b) + Math.sqrt(0.25*(a - b)**2 + c*c); })();
+  const fmt = (v, d) => { const s = Math.abs(v).toFixed(d); return (v < 0 && +s !== 0 ? "−" : "") + s; };
+  const SC = 1.3, X0 = 40, Y0T = 150, Y0S = 190;
+  const PX = x => (X0 + SC*x).toFixed(1);
+  function colorbar(o, x, y, w, lo, hi, label){
+    for (let k=0;k<60;k++) o.push(el("rect", {x: x + k*w/60, y, width: w/60 + 0.4, height: 9, fill: div(k/59)}));
+    o.push(el("text", {x, y: y - 5, "font-size": 12, fill: "#42506a"}, label));
+    [[0, lo], [0.5, 0], [1, hi]].forEach(([f, v]) => o.push(el("text", {x: x + f*w, y: y + 21, "font-size": 11, fill: "#6b7684", "text-anchor": "middle"}, v)));
+  }
+  function drawTemp(T){
+    const o = [], dT = st.dT, cut = [-1, 0, 1];
+    o.push(el("text", {x: X0, y: 14, "font-size": 12.5, fill: "#42506a", "font-weight": 600}, "Temperature rise above the stress-free temperature"));
+    for (let e=0;e<NX*NY;e++){
+      const A = GT.X[GT.IEN[e][0]];
+      for (let j=0;j<2;j++) for (let i=0;i<2;i++){
+        const v = tempAt(T, e, 0.5*(cut[i] + cut[i + 1]), 0.5*(cut[j] + cut[j + 1]))*dT;
+        const c = div(0.5 + 0.5*v/Math.max(Math.abs(dT), 1e-9));
+        o.push(el("rect", {x: PX(A[0] + HX*i/2), y: (Y0T - SC*(A[1] + HY*(j + 1)/2)).toFixed(1), width: (SC*HX/2).toFixed(2), height: (SC*HY/2).toFixed(2),
+          fill: c, stroke: c, "stroke-width": 0.4}));
+      }
+    }
+    o.push(el("rect", {x: X0, y: Y0T - SC*H, width: SC*L, height: SC*H, fill: "none", stroke: "#18202b", "stroke-width": 1}));
+    if (st.temp === "spot") o.push(el("circle", {cx: PX(L/2), cy: Y0T - SC*H/2, r: SC*0.2*H, fill: "none", stroke: "#18202b", "stroke-dasharray": "3 2", "stroke-width": 0.9}));
+    const a = Math.abs(dT);
+    colorbar(o, X0 + 110, Y0T + 27, 300, `${minus(-a)} °C`, `${a} °C`, "ΔT");
+    document.getElementById("c31temp").innerHTML = o.join("");
+  }
+  function support(x, y, ux, uy, kind, color){
+    const vx = -uy, vy = ux, s = 10, bx = x - ux*s, by = y - uy*s;
+    let o = el("polygon", {points: `${x},${y} ${bx + vx*s*0.6},${by + vy*s*0.6} ${bx - vx*s*0.6},${by - vy*s*0.6}`,
+      fill: kind === "pin" ? color : "#fff", stroke: color, "stroke-width": 1.2});
+    let gx = bx, gy = by;
+    if (kind === "roller"){
+      for (const k of [-0.32, 0.32]) o += el("circle", {cx: bx + vx*s*k - ux*2.4, cy: by + vy*s*k - uy*2.4, r: 2.1, fill: "#fff", stroke: color, "stroke-width": 1});
+      gx -= ux*4.8; gy -= uy*4.8;
+    }
+    o += el("line", {x1: gx + vx*8, y1: gy + vy*8, x2: gx - vx*8, y2: gy - vy*8, stroke: color, "stroke-width": 1.2});
+    return o;
+  }
+  function drawStress(R){
+    const o = [], g = R.g, p = g.p, n = p + 1, comp = st.comp, dT = st.dT;
+    const ref = (st.mat === "bimetal" ? MATS.steel[0]*MATS.steel[2] : MATS[st.mat][0]*MATS[st.mat][2])*Math.max(Math.abs(dT), 1e-9);
+    let umax = 0;
+    for (let A=0;A<g.nnp;A++) umax = Math.max(umax, Math.hypot(R.U[2*A], R.U[2*A + 1]));
+    const mag = umax > 1e-15 ? 0.2*H/(umax*Math.abs(dT)) : 0;
+    const P = (e, xi, eta) => { const {N} = shape(p, xi, eta), A = g.IEN[e]; let x = 0, y = 0;
+      for (let a=0;a<N.length;a++){ x += N[a]*(g.X[A[a]][0] + mag*dT*R.U[2*A[a]]); y += N[a]*(g.X[A[a]][1] + mag*dT*R.U[2*A[a] + 1]); }
+      return `${PX(x)},${(Y0S - SC*y).toFixed(1)}`; };
+    const xg = GL[n][0], cuts = [-1, ...xg.slice(1).map((v, k) => 0.5*(v + xg[k])), 1];
+    const names = {0: "σ₀₀", 1: "σ₁₁", 3: "largest principal stress"};
+    o.push(el("text", {x: X0, y: 14, "font-size": 12.5, fill: "#42506a", "font-weight": 600},
+      `The deformed plate, displacements magnified ${mag > 0 ? Math.round(mag) : "—"} times, colored by ${names[comp]}`));
+    o.push(el("rect", {x: X0, y: Y0S - SC*H, width: SC*L, height: SC*H, fill: "none", stroke: "#8b94a1", "stroke-dasharray": "5 4", "stroke-width": 1}));
+    for (let e=0;e<g.nel;e++) for (let j=0;j<n;j++) for (let i=0;i<n;i++){
+      const v = val(R.sig[e][j*n + i], comp, dT), c = div(0.5 + 0.5*v/ref);
+      o.push(el("polygon", {points: [P(e, cuts[i], cuts[j]), P(e, cuts[i + 1], cuts[j]), P(e, cuts[i + 1], cuts[j + 1]), P(e, cuts[i], cuts[j + 1])].join(" "), fill: c, stroke: c, "stroke-width": 0.3}));
+    }
+    if (st.mat === "bimetal"){
+      const pts = []; for (let e=0;e<NX;e++){ const e2 = e + NX*(NY/2); pts.push(P(e2, -1, -1)); } pts.push(P(NX - 1 + NX*(NY/2), 1, -1));
+      o.push(el("polyline", {points: pts.join(" "), fill: "none", stroke: "#18202b", "stroke-width": 0.8, "stroke-dasharray": "2 2"}));
+    }
+    const navy = "#1e3a5f", at = (I, J) => { const A = g.node(I, J); return [X0 + SC*(g.X[A][0] + mag*dT*R.U[2*A]), Y0S - SC*(g.X[A][1] + mag*dT*R.U[2*A + 1])]; };
+    if (st.sup === "free"){ const [x1, y1] = at(0, 0), [x2, y2] = at(g.m0 - 1, 0); o.push(support(x1, y1, 0, -1, "pin", navy), support(x2, y2, 0, -1, "roller", navy)); }
+    if (st.sup === "rollers"){ for (let I=0;I<g.m0;I+=Math.max(1, Math.round((g.m0 - 1)/8))){ const [x, y] = at(I, 0); o.push(support(x, y, 0, -1, I === 0 ? "pin" : "roller", navy)); } }
+    if (st.sup === "clamped") for (const [xw, s] of [[X0, -1], [X0 + SC*L, 1]]){
+      o.push(el("line", {x1: xw, y1: Y0S - SC*H - 6, x2: xw, y2: Y0S + 6, stroke: navy, "stroke-width": 3}));
+      for (let k=0;k<8;k++){ const y = Y0S - SC*H - 4 + k*(SC*H + 8)/7; o.push(el("line", {x1: xw, y1: y, x2: xw + 7*s, y2: y + 6, stroke: navy, "stroke-width": 0.9})); }
+    }
+    colorbar(o, X0 + 110, Y0S + 64, 300, `${fmt(-ref, 0)} MPa`, `${fmt(ref, 0)} MPa`, names[comp] + "   (clipped at the ends)");
+    document.getElementById("c31stress").innerHTML = o.join("");
+    return {ref, mag};
+  }
+
+  function render(){
+    [["temp", "temp"], ["sup", "sup"], ["mat", "mat"], ["deg", "deg"], ["comp", "comp"]].forEach(([k, d]) =>
+      document.querySelectorAll(`#c31w [data-${d}]`).forEach(b => b.setAttribute("aria-pressed", String(b.dataset[d]) === String(st[k]) ? "true" : "false")));
+    document.getElementById("c31dtv").textContent = `${st.dT > 0 ? "+" : st.dT < 0 ? "−" : ""}${Math.abs(st.dT)} °C`;
+    const R = solveElastic(), dT = st.dT;
+    drawTemp(R.T);
+    const {ref} = drawStress(R);
+    const g = R.g, n = g.p + 1;
+    let lo = Infinity, hi = -Infinity, pmax = -Infinity, mlo = Infinity, mhi = -Infinity;
+    for (let e=0;e<g.nel;e++){
+      const e0 = e % NX, midcol = e0 === NX/2 - 1 || e0 === NX/2;
+      for (const s of R.sig[e]){
+        const v = val(s, st.comp, dT); lo = Math.min(lo, v); hi = Math.max(hi, v); pmax = Math.max(pmax, val(s, 3, dT));
+        if (midcol){ mlo = Math.min(mlo, s[0]*dT); mhi = Math.max(mhi, s[0]*dT); }
+      }
+    }
+    const m = st.mat === "bimetal" ? null : MATS[st.mat];
+    let txt = m ? `${NAMES[st.mat]}: E = ${m[0]/1000} GPa, ν = ${m[1]}, α = ${+(m[2]*1e6).toFixed(1)} × 10⁻⁶ /°C, so E α |ΔT| = <b>${ref.toFixed(1)} MPa</b>.<br>`
+      : `Steel on aluminum: E α |ΔT| = ${ref.toFixed(1)} MPa for the steel and ${(MATS.aluminum[0]*MATS.aluminum[2]*Math.abs(dT)).toFixed(1)} MPa for the aluminum.<br>`;
+    const names = {0: "σ₀₀", 1: "σ₁₁", 3: "The largest principal stress"};
+    txt += `${names[st.comp]} ranges from ${fmt(lo, 1)} to ${fmt(hi, 1)} MPa.` + (st.comp === 3 ? "<br>" : ` The largest principal stress anywhere is ${fmt(pmax, 1)} MPa.<br>`);
+    txt += `At mid-length, σ₀₀ ranges through the depth from ${fmt(mlo, 1)} to ${fmt(mhi, 1)} MPa.`;
+    if (st.mat === "bimetal" && st.sup === "free" && st.temp === "uniform" && dT !== 0){
+      const A = (x) => { const I = Math.round(x/L*(g.m0 - 1)), J = (g.m1 - 1)/2; return R.U[2*g.node(I, J) + 1]*dT; };
+      const k = Math.abs(A(100) - 2*A(200) + A(300))/1e4, nE = MATS.steel[0]/MATS.aluminum[0];
+      const kt = Math.abs(6*(MATS.aluminum[2] - MATS.steel[2])*dT*4/(H*(12 + (1 + nE)*(1 + 1/nE))));
+      txt += `<br>The curvature at mid-length is ${(k*1e6).toFixed(2)} × 10⁻⁶ /mm; Timoshenko's formula for a two-layer strip gives ${(kt*1e6).toFixed(2)} × 10⁻⁶ /mm.`;
+    }
+    document.getElementById("c31read").innerHTML = txt;
+  }
+  const bind = (attr, key, conv) => document.querySelectorAll(`#c31w [data-${attr}]`).forEach(b => b.addEventListener("click", () => { st[key] = conv(b.dataset[attr]); render(); }));
+  bind("temp", "temp", v => v); bind("sup", "sup", v => v); bind("mat", "mat", v => v); bind("deg", "deg", v => +v); bind("comp", "comp", v => +v);
+  document.getElementById("c31dt").addEventListener("input", ev => { st.dT = +ev.target.value; render(); });
+  render();
+})();
+</script>
+```
+:::
+
+### Things to try
+
+1. With the uniform rise and steel, switch between the pin and roller and both ends clamped.
+   On the pin and roller, the plate grows without any stress.
+   With both ends clamped, $\sigma_{00}$ at mid-length is about $-E\,\alpha\,\Delta T$; it is `{python} neg(f0(clamp_mid))` MPa for 50 °C, slightly more than `{python} f0(ref)` MPa, because the clamps also prevent the ends from widening.
+   The much larger stresses reported at the corners of the clamps are the singularities of [Class 29](29_Class.qmd), and they grow without limit as the mesh is refined.
+2. Clamp both ends, choose concrete, and set the change to −10 °C.
+   The concrete is stretched by about 3 MPa, which is about its tensile strength.
+3. Choose the hot top and cool bottom.
+   On the pin and roller, the plate bends without stress.
+   With its bottom on rollers, it cannot bend, and $\sigma_{00}$ at mid-length runs from about $-E\,\alpha\,\Delta T/2$ at the top to $+E\,\alpha\,\Delta T/2$ at the bottom.
+   This is the curling stress of a concrete slab that is held flat on the ground while the sun heats its top surface.
+4. Choose the hot patch on the top edge, on the pin and roller.
+   The temperature is far from uniform, but the stress is almost zero, as in @fig-c31-free b.
+   Clamp the ends, and the same temperature causes large stresses.
+5. Choose heat generated inside, on the pin and roller, and color by the largest principal stress.
+   Nothing restrains the plate, yet its edges are in tension, as the surface of a thick concrete pour is while its core is warmed by the hydration of the cement.
+6. Choose steel on aluminum with the uniform rise, on the pin and roller.
+   The strip bends toward the steel, and the readout compares its curvature with Timoshenko's formula for a two-layer strip, which it matches to within about 1%.
+   Set a negative change, and it bends the other way.
+7. Choose the hot top and cool bottom on the pin and roller, color by $\sigma_{11}$, and switch the displacement to degree 1.
+   The stress should be zero, but the elements of degree 1 cannot follow the expansion, as in @fig-c31-degree a.
+   The readout shows $\sigma_{11}$ of about ±3 MPa, too small to see in the colors, which run to ±`{python} f0(ref)` MPa.
+
+## Two-way coupling
+
+### The coupled heat equation
+
+So far, the temperature has affected the deformation, but not the other way around.
+A complete derivation from thermodynamics, which is beyond the scope of this course, shows that a deformation does affect the temperature.
+For an isotropic material with small strains, the heat equation of Classes 19 to 25 gains a term:
+
+$$
+\rho\,c\,\frac{\partial T}{\partial t} - \nabla\cdot\left(\kappa\,\nabla T\right) + T_0\,\left(3\lambda + 2\mu\right)\alpha\,\frac{\partial \varepsilon_{kk}}{\partial t} = Q ,
+$$
+
+where $\rho$ is the density, $c$ the specific heat at constant strain, $Q$ the heat generated per unit volume, and $T_0$ the absolute temperature (in kelvin) of the stress-free state.
+The new term says that changing the volume of a material changes its temperature: a material that is suddenly compressed warms up, and one that is suddenly stretched cools down.
+This is the **thermoelastic effect**.
+
+Two consequences follow directly from the form of the term.
+
+- **The term contains a rate of change.**
+  In a steady state, $\partial\varepsilon_{kk}/\partial t = 0$, so in linear thermoelasticity, every steady problem is exactly one-way coupled.
+  The coupling back to the temperature matters only while the body is being deformed.
+- **The term is the transpose of the thermal load.**
+  In the finite element equations, it becomes $T_0\,\underline{\underline{K}}_{u\theta}^T\,\dot{\underline{d}}$, with the same coupling matrix that goes from the temperature into the elasticity equations:
+
+  $$
+  \underline{\underline{C}}\,\dot{\underline{\theta}} + \underline{\underline{K}}_{\theta\theta}\,\underline{\theta} + T_0\,\underline{\underline{K}}_{u\theta}^T\,\dot{\underline{d}} = \underline{Q},
+  \qquad
+  \underline{\underline{K}}_{uu}\,\underline{d} - \underline{\underline{K}}_{u\theta}\,\underline{\theta} = \underline{F} ,
+  $$
+
+  where $\underline{\underline{C}}$ is the heat capacity matrix of the transient heat equation.
+  After the rates are approximated over a time step, both coupling blocks of the matrix are nonzero (@fig-c31-blocks b), and the two fields must be found together.
+
+### How strong the coupling is
+
+For a sudden change in stress, too fast for heat to flow, the coupled heat equation gives the temperature change
+
+$$
+\Delta T = -\frac{\alpha\,T_0}{\rho\,c}\,\Delta\!\left(\sigma_{00} + \sigma_{11} + \sigma_{22}\right) ,
+$$
+
+which is known as **Kelvin's formula**.
+Here $c$ is the specific heat at constant stress, which is the value usually tabulated for solids.
+It exceeds the specific heat at constant strain in the heat equation above by about `{python} pct(cs_excess("steel"))` for steel and `{python} pct(cs_excess("aluminum"))` for aluminum.
+For steel at room temperature, a sudden tension of 100 MPa lowers the temperature by only `{python} f2(abs(kelvin))` °C.
+A dimensionless measure of the coupling is $\delta = (3\lambda + 2\mu)^2\alpha^2\,T_0/\left(\rho\,c\,(\lambda + 2\mu)\right)$, which is about `{python} f2(delta_st)` for steel and `{python} f2(delta_al)` for aluminum.
+For structural metals, neglecting the coupling usually changes the results by a few percent or less, and by less still when the load is applied slowly enough for heat to flow away.
+This is an estimate of size, not a bound.
+The actual effect depends on the rate of loading, the thermal boundary conditions, and the quantity of interest, and for some quantities, such as the damping of a vibration, the coupling is the entire effect.
+
+### Coupling from the deformation to the temperature
+
+Sometimes the effect of interest runs only from the deformation to the temperature, and the temperature's effect on the deformation can be neglected.
+The mechanical problem is then solved first, and the temperature is computed from its result, which is one-way coupling in the reverse direction.
+
+- **Thermoelastic stress analysis** measures stresses with an infrared camera.
+  A part loaded and unloaded several times per second deforms too quickly for heat to flow, and Kelvin's formula relates the small temperature changes on its surface, often a few thousandths of a degree, to the changes in $\sigma_{00} + \sigma_{11}$.
+- **Thermoelastic damping** dissipates the energy of vibrating beams and plates.
+  The compressed side warms and the stretched side cools, heat flows between them, and the energy carried by that heat is lost to the vibration.
+  It limits the sharpness of the resonance of small mechanical resonators, such as those used in timing devices and sensors.
+- **Heating by plastic work, friction, and viscoelastic losses** are irreversible and are not part of linear thermoelasticity, but they are often treated in the same way.
+  Most of the plastic work done on a metal, about 90%, becomes heat, and rubber tires warm up as they roll because rubber loses some energy in each cycle of loading.
+
+Rubber behaves in the opposite way from metals.
+A rubber band that is quickly stretched warms up, rather than cooling, because rubber's stiffness comes mostly from the entropy of its long molecular chains rather than from stretching chemical bonds.
+
+### Problems that need two-way coupling
+
+Two-way coupling is needed when the deformation changes the heat flow enough to matter.
+This happens most often through the boundary conditions or through irreversible heating:
+
+- **Friction.**
+  In a brake or clutch, frictional heating expands the surface where it is hottest, which raises the contact pressure there, which raises the heating further.
+  Above a critical sliding speed, this feedback concentrates the heat into hot spots, which is called **thermoelastic instability**.
+- **Contact and gaps.**
+  Heat crosses an interface more easily when the surfaces are pressed together, and thermal expansion can close or open the gap.
+  Examples include nuclear fuel pellets in their cladding, bolted joints, and pistons in cylinders.
+- **Fast plastic deformation.**
+  In metal forming, machining, and impact, plastic work heats and softens the metal, which concentrates the deformation further, sometimes into narrow bands.
+
+There are two ways to solve such problems.
+A **monolithic** method solves for both fields together at each step, with a matrix like that of @fig-c31-blocks b.
+A **staggered** method alternates between the heat problem and the elasticity problem within each step, which lets each be solved by its own code, but the way the problem is split affects its stability.
+For example, holding the temperature fixed during the mechanical step is stable only for small enough time steps, while holding the entropy fixed is stable for any time step (Armero and Simo, 1992).
+
+## Nonlinear thermoelasticity
+
+The linear theory assumes small strains and properties that do not depend on the temperature.
+Neither assumption holds over large changes in temperature, and the following effects, roughly in order of how often they matter, make the problem nonlinear.
+
+- **Properties that depend on temperature.**
+  The stiffness, the coefficient of expansion, the conductivity, and the strength all change with temperature.
+  Structural steel at 600 °C, as in a building fire, retains only about half of its yield strength.
+  A conductivity that depends on the temperature makes the heat equation itself nonlinear.
+- **Radiation.**
+  Heat lost by radiation from a surface is proportional to $T^4 - T_\infty^4$, with absolute temperatures, which is a nonlinear boundary condition.
+  It dominates in fires, furnaces, and spacecraft.
+- **Thermal buckling.**
+  A restrained member that is heated is compressed by $E\,\alpha\,\Delta T$, and a slender one buckles when that reaches its buckling load.
+  A steel rod 2 m long and 20 mm in diameter, pinned at both ends, buckles after a rise of only `{python} f1(dT_buckle)` °C.
+  Railway tracks and thin plates buckle in the same way, and the analysis needs the geometrically nonlinear theory of large displacements.
+- **Plasticity and creep.**
+  A large or repeated thermal stress can yield the material, which leaves residual stresses after it cools, as in welds and quenched parts, and repeated cycles can cause thermal fatigue, as in the solder joints of electronic circuit boards.
+  At high temperatures, creep slowly relaxes thermal stresses.
+- **Large deformations.**
+  When the strains are large, the thermal expansion is combined with the elastic deformation by multiplication of the deformation gradients, rather than by adding strains.
+
+Each of these is solved incrementally, in steps of load or time with Newton iterations within each step, in the same way as other nonlinear problems.
+Their details are beyond the scope of this course.
+
+## Summary
+
+- A change in temperature $\Delta T$ from the stress-free temperature causes a thermal strain $\alpha\,\Delta T$ in every direction, and Hooke's law relates the stress to the total strain minus the thermal strain, $\underline{\sigma} = \underline{\underline{D}}\left(\underline{\epsilon} - \underline{\epsilon}^{\theta}\right)$.
+  In plane stress the in-plane thermal strain is $\alpha\,\Delta T$, and in plane strain it is $(1 + \nu)\,\alpha\,\Delta T$.
+- A body that is free to move is stressed by a temperature only if the thermal strain is incompatible.
+  In a plate without holes, that requires a temperature that does not satisfy steady heat conduction without sources.
+  Thermal stresses come from redundant supports, heat sources, changing temperatures, heat flowing around holes, and bonded materials with different coefficients.
+- In the finite element method, the thermal strain adds $\int \underline{\underline{B}}_a^T\,\underline{\underline{D}}\,\underline{\epsilon}^{\theta}\,d\Omega$ to the element force vector, and the stresses subtract it.
+  With one-way coupling, the heat problem is solved first and its temperatures load the elasticity problem.
+- The displacement should be interpolated with one degree more than the temperature, or a free body under a linear temperature shows spurious stress.
+- The deformation also changes the temperature, through a term that contains the rate of volume change.
+  It vanishes in steady states and is small for most structural metals, which is why one-way coupling is usually adequate.
+  Reverse one-way coupling describes thermoelastic stress measurement and damping, and two-way coupling is needed for friction, contact with gaps, and heating by fast plastic deformation.
+- Temperature-dependent properties, radiation, thermal buckling, plasticity, creep, and large deformations make thermoelasticity nonlinear.
