@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Finite Element Methods">
+
+<title>30&nbsp; Class 30: Convergence and Volumetric Locking – CE/ME 507 — Class Notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/3_Support_FunctionSpaces.html" rel="next">
+<link href="../chapters/29_Class.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-cb76554c71210f48e098573b9225a2ca.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script>
+window.MathJax = {
+  tex: {
+    tags: 'ams',
+    macros: {
+      RR: '{\\mathbb{R}}',
+      Om: '{\\Omega}'
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/30_Class.html"><span class="chapter-number">30</span>&nbsp; <span class="chapter-title">Class 30: Convergence and Volumetric Locking</span></a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Site">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">CE/ME 507 — Class Notes</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">CE/ME 507 — Class Notes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/2_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Class 2: Linear FEM</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Class 3: Index Notation, Function Spaces, and the Weak Form</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/4_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Class 4: Strong and Weak Forms of the Boundary Value Problem</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/5_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/6_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Class 6: Basis Functions and Lagrange Polynomials</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/7_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Class 7: From Galerkin to a Matrix Equation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/8_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Class 8: Assembly, Sparsity, and the Road to Quadrature</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/9_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Class 9: The Isoparametric Map and the Jacobian</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Class 10: Assembly with the IEN Array, and Quadrature on an Element</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Class 11: Tensor-Product Basis Functions in 2D</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Class 12: The Spatial Mapping</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Class 13: The Jacobian Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Class 14: The ID and IEN Arrays</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Class 15: Unidimensional Finite Element Code</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Class 16: Derivatives of the Solution</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Class 20: Quadrature in 2D, and Integrating Over a Face</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Class 21: CAD, Meshing, and Discretization Choice</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/22_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Class 22: Robin Boundary Conditions</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/23_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Class 23: Minimization, Symmetry, and Positive Definiteness</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Classes 24 and 25: Applications and Interpretation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">Classes 24 and 25 applications</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Seepage.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Groundwater Seepage Under a Dam</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Torsion.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Torsion of an I-Beam, and the Membrane Analogy</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Membrane.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deflection of a Pressurized Membrane</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Diffusion.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Diffusion Through a Damaged Landfill Liner</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/25_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Class 25: Applications and Interpretation, Continued</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/26_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Class 26: Linear Elasticity and the Principle of Virtual Work</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/27_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Class 27: Voigt Notation and the Elasticity Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/28_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Class 28: The Galerkin Form of Elasticity and Assembly</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/29_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">29</span>&nbsp; <span class="chapter-title">Class 29: Supports, Symmetry, and Boundary Conditions in Elasticity</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/30_Class.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">30</span>&nbsp; <span class="chapter-title">Class 30: Convergence and Volumetric Locking</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">Appendices</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">1D Poisson I: Heat Conduction Through a Wall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">1D Poisson II: The Wall, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">1D Poisson III: An Axially Loaded Rod</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Elasticity2D.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">H</span>&nbsp; <span class="chapter-title">Linear Elasticity I: Stress, Strain, and the Strong Form</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Elasticity2D_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">I</span>&nbsp; <span class="chapter-title">Linear Elasticity II: Plane Elasticity, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Beam_Frame_Formulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">J</span>&nbsp; <span class="chapter-title">Beams and Frames from Three-Dimensional Elasticity</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#convergence-revisited" id="toc-convergence-revisited" class="nav-link active" data-scroll-target="#convergence-revisited"><span class="header-section-number">30.1</span> Convergence, revisited</a>
+  <ul class="collapse">
+  <li><a href="#measuring-the-error-of-a-displacement" id="toc-measuring-the-error-of-a-displacement" class="nav-link" data-scroll-target="#measuring-the-error-of-a-displacement"><span class="header-section-number">30.1.1</span> Measuring the error of a displacement</a></li>
+  <li><a href="#the-a-priori-estimate" id="toc-the-a-priori-estimate" class="nav-link" data-scroll-target="#the-a-priori-estimate"><span class="header-section-number">30.1.2</span> The a priori estimate</a></li>
+  <li><a href="#galerkin-orthogonality-and-céas-lemma" id="toc-galerkin-orthogonality-and-céas-lemma" class="nav-link" data-scroll-target="#galerkin-orthogonality-and-céas-lemma"><span class="header-section-number">30.1.3</span> Galerkin orthogonality and Céa’s lemma</a></li>
+  <li><a href="#exact-solutions-for-checking-convergence" id="toc-exact-solutions-for-checking-convergence" class="nav-link" data-scroll-target="#exact-solutions-for-checking-convergence"><span class="header-section-number">30.1.4</span> Exact solutions for checking convergence</a></li>
+  <li><a href="#a-convergence-study" id="toc-a-convergence-study" class="nav-link" data-scroll-target="#a-convergence-study"><span class="header-section-number">30.1.5</span> A convergence study</a></li>
+  </ul></li>
+  <li><a href="#nearly-incompressible-materials" id="toc-nearly-incompressible-materials" class="nav-link" data-scroll-target="#nearly-incompressible-materials"><span class="header-section-number">30.2</span> Nearly incompressible materials</a>
+  <ul class="collapse">
+  <li><a href="#volume-change-and-the-bulk-modulus" id="toc-volume-change-and-the-bulk-modulus" class="nav-link" data-scroll-target="#volume-change-and-the-bulk-modulus"><span class="header-section-number">30.2.1</span> Volume change and the bulk modulus</a></li>
+  <li><a href="#the-volumetric-term-in-the-weak-form" id="toc-the-volumetric-term-in-the-weak-form" class="nav-link" data-scroll-target="#the-volumetric-term-in-the-weak-form"><span class="header-section-number">30.2.2</span> The volumetric term in the weak form</a></li>
+  </ul></li>
+  <li><a href="#volumetric-locking" id="toc-volumetric-locking" class="nav-link" data-scroll-target="#volumetric-locking"><span class="header-section-number">30.3</span> Volumetric locking</a>
+  <ul class="collapse">
+  <li><a href="#what-goes-wrong-in-the-discrete-problem" id="toc-what-goes-wrong-in-the-discrete-problem" class="nav-link" data-scroll-target="#what-goes-wrong-in-the-discrete-problem"><span class="header-section-number">30.3.1</span> What goes wrong in the discrete problem</a></li>
+  </ul></li>
+  <li><a href="#volumetric-locking-interactively" id="toc-volumetric-locking-interactively" class="nav-link" data-scroll-target="#volumetric-locking-interactively"><span class="header-section-number">30.4</span> Volumetric locking, interactively</a>
+  <ul class="collapse">
+  <li><a href="#things-to-try" id="toc-things-to-try" class="nav-link" data-scroll-target="#things-to-try"><span class="header-section-number">30.4.1</span> Things to try</a></li>
+  </ul></li>
+  <li><a href="#locking-can-look-like-convergence" id="toc-locking-can-look-like-convergence" class="nav-link" data-scroll-target="#locking-can-look-like-convergence"><span class="header-section-number">30.5</span> Locking can look like convergence</a></li>
+  <li><a href="#mitigating-volumetric-locking" id="toc-mitigating-volumetric-locking" class="nav-link" data-scroll-target="#mitigating-volumetric-locking"><span class="header-section-number">30.6</span> Mitigating volumetric locking</a>
+  <ul class="collapse">
+  <li><a href="#refining-the-mesh" id="toc-refining-the-mesh" class="nav-link" data-scroll-target="#refining-the-mesh"><span class="header-section-number">30.6.1</span> Refining the mesh</a></li>
+  <li><a href="#raising-the-degree" id="toc-raising-the-degree" class="nav-link" data-scroll-target="#raising-the-degree"><span class="header-section-number">30.6.2</span> Raising the degree</a></li>
+  <li><a href="#special-elements-and-mixed-methods" id="toc-special-elements-and-mixed-methods" class="nav-link" data-scroll-target="#special-elements-and-mixed-methods"><span class="header-section-number">30.6.3</span> Special elements and mixed methods</a></li>
+  <li><a href="#plane-stress-does-not-lock" id="toc-plane-stress-does-not-lock" class="nav-link" data-scroll-target="#plane-stress-does-not-lock"><span class="header-section-number">30.6.4</span> Plane stress does not lock</a></li>
+  </ul></li>
+  <li><a href="#other-kinds-of-locking" id="toc-other-kinds-of-locking" class="nav-link" data-scroll-target="#other-kinds-of-locking"><span class="header-section-number">30.7</span> Other kinds of locking</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">30.8</span> Summary</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content column-body" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">30</span>&nbsp; <span class="chapter-title">Class 30: Convergence and Volumetric Locking</span></h1>
+<p class="subtitle lead">The error estimates of Classes 17 and 18 for elasticity, and what happens to them as a material becomes nearly incompressible</p>
+</div>
+
+
+
+<div class="quarto-title-meta column-body">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>In <a href="../chapters/17_Class.html">Class 17</a> and <a href="../chapters/18_Class.html">Class 18</a>, the finite element solution of the Poisson Equation was shown to converge to the exact solution at a rate set by the polynomial degree because of the so-called Galerkin orthogonality of finite element methods. This class first revisits those results for elasticity, where they hold with few changes. It then turns to a case in which the estimate still holds but is of little practical use: a material that is nearly incompressible, such as rubber. For such a material, the elements of the previous classes can be far too stiff, which is called <strong>volumetric locking</strong>.</p>
+<section id="convergence-revisited" class="level2" data-number="30.1">
+<h2 data-number="30.1" class="anchored" data-anchor-id="convergence-revisited"><span class="header-section-number">30.1</span> Convergence, revisited</h2>
+<section id="measuring-the-error-of-a-displacement" class="level3" data-number="30.1.1">
+<h3 data-number="30.1.1" class="anchored" data-anchor-id="measuring-the-error-of-a-displacement"><span class="header-section-number">30.1.1</span> Measuring the error of a displacement</h3>
+<p>The error is now a vector field, <span class="math inline">\(\underline{e} = \underline{u} - \underline{u}^h\)</span>, and its norms add up the contributions of its components. The norms of Class 17 become</p>
+<p><span class="math display">\[
+\|\underline{e}\|_{L^2}^2 = \int_\Omega e_i\,e_i\;d\Omega,
+\qquad
+\|\underline{e}\|_{H^1}^2 = \int_\Omega e_i\,e_i + e_{i,j}\,e_{i,j}\;d\Omega,
+\]</span></p>
+<p>with sums over the repeated indices, so that in two dimensions <span class="math inline">\(e_i\,e_i = e_0^2 + e_1^2\)</span>, and <span class="math inline">\(e_{i,j}\,e_{i,j}\)</span> adds the squares of all four derivatives. The <strong>energy norm</strong> of Class 18 uses the bilinear form of <a href="../chapters/28_Class.html">Class 28</a>,</p>
+<p><span class="math display">\[
+\|\underline{e}\|_E^2 = a(\underline{e}, \underline{e}) = \int_\Omega \underline{\epsilon}(\underline{e})^T\,\underline{\underline{D}}\;\underline{\epsilon}(\underline{e})\;d\Omega ,
+\]</span></p>
+<p>which is twice the strain energy that the error would store. Each norm is computed element by element with Gaussian quadrature, as in Class 17. The exact solution is evaluated at the physical location <span class="math inline">\(\underline{x}^e(\underline{\xi}_q)\)</span> of each quadrature point, and more points are used than the stiffness matrix needs, because the error is not a polynomial. The errors below are relative errors, such as <span class="math inline">\(\|\underline{e}\|_{L^2}/\|\underline{u}\|_{L^2}\)</span>, so that they do not depend on the units.</p>
+</section>
+<section id="the-a-priori-estimate" class="level3" data-number="30.1.2">
+<h3 data-number="30.1.2" class="anchored" data-anchor-id="the-a-priori-estimate"><span class="header-section-number">30.1.2</span> The a priori estimate</h3>
+<p>The a priori estimate is unchanged. For a sufficiently smooth exact solution and elements of degree <span class="math inline">\(p\)</span> (written <span class="math inline">\(k\)</span> in Class 17),</p>
+<p><span class="math display">\[
+\|\underline{e}\|_{H^s} \leq C\,h^{\,p+1-s}\,\|\underline{u}\|_{H^{p+1}} ,
+\]</span></p>
+<p>so the displacements converge at the rate <span class="math inline">\(p+1\)</span> in the <span class="math inline">\(L^2\)</span> norm, and the strains and stresses, through the <span class="math inline">\(H^1\)</span> and energy norms, at the rate <span class="math inline">\(p\)</span>. The rate is measured as before, by halving <span class="math inline">\(h\)</span> and taking the base-2 logarithm of the ratio of successive errors.</p>
+<p>The constant <span class="math inline">\(C\)</span> does not depend on <span class="math inline">\(h\)</span> or on <span class="math inline">\(\underline{u}\)</span>. It does depend on the domain, the degree, the shapes of the elements, and the coefficients of the problem, which for an isotropic material are <span class="math inline">\(E\)</span> and <span class="math inline">\(\nu\)</span>. That last dependence is the subject of most of this class.</p>
+</section>
+<section id="galerkin-orthogonality-and-céas-lemma" class="level3" data-number="30.1.3">
+<h3 data-number="30.1.3" class="anchored" data-anchor-id="galerkin-orthogonality-and-céas-lemma"><span class="header-section-number">30.1.3</span> Galerkin orthogonality and Céa’s lemma</h3>
+<p>The argument of Class 18 used only two properties of the bilinear form: that it is symmetric, and that <span class="math inline">\(a(\underline{v}, \underline{v}) &gt; 0\)</span> for every admissible <span class="math inline">\(\underline{v} \neq \underline{0}\)</span>. Both hold in elasticity. The form is symmetric because <span class="math inline">\(\underline{\underline{D}}\)</span> is symmetric. It is positive because <span class="math inline">\(\underline{\underline{D}}\)</span> is positive definite and, by Korn’s inequality in <a href="../chapters/29_Class.html">Class 29</a>, only a rigid-body motion has no strain, and the supports exclude those. Galerkin orthogonality then follows word for word,</p>
+<p><span class="math display">\[
+a(\underline{u} - \underline{u}^h,\; \underline{w}^h) = 0 \qquad \text{for all } \underline{w}^h \in \mathcal{V}^h ,
+\]</span></p>
+<p>and so does Céa’s lemma,</p>
+<p><span class="math display">\[
+\left\|\underline{u} - \underline{u}^h\right\|_E \leq \left\|\underline{u} - \underline{w}^h\right\|_E \qquad \text{for every } \underline{w}^h \in \mathcal{V}^h .
+\]</span></p>
+<p>The finite element displacement is the best approximation in its space, measured in the energy norm. Choosing <span class="math inline">\(\underline{w}^h\)</span> to be the interpolant of <span class="math inline">\(\underline{u}\)</span> and applying the Bramble–Hilbert lemma to each component then gives the estimate above.</p>
+</section>
+<section id="exact-solutions-for-checking-convergence" class="level3" data-number="30.1.4">
+<h3 data-number="30.1.4" class="anchored" data-anchor-id="exact-solutions-for-checking-convergence"><span class="header-section-number">30.1.4</span> Exact solutions for checking convergence</h3>
+<p>As in Class 18, an exact solution can be manufactured for any body by choosing the displacement first and computing the data that it satisfies:</p>
+<ol type="1">
+<li>Choose a displacement field <span class="math inline">\(\underline{u}(\underline{x})\)</span> that can be differentiated twice.</li>
+<li>Compute its strains, the stresses <span class="math inline">\(\sigma_{ij}\)</span> from Hooke’s law of <a href="../chapters/27_Class.html">Class 27</a>, and the body force that balances them, <span class="math inline">\(f_i = -\sigma_{ij,j}\)</span>.</li>
+<li>Prescribe <span class="math inline">\(g_i = u_i\)</span> on <span class="math inline">\(\Gamma_{g_i}\)</span>, and the tractions <span class="math inline">\(h_i = \sigma_{ij}\,n_j\)</span> on <span class="math inline">\(\Gamma_{h_i}\)</span>.</li>
+</ol>
+<p>A few problems also have exact solutions without a body force, both of which involve plane strain (<a href="#fig-c30-problems" class="quarto-xref">Figure&nbsp;<span>30.1</span></a>). The first is a long thick-walled cylinder, such as a hose or a pipe, with inner radius <span class="math inline">\(a\)</span>, outer radius <span class="math inline">\(b\)</span>, and an internal pressure <span class="math inline">\(q\)</span>. The pressure is written <span class="math inline">\(q\)</span> here to clarify that it is not the polynomial degree, which to this point we have written using <span class="math inline">\(p\)</span>. Its displacement is radial, and Lamé’s solution gives</p>
+<p><span class="math display">\[
+u_r(r) = \frac{(1+\nu)\,q\,a^2}{E\left(b^2 - a^2\right)}\left((1 - 2\nu)\,r + \frac{b^2}{r}\right) .
+\]</span></p>
+<p>By symmetry, only a quarter of the cylinder needs to be modeled, with rollers on the two cuts, as in Class 29. The second is the end-loaded cantilever of Timoshenko and Goodier from the <a href="../chapters/Elasticity2D.html#a-problem-with-an-exact-solution-the-end-loaded-cantilever">first elasticity appendix</a>, with the exact displacements prescribed on its left end and a parabolic shear traction on its right end. Both use <span class="math inline">\(E\)</span> = 10 MPa, which is typical of a soft rubber; <span class="math inline">\(E\)</span> only scales the displacements, and <span class="math inline">\(\nu\)</span> is varied below.</p>
+<div id="fig-c30-problems" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c30-problems-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class30/C30_Fig1_Problems.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c30-problems-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;30.1: The two problems with exact solutions, both in plane strain. (a) A quarter of a thick-walled cylinder with an internal pressure. The two cuts are planes of symmetry, so each is held by rollers, and the outer surface is free. (b) A cantilever with the exact displacements prescribed on its left end and a parabolic shear traction on its right end.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="a-convergence-study" class="level3" data-number="30.1.5">
+<h3 data-number="30.1.5" class="anchored" data-anchor-id="a-convergence-study"><span class="header-section-number">30.1.5</span> A convergence study</h3>
+<p><a href="#fig-c30-review" class="quarto-xref">Figure&nbsp;<span>30.2</span></a> shows the errors in the cylinder at <span class="math inline">\(\nu = 0.3\)</span>, on meshes with <span class="math inline">\(n\)</span> elements through the wall and <span class="math inline">\(2n\)</span> around the quarter, for <span class="math inline">\(n = 1, 2, 4, \ldots\)</span> The elements approximate the circular boundaries, with straight sides at degree 1 and parabolic sides at degree 2, and this approximation does not reduce the rates. The measured rates on the finest meshes are 2.00 and 2.99 in the <span class="math inline">\(L^2\)</span> norm, and 1.00 and 1.99 in the energy norm. These are <span class="math inline">\(p+1\)</span> and <span class="math inline">\(p\)</span>, as for the Poisson Equation.</p>
+<div id="fig-c30-review" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c30-review-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class30/C30_Fig2_Review.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c30-review-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;30.2: The cylinder at <span class="math inline">\(\nu = 0.3\)</span>, with elements of degree 1 and 2. (a) The relative <span class="math inline">\(L^2\)</span> error of the displacement, which falls at the rate <span class="math inline">\(p + 1\)</span>. (b) The relative error in the energy norm, which falls at the rate <span class="math inline">\(p\)</span>. The triangles show the expected slopes.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="nearly-incompressible-materials" class="level2" data-number="30.2">
+<h2 data-number="30.2" class="anchored" data-anchor-id="nearly-incompressible-materials"><span class="header-section-number">30.2</span> Nearly incompressible materials</h2>
+<section id="volume-change-and-the-bulk-modulus" class="level3" data-number="30.2.1">
+<h3 data-number="30.2.1" class="anchored" data-anchor-id="volume-change-and-the-bulk-modulus"><span class="header-section-number">30.2.1</span> Volume change and the bulk modulus</h3>
+<p>For small strains, the divergence of the displacement, <span class="math inline">\(\nabla\cdot\underline{u} = u_{i,i} = \varepsilon_{kk}\)</span>, is the change in volume per unit volume. In plane strain, <span class="math inline">\(\varepsilon_{22} = 0\)</span>, so <span class="math inline">\(\nabla\cdot\underline{u} = u_{0,0} + u_{1,1}\)</span>. The mean of the three normal stresses is proportional to it,</p>
+<p><span class="math display">\[
+\frac{\sigma_{00} + \sigma_{11} + \sigma_{22}}{3} = \left(\lambda + \tfrac{2}{3}\mu\right)\nabla\cdot\underline{u} = K\,\nabla\cdot\underline{u},
+\]</span></p>
+<p>where <span class="math inline">\(K\)</span> is called the <strong>bulk modulus</strong>. In terms of <span class="math inline">\(E\)</span> and <span class="math inline">\(\nu\)</span>,</p>
+<p><span class="math display">\[
+K = \frac{E}{3\,(1 - 2\nu)}, \qquad \mu = \frac{E}{2\,(1 + \nu)}, \qquad \frac{\lambda}{\mu} = \frac{2\nu}{1 - 2\nu} .
+\]</span></p>
+<p>As <span class="math inline">\(\nu\)</span> approaches <span class="math inline">\(\tfrac{1}{2}\)</span>, <span class="math inline">\(K\)</span> and <span class="math inline">\(\lambda\)</span> grow without bound, while <span class="math inline">\(\mu\)</span> approaches <span class="math inline">\(E/3\)</span>.</p>
+<div id="tbl-c30-ratio" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-c30-ratio-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;30.1: The ratio of the two Lamé parameters as <span class="math inline">\(\nu\)</span> approaches <span class="math inline">\(\tfrac{1}{2}\)</span>.
+</figcaption>
+<div aria-describedby="tbl-c30-ratio-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;"><span class="math inline">\(\nu\)</span></th>
+<th style="text-align: right;">0.3</th>
+<th style="text-align: right;">0.45</th>
+<th style="text-align: right;">0.49</th>
+<th style="text-align: right;">0.499</th>
+<th style="text-align: right;">0.4999</th>
+<th style="text-align: right;">0.49999</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(\lambda/\mu\)</span></td>
+<td style="text-align: right;">1.5</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">49</td>
+<td style="text-align: right;">499</td>
+<td style="text-align: right;">4,999</td>
+<td style="text-align: right;">49,999</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>A material with <span class="math inline">\(\nu\)</span> close to <span class="math inline">\(\tfrac{1}{2}\)</span> is called <strong>nearly incompressible</strong>. Examples are rubber and other elastomers, with <span class="math inline">\(\nu\)</span> of about 0.4995 or more, and soft biological tissue. Water-saturated soils behave in the same way when they are loaded faster than the water can drain, and metals do during plastic flow, which is beyond the scope of this course. In such a material, a finite mean stress produces almost no change in volume, since <span class="math inline">\(\nabla\cdot\underline{u}\)</span> is the mean stress divided by <span class="math inline">\(K\)</span>.</p>
+</section>
+<section id="the-volumetric-term-in-the-weak-form" class="level3" data-number="30.2.2">
+<h3 data-number="30.2.2" class="anchored" data-anchor-id="the-volumetric-term-in-the-weak-form"><span class="header-section-number">30.2.2</span> The volumetric term in the weak form</h3>
+<p>The plane strain elasticity matrix of Class 27 splits into a part with <span class="math inline">\(\mu\)</span> and a part with <span class="math inline">\(\lambda\)</span>,</p>
+<p><span class="math display">\[
+\underline{\underline{D}} =
+\begin{bmatrix} \lambda + 2\mu &amp; \lambda &amp; 0 \\ \lambda &amp; \lambda + 2\mu &amp; 0 \\ 0 &amp; 0 &amp; \mu \end{bmatrix}
+= \underbrace{\mu\begin{bmatrix} 2 &amp; 0 &amp; 0 \\ 0 &amp; 2 &amp; 0 \\ 0 &amp; 0 &amp; 1 \end{bmatrix}}_{\underline{\underline{D}}_\mu}
++ \;\lambda\,\underline{m}\,\underline{m}^T,
+\qquad
+\underline{m} = \begin{bmatrix} 1 \\ 1 \\ 0 \end{bmatrix} ,
+\]</span></p>
+<p>and since <span class="math inline">\(\underline{m}^T\underline{\epsilon}(\underline{u}) = u_{0,0} + u_{1,1} = \nabla\cdot\underline{u}\)</span>, the bilinear form splits in the same way:</p>
+<p><span class="math display">\[
+a(\underline{w}, \underline{u}) = \int_\Omega \underline{\epsilon}(\underline{w})^T\,\underline{\underline{D}}_\mu\;\underline{\epsilon}(\underline{u})\;d\Omega
++ \int_\Omega \lambda\,\left(\nabla\cdot\underline{w}\right)\left(\nabla\cdot\underline{u}\right)d\Omega .
+\]</span></p>
+<p>As <span class="math inline">\(\lambda\)</span> grows, the second integral acts like the stiff spring of the penalty method in Class 29. It permits a change in volume only at a large cost in energy, and so it enforces <span class="math inline">\(\nabla\cdot\underline{u} \approx 0\)</span>, with an error proportional to <span class="math inline">\(1/\lambda\)</span>. The product <span class="math inline">\(\lambda\,\nabla\cdot\underline{u}\)</span> stays finite. In plane strain it is exactly the stress along the length of the body, <span class="math inline">\(\sigma_{22} = \lambda\left(\varepsilon_{00} + \varepsilon_{11}\right)\)</span>, from Class 27.</p>
+<p>The exact solutions are well behaved as <span class="math inline">\(\nu\)</span> approaches <span class="math inline">\(\tfrac{1}{2}\)</span>. The inner surface of the cylinder moves out 4.77 mm at <span class="math inline">\(\nu = 0.3\)</span> and 5.00 mm at <span class="math inline">\(\nu = 0.49999\)</span>, and the tip of the cantilever moves down 9.77 mm and 8.22 mm.</p>
+</section>
+</section>
+<section id="volumetric-locking" class="level2" data-number="30.3">
+<h2 data-number="30.3" class="anchored" data-anchor-id="volumetric-locking"><span class="header-section-number">30.3</span> Volumetric locking</h2>
+<section id="what-goes-wrong-in-the-discrete-problem" class="level3" data-number="30.3.1">
+<h3 data-number="30.3.1" class="anchored" data-anchor-id="what-goes-wrong-in-the-discrete-problem"><span class="header-section-number">30.3.1</span> What goes wrong in the discrete problem</h3>
+<p>The finite element solution is subject to the same near-constraint, but it can satisfy it only with the fields its space contains, and only where the <span class="math inline">\(\lambda\)</span> integral is evaluated: at the quadrature points. With the full quadrature used so far, <span class="math inline">\(\nabla\cdot\underline{u}^h\)</span> must be nearly zero at every quadrature point of every element.</p>
+<p><a href="#fig-c30-count" class="quarto-xref">Figure&nbsp;<span>30.3</span></a> compares the number of these points with the number of unknowns. In a large mesh of degree-1 elements, each element adds about one node, and so two unknowns, but four quadrature points. Degree-2 elements add about four nodes, or eight unknowns, and nine points. Hughes (Chapter 4) calls the ratio of unknowns to constraints the <strong>constraint ratio</strong>. The continuous problem has two displacement components and one constraint at each point, a ratio of 2. A ratio below 1, as for degree 1 with four points, suggests that the elements will lock. The count is a rule of thumb rather than a proof, but the results below follow it.</p>
+<div id="fig-c30-count" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c30-count-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class30/C30_Fig4_Constraints.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c30-count-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;30.3: Unknowns (dots) and the quadrature points at which the <span class="math inline">\(\lambda\)</span> integral is evaluated (crosses), on a patch of nine elements. The shaded element is one of them. In a large mesh, each element adds the number of unknowns shown, and each cross asks for <span class="math inline">\(\nabla\cdot\underline{u}^h \approx 0\)</span> when <span class="math inline">\(\lambda\)</span> is large. (a) Degree 1 with full quadrature has more constraints than unknowns. (b) Degree 2 has about as many of each. (c) Degree 1 with the <span class="math inline">\(\lambda\)</span> integral evaluated at the center has one constraint for two unknowns.
+</figcaption>
+</figure>
+</div>
+<p>When the constraints outnumber the unknowns, the only fields that satisfy them are very restricted. As <span class="math inline">\(\lambda/\mu\)</span> grows on a fixed mesh, the finite element solution approaches the best fit among those restricted fields, which is often a poor fit. The elements become far too stiff and hardly move, which is why they are said to <strong>lock</strong>.</p>
+<p>In the terms of Class 18, Céa’s lemma still holds: <span class="math inline">\(\underline{u}^h\)</span> is still the best approximation in the energy norm. That norm, however, now contains <span class="math inline">\(\int_\Omega \lambda\left(\nabla\cdot\underline{e}\right)^2 d\Omega\)</span>. When <span class="math inline">\(\lambda\)</span> is very large, the best approximation is the one that keeps <span class="math inline">\(\nabla\cdot\underline{u}^h\)</span> small at the quadrature points, whatever that costs in the displacement itself. Converting the statement about the energy norm into one about the displacement brings in the ratio <span class="math inline">\(\lambda/\mu\)</span>, and the constant <span class="math inline">\(C\)</span> in the estimate for the displacement grows without bound as <span class="math inline">\(\nu\)</span> approaches <span class="math inline">\(\tfrac{1}{2}\)</span>. The rate is unchanged. What changes is how small the elements must be before the error begins to fall at that rate.</p>
+<p><a href="#fig-c30-lock" class="quarto-xref">Figure&nbsp;<span>30.4</span></a> shows this for the cylinder. At <span class="math inline">\(\nu = 0.3\)</span>, the error of the degree-1 elements falls at the rate 2 from the coarsest mesh. As <span class="math inline">\(\nu\)</span> approaches <span class="math inline">\(\tfrac{1}{2}\)</span>, the error stays near 100% on the coarse meshes, and it begins to fall only once the elements are small enough, eventually at the same rate. Each tenfold increase in <span class="math inline">\(\lambda/\mu\)</span> moves the start of that decline to elements about three times smaller, close to <span class="math inline">\(\sqrt{10}\)</span>. At <span class="math inline">\(\nu = 0.49999\)</span>, even the finest mesh of degree-1 elements, 32 × 64 with 4,224 unknowns, has an error of 72%. Degree 2 also locks on the coarsest meshes, but it recovers on much coarser meshes than degree 1.</p>
+<div id="fig-c30-lock" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c30-lock-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class30/C30_Fig3_LockingRates.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c30-lock-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;30.4: The relative <span class="math inline">\(L^2\)</span> error of the displacement in the cylinder, for several values of <span class="math inline">\(\nu\)</span>. (a) Degree 1: as <span class="math inline">\(\nu\)</span> approaches <span class="math inline">\(\tfrac{1}{2}\)</span>, the error stays near 100% for more and more refinements, and then falls at the rate 2. (b) Degree 2: the same pattern on coarser meshes, falling eventually at the rate 3.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="volumetric-locking-interactively" class="level2" data-number="30.4">
+<h2 data-number="30.4" class="anchored" data-anchor-id="volumetric-locking-interactively"><span class="header-section-number">30.4</span> Volumetric locking, interactively</h2>
+<p>The widget below solves both problems of <a href="#fig-c30-problems" class="quarto-xref">Figure&nbsp;<span>30.1</span></a>, in plane strain, for any <span class="math inline">\(\nu\)</span>, with three kinds of elements, and compares every result with the exact solution.</p>
+<ul>
+<li>Use the buttons to choose the problem and the elements, and the sliders to choose <span class="math inline">\(\nu\)</span> and the mesh. The meshes have <span class="math inline">\(n = 1, 2, 4, 8,\)</span> or 16 elements through the depth of the cantilever, with <span class="math inline">\(4n\)</span> along its length, or through the wall of the cylinder, with <span class="math inline">\(2n\)</span> around the quarter.</li>
+<li>The upper panel shows the deformed mesh, magnified, with the exact deformed shape dashed and the undeformed outline in gray. The colors show <span class="math inline">\(\lambda\,\nabla\cdot\underline{u}^h\)</span>, which in plane strain is <span class="math inline">\(\sigma_{22}\)</span>, at each quadrature point of each element, or at the center for the third kind of element. The exact <span class="math inline">\(\sigma_{22}\)</span> varies linearly along and through the cantilever, and it is uniform in the cylinder.</li>
+<li>The lower panels show, for all three kinds of element and every mesh, the computed displacement divided by the exact one, and the relative <span class="math inline">\(L^2\)</span> error. The displacement is the deflection at the middle of the cantilever’s tip, or the radial displacement of the cylinder’s inner surface at 45°.</li>
+<li>The third kind of element, “degree 1, <span class="math inline">\(\lambda\)</span> term at one point,” is described in the section on mitigating locking below.</li>
+<li>Every solution is computed in your browser when <span class="math inline">\(\nu\)</span> or the problem changes.</li>
+</ul>
+<style>
+.c30{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;color:var(--ink)}
+.c30 .bar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:10px 14px;background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.c30 .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey);margin-right:2px}
+.c30 .bar .gap{width:10px}
+.c30 button{font:inherit;font-size:13px;padding:4px 10px;border:1px solid #c3c9d2;border-radius:6px;background:#fff;cursor:pointer;color:var(--ink)}
+.c30 button:hover{background:#eef1f5}
+.c30 button[aria-pressed="true"]{background:#18202b;color:#fff;border-color:#18202b}
+.c30 svg{display:block;width:100%;height:auto}
+.c30 .panel{border:1px solid var(--faint);border-radius:8px;background:#fff;padding:6px;margin-bottom:10px}
+.c30 .plots{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+@media (max-width:700px){.c30 .plots{grid-template-columns:1fr}}
+.c30 .read{font-size:.88em;background:var(--paper);border:1px solid var(--faint);border-radius:8px;padding:9px 12px;line-height:1.6;margin-bottom:22px}
+.c30 .read b{color:#b8322a}
+.c30 input[type=range]{vertical-align:middle;width:170px}
+.c30 .val{font-family:monospace;font-size:12px;color:var(--grey);min-width:4em;display:inline-block}
+.c30 .key{font-size:.85em;color:#42506a;margin:-2px 2px 10px;display:flex;flex-wrap:wrap;gap:4px 18px;align-items:center}
+.c30 .key i{display:inline-block;width:20px;height:0;border-top:3px solid;vertical-align:middle;margin-right:6px}
+</style>
+<div class="c30" id="c30w">
+  <div class="bar">
+    <b>PROBLEM</b>
+    <button data-prob="cantilever">the cantilever</button>
+    <button data-prob="cylinder">the thick-walled cylinder</button>
+  </div>
+  <div class="bar">
+    <b>ELEMENTS</b>
+    <button data-el="0">degree 1</button>
+    <button data-el="1">degree 2</button>
+    <button data-el="2">degree 1, λ term at one point</button>
+  </div>
+  <div class="bar">
+    <b>POISSON'S RATIO</b>
+    <input type="range" id="c30nu" min="0" max="11" step="1" value="11" aria-label="Poisson's ratio"><span class="val" id="c30nuv"></span>
+    <span class="gap"></span>
+    <b>MESH</b>
+    <input type="range" id="c30lev" min="0" max="4" step="1" value="2" aria-label="Mesh"><span class="val" id="c30levv"></span>
+  </div>
+  <div class="panel"><svg id="c30shape" viewbox="0 0 680 300" role="img" aria-label="The deformed mesh, colored by lambda times the divergence of the displacement, with the exact deformed shape dashed"></svg></div>
+  <div class="plots">
+    <div class="panel"><svg id="c30ratio" viewbox="0 0 340 250" role="img" aria-label="The computed displacement divided by the exact displacement, for each kind of element, as the mesh is refined"></svg></div>
+    <div class="panel"><svg id="c30err" viewbox="0 0 340 250" role="img" aria-label="The relative L2 error of the displacement, for each kind of element, as the mesh is refined"></svg></div>
+  </div>
+  <div class="key" id="c30key"></div>
+  <div class="read" id="c30read"></div>
+</div>
+<script>
+// Plane strain on structured meshes of degree 1 or 2: local nodes by the stride rule,
+// nodes numbered along the short direction to keep the band narrow, full Gauss
+// quadrature or, for the third kind of element, the lambda term at the element
+// center, and a banded Cholesky factorization.  Same data as c30_locking.py.
+(function(){
+  const E = 10, A_IN = 50, B_OUT = 100, Q_IN = 0.5, LB = 400, DB = 100, PB = 0.4;
+  const NUS = [0, 0.2, 0.3, 0.4, 0.45, 0.49, 0.495, 0.499, 0.4995, 0.4999, 0.49995, 0.49999];
+  const NS = [1, 2, 4, 8, 16];
+  const ELS = [{p: 1, sri: false, name: "degree 1", color: "#c0392b"},
+               {p: 2, sri: false, name: "degree 2", color: "#1f6feb"},
+               {p: 1, sri: true, name: "degree 1, λ term at one point", color: "#0d9488"}];
+  const GL = {1: [[0], [2]], 2: [[-0.5773502691896257, 0.5773502691896257], [1, 1]],
+    3: [[-0.7745966692414834, 0, 0.7745966692414834], [5/9, 8/9, 5/9]],
+    4: [[-0.8611363115940526, -0.3399810435848563, 0.3399810435848563, 0.8611363115940526],
+        [0.3478548451374538, 0.6521451548625461, 0.6521451548625461, 0.3478548451374538]],
+    5: [[-0.906179845938664, -0.5384693101056831, 0, 0.5384693101056831, 0.906179845938664],
+        [0.2369268850561891, 0.4786286704993665, 0.5688888888888889, 0.4786286704993665, 0.2369268850561891]]};
+  const lame = nu => [E*nu/((1 + nu)*(1 - 2*nu)), E/(2*(1 + nu))];
+  const st = {prob: "cantilever", el: 0, nu: 11, lev: 2};
+
+  // ---------------------------------------------------------------- elements
+  function lag(p, s){
+    const xs = Array.from({length: p + 1}, (_, i) => -1 + 2*i/p), N = [], dN = [];
+    for (let a=0;a<=p;a++){
+      let v = 1, d = 0;
+      for (let b=0;b<=p;b++) if (b !== a) v *= (s - xs[b])/(xs[a] - xs[b]);
+      for (let m=0;m<=p;m++){
+        if (m === a) continue;
+        let t = 1/(xs[a] - xs[m]);
+        for (let b=0;b<=p;b++) if (b !== a && b !== m) t *= (s - xs[b])/(xs[a] - xs[b]);
+        d += t;
+      }
+      N.push(v); dN.push(d);
+    }
+    return [N, dN];
+  }
+  const SH = new Map();
+  function shape(p, xi, eta){                      // N_a and dN_a/d(xi, eta), a = i + (p+1) j
+    const key = p + "," + xi + "," + eta;
+    if (!SH.has(key)){
+      const [Nx, dx] = lag(p, xi), [Ny, dy] = lag(p, eta), N = [], dN = [];
+      for (let j=0;j<=p;j++) for (let i=0;i<=p;i++){ N.push(Nx[i]*Ny[j]); dN.push([dx[i]*Ny[j], Nx[i]*dy[j]]); }
+      SH.set(key, {N, dN});
+    }
+    return SH.get(key);
+  }
+  function grid(prob, p, n){
+    const cyl = prob === "cylinder", n0 = cyl ? n : 4*n, n1 = cyl ? 2*n : n, m0 = p*n0 + 1, m1 = p*n1 + 1;
+    const node = cyl ? (I, J) => I + m0*J : (I, J) => J + m1*I;
+    const X = new Array(m0*m1);
+    for (let I=0;I<m0;I++) for (let J=0;J<m1;J++){
+      const s = I/(m0 - 1), t = J/(m1 - 1);
+      if (cyl){ const r = A_IN + (B_OUT - A_IN)*s, th = 0.5*Math.PI*t; X[node(I, J)] = [r*Math.cos(th), r*Math.sin(th)]; }
+      else X[node(I, J)] = [LB*s, DB*(t - 0.5)];
+    }
+    const IEN = [];
+    for (let e1=0;e1<n1;e1++) for (let e0=0;e0<n0;e0++){
+      const row = [];
+      for (let j=0;j<=p;j++) for (let i=0;i<=p;i++) row.push(node(p*e0 + i, p*e1 + j));
+      IEN.push(row);
+    }
+    return {prob, p, n, n0, n1, m0, m1, node, X, IEN, nnp: X.length, nel: IEN.length, nen: (p + 1)**2, elem: (e0, e1) => e0 + n0*e1};
+  }
+  function geom(g, e, xi, eta){
+    const {N, dN} = shape(g.p, xi, eta), A = g.IEN[e];
+    let a00 = 0, a01 = 0, a10 = 0, a11 = 0, x0 = 0, x1 = 0;
+    for (let a=0;a<A.length;a++){
+      const X = g.X[A[a]];
+      a00 += X[0]*dN[a][0]; a01 += X[0]*dN[a][1]; a10 += X[1]*dN[a][0]; a11 += X[1]*dN[a][1];
+      x0 += N[a]*X[0]; x1 += N[a]*X[1];
+    }
+    const J = a00*a11 - a01*a10;
+    return {N, J, x: [x0, x1], dNx: dN.map(([dxi, deta]) => [(dxi*a11 - deta*a10)/J, (deta*a00 - dxi*a01)/J])};
+  }
+  // add w B_a^T D B_b for D = mu diag(2, 2, 1) + lam m m^T
+  function addK(ke, dNx, nen, mu, lam, w){
+    const nd = 2*nen;
+    for (let a=0;a<nen;a++){
+      const xa = dNx[a][0], ya = dNx[a][1];
+      for (let b=0;b<nen;b++){
+        const xb = dNx[b][0], yb = dNx[b][1];
+        ke[2*a*nd + 2*b] += w*((lam + 2*mu)*xa*xb + mu*ya*yb);
+        ke[2*a*nd + 2*b + 1] += w*(lam*xa*yb + mu*ya*xb);
+        ke[(2*a + 1)*nd + 2*b] += w*(lam*ya*xb + mu*xa*yb);
+        ke[(2*a + 1)*nd + 2*b + 1] += w*((lam + 2*mu)*ya*yb + mu*xa*xb);
+      }
+    }
+  }
+
+  // --------------------------------------------------------- exact solutions
+  function exact(prob, nu){
+    if (prob === "cylinder"){
+      const c = (1 + nu)*Q_IN*A_IN*A_IN/(E*(B_OUT*B_OUT - A_IN*A_IN)), ur = r => c*((1 - 2*nu)*r + B_OUT*B_OUT/r);
+      return {u: (x, y) => { const r = Math.hypot(x, y), f = ur(r)/r; return [f*x, f*y]; },
+              qoi: ur(A_IN), s22scale: 2*0.5*Q_IN*A_IN*A_IN/(B_OUT*B_OUT - A_IN*A_IN)};
+    }
+    const Ep = E/(1 - nu*nu), nup = nu/(1 - nu), I = DB**3/12, k = PB/(6*Ep*I);
+    const u = (x, y) => [k*y*((6*LB - 3*x)*x + (2 + nup)*(y*y - DB*DB/4)),
+                         -k*(3*nup*y*y*(LB - x) + (4 + 5*nup)*DB*DB*x/4 + (3*LB - x)*x*x)];
+    return {u, qoi: u(LB, 0)[1], s01: y => -PB/(2*I)*(DB*DB/4 - y*y), s22scale: 0.5*PB*LB*(DB/2)/I};
+  }
+
+  // ------------------------------------------------------------------ solve
+  function solveCase(prob, nu, el, n){
+    const g = grid(prob, el.p, n), [lam, mu] = lame(nu), ex = exact(prob, nu), p = g.p, nen = g.nen, nd = 2*nen, n2 = 2*g.nnp;
+    const fixed = new Float64Array(n2).fill(NaN);                // NaN marks a free component
+    if (prob === "cylinder") for (let I=0;I<g.m0;I++){ fixed[2*g.node(I, 0) + 1] = 0; fixed[2*g.node(I, g.m1 - 1)] = 0; }
+    else for (let J=0;J<g.m1;J++){ const A = g.node(0, J), u = ex.u(g.X[A][0], g.X[A][1]); fixed[2*A] = u[0]; fixed[2*A + 1] = u[1]; }
+    const ID = new Int32Array(n2).fill(-1);
+    let neq = 0;
+    for (let q=0;q<n2;q++) if (isNaN(fixed[q])) ID[q] = neq++;
+    let bw = 0;
+    for (const row of g.IEN){
+      let lo = Infinity, hi = -Infinity;
+      for (const A of row) for (let i=0;i<2;i++){ const P = ID[2*A + i]; if (P >= 0){ lo = Math.min(lo, P); hi = Math.max(hi, P); } }
+      if (hi >= lo) bw = Math.max(bw, hi - lo);
+    }
+    const w = bw + 1, K = new Float64Array(neq*w), F = new Float64Array(neq), Fn = new Float64Array(n2);
+    // the traction on the loaded side
+    const [sx, sw] = GL[Math.min(p + 3, 5)], xiS = prob === "cylinder" ? -1 : 1;
+    for (let e1=0;e1<g.n1;e1++){
+      const e = prob === "cylinder" ? g.elem(0, e1) : g.elem(g.n0 - 1, e1), A = g.IEN[e];
+      for (let k=0;k<sx.length;k++){
+        const {N, dN} = shape(p, xiS, sx[k]);
+        let x0 = 0, x1 = 0, t0 = 0, t1 = 0;
+        for (let a=0;a<nen;a++){ const X = g.X[A[a]]; x0 += N[a]*X[0]; x1 += N[a]*X[1]; t0 += dN[a][1]*X[0]; t1 += dN[a][1]*X[1]; }
+        const jw = Math.hypot(t0, t1)*sw[k], r = Math.hypot(x0, x1);
+        const h = prob === "cylinder" ? [Q_IN*x0/r, Q_IN*x1/r] : [0, ex.s01(x1)];
+        for (let a=0;a<nen;a++){ Fn[2*A[a]] += N[a]*h[0]*jw; Fn[2*A[a] + 1] += N[a]*h[1]*jw; }
+      }
+    }
+    // element stiffness and assembly
+    const [gx, gw] = GL[p + 1], ke = new Float64Array(nd*nd);
+    for (let e=0;e<g.nel;e++){
+      ke.fill(0);
+      for (let i=0;i<gx.length;i++) for (let j=0;j<gx.length;j++){
+        const G = geom(g, e, gx[i], gx[j]);
+        addK(ke, G.dNx, nen, mu, el.sri ? 0 : lam, gw[i]*gw[j]*G.J);
+      }
+      if (el.sri){ const G = geom(g, e, 0, 0); addK(ke, G.dNx, nen, 0, lam, 4*G.J); }
+      const A = g.IEN[e];
+      for (let a=0;a<nen;a++) for (let i=0;i<2;i++){
+        const P = ID[2*A[a] + i]; if (P < 0) continue;
+        const r = (2*a + i)*nd;
+        for (let b=0;b<nen;b++) for (let j=0;j<2;j++){
+          const q = 2*A[b] + j, Q = ID[q];
+          if (Q < 0) F[P] -= ke[r + 2*b + j]*fixed[q];
+          else if (Q >= P) K[P*w + Q - P] += ke[r + 2*b + j];
+        }
+      }
+    }
+    for (let q=0;q<n2;q++) if (ID[q] >= 0) F[ID[q]] += Fn[q];
+    // banded Cholesky
+    for (let i=0;i<neq;i++){
+      let s = K[i*w];
+      for (let k=Math.max(0, i - bw);k<i;k++){ const v = K[k*w + i - k]; s -= v*v; }
+      if (!(s > 0)) return {ok: false};
+      const d = Math.sqrt(s), jm = Math.min(neq - 1, i + bw);
+      K[i*w] = d;
+      for (let j=i+1;j<=jm;j++){
+        let v = K[i*w + j - i];
+        for (let k=Math.max(0, j - bw);k<i;k++) v -= K[k*w + i - k]*K[k*w + j - k];
+        K[i*w + j - i] = v/d;
+      }
+    }
+    const y = new Float64Array(neq), x = new Float64Array(neq);
+    for (let i=0;i<neq;i++){ let v = F[i]; for (let k=Math.max(0, i - bw);k<i;k++) v -= K[k*w + i - k]*y[k]; y[i] = v/K[i*w]; }
+    for (let i=neq-1;i>=0;i--){ let v = y[i]; const jm = Math.min(neq - 1, i + bw); for (let j=i+1;j<=jm;j++) v -= K[i*w + j - i]*x[j]; x[i] = v/K[i*w]; }
+    const U = new Float64Array(n2);
+    for (let q=0;q<n2;q++) U[q] = ID[q] >= 0 ? x[ID[q]] : fixed[q];
+    const disp = (e, xi, eta) => { const {N} = shape(p, xi, eta), A = g.IEN[e]; let u0 = 0, u1 = 0;
+      for (let a=0;a<nen;a++){ u0 += N[a]*U[2*A[a]]; u1 += N[a]*U[2*A[a] + 1]; } return [u0, u1]; };
+    // the displacement compared, and the relative L2 error
+    let qoi;
+    if (prob === "cylinder"){ const u = disp(g.elem(0, g.n1/2), -1, -1); qoi = (u[0] + u[1])/Math.SQRT2; }
+    else { const e1 = Math.min(Math.floor(g.n1/2), g.n1 - 1); qoi = disp(g.elem(g.n0 - 1, e1), 1, 2*(0.5*g.n1 - e1) - 1)[1]; }
+    const [qx, qw] = GL[Math.min(p + 3, 5)];
+    let eL2 = 0, uL2 = 0;
+    for (let e=0;e<g.nel;e++) for (let i=0;i<qx.length;i++) for (let j=0;j<qx.length;j++){
+      const G = geom(g, e, qx[i], qx[j]), uh = disp(e, qx[i], qx[j]), ue = ex.u(G.x[0], G.x[1]), wt = qw[i]*qw[j]*G.J;
+      eL2 += wt*((ue[0] - uh[0])**2 + (ue[1] - uh[1])**2); uL2 += wt*(ue[0]**2 + ue[1]**2);
+    }
+    // lambda div u^h at the points where the lambda term is evaluated
+    const pts = el.sri ? [0] : gx, s22 = [];
+    for (let e=0;e<g.nel;e++){
+      const A = g.IEN[e], v = [];
+      for (const eta of pts) for (const xi of pts){
+        const G = geom(g, e, xi, eta); let div = 0;
+        for (let a=0;a<nen;a++) div += G.dNx[a][0]*U[2*A[a]] + G.dNx[a][1]*U[2*A[a] + 1];
+        v.push(lam*div);
+      }
+      s22.push(v);
+    }
+    return {ok: true, g, U, neq, qoi, ratio: qoi/ex.qoi, eL2: Math.sqrt(eL2/uL2), s22, pts, disp};
+  }
+
+  // ------------------------------------------------------------------ cache
+  let cacheKey = null, cache = null;
+  function results(){
+    const key = st.prob + "|" + st.nu;
+    if (key !== cacheKey){
+      cache = ELS.map(el => NS.map(n => solveCase(st.prob, NUS[st.nu], el, n)));
+      cacheKey = key;
+    }
+    return cache;
+  }
+
+  // ---------------------------------------------------------------- drawing
+  const el = (tag, a, inner) => `<${tag} ${Object.entries(a).map(([k, v]) => `${k}="${v}"`).join(" ")}>${inner || ""}</${tag}>`;
+  function ramp(stops){
+    return v => {
+      v = Math.max(0, Math.min(1, v));
+      const n = stops.length - 1, k = Math.min(n - 1, Math.floor(v*n)), f = v*n - k, a = stops[k], b = stops[k + 1];
+      return `rgb(${[0, 1, 2].map(i => Math.round(a[i] + f*(b[i] - a[i]))).join(",")})`;
+    };
+  }
+  const div = ramp([[33,102,172],[103,169,207],[209,229,240],[247,247,247],[253,219,199],[239,138,98],[178,24,43]]);
+  const fmt = v => (v < 0 ? "−" : "") + (Math.abs(v) >= 100 ? Math.abs(v).toFixed(0) : Math.abs(v) >= 10 ? Math.abs(v).toFixed(1) : Math.abs(v).toFixed(2));
+  const ratioText = nu => { const r = 2*nu/(1 - 2*nu); return r >= 10 ? Math.round(r).toLocaleString("en-US") : r === 0 ? "0" : r.toFixed(r < 1 ? 2 : 1); };
+  const CUTS = {1: [-1, 0, 1], 2: [-1, -0.3872983346207417, 0.3872983346207417, 1], s: [-1, 1]};
+
+  function drawShape(sol, ex){
+    const g = sol.g, cyl = st.prob === "cylinder", p = g.p;
+    const mag = cyl ? 0.12*B_OUT/ex.qoi : 0.45*DB/Math.abs(ex.qoi);
+    const sc = cyl ? 2.25 : 1.3, X0 = cyl ? 70 : 50, Y0 = cyl ? 262 : 90;
+    const P = (x, y) => `${(X0 + sc*x).toFixed(1)},${(Y0 - sc*y).toFixed(1)}`;
+    const at = (e, xi, eta, U) => {
+      const {N} = shape(p, xi, eta), A = g.IEN[e]; let x = 0, y = 0;
+      for (let a=0;a<N.length;a++){ x += N[a]*(g.X[A[a]][0] + mag*sol.U[2*A[a]]); y += N[a]*(g.X[A[a]][1] + mag*sol.U[2*A[a] + 1]); }
+      return P(x, y);
+    };
+    const cuts = sol.pts.length === 1 ? CUTS.s : CUTS[p], nc = cuts.length - 1, S = ex.s22scale*1.5;
+    let o = "";
+    // undeformed outline
+    if (cyl){
+      const arc = r => Array.from({length: 41}, (_, k) => { const t = 0.5*Math.PI*k/40; return P(r*Math.cos(t), r*Math.sin(t)); });
+      o += el("polygon", {points: [...arc(A_IN), ...arc(B_OUT).reverse()].join(" "), fill: "none", stroke: "#b8bec7", "stroke-width": 1});
+    } else o += el("polygon", {points: [P(0, -DB/2), P(LB, -DB/2), P(LB, DB/2), P(0, DB/2)].join(" "), fill: "none", stroke: "#b8bec7", "stroke-width": 1});
+    // the deformed elements, colored at their quadrature points
+    for (let e=0;e<g.nel;e++){
+      const v = sol.s22[e];
+      for (let j=0;j<nc;j++) for (let i=0;i<nc;i++){
+        const pts = [at(e, cuts[i], cuts[j]), at(e, cuts[i + 1], cuts[j]), at(e, cuts[i + 1], cuts[j + 1]), at(e, cuts[i], cuts[j + 1])];
+        o += el("polygon", {points: pts.join(" "), fill: div(0.5 + 0.5*v[j*nc + i]/S), stroke: div(0.5 + 0.5*v[j*nc + i]/S), "stroke-width": 0.3});
+      }
+      const m = p === 1 ? 1 : 4, side = [];
+      for (let k=0;k<m;k++) side.push([-1 + 2*k/m, -1]);
+      for (let k=0;k<m;k++) side.push([1, -1 + 2*k/m]);
+      for (let k=0;k<m;k++) side.push([1 - 2*k/m, 1]);
+      for (let k=0;k<m;k++) side.push([-1, 1 - 2*k/m]);
+      o += el("polygon", {points: side.map(([a, b]) => at(e, a, b)).join(" "), fill: "none", stroke: "#6b5a44", "stroke-width": g.nel > 300 ? 0.25 : 0.5, "stroke-opacity": 0.8});
+    }
+    // the exact deformed shape
+    const exPt = (x, y) => { const u = ex.u(x, y); return P(x + mag*u[0], y + mag*u[1]); };
+    let pts = [];
+    if (cyl){
+      for (let k=0;k<=40;k++){ const t = 0.5*Math.PI*k/40; pts.push(exPt(A_IN*Math.cos(t), A_IN*Math.sin(t))); }
+      for (let k=40;k>=0;k--){ const t = 0.5*Math.PI*k/40; pts.push(exPt(B_OUT*Math.cos(t), B_OUT*Math.sin(t))); }
+    } else {
+      for (let k=0;k<=40;k++) pts.push(exPt(LB*k/40, -DB/2));
+      for (let k=0;k<=10;k++) pts.push(exPt(LB, -DB/2 + DB*k/10));
+      for (let k=40;k>=0;k--) pts.push(exPt(LB*k/40, DB/2));
+      for (let k=10;k>=0;k--) pts.push(exPt(0, -DB/2 + DB*k/10));
+    }
+    o += el("polygon", {points: pts.join(" "), fill: "none", stroke: "#18202b", "stroke-width": 1.5, "stroke-dasharray": "6 4"});
+    // legend and color bar
+    const lx = cyl ? 360 : 50, ly = cyl ? 70 : 196;
+    o += el("line", {x1: lx, y1: ly, x2: lx + 30, y2: ly, stroke: "#18202b", "stroke-width": 1.5, "stroke-dasharray": "6 4"});
+    o += el("text", {x: lx + 38, y: ly + 4, "font-size": 12, fill: "#42506a"}, "exact deformed shape");
+    o += el("line", {x1: lx, y1: ly + 20, x2: lx + 30, y2: ly + 20, stroke: "#b8bec7", "stroke-width": 1.2});
+    o += el("text", {x: lx + 38, y: ly + 24, "font-size": 12, fill: "#42506a"}, "undeformed");
+    o += el("text", {x: lx, y: ly + 46, "font-size": 12, fill: "#42506a"}, `displacements magnified ${mag.toFixed(1)} times`);
+    const cx = cyl ? 360 : 400, cy = cyl ? 170 : 262, cw = 200;
+    for (let k=0;k<50;k++) o += el("rect", {x: cx + k*cw/50, y: cy, width: cw/50 + 0.4, height: 9, fill: div(k/49)});
+    o += el("text", {x: cx, y: cy - 6, "font-size": 12, fill: "#42506a"}, "λ ∇·uʰ = σ₂₂ (MPa), clipped at the ends");
+    for (const [f, t] of [[0, `−${fmt(S)}`], [0.5, "0"], [1, fmt(S)]]) o += el("text", {x: cx + f*cw, y: cy + 22, "font-size": 11, fill: "#6b7684", "text-anchor": "middle"}, t);
+    document.getElementById("c30shape").innerHTML = o;
+  }
+
+  function drawPlots(R){
+    const L = 52, Rt = 330, T = 22, B = 200, X = k => L + (Rt - L)*k/4;
+    const xlab = st.prob === "cylinder" ? "elements through the wall" : "elements through the depth";
+    function frame(title){
+      let o = el("text", {x: L - 40, y: 13, "font-size": 12, fill: "#42506a", "font-weight": 600}, title);
+      o += el("line", {x1: L, y1: B, x2: Rt, y2: B, stroke: "#59636e"}) + el("line", {x1: L, y1: T, x2: L, y2: B, stroke: "#59636e"});
+      NS.forEach((n, k) => { o += el("text", {x: X(k), y: B + 15, "text-anchor": "middle", "font-size": 11, fill: "#6b7684"}, n); });
+      o += el("text", {x: (L + Rt)/2, y: B + 32, "text-anchor": "middle", "font-size": 12, fill: "#42506a"}, xlab);
+      return o;
+    }
+    function lines(Y, key){
+      let o = "";
+      ELS.forEach((E_, ei) => {
+        if (ei === st.el) return;
+        o += el("polyline", {points: R[ei].map((s, k) => `${X(k)},${Y(s[key]).toFixed(1)}`).join(" "), fill: "none", stroke: E_.color, "stroke-width": 1.4, "stroke-opacity": 0.75});
+        R[ei].forEach((s, k) => { o += el("circle", {cx: X(k), cy: Y(s[key]).toFixed(1), r: 2.4, fill: E_.color, "fill-opacity": 0.75}); });
+      });
+      const E_ = ELS[st.el];
+      o += el("polyline", {points: R[st.el].map((s, k) => `${X(k)},${Y(s[key]).toFixed(1)}`).join(" "), fill: "none", stroke: E_.color, "stroke-width": 2.6});
+      R[st.el].forEach((s, k) => { o += el("circle", {cx: X(k), cy: Y(s[key]).toFixed(1), r: 3.4, fill: E_.color}); });
+      o += el("circle", {cx: X(st.lev), cy: Y(R[st.el][st.lev][key]).toFixed(1), r: 7, fill: "none", stroke: "#18202b", "stroke-width": 1.4});
+      return o;
+    }
+    // the displacement over the exact one
+    const YR = v => B - (B - T)*Math.max(0, Math.min(1.45, v))/1.4;
+    let o = frame("computed / exact displacement");
+    for (const v of [0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4]){
+      o += el("line", {x1: L - 4, y1: YR(v), x2: Rt, y2: YR(v), stroke: v === 1 ? "#9aa3ad" : "#eef0f3", "stroke-dasharray": v === 1 ? "4 3" : "none"});
+      o += el("text", {x: L - 7, y: YR(v) + 4, "text-anchor": "end", "font-size": 11, fill: "#6b7684"}, v.toFixed(1));
+    }
+    o += el("text", {x: X(3.5), y: YR(1) + 13, "text-anchor": "middle", "font-size": 11, fill: "#6b7684"}, "exact");
+    o += lines(YR, "ratio");
+    document.getElementById("c30ratio").innerHTML = o;
+    document.getElementById("c30key").innerHTML = ELS.map((E_, ei) =>
+      `<span><i style="border-color:${E_.color};border-top-width:${ei === st.el ? 3 : 1.5}px"></i>${E_.name}</span>`).join("") +
+      `<span>The selected kind is drawn heavier, and the ring marks the selected mesh.</span>`;
+    // the relative L2 error
+    const LO = -7, HI = 0, YE = v => B - (B - T)*(Math.log10(Math.max(v, 10**LO)) - LO)/(HI - LO);
+    o = frame("relative L² error of the displacement");
+    const TICK = {"-7": "10⁻⁷", "-6": "10⁻⁶", "-5": "10⁻⁵", "-4": "10⁻⁴", "-3": "10⁻³", "-2": "10⁻²", "-1": "10⁻¹", "0": "1"};
+    for (let k=LO;k<=HI;k++){
+      o += el("line", {x1: L - 4, y1: YE(10**k), x2: Rt, y2: YE(10**k), stroke: "#eef0f3"});
+      o += el("text", {x: L - 7, y: YE(10**k) + 4, "text-anchor": "end", "font-size": 11, fill: "#6b7684"}, TICK[k]);
+    }
+    o += lines(YE, "eL2");
+    document.getElementById("c30err").innerHTML = o;
+  }
+
+  function render(){
+    document.querySelectorAll("#c30w [data-prob]").forEach(b => b.setAttribute("aria-pressed", b.dataset.prob === st.prob ? "true" : "false"));
+    document.querySelectorAll("#c30w [data-el]").forEach(b => b.setAttribute("aria-pressed", +b.dataset.el === st.el ? "true" : "false"));
+    labels();
+    const R = results(), nu = NUS[st.nu], ex = exact(st.prob, nu), sol = R[st.el][st.lev];
+    if (!R.every(r => r.every(s => s.ok))){ document.getElementById("c30read").innerHTML = "The factorization failed."; return; }
+    drawShape(sol, ex);
+    drawPlots(R);
+    const cyl = st.prob === "cylinder", g = sol.g, prev = st.lev > 0 ? R[st.el][st.lev - 1] : null;
+    const what = cyl ? "Radial displacement of the inner surface at 45°" : "Deflection at the middle of the tip";
+    const change = prev ? `${sol.qoi/prev.qoi >= 1 ? "+" : "−"}${Math.abs(100*(sol.qoi/prev.qoi - 1)).toFixed(1)}%` : "none; this is the coarsest mesh";
+    document.getElementById("c30read").innerHTML =
+      `ν = ${nu}, so λ/μ = ${ratioText(nu)}. ${ELS[st.el].name[0].toUpperCase() + ELS[st.el].name.slice(1)} on ${g.n0} × ${g.n1} elements, with ${sol.neq.toLocaleString("en-US")} unknowns.<br>` +
+      `${what}: computed ${fmt(sol.qoi)} mm, exact ${fmt(ex.qoi)} mm, ratio <b>${sol.ratio.toFixed(3)}</b>.<br>` +
+      `Change in the computed value from the next coarser mesh: ${change}. Relative L² error of the displacement: <b>${(100*sol.eL2).toPrecision(2)}%</b>.`;
+  }
+  function labels(){
+    const nu = NUS[st.nu], n = NS[st.lev], cyl = st.prob === "cylinder";
+    document.getElementById("c30nuv").textContent = `${nu}`;
+    document.getElementById("c30levv").textContent = cyl ? `${n} × ${2*n}` : `${4*n} × ${n}`;
+  }
+  let timer = null;
+  const later = () => { labels(); clearTimeout(timer); timer = setTimeout(render, 120); };
+  document.querySelectorAll("#c30w [data-prob]").forEach(b => b.addEventListener("click", () => { st.prob = b.dataset.prob; render(); }));
+  document.querySelectorAll("#c30w [data-el]").forEach(b => b.addEventListener("click", () => { st.el = +b.dataset.el; render(); }));
+  document.getElementById("c30nu").addEventListener("input", ev => { st.nu = +ev.target.value; later(); });
+  document.getElementById("c30lev").addEventListener("input", ev => { st.lev = +ev.target.value; later(); });
+  render();
+})();
+</script>
+<section id="things-to-try" class="level3" data-number="30.4.1">
+<h3 data-number="30.4.1" class="anchored" data-anchor-id="things-to-try"><span class="header-section-number">30.4.1</span> Things to try</h3>
+<ol type="1">
+<li>With the cantilever and degree 1 on 16 × 4 elements, move <span class="math inline">\(\nu\)</span> from 0 to 0.49999. The exact deflection decreases from 10.6 mm to 8.2 mm, but the computed deflection falls to under a quarter of the exact value.</li>
+<li>At <span class="math inline">\(\nu = 0.49999\)</span>, refine the degree-1 mesh from two to sixteen elements through the depth. The computed deflection changes by 10% or less at each step, but it stays near a quarter of the exact value.</li>
+<li>Switch to degree 2, or to degree 1 with the <span class="math inline">\(\lambda\)</span> term at one point. Degree 2 is essentially exact on every mesh, and the other is within 6% with two elements through the depth.</li>
+<li>Switch to the cylinder at <span class="math inline">\(\nu = 0.49999\)</span>. Each refinement of the degree-1 mesh multiplies the displacement by about four. Degree 2 also locks on the coarsest meshes, reaching 0.07 of the exact displacement on 2 × 4 elements and 0.50 on 4 × 8.</li>
+<li>Watch the colors. For degree 1 at large <span class="math inline">\(\nu\)</span>, <span class="math inline">\(\lambda\,\nabla\cdot\underline{u}^h\)</span> jumps in sign from one quadrature point to the next, while the deformed shape looks smooth. For degree 2 on the cylinder, it oscillates even on the finer meshes, where the displacement is accurate, and only the third kind of element gives the uniform exact value.</li>
+<li>Set <span class="math inline">\(\nu = 0\)</span>, with degree 1 and one element through the depth of the cantilever. With <span class="math inline">\(\lambda = 0\)</span> there is no volumetric locking, yet the deflection is only 67% of the exact value; this is a different kind of locking, described at the end of this class.</li>
+</ol>
+</section>
+</section>
+<section id="locking-can-look-like-convergence" class="level2" data-number="30.5">
+<h2 data-number="30.5" class="anchored" data-anchor-id="locking-can-look-like-convergence"><span class="header-section-number">30.5</span> Locking can look like convergence</h2>
+<p>In the cylinder, locking is easy to see. Each refinement multiplies the displacement by about four, and the answer is clearly not converged. The cantilever is more misleading. <a href="#tbl-c30-false" class="quarto-xref">Table&nbsp;<span>30.2</span></a> shows its tip deflection at <span class="math inline">\(\nu = 0.49999\)</span> with degree-1 elements.</p>
+<div class="cell" data-execution_count="2">
+<div id="tbl-c30-false" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-execution_count="2">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-c30-false-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;30.2: The cantilever at <span class="math inline">\(\nu = 0.49999\)</span> with degree-1 elements. The change is that of the computed deflection from the previous mesh. The relative <span class="math inline">\(L^2\)</span> error can be computed only because the exact solution is known.
+</figcaption>
+<div aria-describedby="tbl-c30-false-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output cell-output-display cell-output-markdown" data-execution_count="2">
+<table class="cell caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 18%">
+<col style="width: 25%">
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Elements through the depth</th>
+<th style="text-align: center;">Mesh</th>
+<th style="text-align: right;">Deflection / exact</th>
+<th style="text-align: right;">Change from the previous mesh</th>
+<th style="text-align: right;">Relative <span class="math inline">\(L^2\)</span> error</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: center;">4 × 1</td>
+<td style="text-align: right;">0.080</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">90%</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: center;">8 × 2</td>
+<td style="text-align: right;">0.210</td>
+<td style="text-align: right;">+161.7%</td>
+<td style="text-align: right;">76%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4</td>
+<td style="text-align: center;">16 × 4</td>
+<td style="text-align: right;">0.232</td>
+<td style="text-align: right;">+10.5%</td>
+<td style="text-align: right;">74%</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: center;">32 × 8</td>
+<td style="text-align: right;">0.242</td>
+<td style="text-align: right;">+4.1%</td>
+<td style="text-align: right;">73%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">16</td>
+<td style="text-align: center;">64 × 16</td>
+<td style="text-align: right;">0.255</td>
+<td style="text-align: right;">+5.2%</td>
+<td style="text-align: right;">72%</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>From two to four to eight elements through the depth, the deflection changes by 10.5% and then by 4.1%. The deformed shape in <a href="#fig-c30-false" class="quarto-xref">Figure&nbsp;<span>30.5</span></a> a looks like a bent beam, only a stiffer one, and nothing in the output warns that anything is wrong. A mesh study that refines until the answer changes by less than 5% would stop at eight elements through the depth, at about a quarter of the correct deflection. The relative <span class="math inline">\(L^2\)</span> error, which is known only because the exact solution is, stays above 70% throughout.</p>
+<p>The beam settles because of what degree-1 elements can do without changing their volume at their quadrature points. They can shear: a rectangle that becomes a parallelogram keeps its area. They cannot bend without changing volume, however. In a nearly incompressible material, the stretching of the fibers on one side of the beam and their shortening on the other must be matched by an opposite strain across the depth, which varies through the depth. That requires a displacement across the depth that is quadratic, and a degree-1 element has no quadratic terms. The locked beam therefore deflects mainly by shearing its elements, and each refinement adds only a little bending.</p>
+<div id="fig-c30-false" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c30-false-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class30/C30_Fig5_FalseConvergence.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c30-false-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;30.5: The cantilever at <span class="math inline">\(\nu = 0.49999\)</span>. (a) The deformed mesh of degree-1 elements, 16 × 4, against the exact deformed shape (dashed). The beam bends, but far less than it should. (b) The computed displacement divided by the exact one, as the mesh is refined. For the cantilever with degree 1 (solid red), the answer barely changes after two elements through the depth, at about a quarter of the exact value. For the cylinder with degree 1 (dashed red), the answer is far smaller and grows by about four times with each refinement. Degree 2 and the <span class="math inline">\(\lambda\)</span> term at one point are close to the exact value on every mesh.
+</figcaption>
+</figure>
+</div>
+<p>Verification does not catch locking either. The code that produced these numbers converges at the expected rates at <span class="math inline">\(\nu = 0.3\)</span> (<a href="#fig-c30-review" class="quarto-xref">Figure&nbsp;<span>30.2</span></a>), so it passes the test of <a href="../chapters/18_Class.html">Class 18</a>. Locking is a property of the method, not a mistake in the code, and verification only asks whether the equations were solved correctly.</p>
+<p>There are several practical signs of locking:</p>
+<ul>
+<li><strong>A different kind of element disagrees.</strong> Compare against elements of a higher degree or a formulation designed to avoid locking, not against a finer mesh of the same elements. For the cantilever, degree 2 is within 0.01% of the exact deflection with one element through the depth, while degree 1 with sixteen is still at 0.25 of it.</li>
+<li><strong>The answer is much more sensitive to <span class="math inline">\(\nu\)</span> than the physics is.</strong> Solve again with a somewhat smaller <span class="math inline">\(\nu\)</span>, such as 0.45. The exact tip deflection changes only from 8.68 mm to 8.22 mm between <span class="math inline">\(\nu = 0.45\)</span> and 0.49999, but the degree-1 deflection on 16 × 4 elements falls from 7.71 mm to 1.91 mm.</li>
+<li><strong>The volumetric stress oscillates.</strong> In a locked solution, <span class="math inline">\(\lambda\,\nabla\cdot\underline{u}^h\)</span> often changes sign from one quadrature point to the next, in a checkerboard pattern, even where the displacements look smooth, as the colors in the widget show. The converse does not hold. Since <span class="math inline">\(\lambda\,\nabla\cdot\underline{u}^h\)</span> is a small divergence multiplied by a large <span class="math inline">\(\lambda\)</span>, it can oscillate even when the displacements are accurate. For degree 2 on the cylinder at <span class="math inline">\(\nu = 0.4999\)</span>, with 16 × 32 elements, the displacement is within 0.1% of the exact value, but <span class="math inline">\(\lambda\,\nabla\cdot\underline{u}^h\)</span> ranges from −1.3 to 1.4 MPa, while the exact <span class="math inline">\(\sigma_{22}\)</span> is 0.17 MPa everywhere. The stresses in a nearly incompressible material should therefore be computed with one of the remedies below, even when the displacements have converged.</li>
+</ul>
+</section>
+<section id="mitigating-volumetric-locking" class="level2" data-number="30.6">
+<h2 data-number="30.6" class="anchored" data-anchor-id="mitigating-volumetric-locking"><span class="header-section-number">30.6</span> Mitigating volumetric locking</h2>
+<section id="refining-the-mesh" class="level3" data-number="30.6.1">
+<h3 data-number="30.6.1" class="anchored" data-anchor-id="refining-the-mesh"><span class="header-section-number">30.6.1</span> Refining the mesh</h3>
+<p>Since the rate is unchanged, refining the mesh eventually works for any <span class="math inline">\(\nu\)</span> less than <span class="math inline">\(\tfrac{1}{2}\)</span>. The elements must become small compared with roughly <span class="math inline">\(\sqrt{\mu/\lambda}\)</span> times the size of the body, however, and that can be very small. In the cylinder at <span class="math inline">\(\nu = 0.49999\)</span>, degree 1 on 32 × 64 elements, with 4,224 unknowns, still gives only 0.28 of the exact displacement. For <span class="math inline">\(\nu = \tfrac{1}{2}\)</span> itself, <span class="math inline">\(\lambda\)</span> is infinite, and the displacement formulation cannot be used at all.</p>
+</section>
+<section id="raising-the-degree" class="level3" data-number="30.6.2">
+<h3 data-number="30.6.2" class="anchored" data-anchor-id="raising-the-degree"><span class="header-section-number">30.6.2</span> Raising the degree</h3>
+<p>Raising the degree is much more effective. The ratio of unknowns to constraints is closer to balanced (<a href="#fig-c30-count" class="quarto-xref">Figure&nbsp;<span>30.3</span></a>), and polynomials of higher degree can represent more of the fields that keep their volume, such as the bending of the cantilever. In the cylinder at <span class="math inline">\(\nu = 0.4999\)</span>, degree 2 on 8 × 16 elements, with 1,088 unknowns, is within 1% of the exact displacement (0.994). Degree 1 on 32 × 64 elements, with almost four times as many unknowns, is still 20% low. Degree 3 reaches 0.977 on 2 × 4 elements, with 168 unknowns. Higher degrees still lock on the coarsest meshes, however: degree 3 on a 1 × 2 mesh gives 0.60, and degree 2 gives 0.07. Raising the degree shortens the range of locked meshes rather than removing it.</p>
+</section>
+<section id="special-elements-and-mixed-methods" class="level3" data-number="30.6.3">
+<h3 data-number="30.6.3" class="anchored" data-anchor-id="special-elements-and-mixed-methods"><span class="header-section-number">30.6.3</span> Special elements and mixed methods</h3>
+<p>Since the trouble lies in the <span class="math inline">\(\lambda\)</span> integral, one remedy is to evaluate that integral with fewer quadrature points than the rest of <span class="math inline">\(\underline{\underline{k}}^e\)</span>, which is called <strong>selective reduced integration</strong>. For degree 1, the <span class="math inline">\(\mu\)</span> part keeps its <span class="math inline">\(2 \times 2\)</span> points, and the <span class="math inline">\(\lambda\)</span> part is evaluated at the element center only,</p>
+<p><span class="math display">\[
+\underline{\underline{k}}^e = \sum_{q=0}^{3} \underline{\underline{B}}^T\,\underline{\underline{D}}_\mu\,\underline{\underline{B}}\;J\;W_q\,\Big|_{\underline{\xi}_q}
+\; + \;\lambda\,\left(\underline{\underline{B}}^T\underline{m}\right)\left(\underline{m}^T\underline{\underline{B}}\right)J\;W\,\Big|_{\underline{\xi} = \underline{0}} ,
+\]</span></p>
+<p>where <span class="math inline">\(W = 4\)</span> is the weight of the one-point rule, the area of the parent square. Each element then imposes one constraint for two unknowns (<a href="#fig-c30-count" class="quarto-xref">Figure&nbsp;<span>30.3</span></a> c), and in the widget this element shows no locking at any <span class="math inline">\(\nu\)</span>. Hughes’s <strong>B-bar method</strong> generalizes the idea to other elements by replacing the divergence in <span class="math inline">\(\underline{\underline{B}}\)</span> by its average over the element. Evaluating all of <span class="math inline">\(\underline{\underline{k}}^e\)</span> at the center is not a remedy. That leaves deformations with no strain at the center, called hourglass modes, which store no energy and appear in the solution as spurious zigzag displacements.</p>
+<p>A second remedy changes the formulation. In a <strong>mixed method</strong>, the volumetric stress <span class="math inline">\(\sigma_v = \lambda\,\nabla\cdot\underline{u}\)</span> becomes a second unknown field, with its own basis functions, and the relation between them becomes a second equation. For every weighting function <span class="math inline">\(\underline{w}\)</span> of the displacement and <span class="math inline">\(\psi\)</span> of the volumetric stress,</p>
+<p><span class="math display">\[
+\begin{aligned}
+\int_\Omega \underline{\epsilon}(\underline{w})^T\,\underline{\underline{D}}_\mu\;\underline{\epsilon}(\underline{u})\;d\Omega + \int_\Omega \left(\nabla\cdot\underline{w}\right)\sigma_v\;d\Omega &amp;= (\underline{w}, \underline{f}) + (\underline{w}, \underline{h})_\Gamma , \\
+\int_\Omega \psi\left(\nabla\cdot\underline{u} - \frac{\sigma_v}{\lambda}\right)d\Omega &amp;= 0 .
+\end{aligned}
+\]</span></p>
+<p>The large coefficient no longer multiplies the displacements. As <span class="math inline">\(\lambda\)</span> approaches infinity, the second equation simply becomes <span class="math inline">\(\int_\Omega \psi\,\nabla\cdot\underline{u}\;d\Omega = 0\)</span>, so even a fully incompressible material can be modeled. The matrix equations are still symmetric, but they are no longer positive definite (Class 23), and not every pair of bases works. The bases for the displacement and the volumetric stress must satisfy a compatibility condition called the <strong>inf–sup</strong> or <strong>LBB condition</strong>. Biquadratic displacements with bilinear, continuous stresses (the Taylor–Hood element) satisfy it. Bilinear displacements with a constant stress in each element do not, and their stresses can oscillate in a checkerboard pattern. On elements that are parallelograms, this pair gives the same displacements as selective reduced integration.</p>
+<p>Many other elements have been designed to avoid locking, such as elements with <strong>incompatible modes</strong> and <strong>enhanced assumed strain</strong> elements, which add internal deformation modes to each element. Commercial programs commonly provide mixed elements for rubber, often under the name hybrid elements.</p>
+</section>
+<section id="plane-stress-does-not-lock" class="level3" data-number="30.6.4">
+<h3 data-number="30.6.4" class="anchored" data-anchor-id="plane-stress-does-not-lock"><span class="header-section-number">30.6.4</span> Plane stress does not lock</h3>
+<p>In plane stress, <span class="math inline">\(\lambda\)</span> is replaced by <span class="math inline">\(\bar{\lambda} = 2\lambda\mu/(\lambda + 2\mu)\)</span> (Class 27), which approaches <span class="math inline">\(2\mu\)</span> as <span class="math inline">\(\lambda\)</span> grows. A thin plate can change its volume by changing its thickness, so its in-plane displacements are not constrained, and plane stress models do not lock. Volumetric locking is a concern in plane strain, in axisymmetric models, and in three dimensions.</p>
+</section>
+</section>
+<section id="other-kinds-of-locking" class="level2" data-number="30.7">
+<h2 data-number="30.7" class="anchored" data-anchor-id="other-kinds-of-locking"><span class="header-section-number">30.7</span> Other kinds of locking</h2>
+<p>Volumetric locking is one case of a general pattern. A term in the energy with a large coefficient imposes a constraint, and a discrete space that cannot satisfy the constraint without distorting everything else becomes too stiff.</p>
+<ul>
+<li><strong>Shear locking</strong> occurs in beam, plate, and shell elements that include shear deformation, such as Timoshenko beams and Reissner–Mindlin plates. As the thickness <span class="math inline">\(t\)</span> decreases, the shear stiffness grows relative to the bending stiffness, in proportion to <span class="math inline">\((L/t)^2\)</span>, and the shear strain must approach zero. Elements of low degree cannot bend without also shearing, so they become too stiff as <span class="math inline">\(t\)</span> decreases. Degree-1 elements in plane elasticity show the same effect in bending, sometimes called parasitic shear: at <span class="math inline">\(\nu = 0\)</span>, where the <span class="math inline">\(\lambda\)</span> term vanishes, the cantilever with one degree-1 element through the depth reaches only 67% of the exact deflection.</li>
+<li><strong>Membrane locking</strong> occurs in curved beams and shells. A thin curved structure bends far more easily than it stretches, so it bends with almost no stretching of its midsurface. Curved elements of low degree cannot bend without stretching, and they become too stiff.</li>
+</ul>
+<p>Each of these depends on a theory of beams, plates, or shells, and has its own remedies, so they will not be further discussed here.</p>
+</section>
+<section id="summary" class="level2" data-number="30.8">
+<h2 data-number="30.8" class="anchored" data-anchor-id="summary"><span class="header-section-number">30.8</span> Summary</h2>
+<ul>
+<li>The error measures, the a priori estimate, Galerkin orthogonality, and Céa’s lemma of Classes 17 and 18 carry over to elasticity unchanged. The displacements converge at the rate <span class="math inline">\(p+1\)</span> in the <span class="math inline">\(L^2\)</span> norm, and the strains and stresses at the rate <span class="math inline">\(p\)</span>.</li>
+<li>The constant in the estimate depends on <span class="math inline">\(\nu\)</span>. As <span class="math inline">\(\nu\)</span> approaches <span class="math inline">\(\tfrac{1}{2}\)</span>, <span class="math inline">\(\lambda/\mu\)</span> grows without bound, and the <span class="math inline">\(\lambda\)</span> term in the weak form acts as a penalty that forces <span class="math inline">\(\nabla\cdot\underline{u} \approx 0\)</span>.</li>
+<li>With full quadrature, degree-1 elements have more such constraints than unknowns, and they lock: they are far too stiff until the mesh is very fine. The rate is unchanged, but the asymptotic range begins only at elements roughly <span class="math inline">\(\sqrt{\mu/\lambda}\)</span> times the size of the body.</li>
+<li>Locking can look like convergence. In the cantilever, the computed deflection changes by only a few percent under refinement while remaining at about a quarter of the exact value, and the code still passes a verification test at <span class="math inline">\(\nu = 0.3\)</span>. Comparing against a different element, varying <span class="math inline">\(\nu\)</span>, and looking for oscillating volumetric stresses are practical checks.</li>
+<li>Refining the mesh helps slowly, raising the degree helps much more, and selective reduced integration, the B-bar method, and mixed methods remove volumetric locking. Plane stress does not lock.</li>
+<li>Shear locking and membrane locking arise in the same way in beams, plates, and shells, and are left to a treatment of those theories.</li>
+</ul>
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+<nav class="page-navigation column-body" aria-label="Page">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/29_Class.html" class="pagination-link" aria-label="Class 29: Supports, Symmetry, and Boundary Conditions in Elasticity">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">29</span>&nbsp; <span class="chapter-title">Class 29: Supports, Symmetry, and Boundary Conditions in Elasticity</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/3_Support_FunctionSpaces.html" class="pagination-link" aria-label="Support: Norms and Function Spaces">
+        <span class="nav-page-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
