@@ -42,6 +42,7 @@ book:
       - chapters/27_Class.qmd
       - chapters/28_Class.qmd
       - chapters/29_Class.qmd
+      - chapters/30_Class.qmd
       - section: "The 1D Poisson Problem"
         contents:
           - chapters/Poisson1D_Heat.qmd
@@ -94,6 +95,7 @@ book:
     - chapters/27_Class.qmd
     - chapters/28_Class.qmd
     - chapters/29_Class.qmd
+    - chapters/30_Class.qmd
 
   appendices:
     - chapters/3_Support_FunctionSpaces.qmd

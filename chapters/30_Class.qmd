@@ -1,0 +1,846 @@
+---
+title: "Class 30: Convergence and Volumetric Locking"
+subtitle: "The error estimates of Classes 17 and 18 for elasticity, and what happens to them as a material becomes nearly incompressible"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+format:
+  html:
+    page-layout: full
+    toc: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+import sys
+sys.path.append('python')
+import numpy as np
+from notes_style import use_chapter, save
+import c30_locking as C30
+IMGDIR = use_chapter("Class30")
+
+fig_prob_path = save(C30.fig_problems(), "C30_Fig1_Problems.png")
+f, review = C30.fig_review()
+fig_review_path = save(f, "C30_Fig2_Review.png")
+f, lockdata = C30.fig_locking_rates()
+fig_lock_path = save(f, "C30_Fig3_LockingRates.png")
+fig_count_path = save(C30.fig_constraints(), "C30_Fig4_Constraints.png")
+f, falseconv = C30.fig_false_convergence()
+fig_false_path = save(f, "C30_Fig5_FalseConvergence.png")
+
+# numbers quoted in the text
+f2 = lambda v: "%.2f" % v
+pct = lambda v: "%.0f%%" % (100 * v)
+rL2 = {p: C30.rates(review[p]["eL2"])[-1] for p in (1, 2)}
+rE = {p: C30.rates(review[p]["eE"])[-1] for p in (1, 2)}
+lam_mu = lambda nu: 2 * nu / (1 - 2 * nu)
+ur_03, ur_05 = C30.cylinder_exact(0.3)[2](C30.A_IN), C30.cylinder_exact(0.49999)[2](C30.A_IN)
+tip_03, tip_045, tip_05 = (abs(C30.cantilever_tip(nu)) for nu in (0.3, 0.45, 0.49999))
+
+d1_4999 = lockdata[(1, 0.4999)]                 # degree 1, cylinder, n = 1 ... 32
+d1_49999 = lockdata[(1, 0.49999)]
+d2_4999 = lockdata[(2, 0.4999)]
+fine1 = d1_49999["sols"][-1]
+fine1_4999 = d1_4999["sols"][-1]
+deg2_8 = d2_4999["sols"][3]
+deg3_1, deg3_2 = C30.cylinder(3, 1, 0.4999), C30.cylinder(3, 2, 0.4999)
+
+cant1 = falseconv[("cantilever", 1, False)]     # nu = 0.49999, n = 1 ... 16
+cant2 = falseconv[("cantilever", 2, False)]
+cants = falseconv[("cantilever", 1, True)]
+cyl1 = falseconv[("cylinder", 1, False)]
+chg = np.diff(cant1["qoi"]) / cant1["qoi"][:-1]            # change from the previous mesh
+tip_0 = abs(C30.cantilever_tip(0.0))
+sri2 = cants["qoi"][1]
+cyl2 = C30.study("cylinder", 2, 0.49999, (1, 2, 4))["qoi"]
+cant045 = C30.cantilever(1, 4, 0.45)
+cant05 = C30.cantilever(1, 4, 0.49999)
+shear0 = C30.cantilever(1, 1, 0.0).qoi
+s22_lo, s22_hi = C30.volumetric_stress_range(C30.cylinder(2, 16, 0.4999))
+s22_ex = 2 * 0.4999 * C30.P_IN * C30.A_IN**2 / (C30.B_OUT**2 - C30.A_IN**2)
+```
+
+In [Class 17](17_Class.qmd) and [Class 18](18_Class.qmd), the finite element solution of the Poisson Equation was shown to converge to the exact solution at a rate set by the polynomial degree because of the so-called Galerkin orthogonality of finite element methods.
+This class first revisits those results for elasticity, where they hold with few changes.
+It then turns to a case in which the estimate still holds but is of little practical use: a material that is nearly incompressible, such as rubber.
+For such a material, the elements of the previous classes can be far too stiff, which is called **volumetric locking**.
+
+## Convergence, revisited
+
+### Measuring the error of a displacement
+
+The error is now a vector field, $\underline{e} = \underline{u} - \underline{u}^h$, and its norms add up the contributions of its components.
+The norms of Class 17 become
+
+$$
+\|\underline{e}\|_{L^2}^2 = \int_\Omega e_i\,e_i\;d\Omega,
+\qquad
+\|\underline{e}\|_{H^1}^2 = \int_\Omega e_i\,e_i + e_{i,j}\,e_{i,j}\;d\Omega,
+$$
+
+with sums over the repeated indices, so that in two dimensions $e_i\,e_i = e_0^2 + e_1^2$, and $e_{i,j}\,e_{i,j}$ adds the squares of all four derivatives.
+The **energy norm** of Class 18 uses the bilinear form of [Class 28](28_Class.qmd),
+
+$$
+\|\underline{e}\|_E^2 = a(\underline{e}, \underline{e}) = \int_\Omega \underline{\epsilon}(\underline{e})^T\,\underline{\underline{D}}\;\underline{\epsilon}(\underline{e})\;d\Omega ,
+$$
+
+which is twice the strain energy that the error would store.
+Each norm is computed element by element with Gaussian quadrature, as in Class 17.
+The exact solution is evaluated at the physical location $\underline{x}^e(\underline{\xi}_q)$ of each quadrature point, and more points are used than the stiffness matrix needs, because the error is not a polynomial.
+The errors below are relative errors, such as $\|\underline{e}\|_{L^2}/\|\underline{u}\|_{L^2}$, so that they do not depend on the units.
+
+### The a priori estimate
+
+The a priori estimate is unchanged.
+For a sufficiently smooth exact solution and elements of degree $p$ (written $k$ in Class 17),
+
+$$
+\|\underline{e}\|_{H^s} \leq C\,h^{\,p+1-s}\,\|\underline{u}\|_{H^{p+1}} ,
+$$
+
+so the displacements converge at the rate $p+1$ in the $L^2$ norm, and the strains and stresses, through the $H^1$ and energy norms, at the rate $p$.
+The rate is measured as before, by halving $h$ and taking the base-2 logarithm of the ratio of successive errors.
+
+The constant $C$ does not depend on $h$ or on $\underline{u}$.
+It does depend on the domain, the degree, the shapes of the elements, and the coefficients of the problem, which for an isotropic material are $E$ and $\nu$.
+That last dependence is the subject of most of this class.
+
+### Galerkin orthogonality and Céa's lemma
+
+The argument of Class 18 used only two properties of the bilinear form: that it is symmetric, and that $a(\underline{v}, \underline{v}) > 0$ for every admissible $\underline{v} \neq \underline{0}$.
+Both hold in elasticity.
+The form is symmetric because $\underline{\underline{D}}$ is symmetric.
+It is positive because $\underline{\underline{D}}$ is positive definite and, by Korn's inequality in [Class 29](29_Class.qmd), only a rigid-body motion has no strain, and the supports exclude those.
+Galerkin orthogonality then follows word for word,
+
+$$
+a(\underline{u} - \underline{u}^h,\; \underline{w}^h) = 0 \qquad \text{for all } \underline{w}^h \in \mathcal{V}^h ,
+$$
+
+and so does Céa's lemma,
+
+$$
+\left\|\underline{u} - \underline{u}^h\right\|_E \leq \left\|\underline{u} - \underline{w}^h\right\|_E \qquad \text{for every } \underline{w}^h \in \mathcal{V}^h .
+$$
+
+The finite element displacement is the best approximation in its space, measured in the energy norm.
+Choosing $\underline{w}^h$ to be the interpolant of $\underline{u}$ and applying the Bramble–Hilbert lemma to each component then gives the estimate above.
+
+### Exact solutions for checking convergence
+
+As in Class 18, an exact solution can be manufactured for any body by choosing the displacement first and computing the data that it satisfies:
+
+1. Choose a displacement field $\underline{u}(\underline{x})$ that can be differentiated twice.
+2. Compute its strains, the stresses $\sigma_{ij}$ from Hooke's law of [Class 27](27_Class.qmd), and the body force that balances them, $f_i = -\sigma_{ij,j}$.
+3. Prescribe $g_i = u_i$ on $\Gamma_{g_i}$, and the tractions $h_i = \sigma_{ij}\,n_j$ on $\Gamma_{h_i}$.
+
+A few problems also have exact solutions without a body force, both of which involve plane strain (@fig-c30-problems).
+The first is a long thick-walled cylinder, such as a hose or a pipe, with inner radius $a$, outer radius $b$, and an internal pressure $q$.
+The pressure is written $q$ here to clarify that it is not the polynomial degree, which to this point we have written using $p$.
+Its displacement is radial, and Lamé's solution gives
+
+$$
+u_r(r) = \frac{(1+\nu)\,q\,a^2}{E\left(b^2 - a^2\right)}\left((1 - 2\nu)\,r + \frac{b^2}{r}\right) .
+$$
+
+By symmetry, only a quarter of the cylinder needs to be modeled, with rollers on the two cuts, as in Class 29.
+The second is the end-loaded cantilever of Timoshenko and Goodier from the [first elasticity appendix](Elasticity2D.qmd#a-problem-with-an-exact-solution-the-end-loaded-cantilever), with the exact displacements prescribed on its left end and a parabolic shear traction on its right end.
+Both use $E$ = 10 MPa, which is typical of a soft rubber; $E$ only scales the displacements, and $\nu$ is varied below.
+
+![The two problems with exact solutions, both in plane strain. (a) A quarter of a thick-walled cylinder with an internal pressure. The two cuts are planes of symmetry, so each is held by rollers, and the outer surface is free. (b) A cantilever with the exact displacements prescribed on its left end and a parabolic shear traction on its right end.](`{python} fig_prob_path`){#fig-c30-problems width=100%}
+
+### A convergence study
+
+@fig-c30-review shows the errors in the cylinder at $\nu = 0.3$, on meshes with $n$ elements through the wall and $2n$ around the quarter, for $n = 1, 2, 4, \ldots$
+The elements approximate the circular boundaries, with straight sides at degree 1 and parabolic sides at degree 2, and this approximation does not reduce the rates.
+The measured rates on the finest meshes are `{python} f2(rL2[1])` and `{python} f2(rL2[2])` in the $L^2$ norm, and `{python} f2(rE[1])` and `{python} f2(rE[2])` in the energy norm.
+These are $p+1$ and $p$, as for the Poisson Equation.
+
+![The cylinder at $\nu = 0.3$, with elements of degree 1 and 2. (a) The relative $L^2$ error of the displacement, which falls at the rate $p + 1$. (b) The relative error in the energy norm, which falls at the rate $p$. The triangles show the expected slopes.](`{python} fig_review_path`){#fig-c30-review width=100%}
+
+## Nearly incompressible materials
+
+### Volume change and the bulk modulus
+
+For small strains, the divergence of the displacement, $\nabla\cdot\underline{u} = u_{i,i} = \varepsilon_{kk}$, is the change in volume per unit volume.
+In plane strain, $\varepsilon_{22} = 0$, so $\nabla\cdot\underline{u} = u_{0,0} + u_{1,1}$.
+The mean of the three normal stresses is proportional to it,
+
+$$
+\frac{\sigma_{00} + \sigma_{11} + \sigma_{22}}{3} = \left(\lambda + \tfrac{2}{3}\mu\right)\nabla\cdot\underline{u} = K\,\nabla\cdot\underline{u},
+$$
+
+where $K$ is called the **bulk modulus**.
+In terms of $E$ and $\nu$,
+
+$$
+K = \frac{E}{3\,(1 - 2\nu)}, \qquad \mu = \frac{E}{2\,(1 + \nu)}, \qquad \frac{\lambda}{\mu} = \frac{2\nu}{1 - 2\nu} .
+$$
+
+As $\nu$ approaches $\tfrac{1}{2}$, $K$ and $\lambda$ grow without bound, while $\mu$ approaches $E/3$.
+
+| $\nu$ | 0.3 | 0.45 | 0.49 | 0.499 | 0.4999 | 0.49999 |
+|:--|--:|--:|--:|--:|--:|--:|
+| $\lambda/\mu$ | 1.5 | 9 | 49 | 499 | 4,999 | 49,999 |
+
+: The ratio of the two Lamé parameters as $\nu$ approaches $\tfrac{1}{2}$. {#tbl-c30-ratio}
+
+A material with $\nu$ close to $\tfrac{1}{2}$ is called **nearly incompressible**.
+Examples are rubber and other elastomers, with $\nu$ of about 0.4995 or more, and soft biological tissue.
+Water-saturated soils behave in the same way when they are loaded faster than the water can drain, and metals do during plastic flow, which is beyond the scope of this course.
+In such a material, a finite mean stress produces almost no change in volume, since $\nabla\cdot\underline{u}$ is the mean stress divided by $K$.
+
+### The volumetric term in the weak form
+
+The plane strain elasticity matrix of Class 27 splits into a part with $\mu$ and a part with $\lambda$,
+
+$$
+\underline{\underline{D}} =
+\begin{bmatrix} \lambda + 2\mu & \lambda & 0 \\ \lambda & \lambda + 2\mu & 0 \\ 0 & 0 & \mu \end{bmatrix}
+= \underbrace{\mu\begin{bmatrix} 2 & 0 & 0 \\ 0 & 2 & 0 \\ 0 & 0 & 1 \end{bmatrix}}_{\underline{\underline{D}}_\mu}
++ \;\lambda\,\underline{m}\,\underline{m}^T,
+\qquad
+\underline{m} = \begin{bmatrix} 1 \\ 1 \\ 0 \end{bmatrix} ,
+$$
+
+and since $\underline{m}^T\underline{\epsilon}(\underline{u}) = u_{0,0} + u_{1,1} = \nabla\cdot\underline{u}$, the bilinear form splits in the same way:
+
+$$
+a(\underline{w}, \underline{u}) = \int_\Omega \underline{\epsilon}(\underline{w})^T\,\underline{\underline{D}}_\mu\;\underline{\epsilon}(\underline{u})\;d\Omega
++ \int_\Omega \lambda\,\left(\nabla\cdot\underline{w}\right)\left(\nabla\cdot\underline{u}\right)d\Omega .
+$$
+
+As $\lambda$ grows, the second integral acts like the stiff spring of the penalty method in Class 29.
+It permits a change in volume only at a large cost in energy, and so it enforces $\nabla\cdot\underline{u} \approx 0$, with an error proportional to $1/\lambda$.
+The product $\lambda\,\nabla\cdot\underline{u}$ stays finite.
+In plane strain it is exactly the stress along the length of the body, $\sigma_{22} = \lambda\left(\varepsilon_{00} + \varepsilon_{11}\right)$, from Class 27.
+
+The exact solutions are well behaved as $\nu$ approaches $\tfrac{1}{2}$.
+The inner surface of the cylinder moves out `{python} f2(ur_03)` mm at $\nu = 0.3$ and `{python} f2(ur_05)` mm at $\nu = 0.49999$, and the tip of the cantilever moves down `{python} f2(tip_03)` mm and `{python} f2(tip_05)` mm.
+
+## Volumetric locking
+
+### What goes wrong in the discrete problem
+
+The finite element solution is subject to the same near-constraint, but it can satisfy it only with the fields its space contains, and only where the $\lambda$ integral is evaluated: at the quadrature points.
+With the full quadrature used so far, $\nabla\cdot\underline{u}^h$ must be nearly zero at every quadrature point of every element.
+
+@fig-c30-count compares the number of these points with the number of unknowns.
+In a large mesh of degree-1 elements, each element adds about one node, and so two unknowns, but four quadrature points.
+Degree-2 elements add about four nodes, or eight unknowns, and nine points.
+Hughes (Chapter 4) calls the ratio of unknowns to constraints the **constraint ratio**.
+The continuous problem has two displacement components and one constraint at each point, a ratio of 2.
+A ratio below 1, as for degree 1 with four points, suggests that the elements will lock.
+The count is a rule of thumb rather than a proof, but the results below follow it.
+
+![Unknowns (dots) and the quadrature points at which the $\lambda$ integral is evaluated (crosses), on a patch of nine elements. The shaded element is one of them. In a large mesh, each element adds the number of unknowns shown, and each cross asks for $\nabla\cdot\underline{u}^h \approx 0$ when $\lambda$ is large. (a) Degree 1 with full quadrature has more constraints than unknowns. (b) Degree 2 has about as many of each. (c) Degree 1 with the $\lambda$ integral evaluated at the center has one constraint for two unknowns.](`{python} fig_count_path`){#fig-c30-count width=100%}
+
+When the constraints outnumber the unknowns, the only fields that satisfy them are very restricted.
+As $\lambda/\mu$ grows on a fixed mesh, the finite element solution approaches the best fit among those restricted fields, which is often a poor fit.
+The elements become far too stiff and hardly move, which is why they are said to **lock**.
+
+In the terms of Class 18, Céa's lemma still holds: $\underline{u}^h$ is still the best approximation in the energy norm.
+That norm, however, now contains $\int_\Omega \lambda\left(\nabla\cdot\underline{e}\right)^2 d\Omega$.
+When $\lambda$ is very large, the best approximation is the one that keeps $\nabla\cdot\underline{u}^h$ small at the quadrature points, whatever that costs in the displacement itself.
+Converting the statement about the energy norm into one about the displacement brings in the ratio $\lambda/\mu$, and the constant $C$ in the estimate for the displacement grows without bound as $\nu$ approaches $\tfrac{1}{2}$.
+The rate is unchanged.
+What changes is how small the elements must be before the error begins to fall at that rate.
+
+@fig-c30-lock shows this for the cylinder.
+At $\nu = 0.3$, the error of the degree-1 elements falls at the rate 2 from the coarsest mesh.
+As $\nu$ approaches $\tfrac{1}{2}$, the error stays near 100% on the coarse meshes, and it begins to fall only once the elements are small enough, eventually at the same rate.
+Each tenfold increase in $\lambda/\mu$ moves the start of that decline to elements about three times smaller, close to $\sqrt{10}$.
+At $\nu = 0.49999$, even the finest mesh of degree-1 elements, `{python} f"{fine1.g.n0} × {fine1.g.n1}"` with `{python} f"{fine1.neq:,}"` unknowns, has an error of `{python} pct(fine1.eL2)`.
+Degree 2 also locks on the coarsest meshes, but it recovers on much coarser meshes than degree 1.
+
+![The relative $L^2$ error of the displacement in the cylinder, for several values of $\nu$. (a) Degree 1: as $\nu$ approaches $\tfrac{1}{2}$, the error stays near 100% for more and more refinements, and then falls at the rate 2. (b) Degree 2: the same pattern on coarser meshes, falling eventually at the rate 3.](`{python} fig_lock_path`){#fig-c30-lock width=100%}
+
+## Volumetric locking, interactively
+
+The widget below solves both problems of @fig-c30-problems, in plane strain, for any $\nu$, with three kinds of elements, and compares every result with the exact solution.
+
+- Use the buttons to choose the problem and the elements, and the sliders to choose $\nu$ and the mesh.
+  The meshes have $n = 1, 2, 4, 8,$ or 16 elements through the depth of the cantilever, with $4n$ along its length, or through the wall of the cylinder, with $2n$ around the quarter.
+- The upper panel shows the deformed mesh, magnified, with the exact deformed shape dashed and the undeformed outline in gray.
+  The colors show $\lambda\,\nabla\cdot\underline{u}^h$, which in plane strain is $\sigma_{22}$, at each quadrature point of each element, or at the center for the third kind of element.
+  The exact $\sigma_{22}$ varies linearly along and through the cantilever, and it is uniform in the cylinder.
+- The lower panels show, for all three kinds of element and every mesh, the computed displacement divided by the exact one, and the relative $L^2$ error.
+  The displacement is the deflection at the middle of the cantilever's tip, or the radial displacement of the cylinder's inner surface at 45°.
+- The third kind of element, "degree 1, $\lambda$ term at one point," is described in the section on mitigating locking below.
+- Every solution is computed in your browser when $\nu$ or the problem changes.
+
+::: {html-table-processing="none"}
+```{=html}
+<style>
+.c30{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;color:var(--ink)}
+.c30 .bar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:10px 14px;background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.c30 .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey);margin-right:2px}
+.c30 .bar .gap{width:10px}
+.c30 button{font:inherit;font-size:13px;padding:4px 10px;border:1px solid #c3c9d2;border-radius:6px;background:#fff;cursor:pointer;color:var(--ink)}
+.c30 button:hover{background:#eef1f5}
+.c30 button[aria-pressed="true"]{background:#18202b;color:#fff;border-color:#18202b}
+.c30 svg{display:block;width:100%;height:auto}
+.c30 .panel{border:1px solid var(--faint);border-radius:8px;background:#fff;padding:6px;margin-bottom:10px}
+.c30 .plots{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+@media (max-width:700px){.c30 .plots{grid-template-columns:1fr}}
+.c30 .read{font-size:.88em;background:var(--paper);border:1px solid var(--faint);border-radius:8px;padding:9px 12px;line-height:1.6;margin-bottom:22px}
+.c30 .read b{color:#b8322a}
+.c30 input[type=range]{vertical-align:middle;width:170px}
+.c30 .val{font-family:monospace;font-size:12px;color:var(--grey);min-width:4em;display:inline-block}
+.c30 .key{font-size:.85em;color:#42506a;margin:-2px 2px 10px;display:flex;flex-wrap:wrap;gap:4px 18px;align-items:center}
+.c30 .key i{display:inline-block;width:20px;height:0;border-top:3px solid;vertical-align:middle;margin-right:6px}
+</style>
+<div class="c30" id="c30w">
+  <div class="bar">
+    <b>PROBLEM</b>
+    <button data-prob="cantilever">the cantilever</button>
+    <button data-prob="cylinder">the thick-walled cylinder</button>
+  </div>
+  <div class="bar">
+    <b>ELEMENTS</b>
+    <button data-el="0">degree 1</button>
+    <button data-el="1">degree 2</button>
+    <button data-el="2">degree 1, λ term at one point</button>
+  </div>
+  <div class="bar">
+    <b>POISSON'S RATIO</b>
+    <input type="range" id="c30nu" min="0" max="11" step="1" value="11" aria-label="Poisson's ratio"><span class="val" id="c30nuv"></span>
+    <span class="gap"></span>
+    <b>MESH</b>
+    <input type="range" id="c30lev" min="0" max="4" step="1" value="2" aria-label="Mesh"><span class="val" id="c30levv"></span>
+  </div>
+  <div class="panel"><svg id="c30shape" viewBox="0 0 680 300" role="img" aria-label="The deformed mesh, colored by lambda times the divergence of the displacement, with the exact deformed shape dashed"></svg></div>
+  <div class="plots">
+    <div class="panel"><svg id="c30ratio" viewBox="0 0 340 250" role="img" aria-label="The computed displacement divided by the exact displacement, for each kind of element, as the mesh is refined"></svg></div>
+    <div class="panel"><svg id="c30err" viewBox="0 0 340 250" role="img" aria-label="The relative L2 error of the displacement, for each kind of element, as the mesh is refined"></svg></div>
+  </div>
+  <div class="key" id="c30key"></div>
+  <div class="read" id="c30read"></div>
+</div>
+<script>
+// Plane strain on structured meshes of degree 1 or 2: local nodes by the stride rule,
+// nodes numbered along the short direction to keep the band narrow, full Gauss
+// quadrature or, for the third kind of element, the lambda term at the element
+// center, and a banded Cholesky factorization.  Same data as c30_locking.py.
+(function(){
+  const E = 10, A_IN = 50, B_OUT = 100, Q_IN = 0.5, LB = 400, DB = 100, PB = 0.4;
+  const NUS = [0, 0.2, 0.3, 0.4, 0.45, 0.49, 0.495, 0.499, 0.4995, 0.4999, 0.49995, 0.49999];
+  const NS = [1, 2, 4, 8, 16];
+  const ELS = [{p: 1, sri: false, name: "degree 1", color: "#c0392b"},
+               {p: 2, sri: false, name: "degree 2", color: "#1f6feb"},
+               {p: 1, sri: true, name: "degree 1, λ term at one point", color: "#0d9488"}];
+  const GL = {1: [[0], [2]], 2: [[-0.5773502691896257, 0.5773502691896257], [1, 1]],
+    3: [[-0.7745966692414834, 0, 0.7745966692414834], [5/9, 8/9, 5/9]],
+    4: [[-0.8611363115940526, -0.3399810435848563, 0.3399810435848563, 0.8611363115940526],
+        [0.3478548451374538, 0.6521451548625461, 0.6521451548625461, 0.3478548451374538]],
+    5: [[-0.906179845938664, -0.5384693101056831, 0, 0.5384693101056831, 0.906179845938664],
+        [0.2369268850561891, 0.4786286704993665, 0.5688888888888889, 0.4786286704993665, 0.2369268850561891]]};
+  const lame = nu => [E*nu/((1 + nu)*(1 - 2*nu)), E/(2*(1 + nu))];
+  const st = {prob: "cantilever", el: 0, nu: 11, lev: 2};
+
+  // ---------------------------------------------------------------- elements
+  function lag(p, s){
+    const xs = Array.from({length: p + 1}, (_, i) => -1 + 2*i/p), N = [], dN = [];
+    for (let a=0;a<=p;a++){
+      let v = 1, d = 0;
+      for (let b=0;b<=p;b++) if (b !== a) v *= (s - xs[b])/(xs[a] - xs[b]);
+      for (let m=0;m<=p;m++){
+        if (m === a) continue;
+        let t = 1/(xs[a] - xs[m]);
+        for (let b=0;b<=p;b++) if (b !== a && b !== m) t *= (s - xs[b])/(xs[a] - xs[b]);
+        d += t;
+      }
+      N.push(v); dN.push(d);
+    }
+    return [N, dN];
+  }
+  const SH = new Map();
+  function shape(p, xi, eta){                      // N_a and dN_a/d(xi, eta), a = i + (p+1) j
+    const key = p + "," + xi + "," + eta;
+    if (!SH.has(key)){
+      const [Nx, dx] = lag(p, xi), [Ny, dy] = lag(p, eta), N = [], dN = [];
+      for (let j=0;j<=p;j++) for (let i=0;i<=p;i++){ N.push(Nx[i]*Ny[j]); dN.push([dx[i]*Ny[j], Nx[i]*dy[j]]); }
+      SH.set(key, {N, dN});
+    }
+    return SH.get(key);
+  }
+  function grid(prob, p, n){
+    const cyl = prob === "cylinder", n0 = cyl ? n : 4*n, n1 = cyl ? 2*n : n, m0 = p*n0 + 1, m1 = p*n1 + 1;
+    const node = cyl ? (I, J) => I + m0*J : (I, J) => J + m1*I;
+    const X = new Array(m0*m1);
+    for (let I=0;I<m0;I++) for (let J=0;J<m1;J++){
+      const s = I/(m0 - 1), t = J/(m1 - 1);
+      if (cyl){ const r = A_IN + (B_OUT - A_IN)*s, th = 0.5*Math.PI*t; X[node(I, J)] = [r*Math.cos(th), r*Math.sin(th)]; }
+      else X[node(I, J)] = [LB*s, DB*(t - 0.5)];
+    }
+    const IEN = [];
+    for (let e1=0;e1<n1;e1++) for (let e0=0;e0<n0;e0++){
+      const row = [];
+      for (let j=0;j<=p;j++) for (let i=0;i<=p;i++) row.push(node(p*e0 + i, p*e1 + j));
+      IEN.push(row);
+    }
+    return {prob, p, n, n0, n1, m0, m1, node, X, IEN, nnp: X.length, nel: IEN.length, nen: (p + 1)**2, elem: (e0, e1) => e0 + n0*e1};
+  }
+  function geom(g, e, xi, eta){
+    const {N, dN} = shape(g.p, xi, eta), A = g.IEN[e];
+    let a00 = 0, a01 = 0, a10 = 0, a11 = 0, x0 = 0, x1 = 0;
+    for (let a=0;a<A.length;a++){
+      const X = g.X[A[a]];
+      a00 += X[0]*dN[a][0]; a01 += X[0]*dN[a][1]; a10 += X[1]*dN[a][0]; a11 += X[1]*dN[a][1];
+      x0 += N[a]*X[0]; x1 += N[a]*X[1];
+    }
+    const J = a00*a11 - a01*a10;
+    return {N, J, x: [x0, x1], dNx: dN.map(([dxi, deta]) => [(dxi*a11 - deta*a10)/J, (deta*a00 - dxi*a01)/J])};
+  }
+  // add w B_a^T D B_b for D = mu diag(2, 2, 1) + lam m m^T
+  function addK(ke, dNx, nen, mu, lam, w){
+    const nd = 2*nen;
+    for (let a=0;a<nen;a++){
+      const xa = dNx[a][0], ya = dNx[a][1];
+      for (let b=0;b<nen;b++){
+        const xb = dNx[b][0], yb = dNx[b][1];
+        ke[2*a*nd + 2*b] += w*((lam + 2*mu)*xa*xb + mu*ya*yb);
+        ke[2*a*nd + 2*b + 1] += w*(lam*xa*yb + mu*ya*xb);
+        ke[(2*a + 1)*nd + 2*b] += w*(lam*ya*xb + mu*xa*yb);
+        ke[(2*a + 1)*nd + 2*b + 1] += w*((lam + 2*mu)*ya*yb + mu*xa*xb);
+      }
+    }
+  }
+
+  // --------------------------------------------------------- exact solutions
+  function exact(prob, nu){
+    if (prob === "cylinder"){
+      const c = (1 + nu)*Q_IN*A_IN*A_IN/(E*(B_OUT*B_OUT - A_IN*A_IN)), ur = r => c*((1 - 2*nu)*r + B_OUT*B_OUT/r);
+      return {u: (x, y) => { const r = Math.hypot(x, y), f = ur(r)/r; return [f*x, f*y]; },
+              qoi: ur(A_IN), s22scale: 2*0.5*Q_IN*A_IN*A_IN/(B_OUT*B_OUT - A_IN*A_IN)};
+    }
+    const Ep = E/(1 - nu*nu), nup = nu/(1 - nu), I = DB**3/12, k = PB/(6*Ep*I);
+    const u = (x, y) => [k*y*((6*LB - 3*x)*x + (2 + nup)*(y*y - DB*DB/4)),
+                         -k*(3*nup*y*y*(LB - x) + (4 + 5*nup)*DB*DB*x/4 + (3*LB - x)*x*x)];
+    return {u, qoi: u(LB, 0)[1], s01: y => -PB/(2*I)*(DB*DB/4 - y*y), s22scale: 0.5*PB*LB*(DB/2)/I};
+  }
+
+  // ------------------------------------------------------------------ solve
+  function solveCase(prob, nu, el, n){
+    const g = grid(prob, el.p, n), [lam, mu] = lame(nu), ex = exact(prob, nu), p = g.p, nen = g.nen, nd = 2*nen, n2 = 2*g.nnp;
+    const fixed = new Float64Array(n2).fill(NaN);                // NaN marks a free component
+    if (prob === "cylinder") for (let I=0;I<g.m0;I++){ fixed[2*g.node(I, 0) + 1] = 0; fixed[2*g.node(I, g.m1 - 1)] = 0; }
+    else for (let J=0;J<g.m1;J++){ const A = g.node(0, J), u = ex.u(g.X[A][0], g.X[A][1]); fixed[2*A] = u[0]; fixed[2*A + 1] = u[1]; }
+    const ID = new Int32Array(n2).fill(-1);
+    let neq = 0;
+    for (let q=0;q<n2;q++) if (isNaN(fixed[q])) ID[q] = neq++;
+    let bw = 0;
+    for (const row of g.IEN){
+      let lo = Infinity, hi = -Infinity;
+      for (const A of row) for (let i=0;i<2;i++){ const P = ID[2*A + i]; if (P >= 0){ lo = Math.min(lo, P); hi = Math.max(hi, P); } }
+      if (hi >= lo) bw = Math.max(bw, hi - lo);
+    }
+    const w = bw + 1, K = new Float64Array(neq*w), F = new Float64Array(neq), Fn = new Float64Array(n2);
+    // the traction on the loaded side
+    const [sx, sw] = GL[Math.min(p + 3, 5)], xiS = prob === "cylinder" ? -1 : 1;
+    for (let e1=0;e1<g.n1;e1++){
+      const e = prob === "cylinder" ? g.elem(0, e1) : g.elem(g.n0 - 1, e1), A = g.IEN[e];
+      for (let k=0;k<sx.length;k++){
+        const {N, dN} = shape(p, xiS, sx[k]);
+        let x0 = 0, x1 = 0, t0 = 0, t1 = 0;
+        for (let a=0;a<nen;a++){ const X = g.X[A[a]]; x0 += N[a]*X[0]; x1 += N[a]*X[1]; t0 += dN[a][1]*X[0]; t1 += dN[a][1]*X[1]; }
+        const jw = Math.hypot(t0, t1)*sw[k], r = Math.hypot(x0, x1);
+        const h = prob === "cylinder" ? [Q_IN*x0/r, Q_IN*x1/r] : [0, ex.s01(x1)];
+        for (let a=0;a<nen;a++){ Fn[2*A[a]] += N[a]*h[0]*jw; Fn[2*A[a] + 1] += N[a]*h[1]*jw; }
+      }
+    }
+    // element stiffness and assembly
+    const [gx, gw] = GL[p + 1], ke = new Float64Array(nd*nd);
+    for (let e=0;e<g.nel;e++){
+      ke.fill(0);
+      for (let i=0;i<gx.length;i++) for (let j=0;j<gx.length;j++){
+        const G = geom(g, e, gx[i], gx[j]);
+        addK(ke, G.dNx, nen, mu, el.sri ? 0 : lam, gw[i]*gw[j]*G.J);
+      }
+      if (el.sri){ const G = geom(g, e, 0, 0); addK(ke, G.dNx, nen, 0, lam, 4*G.J); }
+      const A = g.IEN[e];
+      for (let a=0;a<nen;a++) for (let i=0;i<2;i++){
+        const P = ID[2*A[a] + i]; if (P < 0) continue;
+        const r = (2*a + i)*nd;
+        for (let b=0;b<nen;b++) for (let j=0;j<2;j++){
+          const q = 2*A[b] + j, Q = ID[q];
+          if (Q < 0) F[P] -= ke[r + 2*b + j]*fixed[q];
+          else if (Q >= P) K[P*w + Q - P] += ke[r + 2*b + j];
+        }
+      }
+    }
+    for (let q=0;q<n2;q++) if (ID[q] >= 0) F[ID[q]] += Fn[q];
+    // banded Cholesky
+    for (let i=0;i<neq;i++){
+      let s = K[i*w];
+      for (let k=Math.max(0, i - bw);k<i;k++){ const v = K[k*w + i - k]; s -= v*v; }
+      if (!(s > 0)) return {ok: false};
+      const d = Math.sqrt(s), jm = Math.min(neq - 1, i + bw);
+      K[i*w] = d;
+      for (let j=i+1;j<=jm;j++){
+        let v = K[i*w + j - i];
+        for (let k=Math.max(0, j - bw);k<i;k++) v -= K[k*w + i - k]*K[k*w + j - k];
+        K[i*w + j - i] = v/d;
+      }
+    }
+    const y = new Float64Array(neq), x = new Float64Array(neq);
+    for (let i=0;i<neq;i++){ let v = F[i]; for (let k=Math.max(0, i - bw);k<i;k++) v -= K[k*w + i - k]*y[k]; y[i] = v/K[i*w]; }
+    for (let i=neq-1;i>=0;i--){ let v = y[i]; const jm = Math.min(neq - 1, i + bw); for (let j=i+1;j<=jm;j++) v -= K[i*w + j - i]*x[j]; x[i] = v/K[i*w]; }
+    const U = new Float64Array(n2);
+    for (let q=0;q<n2;q++) U[q] = ID[q] >= 0 ? x[ID[q]] : fixed[q];
+    const disp = (e, xi, eta) => { const {N} = shape(p, xi, eta), A = g.IEN[e]; let u0 = 0, u1 = 0;
+      for (let a=0;a<nen;a++){ u0 += N[a]*U[2*A[a]]; u1 += N[a]*U[2*A[a] + 1]; } return [u0, u1]; };
+    // the displacement compared, and the relative L2 error
+    let qoi;
+    if (prob === "cylinder"){ const u = disp(g.elem(0, g.n1/2), -1, -1); qoi = (u[0] + u[1])/Math.SQRT2; }
+    else { const e1 = Math.min(Math.floor(g.n1/2), g.n1 - 1); qoi = disp(g.elem(g.n0 - 1, e1), 1, 2*(0.5*g.n1 - e1) - 1)[1]; }
+    const [qx, qw] = GL[Math.min(p + 3, 5)];
+    let eL2 = 0, uL2 = 0;
+    for (let e=0;e<g.nel;e++) for (let i=0;i<qx.length;i++) for (let j=0;j<qx.length;j++){
+      const G = geom(g, e, qx[i], qx[j]), uh = disp(e, qx[i], qx[j]), ue = ex.u(G.x[0], G.x[1]), wt = qw[i]*qw[j]*G.J;
+      eL2 += wt*((ue[0] - uh[0])**2 + (ue[1] - uh[1])**2); uL2 += wt*(ue[0]**2 + ue[1]**2);
+    }
+    // lambda div u^h at the points where the lambda term is evaluated
+    const pts = el.sri ? [0] : gx, s22 = [];
+    for (let e=0;e<g.nel;e++){
+      const A = g.IEN[e], v = [];
+      for (const eta of pts) for (const xi of pts){
+        const G = geom(g, e, xi, eta); let div = 0;
+        for (let a=0;a<nen;a++) div += G.dNx[a][0]*U[2*A[a]] + G.dNx[a][1]*U[2*A[a] + 1];
+        v.push(lam*div);
+      }
+      s22.push(v);
+    }
+    return {ok: true, g, U, neq, qoi, ratio: qoi/ex.qoi, eL2: Math.sqrt(eL2/uL2), s22, pts, disp};
+  }
+
+  // ------------------------------------------------------------------ cache
+  let cacheKey = null, cache = null;
+  function results(){
+    const key = st.prob + "|" + st.nu;
+    if (key !== cacheKey){
+      cache = ELS.map(el => NS.map(n => solveCase(st.prob, NUS[st.nu], el, n)));
+      cacheKey = key;
+    }
+    return cache;
+  }
+
+  // ---------------------------------------------------------------- drawing
+  const el = (tag, a, inner) => `<${tag} ${Object.entries(a).map(([k, v]) => `${k}="${v}"`).join(" ")}>${inner || ""}</${tag}>`;
+  function ramp(stops){
+    return v => {
+      v = Math.max(0, Math.min(1, v));
+      const n = stops.length - 1, k = Math.min(n - 1, Math.floor(v*n)), f = v*n - k, a = stops[k], b = stops[k + 1];
+      return `rgb(${[0, 1, 2].map(i => Math.round(a[i] + f*(b[i] - a[i]))).join(",")})`;
+    };
+  }
+  const div = ramp([[33,102,172],[103,169,207],[209,229,240],[247,247,247],[253,219,199],[239,138,98],[178,24,43]]);
+  const fmt = v => (v < 0 ? "−" : "") + (Math.abs(v) >= 100 ? Math.abs(v).toFixed(0) : Math.abs(v) >= 10 ? Math.abs(v).toFixed(1) : Math.abs(v).toFixed(2));
+  const ratioText = nu => { const r = 2*nu/(1 - 2*nu); return r >= 10 ? Math.round(r).toLocaleString("en-US") : r === 0 ? "0" : r.toFixed(r < 1 ? 2 : 1); };
+  const CUTS = {1: [-1, 0, 1], 2: [-1, -0.3872983346207417, 0.3872983346207417, 1], s: [-1, 1]};
+
+  function drawShape(sol, ex){
+    const g = sol.g, cyl = st.prob === "cylinder", p = g.p;
+    const mag = cyl ? 0.12*B_OUT/ex.qoi : 0.45*DB/Math.abs(ex.qoi);
+    const sc = cyl ? 2.25 : 1.3, X0 = cyl ? 70 : 50, Y0 = cyl ? 262 : 90;
+    const P = (x, y) => `${(X0 + sc*x).toFixed(1)},${(Y0 - sc*y).toFixed(1)}`;
+    const at = (e, xi, eta, U) => {
+      const {N} = shape(p, xi, eta), A = g.IEN[e]; let x = 0, y = 0;
+      for (let a=0;a<N.length;a++){ x += N[a]*(g.X[A[a]][0] + mag*sol.U[2*A[a]]); y += N[a]*(g.X[A[a]][1] + mag*sol.U[2*A[a] + 1]); }
+      return P(x, y);
+    };
+    const cuts = sol.pts.length === 1 ? CUTS.s : CUTS[p], nc = cuts.length - 1, S = ex.s22scale*1.5;
+    let o = "";
+    // undeformed outline
+    if (cyl){
+      const arc = r => Array.from({length: 41}, (_, k) => { const t = 0.5*Math.PI*k/40; return P(r*Math.cos(t), r*Math.sin(t)); });
+      o += el("polygon", {points: [...arc(A_IN), ...arc(B_OUT).reverse()].join(" "), fill: "none", stroke: "#b8bec7", "stroke-width": 1});
+    } else o += el("polygon", {points: [P(0, -DB/2), P(LB, -DB/2), P(LB, DB/2), P(0, DB/2)].join(" "), fill: "none", stroke: "#b8bec7", "stroke-width": 1});
+    // the deformed elements, colored at their quadrature points
+    for (let e=0;e<g.nel;e++){
+      const v = sol.s22[e];
+      for (let j=0;j<nc;j++) for (let i=0;i<nc;i++){
+        const pts = [at(e, cuts[i], cuts[j]), at(e, cuts[i + 1], cuts[j]), at(e, cuts[i + 1], cuts[j + 1]), at(e, cuts[i], cuts[j + 1])];
+        o += el("polygon", {points: pts.join(" "), fill: div(0.5 + 0.5*v[j*nc + i]/S), stroke: div(0.5 + 0.5*v[j*nc + i]/S), "stroke-width": 0.3});
+      }
+      const m = p === 1 ? 1 : 4, side = [];
+      for (let k=0;k<m;k++) side.push([-1 + 2*k/m, -1]);
+      for (let k=0;k<m;k++) side.push([1, -1 + 2*k/m]);
+      for (let k=0;k<m;k++) side.push([1 - 2*k/m, 1]);
+      for (let k=0;k<m;k++) side.push([-1, 1 - 2*k/m]);
+      o += el("polygon", {points: side.map(([a, b]) => at(e, a, b)).join(" "), fill: "none", stroke: "#6b5a44", "stroke-width": g.nel > 300 ? 0.25 : 0.5, "stroke-opacity": 0.8});
+    }
+    // the exact deformed shape
+    const exPt = (x, y) => { const u = ex.u(x, y); return P(x + mag*u[0], y + mag*u[1]); };
+    let pts = [];
+    if (cyl){
+      for (let k=0;k<=40;k++){ const t = 0.5*Math.PI*k/40; pts.push(exPt(A_IN*Math.cos(t), A_IN*Math.sin(t))); }
+      for (let k=40;k>=0;k--){ const t = 0.5*Math.PI*k/40; pts.push(exPt(B_OUT*Math.cos(t), B_OUT*Math.sin(t))); }
+    } else {
+      for (let k=0;k<=40;k++) pts.push(exPt(LB*k/40, -DB/2));
+      for (let k=0;k<=10;k++) pts.push(exPt(LB, -DB/2 + DB*k/10));
+      for (let k=40;k>=0;k--) pts.push(exPt(LB*k/40, DB/2));
+      for (let k=10;k>=0;k--) pts.push(exPt(0, -DB/2 + DB*k/10));
+    }
+    o += el("polygon", {points: pts.join(" "), fill: "none", stroke: "#18202b", "stroke-width": 1.5, "stroke-dasharray": "6 4"});
+    // legend and color bar
+    const lx = cyl ? 360 : 50, ly = cyl ? 70 : 196;
+    o += el("line", {x1: lx, y1: ly, x2: lx + 30, y2: ly, stroke: "#18202b", "stroke-width": 1.5, "stroke-dasharray": "6 4"});
+    o += el("text", {x: lx + 38, y: ly + 4, "font-size": 12, fill: "#42506a"}, "exact deformed shape");
+    o += el("line", {x1: lx, y1: ly + 20, x2: lx + 30, y2: ly + 20, stroke: "#b8bec7", "stroke-width": 1.2});
+    o += el("text", {x: lx + 38, y: ly + 24, "font-size": 12, fill: "#42506a"}, "undeformed");
+    o += el("text", {x: lx, y: ly + 46, "font-size": 12, fill: "#42506a"}, `displacements magnified ${mag.toFixed(1)} times`);
+    const cx = cyl ? 360 : 400, cy = cyl ? 170 : 262, cw = 200;
+    for (let k=0;k<50;k++) o += el("rect", {x: cx + k*cw/50, y: cy, width: cw/50 + 0.4, height: 9, fill: div(k/49)});
+    o += el("text", {x: cx, y: cy - 6, "font-size": 12, fill: "#42506a"}, "λ ∇·uʰ = σ₂₂ (MPa), clipped at the ends");
+    for (const [f, t] of [[0, `−${fmt(S)}`], [0.5, "0"], [1, fmt(S)]]) o += el("text", {x: cx + f*cw, y: cy + 22, "font-size": 11, fill: "#6b7684", "text-anchor": "middle"}, t);
+    document.getElementById("c30shape").innerHTML = o;
+  }
+
+  function drawPlots(R){
+    const L = 52, Rt = 330, T = 22, B = 200, X = k => L + (Rt - L)*k/4;
+    const xlab = st.prob === "cylinder" ? "elements through the wall" : "elements through the depth";
+    function frame(title){
+      let o = el("text", {x: L - 40, y: 13, "font-size": 12, fill: "#42506a", "font-weight": 600}, title);
+      o += el("line", {x1: L, y1: B, x2: Rt, y2: B, stroke: "#59636e"}) + el("line", {x1: L, y1: T, x2: L, y2: B, stroke: "#59636e"});
+      NS.forEach((n, k) => { o += el("text", {x: X(k), y: B + 15, "text-anchor": "middle", "font-size": 11, fill: "#6b7684"}, n); });
+      o += el("text", {x: (L + Rt)/2, y: B + 32, "text-anchor": "middle", "font-size": 12, fill: "#42506a"}, xlab);
+      return o;
+    }
+    function lines(Y, key){
+      let o = "";
+      ELS.forEach((E_, ei) => {
+        if (ei === st.el) return;
+        o += el("polyline", {points: R[ei].map((s, k) => `${X(k)},${Y(s[key]).toFixed(1)}`).join(" "), fill: "none", stroke: E_.color, "stroke-width": 1.4, "stroke-opacity": 0.75});
+        R[ei].forEach((s, k) => { o += el("circle", {cx: X(k), cy: Y(s[key]).toFixed(1), r: 2.4, fill: E_.color, "fill-opacity": 0.75}); });
+      });
+      const E_ = ELS[st.el];
+      o += el("polyline", {points: R[st.el].map((s, k) => `${X(k)},${Y(s[key]).toFixed(1)}`).join(" "), fill: "none", stroke: E_.color, "stroke-width": 2.6});
+      R[st.el].forEach((s, k) => { o += el("circle", {cx: X(k), cy: Y(s[key]).toFixed(1), r: 3.4, fill: E_.color}); });
+      o += el("circle", {cx: X(st.lev), cy: Y(R[st.el][st.lev][key]).toFixed(1), r: 7, fill: "none", stroke: "#18202b", "stroke-width": 1.4});
+      return o;
+    }
+    // the displacement over the exact one
+    const YR = v => B - (B - T)*Math.max(0, Math.min(1.45, v))/1.4;
+    let o = frame("computed / exact displacement");
+    for (const v of [0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4]){
+      o += el("line", {x1: L - 4, y1: YR(v), x2: Rt, y2: YR(v), stroke: v === 1 ? "#9aa3ad" : "#eef0f3", "stroke-dasharray": v === 1 ? "4 3" : "none"});
+      o += el("text", {x: L - 7, y: YR(v) + 4, "text-anchor": "end", "font-size": 11, fill: "#6b7684"}, v.toFixed(1));
+    }
+    o += el("text", {x: X(3.5), y: YR(1) + 13, "text-anchor": "middle", "font-size": 11, fill: "#6b7684"}, "exact");
+    o += lines(YR, "ratio");
+    document.getElementById("c30ratio").innerHTML = o;
+    document.getElementById("c30key").innerHTML = ELS.map((E_, ei) =>
+      `<span><i style="border-color:${E_.color};border-top-width:${ei === st.el ? 3 : 1.5}px"></i>${E_.name}</span>`).join("") +
+      `<span>The selected kind is drawn heavier, and the ring marks the selected mesh.</span>`;
+    // the relative L2 error
+    const LO = -7, HI = 0, YE = v => B - (B - T)*(Math.log10(Math.max(v, 10**LO)) - LO)/(HI - LO);
+    o = frame("relative L² error of the displacement");
+    const TICK = {"-7": "10⁻⁷", "-6": "10⁻⁶", "-5": "10⁻⁵", "-4": "10⁻⁴", "-3": "10⁻³", "-2": "10⁻²", "-1": "10⁻¹", "0": "1"};
+    for (let k=LO;k<=HI;k++){
+      o += el("line", {x1: L - 4, y1: YE(10**k), x2: Rt, y2: YE(10**k), stroke: "#eef0f3"});
+      o += el("text", {x: L - 7, y: YE(10**k) + 4, "text-anchor": "end", "font-size": 11, fill: "#6b7684"}, TICK[k]);
+    }
+    o += lines(YE, "eL2");
+    document.getElementById("c30err").innerHTML = o;
+  }
+
+  function render(){
+    document.querySelectorAll("#c30w [data-prob]").forEach(b => b.setAttribute("aria-pressed", b.dataset.prob === st.prob ? "true" : "false"));
+    document.querySelectorAll("#c30w [data-el]").forEach(b => b.setAttribute("aria-pressed", +b.dataset.el === st.el ? "true" : "false"));
+    labels();
+    const R = results(), nu = NUS[st.nu], ex = exact(st.prob, nu), sol = R[st.el][st.lev];
+    if (!R.every(r => r.every(s => s.ok))){ document.getElementById("c30read").innerHTML = "The factorization failed."; return; }
+    drawShape(sol, ex);
+    drawPlots(R);
+    const cyl = st.prob === "cylinder", g = sol.g, prev = st.lev > 0 ? R[st.el][st.lev - 1] : null;
+    const what = cyl ? "Radial displacement of the inner surface at 45°" : "Deflection at the middle of the tip";
+    const change = prev ? `${sol.qoi/prev.qoi >= 1 ? "+" : "−"}${Math.abs(100*(sol.qoi/prev.qoi - 1)).toFixed(1)}%` : "none; this is the coarsest mesh";
+    document.getElementById("c30read").innerHTML =
+      `ν = ${nu}, so λ/μ = ${ratioText(nu)}. ${ELS[st.el].name[0].toUpperCase() + ELS[st.el].name.slice(1)} on ${g.n0} × ${g.n1} elements, with ${sol.neq.toLocaleString("en-US")} unknowns.<br>` +
+      `${what}: computed ${fmt(sol.qoi)} mm, exact ${fmt(ex.qoi)} mm, ratio <b>${sol.ratio.toFixed(3)}</b>.<br>` +
+      `Change in the computed value from the next coarser mesh: ${change}. Relative L² error of the displacement: <b>${(100*sol.eL2).toPrecision(2)}%</b>.`;
+  }
+  function labels(){
+    const nu = NUS[st.nu], n = NS[st.lev], cyl = st.prob === "cylinder";
+    document.getElementById("c30nuv").textContent = `${nu}`;
+    document.getElementById("c30levv").textContent = cyl ? `${n} × ${2*n}` : `${4*n} × ${n}`;
+  }
+  let timer = null;
+  const later = () => { labels(); clearTimeout(timer); timer = setTimeout(render, 120); };
+  document.querySelectorAll("#c30w [data-prob]").forEach(b => b.addEventListener("click", () => { st.prob = b.dataset.prob; render(); }));
+  document.querySelectorAll("#c30w [data-el]").forEach(b => b.addEventListener("click", () => { st.el = +b.dataset.el; render(); }));
+  document.getElementById("c30nu").addEventListener("input", ev => { st.nu = +ev.target.value; later(); });
+  document.getElementById("c30lev").addEventListener("input", ev => { st.lev = +ev.target.value; later(); });
+  render();
+})();
+</script>
+```
+:::
+
+### Things to try
+
+1. With the cantilever and degree 1 on 16 × 4 elements, move $\nu$ from 0 to 0.49999.
+   The exact deflection decreases from `{python} "%.1f" % tip_0` mm to `{python} "%.1f" % tip_05` mm, but the computed deflection falls to under a quarter of the exact value.
+2. At $\nu = 0.49999$, refine the degree-1 mesh from two to sixteen elements through the depth.
+   The computed deflection changes by 10% or less at each step, but it stays near a quarter of the exact value.
+3. Switch to degree 2, or to degree 1 with the $\lambda$ term at one point.
+   Degree 2 is essentially exact on every mesh, and the other is within `{python} "%.0f%%" % (100 * (sri2 - 1))` with two elements through the depth.
+4. Switch to the cylinder at $\nu = 0.49999$.
+   Each refinement of the degree-1 mesh multiplies the displacement by about four.
+   Degree 2 also locks on the coarsest meshes, reaching `{python} "%.2f" % cyl2[1]` of the exact displacement on 2 × 4 elements and `{python} "%.2f" % cyl2[2]` on 4 × 8.
+5. Watch the colors.
+   For degree 1 at large $\nu$, $\lambda\,\nabla\cdot\underline{u}^h$ jumps in sign from one quadrature point to the next, while the deformed shape looks smooth.
+   For degree 2 on the cylinder, it oscillates even on the finer meshes, where the displacement is accurate, and only the third kind of element gives the uniform exact value.
+6. Set $\nu = 0$, with degree 1 and one element through the depth of the cantilever.
+   With $\lambda = 0$ there is no volumetric locking, yet the deflection is only `{python} pct(shear0)` of the exact value; this is a different kind of locking, described at the end of this class.
+
+## Locking can look like convergence
+
+In the cylinder, locking is easy to see.
+Each refinement multiplies the displacement by about four, and the answer is clearly not converged.
+The cantilever is more misleading.
+@tbl-c30-false shows its tip deflection at $\nu = 0.49999$ with degree-1 elements.
+
+```{python}
+#| label: tbl-c30-false
+#| tbl-cap: "The cantilever at $\\nu = 0.49999$ with degree-1 elements. The change is that of the computed deflection from the previous mesh. The relative $L^2$ error can be computed only because the exact solution is known."
+from IPython.display import Markdown
+rows = ["| Elements through the depth | Mesh | Deflection / exact | Change from the previous mesh | Relative $L^2$ error |",
+        "|--:|:--:|--:|--:|--:|"]
+for k, n in enumerate(cant1["n"]):
+    c = "" if k == 0 else "%+.1f%%" % (100 * (cant1["qoi"][k] - cant1["qoi"][k - 1]) / cant1["qoi"][k - 1])
+    rows.append("| %d | %d × %d | %.3f | %s | %s |" % (n, 4 * n, n, cant1["qoi"][k], c, pct(cant1["eL2"][k])))
+Markdown("\n".join(rows))
+```
+
+From two to four to eight elements through the depth, the deflection changes by `{python} "%.1f%%" % (100 * chg[1])` and then by `{python} "%.1f%%" % (100 * chg[2])`.
+The deformed shape in @fig-c30-false a looks like a bent beam, only a stiffer one, and nothing in the output warns that anything is wrong.
+A mesh study that refines until the answer changes by less than 5% would stop at eight elements through the depth, at about a quarter of the correct deflection.
+The relative $L^2$ error, which is known only because the exact solution is, stays above 70% throughout.
+
+The beam settles because of what degree-1 elements can do without changing their volume at their quadrature points.
+They can shear: a rectangle that becomes a parallelogram keeps its area.
+They cannot bend without changing volume, however.
+In a nearly incompressible material, the stretching of the fibers on one side of the beam and their shortening on the other must be matched by an opposite strain across the depth, which varies through the depth.
+That requires a displacement across the depth that is quadratic, and a degree-1 element has no quadratic terms.
+The locked beam therefore deflects mainly by shearing its elements, and each refinement adds only a little bending.
+
+![The cantilever at $\nu = 0.49999$. (a) The deformed mesh of degree-1 elements, 16 × 4, against the exact deformed shape (dashed). The beam bends, but far less than it should. (b) The computed displacement divided by the exact one, as the mesh is refined. For the cantilever with degree 1 (solid red), the answer barely changes after two elements through the depth, at about a quarter of the exact value. For the cylinder with degree 1 (dashed red), the answer is far smaller and grows by about four times with each refinement. Degree 2 and the $\lambda$ term at one point are close to the exact value on every mesh.](`{python} fig_false_path`){#fig-c30-false width=100%}
+
+Verification does not catch locking either.
+The code that produced these numbers converges at the expected rates at $\nu = 0.3$ (@fig-c30-review), so it passes the test of [Class 18](18_Class.qmd).
+Locking is a property of the method, not a mistake in the code, and verification only asks whether the equations were solved correctly.
+
+There are several practical signs of locking:
+
+- **A different kind of element disagrees.**
+  Compare against elements of a higher degree or a formulation designed to avoid locking, not against a finer mesh of the same elements.
+  For the cantilever, degree 2 is within `{python} "%.2f%%" % (100 * abs(cant2["qoi"][0] - 1))` of the exact deflection with one element through the depth, while degree 1 with sixteen is still at `{python} f2(cant1["qoi"][-1])` of it.
+- **The answer is much more sensitive to $\nu$ than the physics is.**
+  Solve again with a somewhat smaller $\nu$, such as 0.45.
+  The exact tip deflection changes only from `{python} f2(tip_045)` mm to `{python} f2(tip_05)` mm between $\nu = 0.45$ and 0.49999, but the degree-1 deflection on 16 × 4 elements falls from `{python} f2(abs(cant045.tip))` mm to `{python} f2(abs(cant05.tip))` mm.
+- **The volumetric stress oscillates.**
+  In a locked solution, $\lambda\,\nabla\cdot\underline{u}^h$ often changes sign from one quadrature point to the next, in a checkerboard pattern, even where the displacements look smooth, as the colors in the widget show.
+  The converse does not hold.
+  Since $\lambda\,\nabla\cdot\underline{u}^h$ is a small divergence multiplied by a large $\lambda$, it can oscillate even when the displacements are accurate.
+  For degree 2 on the cylinder at $\nu = 0.4999$, with 16 × 32 elements, the displacement is within 0.1% of the exact value, but $\lambda\,\nabla\cdot\underline{u}^h$ ranges from `{python} ("%.1f" % s22_lo).replace("-", "−")` to `{python} "%.1f" % s22_hi` MPa, while the exact $\sigma_{22}$ is `{python} "%.2f" % s22_ex` MPa everywhere.
+  The stresses in a nearly incompressible material should therefore be computed with one of the remedies below, even when the displacements have converged.
+
+## Mitigating volumetric locking
+
+### Refining the mesh
+
+Since the rate is unchanged, refining the mesh eventually works for any $\nu$ less than $\tfrac{1}{2}$.
+The elements must become small compared with roughly $\sqrt{\mu/\lambda}$ times the size of the body, however, and that can be very small.
+In the cylinder at $\nu = 0.49999$, degree 1 on `{python} f"{fine1.g.n0} × {fine1.g.n1}"` elements, with `{python} f"{fine1.neq:,}"` unknowns, still gives only `{python} f2(fine1.qoi)` of the exact displacement.
+For $\nu = \tfrac{1}{2}$ itself, $\lambda$ is infinite, and the displacement formulation cannot be used at all.
+
+### Raising the degree
+
+Raising the degree is much more effective.
+The ratio of unknowns to constraints is closer to balanced (@fig-c30-count), and polynomials of higher degree can represent more of the fields that keep their volume, such as the bending of the cantilever.
+In the cylinder at $\nu = 0.4999$, degree 2 on `{python} f"{deg2_8.g.n0} × {deg2_8.g.n1}"` elements, with `{python} f"{deg2_8.neq:,}"` unknowns, is within 1% of the exact displacement (`{python} "%.3f" % deg2_8.qoi`).
+Degree 1 on `{python} f"{fine1_4999.g.n0} × {fine1_4999.g.n1}"` elements, with almost four times as many unknowns, is still `{python} "%.0f%%" % (100 * (1 - fine1_4999.qoi))` low.
+Degree 3 reaches `{python} "%.3f" % deg3_2.qoi` on 2 × 4 elements, with `{python} deg3_2.neq` unknowns.
+Higher degrees still lock on the coarsest meshes, however: degree 3 on a 1 × 2 mesh gives `{python} "%.2f" % deg3_1.qoi`, and degree 2 gives `{python} "%.2f" % d2_4999["qoi"][0]`.
+Raising the degree shortens the range of locked meshes rather than removing it.
+
+### Special elements and mixed methods
+
+Since the trouble lies in the $\lambda$ integral, one remedy is to evaluate that integral with fewer quadrature points than the rest of $\underline{\underline{k}}^e$, which is called **selective reduced integration**.
+For degree 1, the $\mu$ part keeps its $2 \times 2$ points, and the $\lambda$ part is evaluated at the element center only,
+
+$$
+\underline{\underline{k}}^e = \sum_{q=0}^{3} \underline{\underline{B}}^T\,\underline{\underline{D}}_\mu\,\underline{\underline{B}}\;J\;W_q\,\Big|_{\underline{\xi}_q}
+\; + \;\lambda\,\left(\underline{\underline{B}}^T\underline{m}\right)\left(\underline{m}^T\underline{\underline{B}}\right)J\;W\,\Big|_{\underline{\xi} = \underline{0}} ,
+$$
+
+where $W = 4$ is the weight of the one-point rule, the area of the parent square.
+Each element then imposes one constraint for two unknowns (@fig-c30-count c), and in the widget this element shows no locking at any $\nu$.
+Hughes's **B-bar method** generalizes the idea to other elements by replacing the divergence in $\underline{\underline{B}}$ by its average over the element.
+Evaluating all of $\underline{\underline{k}}^e$ at the center is not a remedy.
+That leaves deformations with no strain at the center, called hourglass modes, which store no energy and appear in the solution as spurious zigzag displacements.
+
+A second remedy changes the formulation.
+In a **mixed method**, the volumetric stress $\sigma_v = \lambda\,\nabla\cdot\underline{u}$ becomes a second unknown field, with its own basis functions, and the relation between them becomes a second equation.
+For every weighting function $\underline{w}$ of the displacement and $\psi$ of the volumetric stress,
+
+$$
+\begin{aligned}
+\int_\Omega \underline{\epsilon}(\underline{w})^T\,\underline{\underline{D}}_\mu\;\underline{\epsilon}(\underline{u})\;d\Omega + \int_\Omega \left(\nabla\cdot\underline{w}\right)\sigma_v\;d\Omega &= (\underline{w}, \underline{f}) + (\underline{w}, \underline{h})_\Gamma , \\
+\int_\Omega \psi\left(\nabla\cdot\underline{u} - \frac{\sigma_v}{\lambda}\right)d\Omega &= 0 .
+\end{aligned}
+$$
+
+The large coefficient no longer multiplies the displacements.
+As $\lambda$ approaches infinity, the second equation simply becomes $\int_\Omega \psi\,\nabla\cdot\underline{u}\;d\Omega = 0$, so even a fully incompressible material can be modeled.
+The matrix equations are still symmetric, but they are no longer positive definite (Class 23), and not every pair of bases works.
+The bases for the displacement and the volumetric stress must satisfy a compatibility condition called the **inf–sup** or **LBB condition**.
+Biquadratic displacements with bilinear, continuous stresses (the Taylor–Hood element) satisfy it.
+Bilinear displacements with a constant stress in each element do not, and their stresses can oscillate in a checkerboard pattern.
+On elements that are parallelograms, this pair gives the same displacements as selective reduced integration.
+
+Many other elements have been designed to avoid locking, such as elements with **incompatible modes** and **enhanced assumed strain** elements, which add internal deformation modes to each element.
+Commercial programs commonly provide mixed elements for rubber, often under the name hybrid elements.
+
+### Plane stress does not lock
+
+In plane stress, $\lambda$ is replaced by $\bar{\lambda} = 2\lambda\mu/(\lambda + 2\mu)$ (Class 27), which approaches $2\mu$ as $\lambda$ grows.
+A thin plate can change its volume by changing its thickness, so its in-plane displacements are not constrained, and plane stress models do not lock.
+Volumetric locking is a concern in plane strain, in axisymmetric models, and in three dimensions.
+
+## Other kinds of locking
+
+Volumetric locking is one case of a general pattern.
+A term in the energy with a large coefficient imposes a constraint, and a discrete space that cannot satisfy the constraint without distorting everything else becomes too stiff.
+
+- **Shear locking** occurs in beam, plate, and shell elements that include shear deformation, such as Timoshenko beams and Reissner–Mindlin plates.
+  As the thickness $t$ decreases, the shear stiffness grows relative to the bending stiffness, in proportion to $(L/t)^2$, and the shear strain must approach zero.
+  Elements of low degree cannot bend without also shearing, so they become too stiff as $t$ decreases.
+  Degree-1 elements in plane elasticity show the same effect in bending, sometimes called parasitic shear: at $\nu = 0$, where the $\lambda$ term vanishes, the cantilever with one degree-1 element through the depth reaches only `{python} pct(shear0)` of the exact deflection.
+- **Membrane locking** occurs in curved beams and shells.
+  A thin curved structure bends far more easily than it stretches, so it bends with almost no stretching of its midsurface.
+  Curved elements of low degree cannot bend without stretching, and they become too stiff.
+
+Each of these depends on a theory of beams, plates, or shells, and has its own remedies, so they will not be further discussed here.
+
+## Summary
+
+- The error measures, the a priori estimate, Galerkin orthogonality, and Céa's lemma of Classes 17 and 18 carry over to elasticity unchanged.
+  The displacements converge at the rate $p+1$ in the $L^2$ norm, and the strains and stresses at the rate $p$.
+- The constant in the estimate depends on $\nu$.
+  As $\nu$ approaches $\tfrac{1}{2}$, $\lambda/\mu$ grows without bound, and the $\lambda$ term in the weak form acts as a penalty that forces $\nabla\cdot\underline{u} \approx 0$.
+- With full quadrature, degree-1 elements have more such constraints than unknowns, and they lock: they are far too stiff until the mesh is very fine.
+  The rate is unchanged, but the asymptotic range begins only at elements roughly $\sqrt{\mu/\lambda}$ times the size of the body.
+- Locking can look like convergence.
+  In the cantilever, the computed deflection changes by only a few percent under refinement while remaining at about a quarter of the exact value, and the code still passes a verification test at $\nu = 0.3$.
+  Comparing against a different element, varying $\nu$, and looking for oscillating volumetric stresses are practical checks.
+- Refining the mesh helps slowly, raising the degree helps much more, and selective reduced integration, the B-bar method, and mixed methods remove volumetric locking.
+  Plane stress does not lock.
+- Shear locking and membrane locking arise in the same way in beams, plates, and shells, and are left to a treatment of those theories.
