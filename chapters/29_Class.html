@@ -367,6 +367,12 @@ window.Quarto = {
  <span class="menu-text"><span class="chapter-number">30</span>&nbsp; <span class="chapter-title">Class 30: Convergence and Volumetric Locking</span></span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/31_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Class 31: Thermoelasticity</span></span></a>
+  </div>
+</li>
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
@@ -610,7 +616,7 @@ Figure&nbsp;29.2: A plate pulled at its right end by 50 MPa, with two idealizati
 </figcaption>
 </figure>
 </div>
-<p>A uniform rise in temperature <span class="math inline">\(\Delta T\)</span> makes a body that is free to move expand by the strain <span class="math inline">\(\alpha\,\Delta T\)</span> in every direction, where <span class="math inline">\(\alpha\)</span> is the coefficient of thermal expansion, without any stress. Statically determinate supports allow this expansion, so they cause no stress, while redundant supports that prevent it cause stresses that can be large. Class 31 studies thermal stress in more detail.</p>
+<p>A uniform rise in temperature <span class="math inline">\(\Delta T\)</span> makes a body that is free to move expand by the strain <span class="math inline">\(\alpha\,\Delta T\)</span> in every direction, where <span class="math inline">\(\alpha\)</span> is the coefficient of thermal expansion, without any stress. Statically determinate supports allow this expansion, so they cause no stress, while redundant supports that prevent it cause stresses that can be large. <a href="../chapters/31_Class.html">Class 31</a> studies thermal stress in more detail.</p>
 <section id="reactions-as-a-check" class="level3" data-number="29.3.1">
 <h3 data-number="29.3.1" class="anchored" data-anchor-id="reactions-as-a-check"><span class="header-section-number">29.3.1</span> Reactions as a check</h3>
 <p>The rows of <span class="math inline">\(\underline{\underline{K}}\)</span> for the prescribed components were left out of the matrix equation in Class 28, but they are not discarded. Let <span class="math inline">\(\underline{\underline{K}}_{\text{complete}}\)</span> be the stiffness matrix assembled for every displacement component, <span class="math inline">\(2n_{np} \times 2n_{np}\)</span> in two dimensions, before any rows or columns are removed. Let <span class="math inline">\(\underline{d}_{\text{complete}}\)</span> hold every displacement component, the solved values from <span class="math inline">\(\underline{d}\)</span> at the unknown components and the prescribed values <span class="math inline">\(g_{iA}\)</span> at the others. Let <span class="math inline">\(\underline{F}_{\text{complete}}\)</span> hold the applied loads, the body force and the tractions, for every component, without the terms that moved the prescribed displacements to the right-hand side. The <strong>reactions</strong>, the forces that the supports apply to the body, are then</p>

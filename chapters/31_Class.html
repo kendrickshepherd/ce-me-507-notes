@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Finite Element Methods">
+
+<title>31&nbsp; Class 31: Thermoelasticity – CE/ME 507 — Class Notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../chapters/3_Support_FunctionSpaces.html" rel="next">
+<link href="../chapters/30_Class.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-cb76554c71210f48e098573b9225a2ca.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script>
+window.MathJax = {
+  tex: {
+    tags: 'ams',
+    macros: {
+      RR: '{\\mathbb{R}}',
+      Om: '{\\Omega}'
+    }
+  }
+};
+</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../chapters/31_Class.html"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Class 31: Thermoelasticity</span></a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Site">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">CE/ME 507 — Class Notes</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">CE/ME 507 — Class Notes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/2_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Class 2: Linear FEM</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Class 3: Index Notation, Function Spaces, and the Weak Form</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/4_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Class 4: Strong and Weak Forms of the Boundary Value Problem</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/5_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Class 5: Weak Form ⇒ Strong Form, and the Galerkin Method</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/6_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Class 6: Basis Functions and Lagrange Polynomials</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/7_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Class 7: From Galerkin to a Matrix Equation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/8_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Class 8: Assembly, Sparsity, and the Road to Quadrature</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/9_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Class 9: The Isoparametric Map and the Jacobian</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/10_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Class 10: Assembly with the IEN Array, and Quadrature on an Element</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/11_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Class 11: Tensor-Product Basis Functions in 2D</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/12_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Class 12: The Spatial Mapping</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/13_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Class 13: The Jacobian Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/14_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Class 14: The ID and IEN Arrays</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/15_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Class 15: Unidimensional Finite Element Code</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/16_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Class 16: Derivatives of the Solution</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/17_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Class 17: Convergence Rates</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/18_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Class 18: Manufactured Solutions and Galerkin Orthogonality</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/19_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Class 19: The Same Code in Any Dimension</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/20_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Class 20: Quadrature in 2D, and Integrating Over a Face</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/21_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Class 21: CAD, Meshing, and Discretization Choice</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/22_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Class 22: Robin Boundary Conditions</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/23_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">23</span>&nbsp; <span class="chapter-title">Class 23: Minimization, Symmetry, and Positive Definiteness</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">24</span>&nbsp; <span class="chapter-title">Classes 24 and 25: Applications and Interpretation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">Classes 24 and 25 applications</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Seepage.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Groundwater Seepage Under a Dam</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Torsion.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Torsion of an I-Beam, and the Membrane Analogy</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Membrane.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deflection of a Pressurized Membrane</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/24_Diffusion.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Diffusion Through a Damaged Landfill Liner</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/25_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">25</span>&nbsp; <span class="chapter-title">Class 25: Applications and Interpretation, Continued</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/26_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">26</span>&nbsp; <span class="chapter-title">Class 26: Linear Elasticity and the Principle of Virtual Work</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/27_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">27</span>&nbsp; <span class="chapter-title">Class 27: Voigt Notation and the Elasticity Matrix</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/28_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">28</span>&nbsp; <span class="chapter-title">Class 28: The Galerkin Form of Elasticity and Assembly</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/29_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">29</span>&nbsp; <span class="chapter-title">Class 29: Supports, Symmetry, and Boundary Conditions in Elasticity</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/30_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">30</span>&nbsp; <span class="chapter-title">Class 30: Convergence and Volumetric Locking</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/31_Class.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Class 31: Thermoelasticity</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">Appendices</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/3_Support_FunctionSpaces.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">1D Poisson I: Heat Conduction Through a Wall</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">C</span>&nbsp; <span class="chapter-title">1D Poisson II: The Wall, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">D</span>&nbsp; <span class="chapter-title">1D Poisson III: An Axially Loaded Rod</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson1D_Rod_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">E</span>&nbsp; <span class="chapter-title">1D Poisson IV: The Rod, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">F</span>&nbsp; <span class="chapter-title">2D Poisson I: Heat Flow in a Battery Cell</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Poisson2D_Heat_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">G</span>&nbsp; <span class="chapter-title">2D Poisson II: The Battery Cell, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Elasticity2D.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">H</span>&nbsp; <span class="chapter-title">Linear Elasticity I: Stress, Strain, and the Strong Form</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Elasticity2D_FEM.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">I</span>&nbsp; <span class="chapter-title">Linear Elasticity II: Plane Elasticity, by Galerkin’s Method</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/Beam_Frame_Formulation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">J</span>&nbsp; <span class="chapter-title">Beams and Frames from Three-Dimensional Elasticity</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#thermal-expansion" id="toc-thermal-expansion" class="nav-link active" data-scroll-target="#thermal-expansion"><span class="header-section-number">31.1</span> Thermal expansion</a>
+  <ul class="collapse">
+  <li><a href="#the-coefficient-of-thermal-expansion" id="toc-the-coefficient-of-thermal-expansion" class="nav-link" data-scroll-target="#the-coefficient-of-thermal-expansion"><span class="header-section-number">31.1.1</span> The coefficient of thermal expansion</a></li>
+  <li><a href="#hookes-law-with-a-thermal-strain" id="toc-hookes-law-with-a-thermal-strain" class="nav-link" data-scroll-target="#hookes-law-with-a-thermal-strain"><span class="header-section-number">31.1.2</span> Hooke’s law with a thermal strain</a></li>
+  <li><a href="#plane-stress-and-plane-strain" id="toc-plane-stress-and-plane-strain" class="nav-link" data-scroll-target="#plane-stress-and-plane-strain"><span class="header-section-number">31.1.3</span> Plane stress and plane strain</a></li>
+  </ul></li>
+  <li><a href="#where-thermal-stress-comes-from" id="toc-where-thermal-stress-comes-from" class="nav-link" data-scroll-target="#where-thermal-stress-comes-from"><span class="header-section-number">31.2</span> Where thermal stress comes from</a>
+  <ul class="collapse">
+  <li><a href="#compatibility-of-the-thermal-strain" id="toc-compatibility-of-the-thermal-strain" class="nav-link" data-scroll-target="#compatibility-of-the-thermal-strain"><span class="header-section-number">31.2.1</span> Compatibility of the thermal strain</a></li>
+  <li><a href="#steady-temperatures-in-a-uniform-isotropic-plate" id="toc-steady-temperatures-in-a-uniform-isotropic-plate" class="nav-link" data-scroll-target="#steady-temperatures-in-a-uniform-isotropic-plate"><span class="header-section-number">31.2.2</span> Steady temperatures in a uniform isotropic plate</a></li>
+  <li><a href="#the-sources-of-thermal-stress" id="toc-the-sources-of-thermal-stress" class="nav-link" data-scroll-target="#the-sources-of-thermal-stress"><span class="header-section-number">31.2.3</span> The sources of thermal stress</a></li>
+  <li><a href="#a-pipe-with-heat-flowing-through-its-wall" id="toc-a-pipe-with-heat-flowing-through-its-wall" class="nav-link" data-scroll-target="#a-pipe-with-heat-flowing-through-its-wall"><span class="header-section-number">31.2.4</span> A pipe with heat flowing through its wall</a></li>
+  </ul></li>
+  <li><a href="#the-finite-element-method-with-one-way-coupling" id="toc-the-finite-element-method-with-one-way-coupling" class="nav-link" data-scroll-target="#the-finite-element-method-with-one-way-coupling"><span class="header-section-number">31.3</span> The finite element method with one-way coupling</a>
+  <ul class="collapse">
+  <li><a href="#the-weak-form-with-a-thermal-strain" id="toc-the-weak-form-with-a-thermal-strain" class="nav-link" data-scroll-target="#the-weak-form-with-a-thermal-strain"><span class="header-section-number">31.3.1</span> The weak form with a thermal strain</a></li>
+  <li><a href="#the-procedure" id="toc-the-procedure" class="nav-link" data-scroll-target="#the-procedure"><span class="header-section-number">31.3.2</span> The procedure</a></li>
+  <li><a href="#the-coupled-matrix-equations" id="toc-the-coupled-matrix-equations" class="nav-link" data-scroll-target="#the-coupled-matrix-equations"><span class="header-section-number">31.3.3</span> The coupled matrix equations</a></li>
+  <li><a href="#matching-the-degrees-of-the-temperature-and-the-displacement" id="toc-matching-the-degrees-of-the-temperature-and-the-displacement" class="nav-link" data-scroll-target="#matching-the-degrees-of-the-temperature-and-the-displacement"><span class="header-section-number">31.3.4</span> Matching the degrees of the temperature and the displacement</a></li>
+  </ul></li>
+  <li><a href="#thermoelasticity-interactively" id="toc-thermoelasticity-interactively" class="nav-link" data-scroll-target="#thermoelasticity-interactively"><span class="header-section-number">31.4</span> Thermoelasticity, interactively</a>
+  <ul class="collapse">
+  <li><a href="#things-to-try" id="toc-things-to-try" class="nav-link" data-scroll-target="#things-to-try"><span class="header-section-number">31.4.1</span> Things to try</a></li>
+  </ul></li>
+  <li><a href="#two-way-coupling" id="toc-two-way-coupling" class="nav-link" data-scroll-target="#two-way-coupling"><span class="header-section-number">31.5</span> Two-way coupling</a>
+  <ul class="collapse">
+  <li><a href="#the-coupled-heat-equation" id="toc-the-coupled-heat-equation" class="nav-link" data-scroll-target="#the-coupled-heat-equation"><span class="header-section-number">31.5.1</span> The coupled heat equation</a></li>
+  <li><a href="#how-strong-the-coupling-is" id="toc-how-strong-the-coupling-is" class="nav-link" data-scroll-target="#how-strong-the-coupling-is"><span class="header-section-number">31.5.2</span> How strong the coupling is</a></li>
+  <li><a href="#coupling-from-the-deformation-to-the-temperature" id="toc-coupling-from-the-deformation-to-the-temperature" class="nav-link" data-scroll-target="#coupling-from-the-deformation-to-the-temperature"><span class="header-section-number">31.5.3</span> Coupling from the deformation to the temperature</a></li>
+  <li><a href="#problems-that-need-two-way-coupling" id="toc-problems-that-need-two-way-coupling" class="nav-link" data-scroll-target="#problems-that-need-two-way-coupling"><span class="header-section-number">31.5.4</span> Problems that need two-way coupling</a></li>
+  </ul></li>
+  <li><a href="#nonlinear-thermoelasticity" id="toc-nonlinear-thermoelasticity" class="nav-link" data-scroll-target="#nonlinear-thermoelasticity"><span class="header-section-number">31.6</span> Nonlinear thermoelasticity</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">31.7</span> Summary</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content column-body" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Class 31: Thermoelasticity</span></h1>
+<p class="subtitle lead">Thermal expansion and thermal stress, the one-way coupling of heat conduction to elasticity, and when the coupling runs both ways</p>
+</div>
+
+
+
+<div class="quarto-title-meta column-body">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>When the temperature of a body changes, its material expands or contracts. If nothing resists this, the body simply changes size and shape, and it is not stressed. If something does resist it, such as a support, another part of the same body, or a different material bonded to it, the result is a <strong>thermal stress</strong>. <a href="../chapters/29_Class.html">Class 29</a> showed one case: a uniform rise in temperature causes no stress with statically determinate supports, but can cause large stresses with redundant ones. This class develops the linear theory of thermoelasticity and its finite element implementation, in which the temperature from a heat conduction problem of Classes 19 to 25 becomes the load of an elasticity problem. It then describes when the coupling between the two fields also runs the other way, and where the linear theory stops being adequate.</p>
+<section id="thermal-expansion" class="level2" data-number="31.1">
+<h2 data-number="31.1" class="anchored" data-anchor-id="thermal-expansion"><span class="header-section-number">31.1</span> Thermal expansion</h2>
+<section id="the-coefficient-of-thermal-expansion" class="level3" data-number="31.1.1">
+<h3 data-number="31.1.1" class="anchored" data-anchor-id="the-coefficient-of-thermal-expansion"><span class="header-section-number">31.1.1</span> The coefficient of thermal expansion</h3>
+<p>A small piece of an isotropic material that is free to move, heated from the temperature <span class="math inline">\(T_{\mathrm{ref}}\)</span> to the temperature <span class="math inline">\(T\)</span>, stretches equally in every direction, by the <strong>thermal strain</strong></p>
+<p><span class="math display">\[
+\varepsilon^{\theta}_{ij} = \alpha\,\Delta T\,\delta_{ij}, \qquad \Delta T = T - T_{\mathrm{ref}} ,
+\]</span></p>
+<p>and does not shear. The constant <span class="math inline">\(\alpha\)</span> is the <strong>coefficient of linear thermal expansion</strong>, and <span class="math inline">\(T_{\mathrm{ref}}\)</span> is the temperature at which the body is free of stress, such as the temperature at which a structure was built, cast, or welded. The volume grows by <span class="math inline">\(\varepsilon^{\theta}_{kk} = 3\alpha\,\Delta T\)</span>, so <span class="math inline">\(3\alpha\)</span> is the coefficient of volumetric expansion.</p>
+<div id="tbl-c31-alpha" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-c31-alpha-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;31.1: Typical coefficients of thermal expansion near room temperature. Actual values vary with the alloy, the mix, and the temperature.
+</figcaption>
+<div aria-describedby="tbl-c31-alpha-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Material</th>
+<th style="text-align: right;"><span class="math inline">\(\alpha\)</span> (<span class="math inline">\(10^{-6}\)</span>/°C)</th>
+<th style="text-align: right;"><span class="math inline">\(E\)</span> (GPa)</th>
+<th style="text-align: right;"><span class="math inline">\(E\,\alpha\)</span> (MPa/°C)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Structural steel</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">200</td>
+<td style="text-align: right;">2.4</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Stainless steel</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">193</td>
+<td style="text-align: right;">3.3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Aluminum alloys</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">70</td>
+<td style="text-align: right;">1.6</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Copper</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">117</td>
+<td style="text-align: right;">2.0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Invar (an iron–nickel alloy)</td>
+<td style="text-align: right;">1.2</td>
+<td style="text-align: right;">140</td>
+<td style="text-align: right;">0.17</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Concrete</td>
+<td style="text-align: right;">7 to 12</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">about 0.3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Soda-lime (window) glass</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">70</td>
+<td style="text-align: right;">0.63</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Borosilicate glass</td>
+<td style="text-align: right;">3.3</td>
+<td style="text-align: right;">63</td>
+<td style="text-align: right;">0.21</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Wood, along the grain</td>
+<td style="text-align: right;">3 to 5</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Wood, across the grain</td>
+<td style="text-align: right;">30 to 50</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Polyethylene</td>
+<td style="text-align: right;">100 to 200</td>
+<td style="text-align: right;">about 1</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Carbon fiber composite, along the fibers</td>
+<td style="text-align: right;">about 0</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>The product <span class="math inline">\(E\,\alpha\)</span> in <a href="#tbl-c31-alpha" class="quarto-xref">Table&nbsp;<span>31.1</span></a> is the stress caused by each degree of temperature change in a bar whose ends are held fixed (<a href="#fig-c31-expansion" class="quarto-xref">Figure&nbsp;<span>31.1</span></a> b), <span class="math inline">\(\sigma = -E\,\alpha\,\Delta T\)</span>. For steel, a rise of 50 °C causes 120 MPa of compression, which is a large fraction of its yield stress. For concrete, a fall of only about 10 °C in a restrained slab causes about 3 MPa of tension, which is enough to crack it, and this is why slabs and pavements are built with joints.</p>
+<p>Many choices made in engineering are in part because of consequences from <a href="#tbl-c31-alpha" class="quarto-xref">Table&nbsp;<span>31.1</span></a>. Reinforced concrete works in part because steel and concrete expand by nearly the same amount, so a change in temperature does not separate them. Bridges have expansion joints, and continuous welded rail is installed at a chosen neutral temperature so that it is neither too compressed in summer nor too stretched in winter. Laboratory glassware is made of borosilicate glass because its small <span class="math inline">\(\alpha\)</span> makes it resistant to sudden changes in temperature.</p>
+<p>The coefficient itself changes with temperature. For a large change in temperature, <span class="math inline">\(\alpha\)</span> in the formula above is the average, or secant, coefficient between <span class="math inline">\(T_{\mathrm{ref}}\)</span> and <span class="math inline">\(T\)</span>. Materials that are not isotropic expand differently in different directions, so that <span class="math inline">\(\varepsilon^{\theta}_{ij} = \alpha_{ij}\,\Delta T\)</span>, where <span class="math inline">\(\alpha_{ij}\)</span> is diagonal in the material axes. Wood, as in <a href="../chapters/27_Class.html">Class 27</a>, expands about ten times as much across its grain as along it, and fiber composites can be designed to barely expand at all along their fibers.</p>
+<div id="fig-c31-expansion" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c31-expansion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class31/C31_Fig1_Expansion.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c31-expansion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;31.1: Three ways a change in temperature can be resisted, or not. (a) A bar that is free to move lengthens by <span class="math inline">\(\alpha\,\Delta T\,L\)</span> and is not stressed. (b) The same bar between rigid walls cannot lengthen, so it is compressed by <span class="math inline">\(E\,\alpha\,\Delta T\)</span>. (c) A strip of two bonded layers: the aluminum would expand more than the steel, so the strip bends.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="hookes-law-with-a-thermal-strain" class="level3" data-number="31.1.2">
+<h3 data-number="31.1.2" class="anchored" data-anchor-id="hookes-law-with-a-thermal-strain"><span class="header-section-number">31.1.2</span> Hooke’s law with a thermal strain</h3>
+<p>The total strain of the body, computed from its displacements as before, is now the sum of an <strong>elastic strain</strong>, which produces stress, and the thermal strain, which does not:</p>
+<p><span class="math display">\[
+\varepsilon_{ij} = \varepsilon^{e}_{ij} + \varepsilon^{\theta}_{ij} .
+\]</span></p>
+<p>Hooke’s law of <a href="../chapters/26_Class.html">Class 26</a> relates the stress to the elastic strain only,</p>
+<p><span class="math display">\[
+\sigma_{ij} = c_{ijkl}\left(\varepsilon_{kl} - \varepsilon^{\theta}_{kl}\right) ,
+\]</span></p>
+<p>which for an isotropic material is</p>
+<p><span class="math display">\[
+\sigma_{ij} = 2\mu\,\varepsilon_{ij} + \lambda\,\varepsilon_{kk}\,\delta_{ij} - \left(3\lambda + 2\mu\right)\alpha\,\Delta T\,\delta_{ij} ,
+\qquad 3\lambda + 2\mu = \frac{E}{1 - 2\nu} .
+\]</span></p>
+<p>The last term is a pressure, <span class="math inline">\(3K\alpha\,\Delta T\)</span> with the bulk modulus <span class="math inline">\(K\)</span> of <a href="../chapters/30_Class.html">Class 30</a>, that a heated material exerts when its expansion is prevented. In the Voigt notation of <a href="../chapters/27_Class.html">Class 27</a>,</p>
+<p><span class="math display">\[
+\underline{\sigma} = \underline{\underline{D}}\left(\underline{\epsilon} - \underline{\epsilon}^{\theta}\right),
+\qquad
+\underline{\epsilon}^{\theta} = \alpha\,\Delta T\begin{bmatrix} 1 &amp; 1 &amp; 1 &amp; 0 &amp; 0 &amp; 0 \end{bmatrix}^T
+\]</span></p>
+<p>in three dimensions. The stress at any point must always be computed from the total strain minus the thermal strain. A computed stress of <span class="math inline">\(\underline{\underline{D}}\,\underline{\epsilon}\)</span> alone, without the thermal strain, is a common mistake, and it gives a large stress in a body that is free to expand.</p>
+</section>
+<section id="plane-stress-and-plane-strain" class="level3" data-number="31.1.3">
+<h3 data-number="31.1.3" class="anchored" data-anchor-id="plane-stress-and-plane-strain"><span class="header-section-number">31.1.3</span> Plane stress and plane strain</h3>
+<p>The two plane assumptions of Class 27 treat the thermal strain differently, because they treat the third direction differently. In <strong>plane stress</strong>, the plate is free to change its thickness, so the in-plane thermal strain is simply <span class="math inline">\(\alpha\,\Delta T\)</span>:</p>
+<p><span class="math display">\[
+\underline{\sigma} = \underline{\underline{D}}\left(\underline{\epsilon} - \alpha\,\Delta T\,\underline{m}\right),
+\qquad
+\underline{m} = \begin{bmatrix} 1 \\ 1 \\ 0 \end{bmatrix} ,
+\]</span></p>
+<p>with <span class="math inline">\(\underline{\underline{D}}\)</span> the plane stress matrix of Class 27. In <strong>plane strain</strong>, the body cannot expand along its length, <span class="math inline">\(\varepsilon_{22} = 0\)</span>, so the thermal expansion in that direction is suppressed, and the material pushes harder in the plane. Writing the first row of the isotropic law with <span class="math inline">\(\varepsilon_{22} = 0\)</span>,</p>
+<div class="derivation">
+<p><span class="math display">\[
+\begin{aligned}
+\sigma_{00} &amp;= (\lambda + 2\mu)\,\varepsilon_{00} + \lambda\,\varepsilon_{11} - (3\lambda + 2\mu)\,\alpha\,\Delta T \\
+&amp;= (\lambda + 2\mu)\left(\varepsilon_{00} - \beta\right) + \lambda\left(\varepsilon_{11} - \beta\right),
+\qquad \beta = \frac{3\lambda + 2\mu}{2\lambda + 2\mu}\,\alpha\,\Delta T = (1 + \nu)\,\alpha\,\Delta T ,
+\end{aligned}
+\]</span></p>
+</div>
+<p>so that</p>
+<p><span class="math display">\[
+\underline{\sigma} = \underline{\underline{D}}\left(\underline{\epsilon} - (1 + \nu)\,\alpha\,\Delta T\,\underline{m}\right),
+\qquad
+\sigma_{22} = \nu\left(\sigma_{00} + \sigma_{11}\right) - E\,\alpha\,\Delta T ,
+\]</span></p>
+<p>with <span class="math inline">\(\underline{\underline{D}}\)</span> the plane strain matrix. The factor <span class="math inline">\(1 + \nu\)</span> is easy to forget, and the stress <span class="math inline">\(\sigma_{22}\)</span> along the length, which is needed to hold <span class="math inline">\(\varepsilon_{22} = 0\)</span>, now includes the thermal term <span class="math inline">\(-E\,\alpha\,\Delta T\)</span>.</p>
+</section>
+</section>
+<section id="where-thermal-stress-comes-from" class="level2" data-number="31.2">
+<h2 data-number="31.2" class="anchored" data-anchor-id="where-thermal-stress-comes-from"><span class="header-section-number">31.2</span> Where thermal stress comes from</h2>
+<p>A change in temperature does not by itself cause stress. It causes stress only when the thermal strain cannot be accommodated by a displacement of the body.</p>
+<section id="compatibility-of-the-thermal-strain" class="level3" data-number="31.2.1">
+<h3 data-number="31.2.1" class="anchored" data-anchor-id="compatibility-of-the-thermal-strain"><span class="header-section-number">31.2.1</span> Compatibility of the thermal strain</h3>
+<p>Three strains in two dimensions are computed from only two displacement components, <span class="math inline">\(\varepsilon_{00} = u_{0,0}\)</span>, <span class="math inline">\(\varepsilon_{11} = u_{1,1}\)</span>, and <span class="math inline">\(2\varepsilon_{01} = u_{0,1} + u_{1,0}\)</span>, so they cannot be chosen independently. Differentiating each so that every term becomes a third derivative of the displacements,</p>
+<div class="derivation">
+<p><span class="math display">\[
+\varepsilon_{00,11} + \varepsilon_{11,00} - 2\,\varepsilon_{01,01}
+= u_{0,011} + u_{1,100} - \left(u_{0,101} + u_{1,001}\right) = 0 ,
+\]</span></p>
+</div>
+<p>because the order of differentiation does not matter. This is the <strong>compatibility condition</strong>: a strain field that satisfies it is the strain of some displacement field, at least in a body without holes, and one that does not satisfy it is not. A free body is therefore stressed by a temperature exactly when its thermal strain is incompatible.</p>
+<p>In general, the in-plane thermal strain is <span class="math inline">\(\varepsilon^{\theta}_{ij} = \alpha_{ij}\,\Delta T\)</span>, where the coefficients <span class="math inline">\(\alpha_{ij}\)</span> can differ from one direction to another, as in wood or a fiber composite, and from one point to another, as where two materials are bonded together. (In plane strain, holding <span class="math inline">\(\varepsilon_{22} = 0\)</span> adds to the in-plane thermal strain, as the factor <span class="math inline">\(1 + \nu\)</span> did above for an isotropic material.) Substituting it into the compatibility condition gives the general condition for a temperature to cause no stress in a free plate without holes,</p>
+<p><span class="math display">\[
+\left(\alpha_{00}\,\Delta T\right)_{,11} + \left(\alpha_{11}\,\Delta T\right)_{,00} - 2\left(\alpha_{01}\,\Delta T\right)_{,01} = 0 .
+\]</span></p>
+<p>In what follows, <span class="math inline">\(\nabla^2\)</span> is the Laplacian of <a href="../chapters/3_Class.html">Class 3</a>, <span class="math inline">\(\nabla^2 f = \nabla\cdot\nabla f = f_{,ii}\)</span>, the divergence of the gradient. Class 3 wrote it as <span class="math inline">\(\Delta f\)</span>, but in this class <span class="math inline">\(\Delta\)</span> means a finite change, as in <span class="math inline">\(\Delta T = T - T_{\mathrm{ref}}\)</span>, so the Laplacian is written <span class="math inline">\(\nabla^2\)</span> instead.</p>
+<p>The general condition simplifies in three steps.</p>
+<ul>
+<li><strong>A single anisotropic material</strong>, with the same <span class="math inline">\(\alpha_{ij}\)</span> everywhere: <span class="math display">\[
+\alpha_{11}\,\Delta T_{,00} - 2\,\alpha_{01}\,\Delta T_{,01} + \alpha_{00}\,\Delta T_{,11} = 0 .
+\]</span> This is not the steady heat conduction equation, <span class="math inline">\(\kappa_{00}\,T_{,00} + 2\kappa_{01}\,T_{,01} + \kappa_{11}\,T_{,11} = 0\)</span>, unless the conductivities happen to be in the same proportions as the coefficients of expansion, so in an anisotropic material even a steady temperature generally causes stress.</li>
+<li><strong>An isotropic material whose coefficient varies</strong>, <span class="math inline">\(\alpha_{ij} = \alpha(\underline{x})\,\delta_{ij}\)</span>, such as two bonded materials: <span class="math display">\[
+\nabla^2\!\left(\alpha\,\Delta T\right) = 0 .
+\]</span> Even a uniform <span class="math inline">\(\Delta T\)</span> violates this where <span class="math inline">\(\alpha\)</span> jumps from one material to the other, which is why the strip of <a href="#fig-c31-expansion" class="quarto-xref">Figure&nbsp;<span>31.1</span></a> c is stressed.</li>
+<li><strong>A uniform isotropic material</strong>, <span class="math inline">\(\alpha_{ij} = \alpha\,\delta_{ij}\)</span> with <span class="math inline">\(\alpha\)</span> constant: <span class="math display">\[
+\alpha\left(\Delta T_{,00} + \Delta T_{,11}\right) = \alpha\,\nabla^2 T = 0 ,
+\]</span> since <span class="math inline">\(T_{\mathrm{ref}}\)</span> is a constant. In plane strain, <span class="math inline">\(\alpha\)</span> is replaced by <span class="math inline">\((1 + \nu)\,\alpha\)</span>, which does not change the condition.</li>
+</ul>
+</section>
+<section id="steady-temperatures-in-a-uniform-isotropic-plate" class="level3" data-number="31.2.2">
+<h3 data-number="31.2.2" class="anchored" data-anchor-id="steady-temperatures-in-a-uniform-isotropic-plate"><span class="header-section-number">31.2.2</span> Steady temperatures in a uniform isotropic plate</h3>
+<p>A temperature with <span class="math inline">\(\nabla^2 T = 0\)</span> is one that satisfies the steady heat conduction equation of Classes 19 to 25 with no heat source. This gives a result that is surprising at first: <strong>in a plate without holes and without redundant supports, a steady temperature with no heat source causes no in-plane stress</strong>, however nonuniform it is. The plate bends and distorts, but it is not stressed. In three dimensions there are six compatibility conditions, <span class="math inline">\(\varepsilon_{ij,kl} + \varepsilon_{kl,ij} - \varepsilon_{ik,jl} - \varepsilon_{jl,ik} = 0\)</span>, and for a uniform isotropic material, contracting them over <span class="math inline">\(k\)</span> and <span class="math inline">\(l\)</span> gives <span class="math inline">\(T_{,ij} + \delta_{ij}\,\nabla^2 T = 0\)</span>. Its trace gives <span class="math inline">\(\nabla^2 T = 0\)</span>, and then <span class="math inline">\(T_{,ij} = 0\)</span>, so in three dimensions only a temperature that varies linearly in the coordinates causes no stress in a free body.</p>
+<p><a href="#fig-c31-free" class="quarto-xref">Figure&nbsp;<span>31.2</span></a> shows this for a steel plate on a pin and a roller. Its middle column shows how the temperature becomes strain. Where the plate is free of stress, each cell of the grid grows by exactly <span class="math inline">\(\alpha\,\Delta T\)</span> in every direction, so the hot cells grow more than the cool ones, and the plate bends or distorts so that the cells still fit together. A temperature that varies linearly through the depth (a) bends the plate without stress. A steady temperature from a hot patch on the top edge (b) is far from uniform, yet the largest stress is only 0.2% of <span class="math inline">\(E\,\alpha\,\Delta T\)</span>, and it is discretization error: it falls to 0.7%, 0.2%, and 0.06% on meshes of 24 × 6, 48 × 12, and 96 × 24 elements. Heat generated uniformly inside the plate (c) gives a temperature with <span class="math inline">\(\nabla^2 T \neq 0\)</span>, and the plate is stressed even though nothing holds it: the hot interior is compressed, and the cooler edges are stretched, with a largest principal stress of 76 MPa.</p>
+<div id="fig-c31-free" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c31-free-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class31/C31_Fig3_FreePlate.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c31-free-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;31.2: A steel plate, 400 mm by 100 mm in plane stress, on a pin at its lower left corner and a roller at its lower right corner, with a temperature rise of at most 50 °C. Left: the temperature. Middle: the displacement, magnified. Each arrow carries a point of the undeformed plate (dashed outline) to its place on the deformed grid, and the change in the size and shape of each grid cell shows the strain. Right: the deformed plate, magnified in the same way, colored by the largest principal stress. (a) A linear temperature, hot at the top: the cells at the hot top grow more than those at the cool bottom, so the plate bends, without stress. (b) The steady temperature from a hot patch on the top edge, with the rest of the boundary at the reference temperature: the cells near the patch grow and the plate distorts, but the stress is zero apart from discretization error. (c) Heat generated uniformly inside, with the edges at the reference temperature: the cooler material around the hot core keeps it from growing as much as it would on its own, so the grid barely changes shape, the cooler edges are in tension, and the hot core is in compression.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="the-sources-of-thermal-stress" class="level3" data-number="31.2.3">
+<h3 data-number="31.2.3" class="anchored" data-anchor-id="the-sources-of-thermal-stress"><span class="header-section-number">31.2.3</span> The sources of thermal stress</h3>
+<p>Thermal stresses therefore arise in five ways.</p>
+<ol type="1">
+<li><strong>Supports that prevent the expansion.</strong> Redundant supports, as in <a href="../chapters/29_Class.html">Class 29</a>, resist even a uniform temperature.</li>
+<li><strong>Temperatures with heat sources.</strong> Heat generated inside a body, as by the hydration of cement in a thick concrete pour, by an electric current, or by absorbed radiation, makes <span class="math inline">\(\nabla^2 T \neq 0\)</span>. Thick concrete pours can crack at their surfaces this way while they cure.</li>
+<li><strong>Temperatures that are changing.</strong> During heating or cooling, the temperature is not yet steady, so <span class="math inline">\(\nabla^2 T \neq 0\)</span>. When a hot body’s surface is suddenly cooled by <span class="math inline">\(\Delta T\)</span>, the surface layer cannot contract because the interior holds it, and it is stretched by about <span class="math inline">\(E\,\alpha\,\Delta T/(1-\nu)\)</span> in both directions. For a 100 °C quench, that is about 81 MPa in soda-lime glass, more than its tensile strength, but only 26 MPa in borosilicate glass. This is <strong>thermal shock</strong>, and its analysis needs the transient heat equation, solved step by step in time.</li>
+<li><strong>Holes with heat flowing around them.</strong> A steady temperature does cause stress in a body with a hole when heat flows between the hole and the outside, as in the wall of a pipe.</li>
+<li><strong>Coefficients that differ from place to place or from direction to direction.</strong> Bonded materials would each expand by a different amount, as in <a href="#fig-c31-expansion" class="quarto-xref">Figure&nbsp;<span>31.1</span></a> c, and the bond forces them to agree. In an anisotropic material, even a steady temperature is generally incompatible, as shown above.</li>
+</ol>
+</section>
+<section id="a-pipe-with-heat-flowing-through-its-wall" class="level3" data-number="31.2.4">
+<h3 data-number="31.2.4" class="anchored" data-anchor-id="a-pipe-with-heat-flowing-through-its-wall"><span class="header-section-number">31.2.4</span> A pipe with heat flowing through its wall</h3>
+<p><a href="#fig-c31-pipe" class="quarto-xref">Figure&nbsp;<span>31.3</span></a> shows the fourth case: a long steel pipe in plane strain, with an inner radius of 50 mm and an outer radius of 100 mm, whose inner surface is 50 °C hotter than its outer surface. The steady temperature, <span class="math inline">\(\Delta T \ln(b/r)/\ln(b/a)\)</span>, satisfies <span class="math inline">\(\nabla^2 T = 0\)</span>. If the pipe is cut along its length (b), modeled as a quarter on statically determinate supports, the hot inner material is free to expand, the cut opens, and the largest stress is only 0.10 MPa, which is discretization error. The whole pipe (c), modeled as a quarter with the rollers of <a href="../chapters/29_Class.html">Class 29</a> on its planes of symmetry, cannot open, and the hoop stress at its hot inner surface is about −105 MPa, a compression around the pipe. The computed hoop stress agrees with the exact solution of Timoshenko and Goodier to within 0.1% of that value everywhere.</p>
+<div id="fig-c31-pipe" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c31-pipe-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class31/C31_Fig4_Pipe.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c31-pipe-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;31.3: A steel pipe, inner radius 50 mm and outer radius 100 mm, in plane strain, with its inner surface 50 °C hotter than its outer surface. (a) The steady temperature. (b) A pipe cut along its length, as a quarter on three supports: it deforms, magnified, without stress. (c) The whole pipe, as a quarter with rollers on its planes of symmetry, colored by the hoop stress: compression at the hot inner surface and tension at the cool outer surface.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="the-finite-element-method-with-one-way-coupling" class="level2" data-number="31.3">
+<h2 data-number="31.3" class="anchored" data-anchor-id="the-finite-element-method-with-one-way-coupling"><span class="header-section-number">31.3</span> The finite element method with one-way coupling</h2>
+<p>Frequently, we can model steady-state thermoelastic behavior by first solving for the temperature field and then using the solution to inform our elastic deformation. This is a form of one-way coupling, where heat informs elasticity but not vice versa.</p>
+<section id="the-weak-form-with-a-thermal-strain" class="level3" data-number="31.3.1">
+<h3 data-number="31.3.1" class="anchored" data-anchor-id="the-weak-form-with-a-thermal-strain"><span class="header-section-number">31.3.1</span> The weak form with a thermal strain</h3>
+<p>The principle of virtual work of <a href="../chapters/26_Class.html">Class 26</a> is largely unchanged when accounting for thermal strains, and the internal virtual work is <span class="math inline">\(\int_\Omega \underline{\epsilon}(\underline{w})^T\,\underline{\sigma}\,d\Omega\)</span>. Only the stress has changed, to <span class="math inline">\(\underline{\underline{D}}\left(\underline{\epsilon}(\underline{u}) - \underline{\epsilon}^{\theta}\right)\)</span>, and since the thermal strain is known once the temperature is, its term moves to the right-hand side:</p>
+<p><span class="math display">\[
+a(\underline{w}, \underline{u}) = (\underline{w}, \underline{f}) + (\underline{w}, \underline{h})_\Gamma
++ \int_\Omega \underline{\epsilon}(\underline{w})^T\,\underline{\underline{D}}\;\underline{\epsilon}^{\theta}\;d\Omega ,
+\]</span></p>
+<p>with <span class="math inline">\(a(\cdot,\cdot)\)</span>, <span class="math inline">\((\cdot,\cdot)\)</span>, and <span class="math inline">\((\cdot,\cdot)_\Gamma\)</span> as in <a href="../chapters/28_Class.html">Class 28</a>. The stiffness matrix is the same as without the temperature. The element force vector of Class 28 gains one term for each local node <span class="math inline">\(a\)</span>:</p>
+<p><span class="math display">\[
+\underline{f}^e_a = \int_{\Omega^e} N_a\,\underline{f}\;d\Omega
++ \int_{\Gamma^e \cap \Gamma_h} N_a\,\underline{h}\;d\Gamma
+- \sum_{b=0}^{n_{en}-1} \underline{\underline{k}}^e_{ab}\,\underline{g}_b
++ \int_{\Omega^e} \underline{\underline{B}}_a^T\,\underline{\underline{D}}\;\underline{\epsilon}^{\theta}\;d\Omega .
+\]</span></p>
+<p>The tractions <span class="math inline">\(\underline{h}\)</span> are still tractions of the total stress, so a free surface is still one with <span class="math inline">\(\underline{h} = \underline{0}\)</span>; the thermal strain adds no boundary terms of its own.</p>
+<p>For a homogeneous material in plane stress, <span class="math inline">\(\underline{\underline{D}}\,\underline{m}\,\alpha\,\Delta T = p_\theta\,\underline{m}\)</span> with <span class="math inline">\(p_\theta = E\,\alpha\,\Delta T/(1 - \nu)\)</span>, and integrating the thermal term by parts gives</p>
+<p><span class="math display">\[
+\int_\Omega \left(\nabla\cdot\underline{w}\right) p_\theta\;d\Omega = -\int_\Omega \underline{w}\cdot\nabla p_\theta\;d\Omega + \int_\Gamma p_\theta\,\underline{w}\cdot\underline{n}\;d\Gamma .
+\]</span></p>
+<p>A temperature therefore loads the body exactly as a body force <span class="math inline">\(-\nabla p_\theta\)</span>, which points from hot material toward cooler material, together with an outward normal traction <span class="math inline">\(p_\theta\)</span> on the whole boundary. A uniform temperature gives only the outward traction, which a free body follows by expanding uniformly.</p>
+</section>
+<section id="the-procedure" class="level3" data-number="31.3.2">
+<h3 data-number="31.3.2" class="anchored" data-anchor-id="the-procedure"><span class="header-section-number">31.3.2</span> The procedure</h3>
+<p>With the temperature known, the analysis is the elasticity of Classes 26 to 29 with an extra load:</p>
+<ol type="1">
+<li>Solve the heat conduction problem for the nodal temperatures, as in Classes 19 to 25. The simplest choice is to use the same mesh for both problems.</li>
+<li>At each quadrature point of each element, interpolate the temperature from its nodal values, <span class="math inline">\(\Delta T(\underline{\xi}) = \sum_b N_b(\underline{\xi})\,\theta_b\)</span>, where <span class="math inline">\(\theta_b\)</span> is the temperature of node <span class="math inline">\(b\)</span> minus <span class="math inline">\(T_{\mathrm{ref}}\)</span>, and form <span class="math inline">\(\underline{\epsilon}^{\theta}\)</span>.</li>
+<li>Assemble the stiffness matrix and the force vector, including the thermal term, and solve for the displacements.</li>
+<li>Compute the stresses at the quadrature points as <span class="math inline">\(\underline{\underline{D}}\left(\underline{\underline{B}}\,\underline{d}^e - \underline{\epsilon}^{\theta}\right)\)</span>. The reactions of Class 29, <span class="math inline">\(\underline{R} = \underline{\underline{K}}_{\mathrm{complete}}\,\underline{d}_{\mathrm{complete}} - \underline{F}_{\mathrm{complete}}\)</span>, must use a force vector that includes the thermal term.</li>
+</ol>
+<p><a href="#fig-c31-pipeline" class="quarto-xref">Figure&nbsp;<span>31.4</span></a> shows the procedure for a steel plate heated by a source in a small disk at its center. The heated material grows and pushes the material around it outward, as the deformed grid in (b) shows, so it is compressed along the plate (<span class="math inline">\(\sigma_{00}\)</span>) and across it (<span class="math inline">\(\sigma_{11}\)</span>), and the cooler material above and below it is stretched along the plate, by up to 66 MPa at the top and bottom edges.</p>
+<div id="fig-c31-pipeline" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c31-pipeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class31/C31_Fig2_Pipeline.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c31-pipeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;31.4: The one-way procedure for a steel plate, 400 mm by 100 mm in plane stress, on a pin and a roller, with heat generated in the dashed disk and its edges held at the reference temperature. (a) The temperature from the heat conduction problem, with a largest rise of 50 °C. (b) The displacement, magnified: each arrow has a point of the undeformed plate (dashed outline) to its place on the deformed grid, measured from the pin at the lower left. The cells around the disk grow the most and push the top and bottom edges outward. (c) and (d) The deformed plate, magnified in the same way, colored by the two normal stresses.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="the-coupled-matrix-equations" class="level3" data-number="31.3.3">
+<h3 data-number="31.3.3" class="anchored" data-anchor-id="the-coupled-matrix-equations"><span class="header-section-number">31.3.3</span> The coupled matrix equations</h3>
+<p>Since the thermal strain is linear in the nodal temperatures, the thermal load is a matrix times the vector <span class="math inline">\(\underline{\theta}\)</span> of nodal temperature changes,</p>
+<p><span class="math display">\[
+\underline{\underline{K}}_{uu}\,\underline{d} - \underline{\underline{K}}_{u\theta}\,\underline{\theta} = \underline{F},
+\qquad
+\underline{\underline{k}}^e_{u\theta,\,ab} = \int_{\Omega^e} \underline{\underline{B}}_a^T\,\underline{\underline{D}}\;\underline{m}\,\alpha\,N_b\;d\Omega ,
+\]</span></p>
+<p>where <span class="math inline">\(\underline{\underline{K}}_{uu}\)</span> is the stiffness matrix of the previous classes, each block <span class="math inline">\(\underline{\underline{k}}^e_{u\theta,\,ab}\)</span> has two rows and one column, and <span class="math inline">\(\underline{m}\)</span> is replaced by <span class="math inline">\((1 + \nu)\,\underline{m}\)</span> in plane strain. Together with the heat conduction equations <span class="math inline">\(\underline{\underline{K}}_{\theta\theta}\,\underline{\theta} = \underline{Q}\)</span>, the two problems form one system whose matrix is block lower triangular (<a href="#fig-c31-blocks" class="quarto-xref">Figure&nbsp;<span>31.5</span></a> a). The temperatures do not depend on the displacements, so they are found first, and the displacements follow. This is what <strong>one-way coupling</strong> means.</p>
+<div id="fig-c31-blocks" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c31-blocks-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class31/C31_Fig6_Blocks.png" class="img-fluid figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c31-blocks-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;31.5: The block structure of the coupled equations, with the nodal temperatures <span class="math inline">\(\boldsymbol{\theta}\)</span> and the nodal displacements <span class="math inline">\(\mathbf{d}\)</span> as unknowns. (a) One-way coupling: the block above the diagonal is zero, so the temperature can be solved first and the displacements afterward. (b) Two-way coupling, for one time step <span class="math inline">\(\Delta t\)</span> of the transient problem described below: the deformation also appears in the heat equation, through the transpose of the same coupling matrix.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="matching-the-degrees-of-the-temperature-and-the-displacement" class="level3" data-number="31.3.4">
+<h3 data-number="31.3.4" class="anchored" data-anchor-id="matching-the-degrees-of-the-temperature-and-the-displacement"><span class="header-section-number">31.3.4</span> Matching the degrees of the temperature and the displacement</h3>
+<p>A free body under a linear temperature is not stressed, and the finite element solution should reproduce this. It does so only if the elements can represent the displacement of that free expansion. For a temperature that varies linearly through the depth, the free expansion includes displacements that are quadratic in the coordinates, which elements of degree 1 cannot represent. The elements then cannot quite follow the expansion, and a spurious stress appears, alternating in sign within each element (<a href="#fig-c31-degree" class="quarto-xref">Figure&nbsp;<span>31.6</span></a> a). It is 5.3% of <span class="math inline">\(E\,\alpha\,\Delta T\)</span> on a mesh of 24 × 6 elements and 2.7% on a mesh of 48 × 12, so it does decrease under refinement, but only in proportion to the element size. With displacements of degree 2 and the same temperature of degree 1 (b), the stress is zero to roundoff.</p>
+<p>In general, the strains of a displacement of degree <span class="math inline">\(p\)</span> are of degree <span class="math inline">\(p - 1\)</span> in one of the coordinates, so the thermal strain they can match is one degree lower than the displacement. The usual recommendation is therefore to interpolate the temperature with one degree less than the displacement, and commercial coupled elements commonly pair quadratic displacements with linear temperatures. The widget below uses that pair.</p>
+<div id="fig-c31-degree" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-c31-degree-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="generated_images/Class31/C31_Fig5_Degree.png" class="img-fluid figure-img" style="width:90.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-c31-degree-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;31.6: Spurious stress in a free steel plate under a temperature that varies linearly through the depth, on 24 × 6 elements, with a rise of 50 °C at the top. The exact stress is zero. (a) Displacements of degree 1 cannot follow the free expansion, and <span class="math inline">\(\sigma_{11}\)</span> alternates in sign within each element. (b) Displacements of degree 2 follow it exactly.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="thermoelasticity-interactively" class="level2" data-number="31.4">
+<h2 data-number="31.4" class="anchored" data-anchor-id="thermoelasticity-interactively"><span class="header-section-number">31.4</span> Thermoelasticity, interactively</h2>
+<p>The widget below demonstrates the one-way procedure for a plate 400 mm long and 100 mm deep, in plane stress, with 48 × 12 elements. The temperature is found first, by steady heat conduction on the same elements with degree 1, and its thermal strain then loads the elastic plate, with displacements of degree 2 unless you choose degree 1.</p>
+<ul>
+<li>Use the temperature buttons to choose how the plate is heated, and the slider to set the largest temperature change, which may be negative. Except for the uniform rise, each temperature is computed in your browser from a heat conduction problem: a hot top edge and a cool bottom edge; a smooth hot patch on the top edge with the rest of the boundary at the reference temperature; heat generated uniformly inside; or heat generated in a small disk at the center.</li>
+<li>Use the support buttons to put the plate on a pin and a roller, to clamp both ends, or to put its whole bottom edge on rollers, as for a slab resting on a smooth, rigid base.</li>
+<li>Use the material buttons to choose steel, aluminum, concrete, or a strip with steel in its top half and aluminum in its bottom half. The temperature is the same for every material, as if they conducted heat equally well.</li>
+<li>The upper panel shows the temperature. The lower panel shows the deformed plate, magnified, with its undeformed outline dashed, colored by the chosen stress at each quadrature point. The colors run from <span class="math inline">\(-E\,\alpha\,|\Delta T|\)</span> to <span class="math inline">\(E\,\alpha\,|\Delta T|\)</span>, using the steel’s <span class="math inline">\(E\,\alpha\)</span> for the strip.</li>
+</ul>
+<style>
+.c31{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;color:var(--ink)}
+.c31 .bar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:10px 14px;background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.c31 .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey);margin-right:2px}
+.c31 .bar .gap{width:10px}
+.c31 .grp{display:inline-flex;flex-wrap:wrap;gap:8px;align-items:center;margin-right:14px}
+.c31 button{font:inherit;font-size:13px;padding:4px 10px;border:1px solid #c3c9d2;border-radius:6px;background:#fff;cursor:pointer;color:var(--ink)}
+.c31 button:hover{background:#eef1f5}
+.c31 button[aria-pressed="true"]{background:#18202b;color:#fff;border-color:#18202b}
+.c31 svg{display:block;width:100%;height:auto}
+.c31 .panel{border:1px solid var(--faint);border-radius:8px;background:#fff;padding:6px;margin-bottom:10px}
+.c31 .read{font-size:.88em;background:var(--paper);border:1px solid var(--faint);border-radius:8px;padding:9px 12px;line-height:1.6;margin-bottom:22px}
+.c31 .read b{color:#b8322a}
+.c31 input[type=range]{vertical-align:middle;width:170px}
+.c31 .val{font-family:monospace;font-size:12px;color:var(--grey);min-width:4.5em;display:inline-block}
+</style>
+<div class="c31" id="c31w">
+  <div class="bar">
+    <span class="grp"><b>TEMPERATURE</b>
+    <button data-temp="uniform">uniform rise</button>
+    <button data-temp="linear">hot top, cool bottom</button>
+    <button data-temp="edge">hot patch on the top edge</button>
+    <button data-temp="source">heat generated inside</button>
+    <button data-temp="spot">heat generated at a spot</button></span>
+  </div>
+  <div class="bar">
+    <span class="grp"><b>LARGEST CHANGE</b>
+    <input type="range" id="c31dt" min="-50" max="50" step="5" value="50" aria-label="Largest temperature change"><span class="val" id="c31dtv"></span></span>
+    <span class="grp"><b>SUPPORTS</b>
+    <button data-sup="free">pin and roller</button>
+    <button data-sup="clamped">both ends clamped</button>
+    <button data-sup="rollers">bottom on rollers</button></span>
+  </div>
+  <div class="bar">
+    <span class="grp"><b>MATERIAL</b>
+    <button data-mat="steel">steel</button>
+    <button data-mat="aluminum">aluminum</button>
+    <button data-mat="concrete">concrete</button>
+    <button data-mat="bimetal">steel on aluminum</button></span>
+    <span class="grp"><b>DISPLACEMENT</b>
+    <button data-deg="2">degree 2</button>
+    <button data-deg="1">degree 1</button></span>
+  </div>
+  <div class="panel"><svg id="c31temp" viewbox="0 0 680 205" role="img" aria-label="The temperature of the plate"></svg></div>
+  <div class="bar">
+    <b>COLOR BY</b>
+    <button data-comp="0">σ₀₀, along the plate</button>
+    <button data-comp="1">σ₁₁, across the plate</button>
+    <button data-comp="3">largest principal stress</button>
+  </div>
+  <div class="panel"><svg id="c31stress" viewbox="0 0 680 290" role="img" aria-label="The deformed plate, colored by the stress"></svg></div>
+  <div class="read" id="c31read"></div>
+</div>
+<script>
+// One-way thermoelasticity on a 400 mm by 100 mm plate in plane stress: steady heat
+// conduction with degree 1, then elasticity with degree 2 (or 1) on the same elements,
+// loaded by the thermal strain.  Local nodes by the stride rule, nodes numbered up each
+// column, banded Cholesky.  Same data as c31_thermo.py.
+(function(){
+  const L = 400, H = 100, NX = 48, NY = 12;
+  const MATS = {steel: [200000, 0.30, 12e-6], aluminum: [70000, 0.33, 23e-6], concrete: [30000, 0.20, 10e-6]};
+  const NAMES = {steel: "Steel", aluminum: "Aluminum", concrete: "Concrete", bimetal: "Steel on aluminum"};
+  const st = {temp: "uniform", sup: "clamped", mat: "steel", deg: 2, comp: 0, dT: 50};
+  const GL = {1: [[0], [2]], 2: [[-0.5773502691896257, 0.5773502691896257], [1, 1]],
+    3: [[-0.7745966692414834, 0, 0.7745966692414834], [5/9, 8/9, 5/9]],
+    4: [[-0.8611363115940526, -0.3399810435848563, 0.3399810435848563, 0.8611363115940526],
+        [0.3478548451374538, 0.6521451548625461, 0.6521451548625461, 0.3478548451374538]]};
+
+  // ------------------------------------------------------------ elements
+  function lag(p, s){
+    const xs = Array.from({length: p + 1}, (_, i) => -1 + 2*i/p), N = [], dN = [];
+    for (let a=0;a<=p;a++){
+      let v = 1, d = 0;
+      for (let b=0;b<=p;b++) if (b !== a) v *= (s - xs[b])/(xs[a] - xs[b]);
+      for (let m=0;m<=p;m++){
+        if (m === a) continue;
+        let t = 1/(xs[a] - xs[m]);
+        for (let b=0;b<=p;b++) if (b !== a && b !== m) t *= (s - xs[b])/(xs[a] - xs[b]);
+        d += t;
+      }
+      N.push(v); dN.push(d);
+    }
+    return [N, dN];
+  }
+  const SH = new Map();
+  function shape(p, xi, eta){
+    const key = p + "," + xi + "," + eta;
+    if (!SH.has(key)){
+      const [Nx, dx] = lag(p, xi), [Ny, dy] = lag(p, eta), N = [], dN = [];
+      for (let j=0;j<=p;j++) for (let i=0;i<=p;i++){ N.push(Nx[i]*Ny[j]); dN.push([dx[i]*Ny[j], Nx[i]*dy[j]]); }
+      SH.set(key, {N, dN});
+    }
+    return SH.get(key);
+  }
+  function grid(p){
+    const m0 = p*NX + 1, m1 = p*NY + 1, node = (I, J) => J + m1*I, X = new Array(m0*m1), IEN = [];
+    for (let I=0;I<m0;I++) for (let J=0;J<m1;J++) X[node(I, J)] = [L*I/(m0 - 1), H*J/(m1 - 1)];
+    for (let e1=0;e1<NY;e1++) for (let e0=0;e0<NX;e0++){
+      const row = [];
+      for (let j=0;j<=p;j++) for (let i=0;i<=p;i++) row.push(node(p*e0 + i, p*e1 + j));
+      IEN.push(row);
+    }
+    return {p, m0, m1, node, X, IEN, nnp: X.length, nel: IEN.length, nen: (p + 1)**2};
+  }
+  // every element is the same rectangle, so the map is x = x_a + (L/NX)(xi + 1)/2, y likewise
+  const HX = L/NX, HY = H/NY, JAC = HX*HY/4;
+  const dxi = (dN, a) => [dN[a][0]*2/HX, dN[a][1]*2/HY];
+
+  // banded Cholesky solve of the symmetric matrix stored as rows of its upper band
+  function bandSolve(K, F, n, bw){
+    const w = bw + 1;
+    for (let i=0;i<n;i++){
+      let s = K[i*w];
+      for (let k=Math.max(0, i - bw);k<i;k++){ const v = K[k*w + i - k]; s -= v*v; }
+      const d = Math.sqrt(s), jm = Math.min(n - 1, i + bw);
+      K[i*w] = d;
+      for (let j=i+1;j<=jm;j++){
+        let v = K[i*w + j - i];
+        for (let k=Math.max(0, j - bw);k<i;k++) v -= K[k*w + i - k]*K[k*w + j - k];
+        K[i*w + j - i] = v/d;
+      }
+    }
+    const y = new Float64Array(n), x = new Float64Array(n);
+    for (let i=0;i<n;i++){ let v = F[i]; for (let k=Math.max(0, i - bw);k<i;k++) v -= K[k*w + i - k]*y[k]; y[i] = v/K[i*w]; }
+    for (let i=n-1;i>=0;i--){ let v = y[i]; const jm = Math.min(n - 1, i + bw); for (let j=i+1;j<=jm;j++) v -= K[i*w + j - i]*x[j]; x[i] = v/K[i*w]; }
+    return x;
+  }
+  function assemble(nunk, ndofs, edofs, fixedVal, elementArrays){
+    // edofs(e): global dof numbers of element e; fixedVal[q]: prescribed value or NaN
+    const ID = new Int32Array(ndofs).fill(-1);
+    let n = 0;
+    for (let q=0;q<ndofs;q++) if (isNaN(fixedVal[q])) ID[q] = n++;
+    let bw = 0;
+    const nel = NX*NY;
+    for (let e=0;e<nel;e++){
+      const P = edofs(e).map(q => ID[q]).filter(v => v >= 0);
+      if (P.length) bw = Math.max(bw, Math.max(...P) - Math.min(...P));
+    }
+    const w = bw + 1, K = new Float64Array(n*w), F = new Float64Array(n);
+    for (let e=0;e<nel;e++){
+      const dd = edofs(e), {k, f} = elementArrays(e), nd = dd.length;
+      for (let r=0;r<nd;r++){
+        const P = ID[dd[r]]; if (P < 0) continue;
+        F[P] += f[r];
+        for (let c=0;c<nd;c++){
+          const Q = ID[dd[c]];
+          if (Q < 0) F[P] -= k[r*nd + c]*fixedVal[dd[c]];
+          else if (Q >= P) K[P*w + Q - P] += k[r*nd + c];
+        }
+      }
+    }
+    const x = bandSolve(K, F, n, bw), u = new Float64Array(ndofs);
+    for (let q=0;q<ndofs;q++) u[q] = ID[q] >= 0 ? x[ID[q]] : fixedVal[q];
+    return u;
+  }
+
+  // ------------------------------------------------------- temperatures
+  const GT = grid(1), TCACHE = {};
+  function temperature(kind){                       // nodal values on GT, largest = 1
+    if (TCACHE[kind]) return TCACHE[kind];
+    const n = GT.nnp, fixed = new Float64Array(n).fill(NaN);
+    let T;
+    if (kind === "uniform") T = new Float64Array(n).fill(1);
+    else {
+      for (let A=0;A<n;A++){
+        const [x, y] = GT.X[A], edge = x < 1e-9 || x > L - 1e-9 || y < 1e-9 || y > H - 1e-9;
+        if (kind === "linear"){ if (y < 1e-9) fixed[A] = 0; if (y > H - 1e-9) fixed[A] = 1; }
+        else if (edge){
+          const r = (x - L/2)/(L/4);
+          fixed[A] = kind === "edge" && y > H - 1e-9 && Math.abs(r) < 1 ? Math.cos(0.5*Math.PI*r)**2 : 0;
+        }
+      }
+      const src = kind === "source" ? (() => 1) : kind === "spot" ? ((x, y) => Math.hypot(x - L/2, y - H/2) < 0.2*H ? 1 : 0) : null;
+      const [g4, w4] = GL[4];
+      T = assemble(0, n, e => GT.IEN[e], fixed, e => {
+        const k = new Float64Array(16), f = new Float64Array(4), A = GT.IEN[e], x0 = GT.X[A[0]];
+        for (let i=0;i<4;i++) for (let j=0;j<4;j++){
+          const {N, dN} = shape(1, g4[i], g4[j]), wt = w4[i]*w4[j]*JAC;
+          for (let a=0;a<4;a++){
+            const ga = dxi(dN, a);
+            for (let b=0;b<4;b++){ const gb = dxi(dN, b); k[a*4 + b] += wt*(ga[0]*gb[0] + ga[1]*gb[1]); }
+            if (src) f[a] += wt*N[a]*src(x0[0] + HX*(g4[i] + 1)/2, x0[1] + HY*(g4[j] + 1)/2);
+          }
+        }
+        return {k, f};
+      });
+      let mx = 0; for (let A=0;A<n;A++) mx = Math.max(mx, Math.abs(T[A]));
+      for (let A=0;A<n;A++) T[A] /= mx;
+    }
+    TCACHE[kind] = T;
+    return T;
+  }
+
+  // ------------------------------------------------------- elasticity, for a unit temperature scale
+  const GU = {1: grid(1), 2: grid(2)}, SCACHE = {};
+  const matOf = (mat, e) => mat === "bimetal" ? (Math.floor(e/NX) >= NY/2 ? MATS.steel : MATS.aluminum) : MATS[mat];
+  const dmat = ([E, nu]) => { const c = E/(1 - nu*nu); return [[c, c*nu, 0], [c*nu, c, 0], [0, 0, c*(1 - nu)/2]]; };
+  function tempAt(T, e, xi, eta){ const {N} = shape(1, xi, eta), A = GT.IEN[e]; return N[0]*T[A[0]] + N[1]*T[A[1]] + N[2]*T[A[2]] + N[3]*T[A[3]]; }
+  function bmat(dN, nen){
+    const B = [new Float64Array(2*nen), new Float64Array(2*nen), new Float64Array(2*nen)];
+    for (let a=0;a<nen;a++){ const [gx, gy] = dxi(dN, a); B[0][2*a] = gx; B[1][2*a + 1] = gy; B[2][2*a] = gy; B[2][2*a + 1] = gx; }
+    return B;
+  }
+  function solveElastic(){
+    const key = [st.temp, st.sup, st.mat, st.deg].join("|");
+    if (SCACHE[key]) return SCACHE[key];
+    const g = GU[st.deg], p = g.p, nen = g.nen, nd = 2*nen, T = temperature(st.temp);
+    const fixed = new Float64Array(2*g.nnp).fill(NaN), hold = (A, i) => { fixed[2*A + i] = 0; };
+    const BL = g.node(0, 0), BR = g.node(g.m0 - 1, 0);
+    if (st.sup === "free"){ hold(BL, 0); hold(BL, 1); hold(BR, 1); }
+    if (st.sup === "clamped") for (let J=0;J<g.m1;J++){ for (const I of [0, g.m0 - 1]){ hold(g.node(I, J), 0); hold(g.node(I, J), 1); } }
+    if (st.sup === "rollers"){ for (let I=0;I<g.m0;I++) hold(g.node(I, 0), 1); hold(BL, 0); }
+    const [gx, gw] = GL[p + 1];
+    const U = assemble(0, 2*g.nnp, e => g.IEN[e].flatMap(A => [2*A, 2*A + 1]), fixed, e => {
+      const k = new Float64Array(nd*nd), f = new Float64Array(nd), m = matOf(st.mat, e), D = dmat(m), al = m[2];
+      for (let i=0;i<gx.length;i++) for (let j=0;j<gx.length;j++){
+        const {dN} = shape(p, gx[i], gx[j]), B = bmat(dN, nen), wt = gw[i]*gw[j]*JAC;
+        const et = al*tempAt(T, e, gx[i], gx[j]);
+        const s0 = (D[0][0] + D[0][1])*et, s1 = (D[1][0] + D[1][1])*et;      // D (alpha dT m)
+        for (let r=0;r<nd;r++){
+          const DB0 = D[0][0]*B[0][r] + D[0][1]*B[1][r], DB1 = D[1][0]*B[0][r] + D[1][1]*B[1][r], DB2 = D[2][2]*B[2][r];
+          f[r] += wt*(B[0][r]*s0 + B[1][r]*s1);
+          for (let c=0;c<nd;c++) k[c*nd + r] += wt*(DB0*B[0][c] + DB1*B[1][c] + DB2*B[2][c]);
+        }
+      }
+      return {k, f};
+    });
+    // stresses at the Gauss points, (eta, xi) order
+    const sig = [];
+    for (let e=0;e<g.nel;e++){
+      const m = matOf(st.mat, e), D = dmat(m), al = m[2], ue = g.IEN[e].flatMap(A => [U[2*A], U[2*A + 1]]), v = [];
+      for (let j=0;j<gx.length;j++) for (let i=0;i<gx.length;i++){
+        const {dN} = shape(p, gx[i], gx[j]), B = bmat(dN, nen), et = al*tempAt(T, e, gx[i], gx[j]);
+        const eps = [0, 1, 2].map(r => B[r].reduce((s, b, c) => s + b*ue[c], 0));
+        eps[0] -= et; eps[1] -= et;
+        const s = [0, 1, 2].map(r => D[r][0]*eps[0] + D[r][1]*eps[1] + D[r][2]*eps[2]);
+        v.push([s[0], s[1], s[2]]);
+      }
+      sig.push(v);
+    }
+    const out = {g, U, sig, T};
+    SCACHE[key] = out;
+    return out;
+  }
+
+  // ------------------------------------------------------------ drawing
+  const el = (tag, a, inner) => `<${tag} ${Object.entries(a).map(([k, v]) => `${k}="${v}"`).join(" ")}>${inner || ""}</${tag}>`;
+  function ramp(stops){
+    return v => {
+      v = Math.max(0, Math.min(1, v));
+      const n = stops.length - 1, k = Math.min(n - 1, Math.floor(v*n)), f = v*n - k, a = stops[k], b = stops[k + 1];
+      return `rgb(${[0, 1, 2].map(i => Math.round(a[i] + f*(b[i] - a[i]))).join(",")})`;
+    };
+  }
+  const div = ramp([[33,102,172],[103,169,207],[209,229,240],[247,247,247],[253,219,199],[239,138,98],[178,24,43]]);
+  const minus = v => (v < 0 ? "−" : "") + Math.abs(v);
+  // the value shown for a Gauss point: a stress component, or the largest principal stress of the scaled stress
+  const val = (s, comp, dT) => comp < 3 ? s[comp]*dT :
+    (() => { const a = s[0]*dT, b = s[1]*dT, c = s[2]*dT; return 0.5*(a + b) + Math.sqrt(0.25*(a - b)**2 + c*c); })();
+  const fmt = (v, d) => { const s = Math.abs(v).toFixed(d); return (v < 0 && +s !== 0 ? "−" : "") + s; };
+  const SC = 1.3, X0 = 40, Y0T = 150, Y0S = 190;
+  const PX = x => (X0 + SC*x).toFixed(1);
+  function colorbar(o, x, y, w, lo, hi, label){
+    for (let k=0;k<60;k++) o.push(el("rect", {x: x + k*w/60, y, width: w/60 + 0.4, height: 9, fill: div(k/59)}));
+    o.push(el("text", {x, y: y - 5, "font-size": 12, fill: "#42506a"}, label));
+    [[0, lo], [0.5, 0], [1, hi]].forEach(([f, v]) => o.push(el("text", {x: x + f*w, y: y + 21, "font-size": 11, fill: "#6b7684", "text-anchor": "middle"}, v)));
+  }
+  function drawTemp(T){
+    const o = [], dT = st.dT, cut = [-1, 0, 1];
+    o.push(el("text", {x: X0, y: 14, "font-size": 12.5, fill: "#42506a", "font-weight": 600}, "Temperature rise above the stress-free temperature"));
+    for (let e=0;e<NX*NY;e++){
+      const A = GT.X[GT.IEN[e][0]];
+      for (let j=0;j<2;j++) for (let i=0;i<2;i++){
+        const v = tempAt(T, e, 0.5*(cut[i] + cut[i + 1]), 0.5*(cut[j] + cut[j + 1]))*dT;
+        const c = div(0.5 + 0.5*v/Math.max(Math.abs(dT), 1e-9));
+        o.push(el("rect", {x: PX(A[0] + HX*i/2), y: (Y0T - SC*(A[1] + HY*(j + 1)/2)).toFixed(1), width: (SC*HX/2).toFixed(2), height: (SC*HY/2).toFixed(2),
+          fill: c, stroke: c, "stroke-width": 0.4}));
+      }
+    }
+    o.push(el("rect", {x: X0, y: Y0T - SC*H, width: SC*L, height: SC*H, fill: "none", stroke: "#18202b", "stroke-width": 1}));
+    if (st.temp === "spot") o.push(el("circle", {cx: PX(L/2), cy: Y0T - SC*H/2, r: SC*0.2*H, fill: "none", stroke: "#18202b", "stroke-dasharray": "3 2", "stroke-width": 0.9}));
+    const a = Math.abs(dT);
+    colorbar(o, X0 + 110, Y0T + 27, 300, `${minus(-a)} °C`, `${a} °C`, "ΔT");
+    document.getElementById("c31temp").innerHTML = o.join("");
+  }
+  function support(x, y, ux, uy, kind, color){
+    const vx = -uy, vy = ux, s = 10, bx = x - ux*s, by = y - uy*s;
+    let o = el("polygon", {points: `${x},${y} ${bx + vx*s*0.6},${by + vy*s*0.6} ${bx - vx*s*0.6},${by - vy*s*0.6}`,
+      fill: kind === "pin" ? color : "#fff", stroke: color, "stroke-width": 1.2});
+    let gx = bx, gy = by;
+    if (kind === "roller"){
+      for (const k of [-0.32, 0.32]) o += el("circle", {cx: bx + vx*s*k - ux*2.4, cy: by + vy*s*k - uy*2.4, r: 2.1, fill: "#fff", stroke: color, "stroke-width": 1});
+      gx -= ux*4.8; gy -= uy*4.8;
+    }
+    o += el("line", {x1: gx + vx*8, y1: gy + vy*8, x2: gx - vx*8, y2: gy - vy*8, stroke: color, "stroke-width": 1.2});
+    return o;
+  }
+  function drawStress(R){
+    const o = [], g = R.g, p = g.p, n = p + 1, comp = st.comp, dT = st.dT;
+    const ref = (st.mat === "bimetal" ? MATS.steel[0]*MATS.steel[2] : MATS[st.mat][0]*MATS[st.mat][2])*Math.max(Math.abs(dT), 1e-9);
+    let umax = 0;
+    for (let A=0;A<g.nnp;A++) umax = Math.max(umax, Math.hypot(R.U[2*A], R.U[2*A + 1]));
+    const mag = umax > 1e-15 ? 0.2*H/(umax*Math.abs(dT)) : 0;
+    const P = (e, xi, eta) => { const {N} = shape(p, xi, eta), A = g.IEN[e]; let x = 0, y = 0;
+      for (let a=0;a<N.length;a++){ x += N[a]*(g.X[A[a]][0] + mag*dT*R.U[2*A[a]]); y += N[a]*(g.X[A[a]][1] + mag*dT*R.U[2*A[a] + 1]); }
+      return `${PX(x)},${(Y0S - SC*y).toFixed(1)}`; };
+    const xg = GL[n][0], cuts = [-1, ...xg.slice(1).map((v, k) => 0.5*(v + xg[k])), 1];
+    const names = {0: "σ₀₀", 1: "σ₁₁", 3: "largest principal stress"};
+    o.push(el("text", {x: X0, y: 14, "font-size": 12.5, fill: "#42506a", "font-weight": 600},
+      `The deformed plate, displacements magnified ${mag > 0 ? Math.round(mag) : "—"} times, colored by ${names[comp]}`));
+    o.push(el("rect", {x: X0, y: Y0S - SC*H, width: SC*L, height: SC*H, fill: "none", stroke: "#8b94a1", "stroke-dasharray": "5 4", "stroke-width": 1}));
+    for (let e=0;e<g.nel;e++) for (let j=0;j<n;j++) for (let i=0;i<n;i++){
+      const v = val(R.sig[e][j*n + i], comp, dT), c = div(0.5 + 0.5*v/ref);
+      o.push(el("polygon", {points: [P(e, cuts[i], cuts[j]), P(e, cuts[i + 1], cuts[j]), P(e, cuts[i + 1], cuts[j + 1]), P(e, cuts[i], cuts[j + 1])].join(" "), fill: c, stroke: c, "stroke-width": 0.3}));
+    }
+    if (st.mat === "bimetal"){
+      const pts = []; for (let e=0;e<NX;e++){ const e2 = e + NX*(NY/2); pts.push(P(e2, -1, -1)); } pts.push(P(NX - 1 + NX*(NY/2), 1, -1));
+      o.push(el("polyline", {points: pts.join(" "), fill: "none", stroke: "#18202b", "stroke-width": 0.8, "stroke-dasharray": "2 2"}));
+    }
+    const navy = "#1e3a5f", at = (I, J) => { const A = g.node(I, J); return [X0 + SC*(g.X[A][0] + mag*dT*R.U[2*A]), Y0S - SC*(g.X[A][1] + mag*dT*R.U[2*A + 1])]; };
+    if (st.sup === "free"){ const [x1, y1] = at(0, 0), [x2, y2] = at(g.m0 - 1, 0); o.push(support(x1, y1, 0, -1, "pin", navy), support(x2, y2, 0, -1, "roller", navy)); }
+    if (st.sup === "rollers"){ for (let I=0;I<g.m0;I+=Math.max(1, Math.round((g.m0 - 1)/8))){ const [x, y] = at(I, 0); o.push(support(x, y, 0, -1, I === 0 ? "pin" : "roller", navy)); } }
+    if (st.sup === "clamped") for (const [xw, s] of [[X0, -1], [X0 + SC*L, 1]]){
+      o.push(el("line", {x1: xw, y1: Y0S - SC*H - 6, x2: xw, y2: Y0S + 6, stroke: navy, "stroke-width": 3}));
+      for (let k=0;k<8;k++){ const y = Y0S - SC*H - 4 + k*(SC*H + 8)/7; o.push(el("line", {x1: xw, y1: y, x2: xw + 7*s, y2: y + 6, stroke: navy, "stroke-width": 0.9})); }
+    }
+    colorbar(o, X0 + 110, Y0S + 64, 300, `${fmt(-ref, 0)} MPa`, `${fmt(ref, 0)} MPa`, names[comp] + "   (clipped at the ends)");
+    document.getElementById("c31stress").innerHTML = o.join("");
+    return {ref, mag};
+  }
+
+  function render(){
+    [["temp", "temp"], ["sup", "sup"], ["mat", "mat"], ["deg", "deg"], ["comp", "comp"]].forEach(([k, d]) =>
+      document.querySelectorAll(`#c31w [data-${d}]`).forEach(b => b.setAttribute("aria-pressed", String(b.dataset[d]) === String(st[k]) ? "true" : "false")));
+    document.getElementById("c31dtv").textContent = `${st.dT > 0 ? "+" : st.dT < 0 ? "−" : ""}${Math.abs(st.dT)} °C`;
+    const R = solveElastic(), dT = st.dT;
+    drawTemp(R.T);
+    const {ref} = drawStress(R);
+    const g = R.g, n = g.p + 1;
+    let lo = Infinity, hi = -Infinity, pmax = -Infinity, mlo = Infinity, mhi = -Infinity;
+    for (let e=0;e<g.nel;e++){
+      const e0 = e % NX, midcol = e0 === NX/2 - 1 || e0 === NX/2;
+      for (const s of R.sig[e]){
+        const v = val(s, st.comp, dT); lo = Math.min(lo, v); hi = Math.max(hi, v); pmax = Math.max(pmax, val(s, 3, dT));
+        if (midcol){ mlo = Math.min(mlo, s[0]*dT); mhi = Math.max(mhi, s[0]*dT); }
+      }
+    }
+    const m = st.mat === "bimetal" ? null : MATS[st.mat];
+    let txt = m ? `${NAMES[st.mat]}: E = ${m[0]/1000} GPa, ν = ${m[1]}, α = ${+(m[2]*1e6).toFixed(1)} × 10⁻⁶ /°C, so E α |ΔT| = <b>${ref.toFixed(1)} MPa</b>.<br>`
+      : `Steel on aluminum: E α |ΔT| = ${ref.toFixed(1)} MPa for the steel and ${(MATS.aluminum[0]*MATS.aluminum[2]*Math.abs(dT)).toFixed(1)} MPa for the aluminum.<br>`;
+    const names = {0: "σ₀₀", 1: "σ₁₁", 3: "The largest principal stress"};
+    txt += `${names[st.comp]} ranges from ${fmt(lo, 1)} to ${fmt(hi, 1)} MPa.` + (st.comp === 3 ? "<br>" : ` The largest principal stress anywhere is ${fmt(pmax, 1)} MPa.<br>`);
+    txt += `At mid-length, σ₀₀ ranges through the depth from ${fmt(mlo, 1)} to ${fmt(mhi, 1)} MPa.`;
+    if (st.mat === "bimetal" && st.sup === "free" && st.temp === "uniform" && dT !== 0){
+      const A = (x) => { const I = Math.round(x/L*(g.m0 - 1)), J = (g.m1 - 1)/2; return R.U[2*g.node(I, J) + 1]*dT; };
+      const k = Math.abs(A(100) - 2*A(200) + A(300))/1e4, nE = MATS.steel[0]/MATS.aluminum[0];
+      const kt = Math.abs(6*(MATS.aluminum[2] - MATS.steel[2])*dT*4/(H*(12 + (1 + nE)*(1 + 1/nE))));
+      txt += `<br>The curvature at mid-length is ${(k*1e6).toFixed(2)} × 10⁻⁶ /mm; Timoshenko's formula for a two-layer strip gives ${(kt*1e6).toFixed(2)} × 10⁻⁶ /mm.`;
+    }
+    document.getElementById("c31read").innerHTML = txt;
+  }
+  const bind = (attr, key, conv) => document.querySelectorAll(`#c31w [data-${attr}]`).forEach(b => b.addEventListener("click", () => { st[key] = conv(b.dataset[attr]); render(); }));
+  bind("temp", "temp", v => v); bind("sup", "sup", v => v); bind("mat", "mat", v => v); bind("deg", "deg", v => +v); bind("comp", "comp", v => +v);
+  document.getElementById("c31dt").addEventListener("input", ev => { st.dT = +ev.target.value; render(); });
+  render();
+})();
+</script>
+<section id="things-to-try" class="level3" data-number="31.4.1">
+<h3 data-number="31.4.1" class="anchored" data-anchor-id="things-to-try"><span class="header-section-number">31.4.1</span> Things to try</h3>
+<ol type="1">
+<li>With the uniform rise and steel, switch between the pin and roller and both ends clamped. On the pin and roller, the plate grows without any stress. With both ends clamped, <span class="math inline">\(\sigma_{00}\)</span> at mid-length is about <span class="math inline">\(-E\,\alpha\,\Delta T\)</span>; it is −123 MPa for 50 °C, slightly more than 120 MPa, because the clamps also prevent the ends from widening. The much larger stresses reported at the corners of the clamps are the singularities of <a href="../chapters/29_Class.html">Class 29</a>, and they grow without limit as the mesh is refined.</li>
+<li>Clamp both ends, choose concrete, and set the change to −10 °C. The concrete is stretched by about 3 MPa, which is about its tensile strength.</li>
+<li>Choose the hot top and cool bottom. On the pin and roller, the plate bends without stress. With its bottom on rollers, it cannot bend, and <span class="math inline">\(\sigma_{00}\)</span> at mid-length runs from about <span class="math inline">\(-E\,\alpha\,\Delta T/2\)</span> at the top to <span class="math inline">\(+E\,\alpha\,\Delta T/2\)</span> at the bottom. This is the curling stress of a concrete slab that is held flat on the ground while the sun heats its top surface.</li>
+<li>Choose the hot patch on the top edge, on the pin and roller. The temperature is far from uniform, but the stress is almost zero, as in <a href="#fig-c31-free" class="quarto-xref">Figure&nbsp;<span>31.2</span></a> b. Clamp the ends, and the same temperature causes large stresses.</li>
+<li>Choose heat generated inside, on the pin and roller, and color by the largest principal stress. Nothing restrains the plate, yet its edges are in tension, as the surface of a thick concrete pour is while its core is warmed by the hydration of the cement.</li>
+<li>Choose steel on aluminum with the uniform rise, on the pin and roller. The strip bends toward the steel, and the readout compares its curvature with Timoshenko’s formula for a two-layer strip, which it matches to within about 1%. Set a negative change, and it bends the other way.</li>
+<li>Choose the hot top and cool bottom on the pin and roller, color by <span class="math inline">\(\sigma_{11}\)</span>, and switch the displacement to degree 1. The stress should be zero, but the elements of degree 1 cannot follow the expansion, as in <a href="#fig-c31-degree" class="quarto-xref">Figure&nbsp;<span>31.6</span></a> a. The readout shows <span class="math inline">\(\sigma_{11}\)</span> of about ±3 MPa, too small to see in the colors, which run to ±120 MPa.</li>
+</ol>
+</section>
+</section>
+<section id="two-way-coupling" class="level2" data-number="31.5">
+<h2 data-number="31.5" class="anchored" data-anchor-id="two-way-coupling"><span class="header-section-number">31.5</span> Two-way coupling</h2>
+<section id="the-coupled-heat-equation" class="level3" data-number="31.5.1">
+<h3 data-number="31.5.1" class="anchored" data-anchor-id="the-coupled-heat-equation"><span class="header-section-number">31.5.1</span> The coupled heat equation</h3>
+<p>So far, the temperature has affected the deformation, but not the other way around. A complete derivation from thermodynamics, which is beyond the scope of this course, shows that a deformation does affect the temperature. For an isotropic material with small strains, the heat equation of Classes 19 to 25 gains a term:</p>
+<p><span class="math display">\[
+\rho\,c\,\frac{\partial T}{\partial t} - \nabla\cdot\left(\kappa\,\nabla T\right) + T_0\,\left(3\lambda + 2\mu\right)\alpha\,\frac{\partial \varepsilon_{kk}}{\partial t} = Q ,
+\]</span></p>
+<p>where <span class="math inline">\(\rho\)</span> is the density, <span class="math inline">\(c\)</span> the specific heat at constant strain, <span class="math inline">\(Q\)</span> the heat generated per unit volume, and <span class="math inline">\(T_0\)</span> the absolute temperature (in kelvin) of the stress-free state. The new term says that changing the volume of a material changes its temperature: a material that is suddenly compressed warms up, and one that is suddenly stretched cools down. This is the <strong>thermoelastic effect</strong>.</p>
+<p>Two consequences follow directly from the form of the term.</p>
+<ul>
+<li><p><strong>The term contains a rate of change.</strong> In a steady state, <span class="math inline">\(\partial\varepsilon_{kk}/\partial t = 0\)</span>, so in linear thermoelasticity, every steady problem is exactly one-way coupled. The coupling back to the temperature matters only while the body is being deformed.</p></li>
+<li><p><strong>The term is the transpose of the thermal load.</strong> In the finite element equations, it becomes <span class="math inline">\(T_0\,\underline{\underline{K}}_{u\theta}^T\,\dot{\underline{d}}\)</span>, with the same coupling matrix that goes from the temperature into the elasticity equations:</p>
+<p><span class="math display">\[
+\underline{\underline{C}}\,\dot{\underline{\theta}} + \underline{\underline{K}}_{\theta\theta}\,\underline{\theta} + T_0\,\underline{\underline{K}}_{u\theta}^T\,\dot{\underline{d}} = \underline{Q},
+\qquad
+\underline{\underline{K}}_{uu}\,\underline{d} - \underline{\underline{K}}_{u\theta}\,\underline{\theta} = \underline{F} ,
+\]</span></p>
+<p>where <span class="math inline">\(\underline{\underline{C}}\)</span> is the heat capacity matrix of the transient heat equation. After the rates are approximated over a time step, both coupling blocks of the matrix are nonzero (<a href="#fig-c31-blocks" class="quarto-xref">Figure&nbsp;<span>31.5</span></a> b), and the two fields must be found together.</p></li>
+</ul>
+</section>
+<section id="how-strong-the-coupling-is" class="level3" data-number="31.5.2">
+<h3 data-number="31.5.2" class="anchored" data-anchor-id="how-strong-the-coupling-is"><span class="header-section-number">31.5.2</span> How strong the coupling is</h3>
+<p>For a sudden change in stress, too fast for heat to flow, the coupled heat equation gives the temperature change</p>
+<p><span class="math display">\[
+\Delta T = -\frac{\alpha\,T_0}{\rho\,c}\,\Delta\!\left(\sigma_{00} + \sigma_{11} + \sigma_{22}\right) ,
+\]</span></p>
+<p>which is known as <strong>Kelvin’s formula</strong>. Here <span class="math inline">\(c\)</span> is the specific heat at constant stress, which is the value usually tabulated for solids. It exceeds the specific heat at constant strain in the heat equation above by about 2% for steel and 4% for aluminum. For steel at room temperature, a sudden tension of 100 MPa lowers the temperature by only 0.10 °C. A dimensionless measure of the coupling is <span class="math inline">\(\delta = (3\lambda + 2\mu)^2\alpha^2\,T_0/\left(\rho\,c\,(\lambda + 2\mu)\right)\)</span>, which is about 0.01 for steel and 0.03 for aluminum. For structural metals, neglecting the coupling usually changes the results by a few percent or less, and by less still when the load is applied slowly enough for heat to flow away. This is an estimate of size, not a bound. The actual effect depends on the rate of loading, the thermal boundary conditions, and the quantity of interest, and for some quantities, such as the damping of a vibration, the coupling is the entire effect.</p>
+</section>
+<section id="coupling-from-the-deformation-to-the-temperature" class="level3" data-number="31.5.3">
+<h3 data-number="31.5.3" class="anchored" data-anchor-id="coupling-from-the-deformation-to-the-temperature"><span class="header-section-number">31.5.3</span> Coupling from the deformation to the temperature</h3>
+<p>Sometimes the effect of interest runs only from the deformation to the temperature, and the temperature’s effect on the deformation can be neglected. The mechanical problem is then solved first, and the temperature is computed from its result, which is one-way coupling in the reverse direction.</p>
+<ul>
+<li><strong>Thermoelastic stress analysis</strong> measures stresses with an infrared camera. A part loaded and unloaded several times per second deforms too quickly for heat to flow, and Kelvin’s formula relates the small temperature changes on its surface, often a few thousandths of a degree, to the changes in <span class="math inline">\(\sigma_{00} + \sigma_{11}\)</span>.</li>
+<li><strong>Thermoelastic damping</strong> dissipates the energy of vibrating beams and plates. The compressed side warms and the stretched side cools, heat flows between them, and the energy carried by that heat is lost to the vibration. It limits the sharpness of the resonance of small mechanical resonators, such as those used in timing devices and sensors.</li>
+<li><strong>Heating by plastic work, friction, and viscoelastic losses</strong> are irreversible and are not part of linear thermoelasticity, but they are often treated in the same way. Most of the plastic work done on a metal, about 90%, becomes heat, and rubber tires warm up as they roll because rubber loses some energy in each cycle of loading.</li>
+</ul>
+<p>Rubber behaves in the opposite way from metals. A rubber band that is quickly stretched warms up, rather than cooling, because rubber’s stiffness comes mostly from the entropy of its long molecular chains rather than from stretching chemical bonds.</p>
+</section>
+<section id="problems-that-need-two-way-coupling" class="level3" data-number="31.5.4">
+<h3 data-number="31.5.4" class="anchored" data-anchor-id="problems-that-need-two-way-coupling"><span class="header-section-number">31.5.4</span> Problems that need two-way coupling</h3>
+<p>Two-way coupling is needed when the deformation changes the heat flow enough to matter. This happens most often through the boundary conditions or through irreversible heating:</p>
+<ul>
+<li><strong>Friction.</strong> In a brake or clutch, frictional heating expands the surface where it is hottest, which raises the contact pressure there, which raises the heating further. Above a critical sliding speed, this feedback concentrates the heat into hot spots, which is called <strong>thermoelastic instability</strong>.</li>
+<li><strong>Contact and gaps.</strong> Heat crosses an interface more easily when the surfaces are pressed together, and thermal expansion can close or open the gap. Examples include nuclear fuel pellets in their cladding, bolted joints, and pistons in cylinders.</li>
+<li><strong>Fast plastic deformation.</strong> In metal forming, machining, and impact, plastic work heats and softens the metal, which concentrates the deformation further, sometimes into narrow bands.</li>
+</ul>
+<p>There are two ways to solve such problems. A <strong>monolithic</strong> method solves for both fields together at each step, with a matrix like that of <a href="#fig-c31-blocks" class="quarto-xref">Figure&nbsp;<span>31.5</span></a> b. A <strong>staggered</strong> method alternates between the heat problem and the elasticity problem within each step, which lets each be solved by its own code, but the way the problem is split affects its stability. For example, holding the temperature fixed during the mechanical step is stable only for small enough time steps, while holding the entropy fixed is stable for any time step (Armero and Simo, 1992).</p>
+</section>
+</section>
+<section id="nonlinear-thermoelasticity" class="level2" data-number="31.6">
+<h2 data-number="31.6" class="anchored" data-anchor-id="nonlinear-thermoelasticity"><span class="header-section-number">31.6</span> Nonlinear thermoelasticity</h2>
+<p>The linear theory assumes small strains and properties that do not depend on the temperature. Neither assumption holds over large changes in temperature, and the following effects, roughly in order of how often they matter, make the problem nonlinear.</p>
+<ul>
+<li><strong>Properties that depend on temperature.</strong> The stiffness, the coefficient of expansion, the conductivity, and the strength all change with temperature. Structural steel at 600 °C, as in a building fire, retains only about half of its yield strength. A conductivity that depends on the temperature makes the heat equation itself nonlinear.</li>
+<li><strong>Radiation.</strong> Heat lost by radiation from a surface is proportional to <span class="math inline">\(T^4 - T_\infty^4\)</span>, with absolute temperatures, which is a nonlinear boundary condition. It dominates in fires, furnaces, and spacecraft.</li>
+<li><strong>Thermal buckling.</strong> A restrained member that is heated is compressed by <span class="math inline">\(E\,\alpha\,\Delta T\)</span>, and a slender one buckles when that reaches its buckling load. A steel rod 2 m long and 20 mm in diameter, pinned at both ends, buckles after a rise of only 5.1 °C. Railway tracks and thin plates buckle in the same way, and the analysis needs the geometrically nonlinear theory of large displacements.</li>
+<li><strong>Plasticity and creep.</strong> A large or repeated thermal stress can yield the material, which leaves residual stresses after it cools, as in welds and quenched parts, and repeated cycles can cause thermal fatigue, as in the solder joints of electronic circuit boards. At high temperatures, creep slowly relaxes thermal stresses.</li>
+<li><strong>Large deformations.</strong> When the strains are large, the thermal expansion is combined with the elastic deformation by multiplication of the deformation gradients, rather than by adding strains.</li>
+</ul>
+<p>Each of these is solved incrementally, in steps of load or time with Newton iterations within each step, in the same way as other nonlinear problems. Their details are beyond the scope of this course.</p>
+</section>
+<section id="summary" class="level2" data-number="31.7">
+<h2 data-number="31.7" class="anchored" data-anchor-id="summary"><span class="header-section-number">31.7</span> Summary</h2>
+<ul>
+<li>A change in temperature <span class="math inline">\(\Delta T\)</span> from the stress-free temperature causes a thermal strain <span class="math inline">\(\alpha\,\Delta T\)</span> in every direction, and Hooke’s law relates the stress to the total strain minus the thermal strain, <span class="math inline">\(\underline{\sigma} = \underline{\underline{D}}\left(\underline{\epsilon} - \underline{\epsilon}^{\theta}\right)\)</span>. In plane stress the in-plane thermal strain is <span class="math inline">\(\alpha\,\Delta T\)</span>, and in plane strain it is <span class="math inline">\((1 + \nu)\,\alpha\,\Delta T\)</span>.</li>
+<li>A body that is free to move is stressed by a temperature only if the thermal strain is incompatible. In a plate without holes, that requires a temperature that does not satisfy steady heat conduction without sources. Thermal stresses come from redundant supports, heat sources, changing temperatures, heat flowing around holes, and bonded materials with different coefficients.</li>
+<li>In the finite element method, the thermal strain adds <span class="math inline">\(\int \underline{\underline{B}}_a^T\,\underline{\underline{D}}\,\underline{\epsilon}^{\theta}\,d\Omega\)</span> to the element force vector, and the stresses subtract it. With one-way coupling, the heat problem is solved first and its temperatures load the elasticity problem.</li>
+<li>The displacement should be interpolated with one degree more than the temperature, or a free body under a linear temperature shows spurious stress.</li>
+<li>The deformation also changes the temperature, through a term that contains the rate of volume change. It vanishes in steady states and is small for most structural metals, which is why one-way coupling is usually adequate. Reverse one-way coupling describes thermoelastic stress measurement and damping, and two-way coupling is needed for friction, contact with gaps, and heating by fast plastic deformation.</li>
+<li>Temperature-dependent properties, radiation, thermal buckling, plasticity, creep, and large deformations make thermoelasticity nonlinear.</li>
+</ul>
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+<nav class="page-navigation column-body" aria-label="Page">
+  <div class="nav-page nav-page-previous">
+      <a href="../chapters/30_Class.html" class="pagination-link" aria-label="Class 30: Convergence and Volumetric Locking">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">30</span>&nbsp; <span class="chapter-title">Class 30: Convergence and Volumetric Locking</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../chapters/3_Support_FunctionSpaces.html" class="pagination-link" aria-label="Support: Norms and Function Spaces">
+        <span class="nav-page-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

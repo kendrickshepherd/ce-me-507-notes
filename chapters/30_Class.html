@@ -37,7 +37,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../chapters/3_Support_FunctionSpaces.html" rel="next">
+<link href="../chapters/31_Class.html" rel="next">
 <link href="../chapters/29_Class.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -365,6 +365,12 @@ window.Quarto = {
   <div class="sidebar-item-container"> 
   <a href="../chapters/30_Class.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text"><span class="chapter-number">30</span>&nbsp; <span class="chapter-title">Class 30: Convergence and Volumetric Locking</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/31_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Class 31: Thermoelasticity</span></span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
@@ -1245,7 +1251,8 @@ Figure&nbsp;30.5: The cantilever at <span class="math inline">\(\nu = 0.49999\)<
 <li>With full quadrature, degree-1 elements have more such constraints than unknowns, and they lock: they are far too stiff until the mesh is very fine. The rate is unchanged, but the asymptotic range begins only at elements roughly <span class="math inline">\(\sqrt{\mu/\lambda}\)</span> times the size of the body.</li>
 <li>Locking can look like convergence. In the cantilever, the computed deflection changes by only a few percent under refinement while remaining at about a quarter of the exact value, and the code still passes a verification test at <span class="math inline">\(\nu = 0.3\)</span>. Comparing against a different element, varying <span class="math inline">\(\nu\)</span>, and looking for oscillating volumetric stresses are practical checks.</li>
 <li>Refining the mesh helps slowly, raising the degree helps much more, and selective reduced integration, the B-bar method, and mixed methods remove volumetric locking. Plane stress does not lock.</li>
-<li>Shear locking and membrane locking arise in the same way in beams, plates, and shells, and are left to a treatment of those theories.</li>
+<li>Shear locking and membrane locking also arise in beams, plates, and shells, and are left to be addressed in those theories.</li>
+<li>Further reading can be found in Hughes Chapter 4.</li>
 </ul>
 
 
@@ -1735,8 +1742,8 @@ Figure&nbsp;30.5: The cantilever at <span class="math inline">\(\nu = 0.49999\)<
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../chapters/3_Support_FunctionSpaces.html" class="pagination-link" aria-label="Support: Norms and Function Spaces">
-        <span class="nav-page-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Support: Norms and Function Spaces</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../chapters/31_Class.html" class="pagination-link" aria-label="Class 31: Thermoelasticity">
+        <span class="nav-page-text"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Class 31: Thermoelasticity</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
