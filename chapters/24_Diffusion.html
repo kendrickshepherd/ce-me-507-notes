@@ -49,7 +49,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-cb76554c71210f48e098573b9225a2ca.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-60cafddc114efd3af86710cd1b8ffebd.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -371,6 +371,24 @@ window.Quarto = {
   <div class="sidebar-item-container"> 
   <a href="../chapters/31_Class.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Class 31: Thermoelasticity</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/32_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">32</span>&nbsp; <span class="chapter-title">Class 32: An Excavation, by the Poisson Equation and by Elasticity</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/33_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">33</span>&nbsp; <span class="chapter-title">Class 33: Time-Dependent Problems and the Semi-Discrete Method</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/34_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">34</span>&nbsp; <span class="chapter-title">Class 34: Time Stepping for the Heat Equation</span></span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
@@ -730,7 +748,7 @@ Table&nbsp;2: The flux through a 20 mm tear on successively finer meshes.
 a_{eff} = L\,\frac{K(m)}{K(1 - m)} , \qquad m = 1 - e^{-\pi a/L} ,
 \]</span></p>
 <p>where <span class="math inline">\(K\)</span> is the complete elliptic integral of the first kind. It gives 374.8 mm for the 20 mm tear and 257.1 mm for the 2 mm tear, and the finite element values used on this page are larger by 0.11% and 0.16%. They are larger, not smaller, because with the concentration prescribed on the tear the flux is proportional to the energy of the solution, <span class="math inline">\(Q\,c_0 = \int_A nD\,|\nabla c|^2\,dA\)</span>, and a finite element solution never has less energy than the exact one (<a href="../chapters/23_Class.html">Class 23</a>).</p></li>
-<li><p><strong>Balance of mass.</strong> The flux entering through the tear equals the flux leaving into the drainage layer to within a relative difference of 8 × 10⁻¹².</p></li>
+<li><p><strong>Balance of mass.</strong> The flux entering through the tear equals the flux leaving into the drainage layer to within a relative difference of 10⁻¹¹.</p></li>
 <li><p><strong>A one-dimensional limit.</strong> If the tear is as wide as the cell, so that there is effectively no geomembrane, the problem is one-dimensional and <span class="math inline">\(a_{eff}\)</span> must equal the width of the cell, 6 m. The same code gives 6.000000 m.</p></li>
 <li><p><strong>Bounds.</strong> The flux through the tear must be larger than the flux straight down through the tear’s own width, and smaller than the flux through a liner with no geomembrane, so that <span class="math inline">\(a &lt; a_{eff} &lt; 6\)</span> m, which every computed value satisfies.</p></li>
 <li><p><strong>The spacing of tears.</strong> Changing the distance between tears from 3 m to 6 m to 12 m changes <span class="math inline">\(a_{eff}\)</span> by less than 0.04%, so the tears do not interact at this spacing and the result applies to an isolated tear.</p></li>

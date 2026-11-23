@@ -49,7 +49,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-cb76554c71210f48e098573b9225a2ca.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-60cafddc114efd3af86710cd1b8ffebd.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -371,6 +371,24 @@ window.Quarto = {
   <div class="sidebar-item-container"> 
   <a href="../chapters/31_Class.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">31</span>&nbsp; <span class="chapter-title">Class 31: Thermoelasticity</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/32_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">32</span>&nbsp; <span class="chapter-title">Class 32: An Excavation, by the Poisson Equation and by Elasticity</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/33_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">33</span>&nbsp; <span class="chapter-title">Class 33: Time-Dependent Problems and the Semi-Discrete Method</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../chapters/34_Class.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">34</span>&nbsp; <span class="chapter-title">Class 34: Time Stepping for the Heat Equation</span></span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
@@ -725,7 +743,7 @@ Figure&nbsp;5: The vertical force per unit length that the membrane applies to o
 <h2 class="anchored" data-anchor-id="checks">Checks</h2>
 <ul>
 <li><strong>A problem with a known answer.</strong> Without the boss, the deflection at the center of a square membrane has an exact series solution, 0.73671 μm. The finite element values are 0.73728 μm with bilinear elements and 0.73671 μm with biquadratic elements for the mesh provided.</li>
-<li><strong>Balance of forces.</strong> The force on the frame equals the total pressure force to within a relative difference of 2 × 10⁻¹³.</li>
+<li><strong>Balance of forces.</strong> The force on the frame equals the total pressure force to within a relative difference of 3 × 10⁻¹³.</li>
 <li><strong>Refinement.</strong> The deflection of the boss is 0.5975, 0.5977, and 0.5978 μm on three successive meshes.</li>
 <li><strong>The assumptions of the model.</strong> The largest slope is 0.0034, so the small-slope assumption holds easily, except right at the corners of the boss (see below). Stretching the film by this deflection adds a tension of only about <span class="math inline">\(E\,t\,(w/(a/2))^2 \approx\)</span> 0.27 N/m to the built-in 100 N/m, so the tension is effectively unchanged. The bending stiffness of the film, <span class="math inline">\(D = E t^3/(12(1-\nu^2))\)</span>, is 2.8 × 10⁻⁵ times <span class="math inline">\(S\,a^2\)</span>, so bending is negligible.</li>
 </ul>
