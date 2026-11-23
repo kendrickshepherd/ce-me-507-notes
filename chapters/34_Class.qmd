@@ -1,0 +1,646 @@
+---
+title: "Class 34: Time Stepping for the Heat Equation"
+subtitle: "Forward Euler, Crank–Nicolson, and backward Euler for the semi-discrete heat equation, their stability and accuracy, and a brief look at elastodynamics"
+execute:
+  echo: false
+  message: false
+  warning: false
+  error: false
+  fig-show: true
+format:
+  html:
+    page-layout: full
+    toc: true
+---
+
+```{python setup}
+#| echo: false
+#| output: false
+import sys
+sys.path.append('python')
+import math
+import numpy as np
+from notes_style import use_chapter, save
+import c34_time as C34
+IMGDIR = use_chapter("Class34")
+
+fig_amp_path = save(C34.fig_amplification(), "C34_Fig1_Amplification.png")
+f, conv = C34.fig_convergence()
+fig_conv_path = save(f, "C34_Fig2_Convergence.png")
+f, snaps, dtc1 = C34.fig_snapshots()
+fig_snap_path = save(f, "C34_Fig3_Snapshots.png")
+f, dtc_bar, wmax_bar = C34.fig_dynamics()
+fig_dyn_path = save(f, "C34_Fig4_Dynamics.png")
+fig_damp_path = save(C34.fig_damping(), "C34_Fig5_Damping.png")
+
+# numbers quoted in the text
+lam1, lam2 = C34.lambda_max(1), C34.lambda_max(2)
+dtc2 = 2 / lam2
+SUP = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
+def sci(v):
+    m, e = ("%.2e" % v).split("e")
+    return "%s × 10%s" % (m, str(int(e)).translate(SUP))
+rate = lambda key: np.log2(conv[key][1][:-1] / conv[key][1][1:])
+rate_cn = np.median(rate(("semi-discrete", "Crank–Nicolson")))
+rate_be = np.median(rate(("semi-discrete", "backward Euler")))
+```
+
+In [Class 33](33_Class.qmd), the heat equation was discretized in space only.
+The result, the **semi-discrete** equations,
+
+$$
+\underline{\underline{M}}\,\dot{\underline{d}} + \underline{\underline{K}}\,\underline{d} = \underline{F},
+\qquad \underline{d}(0) = \underline{d}_0 ,
+$$
+
+is a system of ordinary differential equations in time, one for each unknown nodal temperature.
+The stiffness matrix $\underline{\underline{K}}$ and the force vector $\underline{F}$ are those of Classes 19 to 25, and the **mass matrix** $\underline{\underline{M}}$, also called the capacity matrix, is assembled from the element matrices $m^e_{ab} = \int_{\Omega^e} \rho\,c\,N_a\,N_b\,d\Omega$, where $\rho$ is the density and $c$ the specific heat.
+This class integrates the semi-discrete equations step by step in time, as in Hughes Chapter 8, and examines when the result is stable and how accurate it is.
+It ends with a brief look at the corresponding methods for elastodynamics, where the time derivative is of second order.
+
+## A family of methods
+
+Divide time into steps of length $\Delta t$, with $t_n = n\,\Delta t$, and let $\underline{d}_n$ approximate $\underline{d}(t_n)$.
+The time derivative that multiplies $\underline{\underline{M}}$ is replaced by a difference quotient, and the other terms are evaluated at a weighted average of the two ends of the step:
+
+$$
+\underline{\underline{M}}\,\frac{\underline{d}_{n+1} - \underline{d}_n}{\Delta t}
++ \underline{\underline{K}}\left((1 - \alpha)\,\underline{d}_n + \alpha\,\underline{d}_{n+1}\right)
+= (1 - \alpha)\,\underline{F}_n + \alpha\,\underline{F}_{n+1} ,
+$$
+
+where $0 \leq \alpha \leq 1$.
+Collecting the unknown $\underline{d}_{n+1}$ on the left gives the equation solved at each step,
+
+$$
+\left(\underline{\underline{M}} + \alpha\,\Delta t\,\underline{\underline{K}}\right)\underline{d}_{n+1}
+= \left(\underline{\underline{M}} - (1 - \alpha)\,\Delta t\,\underline{\underline{K}}\right)\underline{d}_n
++ \Delta t\left((1 - \alpha)\,\underline{F}_n + \alpha\,\underline{F}_{n+1}\right) .
+$$
+
+Hughes calls this the generalized trapezoidal method.
+Three choices of $\alpha$ have their own names.
+
+| $\alpha$ | Method | The rest of the equation is evaluated | Type |
+|:--|:--|:--|:--|
+| 0 | **forward Euler** | at the start of the step | explicit |
+| $\tfrac{1}{2}$ | **Crank–Nicolson**, or the trapezoidal rule | at the average of the two ends, so the difference quotient is a central difference about $t_{n+1/2}$ | implicit |
+| 1 | **backward Euler** | at the end of the step | implicit |
+
+: Three members of the generalized trapezoidal family. {#tbl-c34-methods}
+
+With $\alpha = 0$, the matrix on the left is $\underline{\underline{M}}$ alone, and the method is called **explicit**.
+If $\underline{\underline{M}}$ is replaced by a diagonal, or lumped, mass matrix, whose diagonal holds the sums of the rows of the consistent one, each step costs only a few operations per node, with no system of equations to solve.
+For $\alpha > 0$, the method is **implicit**: each step requires solving a system with the matrix $\underline{\underline{M}} + \alpha\,\Delta t\,\underline{\underline{K}}$.
+When $\Delta t$ is constant, that matrix is factored once, and each step costs a forward and a backward substitution.
+
+Hughes writes the same method with a second vector, $\underline{v}_n$, which approximates $\dot{\underline{d}}(t_n)$, the rate of change of the nodal temperatures:
+
+$$
+\underline{\underline{M}}\,\underline{v}_{n+1} + \underline{\underline{K}}\,\underline{d}_{n+1} = \underline{F}_{n+1} ,
+\qquad
+\underline{d}_{n+1} = \underline{d}_n + \Delta t\left((1 - \alpha)\,\underline{v}_n + \alpha\,\underline{v}_{n+1}\right) ,
+$$
+
+with $\underline{v}_0$ found from $\underline{\underline{M}}\,\underline{v}_0 = \underline{F}_0 - \underline{\underline{K}}\,\underline{d}_0$.
+The first equation then holds at every step, so $\underline{\underline{M}}\,\underline{v}_n = \underline{F}_n - \underline{\underline{K}}\,\underline{d}_n$ for every $n$.
+Multiplying the second equation by $\underline{\underline{M}}$ and replacing $\underline{\underline{M}}\,\underline{v}_n$ and $\underline{\underline{M}}\,\underline{v}_{n+1}$ in this way eliminates the velocity and gives the equation solved at each step above.
+The two forms therefore give the same temperatures.
+The form above is a single operation on the nodal temperatures: $\underline{d}_{n+1}$ is computed from $\underline{d}_n$ and the forces, and nothing else is carried from one step to the next.
+
+## Stability
+
+### One mode at a time
+
+The behavior of these methods is clearest one mode at a time.
+The generalized eigenvalue problem
+
+$$
+\underline{\underline{K}}\,\underline{\psi}_k = \lambda_k\,\underline{\underline{M}}\,\underline{\psi}_k ,
+\qquad 0 < \lambda_1 \leq \lambda_2 \leq \cdots \leq \lambda^h_{n_{eq}} ,
+$$
+
+has $n_{eq}$ eigenvalues, one for each equation, and its eigenvectors are orthogonal with respect to both $\underline{\underline{M}}$ and $\underline{\underline{K}}$.
+Writing $\underline{d} = \sum_k y_k\,\underline{\psi}_k$, with $\underline{F} = \underline{0}$, separates the semi-discrete equations into one equation for each mode,
+
+$$
+\dot{y}_k + \lambda_k\,y_k = 0, \qquad y_k(t) = y_k(0)\,e^{-\lambda_k t} .
+$$
+
+Each mode decays at its own rate.
+The low modes vary smoothly over the body and decay slowly, and the high modes vary from node to node and decay quickly.
+
+Applying the method to one mode gives $y_{n+1} = A\,y_n$, where the **amplification factor** is
+
+$$
+A(\lambda\,\Delta t) = \frac{1 - (1 - \alpha)\,\lambda\,\Delta t}{1 + \alpha\,\lambda\,\Delta t} ,
+$$
+
+compared with the exact factor $e^{-\lambda\,\Delta t}$ over one step (@fig-c34-amp).
+After $n$ steps, the mode has been multiplied by $A^n$, so the method is **stable** when $|A| \leq 1$ for every mode.
+Since $\lambda\,\Delta t > 0$, $A$ is always less than 1, and $A \geq -1$ requires $(1 - 2\alpha)\,\lambda\,\Delta t \leq 2$.
+This gives the stability conditions:
+
+$$
+\boxed{\;
+\alpha \geq \tfrac{1}{2}: \ \text{stable for every } \Delta t ;
+\qquad
+\alpha < \tfrac{1}{2}: \ \text{stable when } \lambda^h_{n_{eq}}\,\Delta t < \frac{2}{1 - 2\alpha} .
+\;}
+$$
+
+Crank–Nicolson and backward Euler are **unconditionally stable**.
+Forward Euler is **conditionally stable**: it requires $\Delta t < \Delta t_{cr} = 2/\lambda^h_{n_{eq}}$, set by the largest eigenvalue.
+
+![The amplification factor $A$ over one step, against $\lambda\,\Delta t$, for the three methods, and the exact factor $e^{-\lambda\,\Delta t}$. The shaded band is $|A| \leq 1$. Forward Euler leaves it at $\lambda\,\Delta t = 2$. Crank–Nicolson stays in it but approaches $-1$ for large $\lambda\,\Delta t$, and backward Euler approaches 0.](`{python} fig_amp_path`){#fig-c34-amp width=80%}
+
+### The size of the largest eigenvalue
+
+For a uniform mesh of linear elements in one dimension, with the diffusivity $D = \kappa/(\rho\,c)$, the largest eigenvalue is about $12D/h^2$ with the consistent mass matrix and $4D/h^2$ with the lumped one.
+For bilinear elements in two dimensions, it is about twice as large.
+The critical step of forward Euler is therefore about $h^2/(6D)$ with the consistent mass and $h^2/(2D)$ with the lumped mass, so halving the element size divides the allowed time step by four.
+For the meshes used below, with $D = 1$ on the unit interval or the unit square, $\Delta t_{cr}$ is `{python} sci(dtc1)` for 20 linear elements and `{python} sci(dtc2)` for 16 × 16 bilinear elements.
+For diffusion problems on fine meshes, this restriction usually makes implicit methods cheaper overall, even though each of their steps costs more.
+
+An unstable method does not fail immediately.
+The modes that grow are the highest ones, and a smooth initial temperature contains them only at the level of roundoff error.
+They grow by a factor $|A|$ at every step, and the solution can look reasonable for many steps before they take over.
+
+### Oscillation
+
+$A$ is negative when $\lambda\,\Delta t > 1/(1 - \alpha)$, and a mode with a negative $A$ changes sign at every step.
+For Crank–Nicolson, this happens when $\lambda\,\Delta t > 2$, and as $\lambda\,\Delta t$ grows, $A$ approaches $-1$, so the high modes alternate in sign and decay only slowly.
+With a large time step and a temperature that has sharp features, Crank–Nicolson therefore oscillates from node to node near those features, although it remains stable.
+Backward Euler has $0 < A < 1$ for every $\lambda\,\Delta t$, so it never oscillates, and it damps the high modes strongly; with a large step, it damps the low modes too much, and the temperature lags behind the exact one.
+
+## Accuracy
+
+For small $\lambda\,\Delta t$, the amplification factor matches $e^{-\lambda\,\Delta t}$ through the first power of $\lambda\,\Delta t$ for every $\alpha$, and through the second power only for $\alpha = \tfrac{1}{2}$.
+The error in time is therefore of first order in $\Delta t$ for forward and backward Euler, and of second order for Crank–Nicolson.
+@fig-c34-conv shows this for a smooth initial temperature, $\sin(\pi x)$, on 20 elements.
+Measured against the exact solution of the semi-discrete equations, which has no error in time (b), the rates are `{python} "%.2f" % rate_cn` for Crank–Nicolson and `{python} "%.2f" % rate_be` for backward Euler, and forward Euler, where it is stable, has nearly the same error as backward Euler.
+Measured against the analytical solution of the heat equation (a), each curve levels off at the spatial error of the mesh, about $10^{-3}$, which no time step can remove.
+The total error is the sum of the error in space and the error in time, and the two must be reduced together.
+
+![The largest nodal error at $t = 0.1$ for the initial temperature $\sin(\pi x)$ on 20 linear elements, against the time step. (a) Against the analytical solution of the heat equation: every method levels off at the spatial error of the mesh. The dip in backward Euler is where its error in time, which slows the decay, cancels the error in space, which speeds it. (b) Against the solution of the semi-discrete equations that is exact in time: backward and forward Euler converge at the rate 1, and Crank–Nicolson at the rate 2. Forward Euler appears only for steps below its limit.](`{python} fig_conv_path`){#fig-c34-conv width=100%}
+
+@fig-c34-snap shows the three behaviors for an initial temperature with sharp edges: a block at 1 in the middle of the interval, at 0 elsewhere.
+Forward Euler just below its limit (a) follows the exact solution, and just above it, a zigzag from node to node grows at every step.
+One large step of Crank–Nicolson (b) overshoots and undershoots at the edges of the block.
+One large step of backward Euler (c) is smooth, but the block has not cooled as much as it should.
+
+![A block of temperature 1 on 20 linear elements, against the exact solution (dashed). (a) Forward Euler after 15 steps, just below and just above its limit $\Delta t_{cr}$. (b) Crank–Nicolson and (c) backward Euler after one step of $20\,\Delta t_{cr}$.](`{python} fig_snap_path`){#fig-c34-snap width=100%}
+
+## Time stepping, interactively
+
+The widget below integrates the heat equation with $D = 1$ on the unit interval with 20 linear elements, or on the unit square with 16 × 16 bilinear elements, with the temperature held at 0 on the boundary and the consistent mass matrix.
+It runs forward Euler, Crank–Nicolson, and backward Euler side by side with the same time step, and compares each with the analytical solution of the heat equation.
+
+- Choose one or two dimensions and the initial temperature: a smooth hump, $\sin(\pi x)$ or $\sin(\pi x)\sin(\pi y)$, which is a single mode, or a hot block, which contains every mode.
+- The slider sets the time step as a multiple of forward Euler's critical step $\Delta t_{cr} = 2/\lambda^h_{n_{eq}}$.
+- Press play to watch the solutions advance to $t = 0.1$ in real time, in about six seconds, or drag the time slider.
+  Each method shows its most recent step, so a large time step appears as a jump.
+- The lower panel shows the largest nodal error of each method against time, on a logarithmic scale.
+
+::: {html-table-processing="none"}
+```{=html}
+<style>
+.c34{--ink:#18202b;--grey:#6b7684;--faint:#dfe4ea;--paper:#f8f9fb;color:var(--ink)}
+.c34 .bar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:10px 14px;background:var(--paper);border:1px solid var(--faint);border-radius:8px;margin-bottom:10px}
+.c34 .grp{display:inline-flex;flex-wrap:wrap;gap:8px;align-items:center;margin-right:14px}
+.c34 .bar b{font-size:12px;letter-spacing:.05em;color:var(--grey);margin-right:2px}
+.c34 button{font:inherit;font-size:13px;padding:4px 10px;border:1px solid #c3c9d2;border-radius:6px;background:#fff;cursor:pointer;color:var(--ink)}
+.c34 button:hover{background:#eef1f5}
+.c34 button[aria-pressed="true"]{background:#18202b;color:#fff;border-color:#18202b}
+.c34 svg{display:block;width:100%;height:auto}
+.c34 .panel{border:1px solid var(--faint);border-radius:8px;background:#fff;padding:6px;margin-bottom:10px}
+.c34 .read{font-size:.88em;background:var(--paper);border:1px solid var(--faint);border-radius:8px;padding:9px 12px;line-height:1.6;margin-bottom:22px}
+.c34 input[type=range]{vertical-align:middle;width:180px}
+.c34 .val{font-family:monospace;font-size:12px;color:var(--grey);min-width:5em;display:inline-block}
+</style>
+<div class="c34" id="c34w">
+  <div class="bar">
+    <span class="grp"><b>DIMENSION</b>
+    <button data-dim="1">one</button>
+    <button data-dim="2">two</button></span>
+    <span class="grp"><b>INITIAL TEMPERATURE</b>
+    <button data-kind="smooth">a smooth hump</button>
+    <button data-kind="block">a hot block</button></span>
+  </div>
+  <div class="bar">
+    <span class="grp"><b>TIME STEP</b>
+    <input type="range" id="c34r" min="0" max="12" step="1" value="4" aria-label="Time step"><span class="val" id="c34rv"></span></span>
+    <span class="grp"><button id="c34play">▶ play</button><button id="c34reset">restart</button></span>
+    <span class="grp"><b>TIME</b>
+    <input type="range" id="c34t" min="0" max="1000" step="1" value="0" aria-label="Time"><span class="val" id="c34tv"></span></span>
+  </div>
+  <div class="panel"><svg id="c34field" viewBox="0 0 680 240" role="img" aria-label="The temperature computed by each method and the analytical temperature"></svg></div>
+  <div class="panel"><svg id="c34err" viewBox="0 0 680 200" role="img" aria-label="The largest nodal error of each method against time"></svg></div>
+  <div class="read" id="c34read"></div>
+</div>
+<script>
+// The heat equation, u_t = u_xx, with u = 0 on the boundary of the unit interval (20 linear
+// elements) or the unit square (16 x 16 bilinear elements), consistent mass, integrated by the
+// generalized trapezoidal method with alpha = 0, 1/2, 1.  Same data as c34_time.py.
+(function(){
+  const T = 0.1, NS = {1: 20, 2: 16};
+  const RS = [0.25, 0.5, 0.9, 1.01, 1.1, 1.5, 2.5, 5, 10, 20, 40, 80, 160];
+  const METH = [{name: "forward Euler", a: 0, color: "#c0392b"}, {name: "Crank–Nicolson", a: 0.5, color: "#1f6feb"},
+                {name: "backward Euler", a: 1, color: "#0d9488"}];
+  const st = {dim: 1, kind: "block", ri: 4, tau: 0, playing: false};
+
+  // ---------------------------------------------------------------- matrices
+  function oneD(n){ const h = 1/n; return {m: n - 1, h, Md: 4*h/6, Mo: h/6, Kd: 2/h, Ko: -1/h, x: Array.from({length: n - 1}, (_, i) => (i + 1)*h)}; }
+  const lmax1 = n => { const h = 1/n, c = Math.cos(Math.PI*h); return 6/(h*h)*(1 + c)/(2 - c); };
+  const tri = (d, o, i, k) => i === k ? d : Math.abs(i - k) === 1 ? o : 0;
+  function system(dim){
+    const n = NS[dim], o = oneD(n), m = o.m;
+    if (dim === 1) return {N: m, bw: 1, m, x: o.x, lmax: lmax1(n),
+      M: (p, q) => tri(o.Md, o.Mo, p, q), K: (p, q) => tri(o.Kd, o.Ko, p, q)};
+    const ij = p => [p % m, Math.floor(p/m)];
+    return {N: m*m, bw: m + 1, m, x: o.x, lmax: 2*lmax1(n),
+      M: (p, q) => { const [i, j] = ij(p), [k, l] = ij(q); return tri(o.Md, o.Mo, i, k)*tri(o.Md, o.Mo, j, l); },
+      K: (p, q) => { const [i, j] = ij(p), [k, l] = ij(q);
+        return tri(o.Kd, o.Ko, i, k)*tri(o.Md, o.Mo, j, l) + tri(o.Md, o.Mo, i, k)*tri(o.Kd, o.Ko, j, l); }};
+  }
+  function band(S, f){                                   // the upper band of a symmetric matrix, rows of width bw + 1
+    const w = S.bw + 1, A = new Float64Array(S.N*w);
+    for (let p=0;p<S.N;p++) for (let q=p;q<=Math.min(S.N - 1, p + S.bw);q++) A[p*w + q - p] = f(p, q);
+    return A;
+  }
+  function cholesky(A, N, bw){
+    const w = bw + 1;
+    for (let i=0;i<N;i++){
+      let s = A[i*w];
+      for (let k=Math.max(0, i - bw);k<i;k++){ const v = A[k*w + i - k]; s -= v*v; }
+      const d = Math.sqrt(s), jm = Math.min(N - 1, i + bw);
+      A[i*w] = d;
+      for (let j=i+1;j<=jm;j++){
+        let v = A[i*w + j - i];
+        for (let k=Math.max(0, j - bw);k<i;k++) v -= A[k*w + i - k]*A[k*w + j - k];
+        A[i*w + j - i] = v/d;
+      }
+    }
+  }
+  function solve(L, N, bw, b){
+    const w = bw + 1, y = new Float64Array(N), x = new Float64Array(N);
+    for (let i=0;i<N;i++){ let v = b[i]; for (let k=Math.max(0, i - bw);k<i;k++) v -= L[k*w + i - k]*y[k]; y[i] = v/L[i*w]; }
+    for (let i=N-1;i>=0;i--){ let v = y[i]; const jm = Math.min(N - 1, i + bw); for (let j=i+1;j<=jm;j++) v -= L[i*w + j - i]*x[j]; x[i] = v/L[i*w]; }
+    return x;
+  }
+  function symmul(B, N, bw, x){
+    const w = bw + 1, y = new Float64Array(N);
+    for (let p=0;p<N;p++){
+      y[p] += B[p*w]*x[p];
+      for (let q=p+1;q<=Math.min(N - 1, p + bw);q++){ const v = B[p*w + q - p]; y[p] += v*x[q]; y[q] += v*x[p]; }
+    }
+    return y;
+  }
+
+  // ---------------------------------------------------- the analytical solution
+  function edges(n){ const h = 1/n; return [Math.ceil(0.3/h - 1e-9)*h - h/2, Math.floor(0.7/h + 1e-9)*h + h/2]; }
+  function exact1(kind, xs, t, n){
+    if (kind === "smooth") return xs.map(x => Math.sin(Math.PI*x)*Math.exp(-Math.PI*Math.PI*t));
+    const [a, b] = edges(n);
+    if (t === 0) return xs.map(x => x > a && x < b ? 1 : (x === a || x === b ? 0.5 : 0));     // the block itself
+    const out = new Array(xs.length).fill(0);
+    for (let k=1;k<=400;k++){
+      const e = 2/(k*Math.PI)*(Math.cos(k*Math.PI*a) - Math.cos(k*Math.PI*b))*Math.exp(-k*k*Math.PI*Math.PI*t);
+      if (Math.abs(e) < 1e-15) continue;
+      for (let i=0;i<xs.length;i++) out[i] += e*Math.sin(k*Math.PI*xs[i]);
+    }
+    return out;
+  }
+  function exactNodes(S, t){
+    const u = exact1(st.kind, S.x, t, NS[st.dim]);
+    if (st.dim === 1) return u;
+    const out = new Array(S.N);
+    for (let j=0;j<S.m;j++) for (let i=0;i<S.m;i++) out[i + S.m*j] = u[i]*u[j];
+    return out;
+  }
+
+  // ----------------------------------------------------------------- runs
+  let cacheKey = null, R = null;
+  function compute(){
+    const key = [st.dim, st.kind, st.ri].join("|");
+    if (key === cacheKey) return R;
+    const S = system(st.dim), dt = RS[st.ri]*2/S.lmax, nsteps = Math.ceil(T/dt - 1e-9);
+    const d0 = exactNodes(S, 0).map(v => v);
+    if (st.kind === "block"){                              // the nodal values of the block
+      const [a, b] = edges(NS[st.dim]), inb = x => x > a && x < b ? 1 : 0;
+      for (let p=0;p<S.N;p++){ const i = p % S.m, j = Math.floor(p/S.m); d0[p] = st.dim === 1 ? inb(S.x[p]) : inb(S.x[i])*inb(S.x[j]); }
+    }
+    const ex = [];
+    for (let k=0;k<=nsteps;k++) ex.push(exactNodes(S, k*dt));
+    const runs = METH.map(me => {
+      const L = band(S, (p, q) => S.M(p, q) + me.a*dt*S.K(p, q)), B = band(S, (p, q) => S.M(p, q) - (1 - me.a)*dt*S.K(p, q));
+      cholesky(L, S.N, S.bw);
+      const d = [Float64Array.from(d0)], err = [];
+      for (let k=0;k<=nsteps;k++){
+        if (k > 0){
+          const prev = d[k - 1];
+          let big = 0; for (const v of prev) big = Math.max(big, Math.abs(v));
+          d.push(big > 1e30 ? prev : solve(L, S.N, S.bw, symmul(B, S.N, S.bw, prev)));
+        }
+        let e = 0; for (let p=0;p<S.N;p++) e = Math.max(e, Math.abs(d[k][p] - ex[k][p]));
+        err.push(e);
+      }
+      return {d, err};
+    });
+    R = {S, dt, nsteps, runs, ex};
+    cacheKey = key;
+    return R;
+  }
+
+  // ---------------------------------------------------------------- drawing
+  const el = (tag, a, inner) => `<${tag} ${Object.entries(a).map(([k, v]) => `${k}="${v}"`).join(" ")}>${inner || ""}</${tag}>`;
+  function ramp(stops){
+    return v => {
+      v = Math.max(0, Math.min(1, v));
+      const n = stops.length - 1, k = Math.min(n - 1, Math.floor(v*n)), f = v*n - k, a = stops[k], b = stops[k + 1];
+      return `rgb(${[0, 1, 2].map(i => Math.round(a[i] + f*(b[i] - a[i]))).join(",")})`;
+    };
+  }
+  const div = ramp([[33,102,172],[103,169,207],[209,229,240],[247,247,247],[253,219,199],[239,138,98],[178,24,43]]);
+  const SUPS = {"-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹"};
+  const sciTxt = v => {
+    if (!isFinite(v) || v > 1e30) return "∞";
+    if (v === 0) return "0";
+    const [m, e] = v.toExponential(1).split("e"), ex = String(+e);
+    return ex === "0" ? m : `${m} × 10${ex.split("").map(c => SUPS[c]).join("")}`;
+  };
+  const sup = s => s;
+
+  function stepAt(R){ return Math.min(R.nsteps, Math.floor(st.tau/R.dt + 1e-9)); }
+
+  function drawField(R, k){
+    const o = [], S = R.S;
+    if (st.dim === 1){
+      const W = 196, H = 160, top = 34, lo = -0.6, hi = 1.3;
+      const xs = Array.from({length: 201}, (_, i) => i/200), ue = exact1(st.kind, xs, k*R.dt, NS[1]);
+      METH.forEach((me, m) => {
+        const x0 = 22 + m*222, X = x => x0 + W*x, Y = v => top + H*(hi - Math.max(lo - 0.05, Math.min(hi + 0.05, v)))/(hi - lo);
+        o.push(el("text", {x: x0, y: 18, "font-size": 13, "font-weight": 600, fill: me.color}, me.name));
+        o.push(el("rect", {x: x0, y: top, width: W, height: H, fill: "none", stroke: "#dfe4ea"}));
+        o.push(el("line", {x1: x0, y1: Y(0), x2: x0 + W, y2: Y(0), stroke: "#c8ced6", "stroke-width": 0.8}));
+        [0, 1].forEach(v => o.push(el("text", {x: x0 - 4, y: Y(v) + 4, "text-anchor": "end", "font-size": 10, fill: "#6b7684"}, v)));
+        o.push(el("polyline", {points: xs.map((x, i) => `${X(x).toFixed(1)},${Y(ue[i]).toFixed(1)}`).join(" "), fill: "none", stroke: "#18202b", "stroke-width": 1.2, "stroke-dasharray": "5 3"}));
+        const d = R.runs[m].d[k], pts = [[0, 0], ...S.x.map((x, i) => [x, d[i]]), [1, 0]];
+        o.push(el("polyline", {points: pts.map(([x, v]) => `${X(x).toFixed(1)},${Y(v).toFixed(1)}`).join(" "), fill: "none", stroke: me.color, "stroke-width": 1.8}));
+        pts.forEach(([x, v]) => o.push(el("circle", {cx: X(x).toFixed(1), cy: Y(v).toFixed(1), r: 2.2, fill: me.color})));
+        let big = 0; for (const v of d) big = Math.max(big, Math.abs(v));
+        if (big > 1.5) o.push(el("text", {x: x0 + W/2, y: top + H + 18, "text-anchor": "middle", "font-size": 11.5, fill: "#b8322a", "font-weight": 600}, `largest value ${sciTxt(big)}: unstable`));
+      });
+      o.push(el("text", {x: 22, y: 232, "font-size": 11, fill: "#6b7684"}, "dashed: the analytical solution"));
+    } else {
+      const C = 140, top = 30, m = S.m, n = NS[2], cs = C/n;
+      const ue = exactNodes(S, k*R.dt);
+      const panels = [{name: "analytical", color: "#18202b", d: ue}, ...METH.map((me, i) => ({name: me.name, color: me.color, d: R.runs[i].d[k]}))];
+      panels.forEach((P, q) => {
+        const x0 = 22 + q*166, val = (i, j) => (i < 1 || j < 1 || i > m || j > m) ? 0 : P.d[(i - 1) + m*(j - 1)];
+        o.push(el("text", {x: x0, y: 18, "font-size": 12.5, "font-weight": 600, fill: P.color}, P.name));
+        for (let j=0;j<n;j++) for (let i=0;i<n;i++){
+          const v = 0.25*(val(i, j) + val(i + 1, j) + val(i, j + 1) + val(i + 1, j + 1));
+          o.push(el("rect", {x: (x0 + i*cs).toFixed(1), y: (top + (n - 1 - j)*cs).toFixed(1), width: (cs + 0.4).toFixed(2), height: (cs + 0.4).toFixed(2), fill: div(0.5 + 0.5*v)}));
+        }
+        o.push(el("rect", {x: x0, y: top, width: C, height: C, fill: "none", stroke: "#8b94a1"}));
+        let big = 0; for (const v of P.d) big = Math.max(big, Math.abs(v));
+        if (big > 1.5) o.push(el("text", {x: x0 + C/2, y: top + C + 18, "text-anchor": "middle", "font-size": 11.5, fill: "#b8322a", "font-weight": 600}, `largest ${sciTxt(big)}: unstable`));
+      });
+      for (let i=0;i<50;i++) o.push(el("rect", {x: 22 + i*3, y: 220, width: 3.2, height: 8, fill: div(i/49)}));
+      o.push(el("text", {x: 22, y: 215, "font-size": 11, fill: "#6b7684"}, "temperature, −1 to 1"));
+    }
+    document.getElementById("c34field").innerHTML = o.join("");
+  }
+
+  function drawErr(R, k){
+    const o = [], L = 64, Rt = 560, top = 14, B = 168, LO = -5, HI = 1;
+    const X = t => L + (Rt - L)*t/T, Y = e => B - (B - top)*(Math.log10(Math.max(Math.min(e, 10**HI), 10**LO)) - LO)/(HI - LO);
+    for (let p=LO;p<=HI;p++){
+      o.push(el("line", {x1: L, y1: Y(10**p), x2: Rt, y2: Y(10**p), stroke: "#eef0f3"}));
+      o.push(el("text", {x: L - 6, y: Y(10**p) + 4, "text-anchor": "end", "font-size": 10.5, fill: "#6b7684"}, p === 0 ? "1" : p === 1 ? "10" : `10${"⁻"}${"⁰¹²³⁴⁵⁶⁷⁸⁹"[-p]}`));
+    }
+    o.push(el("line", {x1: L, y1: B, x2: Rt, y2: B, stroke: "#59636e"}), el("line", {x1: L, y1: top, x2: L, y2: B, stroke: "#59636e"}));
+    for (const t of [0, 0.025, 0.05, 0.075, 0.1]) o.push(el("text", {x: X(t), y: B + 15, "text-anchor": "middle", "font-size": 10.5, fill: "#6b7684"}, t));
+    o.push(el("text", {x: (L + Rt)/2, y: B + 30, "text-anchor": "middle", "font-size": 11.5, fill: "#42506a"}, "time t"));
+    o.push(el("text", {x: 14, y: (top + B)/2, "text-anchor": "middle", "font-size": 11.5, fill: "#42506a", transform: `rotate(-90 14 ${(top + B)/2})`}, "largest nodal error"));
+    METH.forEach((me, m) => {
+      const e = R.runs[m].err, pts = e.map((v, i) => `${X(Math.min(T, i*R.dt)).toFixed(1)},${Y(v).toFixed(1)}`);
+      o.push(el("polyline", {points: pts.join(" "), fill: "none", stroke: me.color, "stroke-width": 1.8}));
+      o.push(el("text", {x: Rt + 8, y: 40 + 22*m, "font-size": 12, fill: me.color, "font-weight": 600}, me.name));
+    });
+    o.push(el("line", {x1: X(Math.min(T, k*R.dt)), y1: top, x2: X(Math.min(T, k*R.dt)), y2: B, stroke: "#18202b", "stroke-dasharray": "3 3"}));
+    document.getElementById("c34err").innerHTML = o.join("");
+  }
+
+  function render(){
+    document.querySelectorAll("#c34w [data-dim]").forEach(b => b.setAttribute("aria-pressed", +b.dataset.dim === st.dim ? "true" : "false"));
+    document.querySelectorAll("#c34w [data-kind]").forEach(b => b.setAttribute("aria-pressed", b.dataset.kind === st.kind ? "true" : "false"));
+    const R = compute(), k = stepAt(R), r = RS[st.ri];
+    document.getElementById("c34rv").textContent = `${r} Δt_cr`;
+    document.getElementById("c34tv").textContent = `t = ${st.tau.toFixed(4)}`;
+    document.getElementById("c34t").value = Math.round(1000*st.tau/T);
+    document.getElementById("c34play").textContent = st.playing ? "❚❚ pause" : "▶ play";
+    drawField(R, k);
+    drawErr(R, k);
+    const errs = R.runs.map(run => run.err[k]);
+    document.getElementById("c34read").innerHTML =
+      `Δt = ${r} Δt<sub>cr</sub> = ${sup(sciTxt(R.dt))}, so λ<sub>max</sub> Δt = ${(2*r).toFixed(r < 1 ? 2 : 1)}. ` +
+      `Step ${k} of ${R.nsteps}, at t = ${(k*R.dt).toFixed(4)}.<br>` +
+      `Largest nodal error at this step: forward Euler ${sup(sciTxt(errs[0]))}, Crank–Nicolson ${sup(sciTxt(errs[1]))}, backward Euler ${sup(sciTxt(errs[2]))}.`;
+  }
+
+  let last = null;
+  function frame(ts){
+    if (!st.playing){ last = null; return; }
+    if (last !== null) st.tau = Math.min(T, st.tau + (ts - last)/1000*T/6);
+    last = ts;
+    if (st.tau >= T) st.playing = false;
+    render();
+    if (st.playing) requestAnimationFrame(frame);
+  }
+  const restart = () => { st.tau = 0; st.playing = false; render(); };
+  document.querySelectorAll("#c34w [data-dim]").forEach(b => b.addEventListener("click", () => { st.dim = +b.dataset.dim; restart(); }));
+  document.querySelectorAll("#c34w [data-kind]").forEach(b => b.addEventListener("click", () => { st.kind = b.dataset.kind; restart(); }));
+  document.getElementById("c34r").addEventListener("input", ev => { st.ri = +ev.target.value; restart(); });
+  document.getElementById("c34t").addEventListener("input", ev => { st.tau = T*(+ev.target.value)/1000; st.playing = false; render(); });
+  document.getElementById("c34reset").addEventListener("click", restart);
+  document.getElementById("c34play").addEventListener("click", () => {
+    if (st.playing){ st.playing = false; render(); return; }
+    if (st.tau >= T) st.tau = 0;
+    st.playing = true; requestAnimationFrame(frame);
+  });
+  render();
+})();
+</script>
+```
+:::
+
+### Things to try
+
+1. In one dimension with the hot block, set the time step to $0.9\,\Delta t_{cr}$ and press play, then try $1.01\,\Delta t_{cr}$ and $1.1\,\Delta t_{cr}$.
+   Below the limit, all three methods follow the analytical solution.
+   Just above it, forward Euler develops a zigzag from node to node that grows at every step, while the other two are unaffected.
+2. Choose the smooth hump at $1.1\,\Delta t_{cr}$.
+   Forward Euler looks correct for most of the run and then grows suddenly near the end, because its unstable modes start from roundoff error.
+   With a very large step and the smooth hump, it takes too few steps for that growth to show, but with the hot block it fails at every step size above the limit.
+3. With the hot block, set the time step to $20\,\Delta t_{cr}$ or $40\,\Delta t_{cr}$.
+   Crank–Nicolson stays bounded, but it oscillates at the edges of the block and its error is the largest of the three, while backward Euler stays smooth and cools too slowly.
+4. With the smooth hump, compare the final errors at $80\,\Delta t_{cr}$ and $160\,\Delta t_{cr}$.
+   Crank–Nicolson's error is several times smaller than backward Euler's, and halving the step divides it by about 3, against about 2 for backward Euler.
+   At small steps, both level off at the spatial error, near $10^{-3}$.
+5. Repeat in two dimensions.
+   The behavior is the same, but forward Euler's limit is smaller, because the largest eigenvalue of a two-dimensional mesh is about twice that of a one-dimensional mesh with the same element size.
+
+## Elastodynamics
+
+For elasticity with inertia, the semi-discrete equations of Hughes Chapter 7 contain the second time derivative,
+
+$$
+\underline{\underline{M}}\,\ddot{\underline{d}} + \underline{\underline{C}}\,\dot{\underline{d}} + \underline{\underline{K}}\,\underline{d} = \underline{F} ,
+$$
+
+where $\underline{\underline{M}}$ is now assembled from $\int_{\Omega^e} \rho\,N_a\,N_b\,d\Omega$ and $\underline{\underline{C}}$ is a damping matrix.
+Without damping, each mode oscillates at its natural frequency $\omega_k = \sqrt{\lambda_k}$ instead of decaying, so the high modes ring indefinitely rather than dying out.
+
+### The Newmark family
+
+The most widely used methods belong to the **Newmark family** (Hughes Chapter 9), which advances the displacement $\underline{d}_n$, the velocity $\underline{v}_n$, and the acceleration $\underline{a}_n$ by
+
+$$
+\begin{aligned}
+\underline{d}_{n+1} &= \underline{d}_n + \Delta t\,\underline{v}_n + \tfrac{1}{2}\Delta t^2\left((1 - 2\beta)\,\underline{a}_n + 2\beta\,\underline{a}_{n+1}\right), \\
+\underline{v}_{n+1} &= \underline{v}_n + \Delta t\left((1 - \gamma)\,\underline{a}_n + \gamma\,\underline{a}_{n+1}\right), \\
+\underline{\underline{M}}\,\underline{a}_{n+1} &+ \underline{\underline{C}}\,\underline{v}_{n+1} + \underline{\underline{K}}\,\underline{d}_{n+1} = \underline{F}_{n+1} ,
+\end{aligned}
+$$
+
+with two parameters, $\beta$ and $\gamma$, in the same spirit as $\alpha$ above.
+
+| Method | $\beta$ | $\gamma$ | Stability | Accuracy and behavior |
+|:--|:--|:--|:--|:--|
+| Central difference | 0 | $\tfrac{1}{2}$ | $\omega_{max}\,\Delta t \leq 2$ | explicit with a lumped mass matrix; second order |
+| Average acceleration (trapezoidal rule) | $\tfrac{1}{4}$ | $\tfrac{1}{2}$ | every $\Delta t$ | second order; no loss of amplitude, but the period lengthens |
+| With numerical damping | $\tfrac{1}{4}\left(\gamma + \tfrac{1}{2}\right)^2$ | greater than $\tfrac{1}{2}$ | every $\Delta t$ | damps the high frequencies; first order |
+
+: Three members of the Newmark family. {#tbl-c34-newmark}
+
+The central difference method of dynamics is a different method from Crank–Nicolson, although both use central differences.
+In general, the Newmark method is unconditionally stable when $2\beta \geq \gamma \geq \tfrac{1}{2}$, and stable for $\omega_{max}\,\Delta t \leq 1/\sqrt{\gamma/2 - \beta}$ when $\gamma \geq \tfrac{1}{2}$ and $\beta < \gamma/2$.
+The largest frequency grows in proportion to $1/h$, not $1/h^2$ as the largest eigenvalue of the heat equation does, and with a lumped mass matrix the limit is about the time a wave takes to cross one element.
+That is why explicit methods are common in wave propagation, impact, and crash analyses, while diffusion problems usually favor implicit ones.
+Methods such as the HHT-$\alpha$ and generalized-$\alpha$ methods add numerical damping while keeping second-order accuracy.
+
+@fig-c34-dyn shows these behaviors for a bar fixed at both ends, with a wave speed of 1 and 20 linear elements, for which $\Delta t_{cr} = 2/\omega_{max}$ is `{python} "%.4f" % dtc_bar`.
+Central difference follows the first mode just below its limit and blows up just above it (a).
+With only eight steps per period (b), average acceleration keeps the amplitude but falls behind in phase, and the version with numerical damping also loses amplitude.
+
+### The Newmark method in terms of the displacement
+
+The Newmark equations carry three vectors from one step to the next.
+As for the heat equation, the velocity and the acceleration can be eliminated, which leaves a single equation for the displacement.
+Subtracting the displacement update from $t_{n-1}$ to $t_n$ from the one from $t_n$ to $t_{n+1}$, and using the velocity update to replace $\underline{v}_n - \underline{v}_{n-1}$, gives
+
+$$
+\underline{d}_{n+1} - 2\,\underline{d}_n + \underline{d}_{n-1}
+= \Delta t^2\left(\beta\,\underline{a}_{n+1} + \left(\tfrac{1}{2} - 2\beta + \gamma\right)\underline{a}_n + \left(\tfrac{1}{2} + \beta - \gamma\right)\underline{a}_{n-1}\right) .
+$$
+
+The same weights applied to the velocities give, after a similar use of the two updates,
+
+$$
+\Delta t^2\left(\beta\,\underline{v}_{n+1} + \left(\tfrac{1}{2} - 2\beta + \gamma\right)\underline{v}_n + \left(\tfrac{1}{2} + \beta - \gamma\right)\underline{v}_{n-1}\right)
+= \Delta t\left(\gamma\,\underline{d}_{n+1} + (1 - 2\gamma)\,\underline{d}_n - (1 - \gamma)\,\underline{d}_{n-1}\right) .
+$$
+
+The equation of motion holds at $t_{n+1}$, $t_n$, and $t_{n-1}$.
+Adding these three equations with the weights $\beta$, $\tfrac{1}{2} - 2\beta + \gamma$, and $\tfrac{1}{2} + \beta - \gamma$, multiplying by $\Delta t^2$, and replacing the weighted accelerations and velocities with the two expressions above gives
+
+$$
+\begin{aligned}
+&\underline{\underline{M}}\left(\underline{d}_{n+1} - 2\,\underline{d}_n + \underline{d}_{n-1}\right)
++ \Delta t\,\underline{\underline{C}}\left(\gamma\,\underline{d}_{n+1} + (1 - 2\gamma)\,\underline{d}_n - (1 - \gamma)\,\underline{d}_{n-1}\right) \\
+&\qquad + \Delta t^2\,\underline{\underline{K}}\left(\beta\,\underline{d}_{n+1} + \left(\tfrac{1}{2} - 2\beta + \gamma\right)\underline{d}_n + \left(\tfrac{1}{2} + \beta - \gamma\right)\underline{d}_{n-1}\right) \\
+&\qquad\qquad = \Delta t^2\left(\beta\,\underline{F}_{n+1} + \left(\tfrac{1}{2} - 2\beta + \gamma\right)\underline{F}_n + \left(\tfrac{1}{2} + \beta - \gamma\right)\underline{F}_{n-1}\right) .
+\end{aligned}
+$$
+
+The three weights add to 1, so the stiffness and force terms are evaluated at a weighted average of three times, as they were at a weighted average of two times for the heat equation.
+Collecting the unknown $\underline{d}_{n+1}$ on the left gives the equation solved at each step,
+
+$$
+\begin{aligned}
+\left(\underline{\underline{M}} + \gamma\,\Delta t\,\underline{\underline{C}} + \beta\,\Delta t^2\,\underline{\underline{K}}\right)\underline{d}_{n+1}
+={}& \left(2\,\underline{\underline{M}} - (1 - 2\gamma)\,\Delta t\,\underline{\underline{C}} - \left(\tfrac{1}{2} - 2\beta + \gamma\right)\Delta t^2\,\underline{\underline{K}}\right)\underline{d}_n \\
+&- \left(\underline{\underline{M}} - (1 - \gamma)\,\Delta t\,\underline{\underline{C}} + \left(\tfrac{1}{2} + \beta - \gamma\right)\Delta t^2\,\underline{\underline{K}}\right)\underline{d}_{n-1} \\
+&+ \Delta t^2\left(\beta\,\underline{F}_{n+1} + \left(\tfrac{1}{2} - 2\beta + \gamma\right)\underline{F}_n + \left(\tfrac{1}{2} + \beta - \gamma\right)\underline{F}_{n-1}\right) .
+\end{aligned}
+$$
+
+The matrix on the left is the one that appears when the three Newmark equations are solved for $\underline{a}_{n+1}$, so this form costs the same per step.
+Unlike the heat equation, each step uses the displacements at two previous times.
+This follows from the second time derivative: the semi-discrete equations need both an initial displacement and an initial velocity, and an equation in the displacement alone holds that information in two consecutive displacements.
+The recurrence therefore starts from $\underline{d}_0$ and $\underline{d}_1$, where $\underline{d}_1$ is found by one step of the Newmark equations, with $\underline{a}_0$ from $\underline{\underline{M}}\,\underline{a}_0 = \underline{F}_0 - \underline{\underline{C}}\,\underline{v}_0 - \underline{\underline{K}}\,\underline{d}_0$.
+From then on, it gives the same displacements as the Newmark equations.
+
+For central difference, $\beta = 0$ and $\gamma = \tfrac{1}{2}$, and after division by $\Delta t^2$ the equation becomes
+
+$$
+\underline{\underline{M}}\,\frac{\underline{d}_{n+1} - 2\,\underline{d}_n + \underline{d}_{n-1}}{\Delta t^2}
++ \underline{\underline{C}}\,\frac{\underline{d}_{n+1} - \underline{d}_{n-1}}{2\,\Delta t}
++ \underline{\underline{K}}\,\underline{d}_n = \underline{F}_n ,
+$$
+
+in which both time derivatives are replaced by central differences about $t_n$, which explains the name.
+The stiffness enters only through $\underline{d}_n$, so with a lumped mass matrix and no damping, or damping proportional to the mass, the matrix on the left is diagonal and no system of equations needs to be solved.
+For average acceleration, $\beta = \tfrac{1}{4}$ and $\gamma = \tfrac{1}{2}$, and the stiffness and force terms become $\underline{\underline{K}}\left(\underline{d}_{n+1} + 2\,\underline{d}_n + \underline{d}_{n-1}\right)/4$ and $\left(\underline{F}_{n+1} + 2\,\underline{F}_n + \underline{F}_{n-1}\right)/4$, with the same difference quotients for the mass and damping terms.
+
+For one undamped mode with no force, the equation becomes, with $\Omega = \omega\,\Delta t$,
+
+$$
+\left(1 + \beta\,\Omega^2\right) y_{n+1}
+- \left(2 - \left(\tfrac{1}{2} - 2\beta + \gamma\right)\Omega^2\right) y_n
++ \left(1 + \left(\tfrac{1}{2} + \beta - \gamma\right)\Omega^2\right) y_{n-1} = 0 .
+$$
+
+Its solutions have the form $y_n = z^n$, where $z$ is one of the two roots of the quadratic obtained by replacing $y_{n+1}$, $y_n$, and $y_{n-1}$ with $z^2$, $z$, and 1.
+The two roots play the role of the amplification factor $A$ of the heat equation, and the spectral radius in panel (b) of @fig-c34-damp is the larger of their magnitudes.
+The product of the roots is $\left(1 + \left(\tfrac{1}{2} + \beta - \gamma\right)\Omega^2\right)/\left(1 + \beta\,\Omega^2\right)$.
+When $\gamma = \tfrac{1}{2}$, the product is 1, so complex roots both have magnitude 1, and the mode keeps its amplitude.
+For central difference, the roots become real beyond $\Omega = 2$, and one of them is then larger than 1 in magnitude.
+When $\gamma > \tfrac{1}{2}$, the product is less than 1, so complex roots have magnitude less than 1, and the mode loses amplitude at every step, which is the numerical damping in @tbl-c34-newmark.
+
+### Damping
+
+The high modes of a mesh are poorly resolved, and in an undamped analysis they ring indefinitely, adding noise to the response (@fig-c34-dyn c).
+Two kinds of damping are used to remove them.
+**Numerical damping**, from $\gamma > \tfrac{1}{2}$ or the methods mentioned above, comes from the time integrator.
+**Rayleigh damping** is physical damping of a convenient form,
+
+$$
+\underline{\underline{C}} = a_0\,\underline{\underline{M}} + a_1\,\underline{\underline{K}} ,
+$$
+
+which keeps the modes separate and gives mode $k$ the damping ratio
+
+$$
+\zeta_k = \frac{a_0}{2\,\omega_k} + \frac{a_1\,\omega_k}{2} .
+$$
+
+The mass-proportional part damps the low frequencies and the stiffness-proportional part the high ones (@fig-c34-damp a), and $a_0$ and $a_1$ are usually chosen to give a target damping ratio, such as 2% to 5% for a structure, at two frequencies of interest.
+
+![A bar fixed at both ends, 20 linear elements, wave speed 1, with the displacement of its midpoint against time. (a) The first mode, $\sin(\pi x)$, by central difference just below and just above its stability limit. (b) The first mode with a large step, by average acceleration and by a Newmark method with numerical damping. (c) A bar plucked at its middle, which excites many modes, by average acceleration with $\Delta t$ = 0.02, without and with stiffness-proportional Rayleigh damping, against the exact undamped response. All three use the consistent mass matrix.](`{python} fig_dyn_path`){#fig-c34-dyn width=100%}
+
+![(a) The damping ratio given by Rayleigh damping, against the natural frequency: the mass-proportional part decreases with frequency and the stiffness-proportional part increases with it. (b) The spectral radius, the largest growth factor per step, of an undamped mode against $\omega\,\Delta t$: central difference exceeds 1 beyond $\omega\,\Delta t = 2$; average acceleration stays exactly at 1; the method with $\gamma = 0.6$ falls below 1 for the high frequencies, which is its numerical damping.](`{python} fig_damp_path`){#fig-c34-damp width=100%}
+
+## Summary
+
+- The semi-discrete heat equation $\underline{\underline{M}}\,\dot{\underline{d}} + \underline{\underline{K}}\,\underline{d} = \underline{F}$ is integrated in time by replacing $\dot{\underline{d}}$ with a difference quotient and evaluating the rest at a weighted average of the two ends of the step: forward Euler ($\alpha = 0$), Crank–Nicolson ($\alpha = \tfrac{1}{2}$), and backward Euler ($\alpha = 1$).
+  Each step is a single solve for $\underline{d}_{n+1}$ from $\underline{d}_n$, and Hughes' form with the velocity $\underline{v}_n$ reduces to it.
+- One mode at a time, each step multiplies the mode by $A = \left(1 - (1 - \alpha)\lambda\Delta t\right)/\left(1 + \alpha\lambda\Delta t\right)$.
+  The method is stable for every $\Delta t$ when $\alpha \geq \tfrac{1}{2}$, and when $\lambda^h_{n_{eq}}\,\Delta t < 2/(1 - 2\alpha)$ when $\alpha < \tfrac{1}{2}$.
+- Forward Euler's limit is proportional to $h^2$.
+  Crank–Nicolson is second-order accurate but oscillates with large steps near sharp features; backward Euler is first order, never oscillates, and lags with large steps.
+- The total error is the error in space plus the error in time, and refining only one of them eventually stops helping.
+- Elastodynamics has a second time derivative and is integrated by the Newmark family: central difference is explicit and conditionally stable, average acceleration is unconditionally stable without numerical damping, and Rayleigh or numerical damping removes the ringing of poorly resolved high modes.
+  Eliminating the velocity and the acceleration leaves a single equation for $\underline{d}_{n+1}$ in terms of $\underline{d}_n$ and $\underline{d}_{n-1}$.

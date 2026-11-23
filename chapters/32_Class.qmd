@@ -1,0 +1,6 @@
+---
+title: "Class 32: An Excavation, by the Poisson Equation and by Elasticity"
+---
+
+The notes for this class are in preparation.
+In class, we worked through an excavation as an example, analyzed first with the Poisson Equation and then with elasticity.

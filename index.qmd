@@ -51,6 +51,9 @@ computed on the page so that the text and the drawings always agree.
 | [Class 29](chapters/29_Class.qmd) | Boundary conditions in elasticity: rigid-body motions and mechanisms, statically determinate and redundant supports, reactions, symmetry and antisymmetry, supports not aligned with the axes, and Saint-Venant's principle, with widgets on supports, symmetry, and the effect of how a load is applied |
 | [Class 30](chapters/30_Class.qmd) | Convergence in elasticity: error norms, the a priori estimate, and Céa's lemma for vector fields; volumetric locking in nearly incompressible materials, how it can look like convergence, and its remedies, with a widget comparing elements against exact solutions as Poisson's ratio approaches one half |
 | [Class 31](chapters/31_Class.qmd) | Thermoelasticity: coefficients of thermal expansion, Hooke's law with a thermal strain in plane stress and plane strain, where thermal stresses come from, the thermal load vector and one-way coupling, matching the degrees of temperature and displacement, two-way and reverse coupling, and nonlinear effects, with a widget that heats a plate in several ways |
+| [Class 32](chapters/32_Class.qmd) | An excavation analyzed by the Poisson Equation and by elasticity (in-class example; notes in preparation) |
+| [Class 33](chapters/33_Class.qmd) | Time-dependent problems: the parabolic problem of Hughes Section 7.1 and its semi-discrete equations, and semi-discrete versus space-time methods (notes in preparation) |
+| [Class 34](chapters/34_Class.qmd) | Time stepping for the semi-discrete heat equation: forward Euler, Crank–Nicolson, and backward Euler as one family, their amplification factors, stability limits, oscillation, and accuracy, with a widget that runs all three in one and two dimensions against the analytical solution; and the Newmark methods and Rayleigh damping for elastodynamics |
 
 ### Classes 24 and 25 applications
 

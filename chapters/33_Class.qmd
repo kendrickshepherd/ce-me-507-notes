@@ -1,0 +1,6 @@
+---
+title: "Class 33: Time-Dependent Problems and the Semi-Discrete Method"
+---
+
+The notes for this class are in preparation.
+In class, we discussed the parabolic problem of Hughes Section 7.1, the heat equation that leads to the semi-discrete equations $\underline{\underline{M}}\,\dot{\underline{d}} + \underline{\underline{K}}\,\underline{d} = \underline{F}$, and the differences between semi-discrete methods and space-time methods.
